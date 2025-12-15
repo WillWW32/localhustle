@@ -1,0 +1,39 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body {
+  @apply bg-white text-black font-sans leading-relaxed;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  @apply font-serif text-3xl font-bold mb-4 mt-8 tracking-tight;
+}
+
+p {
+  @apply mb-6 max-w-2xl;
+}
+
+input, select, textarea, button {
+  @apply border border-black bg-white px-4 py-2 font-mono text-sm;
+}
+
+button {
+  @apply hover:bg-black hover:text-white transition-colors cursor-pointer;
+}
+
+a {
+  @apply underline hover:no-underline;
+}
+
+.container {
+  @apply max-w-4xl mx-auto px-6 py-12;
+}
+
+pre {
+  @apply bg-gray-100 p-4 border border-black overflow-x-auto;
+}
+
+video {
+  @apply w-full max-w-lg border border-black;
+}
