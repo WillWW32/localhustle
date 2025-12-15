@@ -5,49 +5,79 @@
 html, body {
   background-color: white;
   color: black;
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   line-height: 1.6;
 }
 
 h1, h2, h3, h4, h5, h6 {
-  @apply font-serif text-3xl font-bold mb-4 mt-8 tracking-tight;
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-weight: bold;
+  margin-bottom: 1rem;
+  margin-top: 2rem;
+  letter-spacing: -0.025em;
+}
+
+h1 {
+  font-size: 3rem;
+}
+
+h2 {
+  font-size: 2.25rem;
+}
+
+h3 {
+  font-size: 1.875rem;
 }
 
 p {
-  @apply mb-6 max-w-2xl;
+  margin-bottom: 1.5rem;
+  max-width: 42rem;
 }
 
 input, select, textarea, button {
-  @apply border border-black px-4 py-2 font-mono text-sm;
+  border: 1px solid black;
   background-color: white;
+  padding: 0.5rem 1rem;
+  font-family: 'Courier New', monospace;
+  font-size: 0.875rem;
 }
 
 button {
-  @apply hover:bg-black hover:text-white transition-colors cursor-pointer;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: black;
+  color: white;
 }
 
 a {
-  @apply underline hover:no-underline;
+  text-decoration: underline;
+}
+
+a:hover {
+  text-decoration: none;
 }
 
 .container {
-  @apply max-w-4xl mx-auto px-6 py-12;
+  max-width: 80rem;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+  padding-top: 3rem;
+  padding-bottom: 3rem;
 }
 
 pre {
-  background-color: #f3f4f6; /* light gray */
-  @apply p-4 border border-black overflow-x-auto;
+  background-color: #f3f4f6;
+  padding: 1rem;
+  border: 1px solid black;
+  overflow-x: auto;
 }
 
 video {
-  @apply w-full max-w-lg border border-black;
-}
-
-/* Card-like elements (replaces bg-gray-100) */
-.bg-gray-100 {
-  background-color: #f3f4f6;
-}
-
-.bg-white {
-  background-color: white;
+  width: 100%;
+  max-width: 42rem;
+  border: 1px solid black;
 }
