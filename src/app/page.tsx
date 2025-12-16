@@ -66,62 +66,62 @@ export default function Home() {
   }, [router])
 
   return (
-    <div className="container py-32">
+    <div className="min-h-screen flex flex-col justify-center py-32 font-mono text-center">
       {/* Logo */}
-      <div className="text-center mb-20 animate-fadeIn">
+      <div className="mb-24">
         <Image
           src="/logo.jpg"
           alt="LocalHustle Logo"
-          width={300}
-          height={300}
-          className="mx-auto hover:scale-105 transition-transform duration-300"
+          width={320}
+          height={320}
+          className="mx-auto"
           priority
         />
       </div>
 
       {/* Title */}
-      <h1 className="text-center text-6xl mb-16 font-bold tracking-tight animate-fadeIn">
+      <h1 className="text-6xl mb-8 font-bold tracking-tight">
         LocalHustle
       </h1>
 
       {/* Slogan */}
-      <p className="text-center text-4xl mb-32 font-mono animate-fadeIn animation-delay-300">
+      <p className="text-4xl mb-32">
         Community Driven Support for Student Athletes
       </p>
 
-      {/* Benefits Grid */}
-      <div className="grid md:grid-cols-2 gap-24 mb-40 animate-fadeIn animation-delay-600">
-        <div className="text-center">
+      {/* Benefits */}
+      <div className="max-w-3xl mx-auto mb-40 space-y-32">
+        <div>
           <h2 className="text-4xl mb-12 font-bold">For Student Athletes</h2>
-          <ul className="space-y-8 text-xl font-mono max-w-md mx-auto">
-            <li>• Earn real money — $50–$1000 per gig for gas, gear, lunch, or savings.</li>
-            <li>• Local exposure to business owners and entrepreneurs in your town.</li>
-            <li>• Build relationships that lead to scholarships and letters of recommendation.</li>
-            <li>• Safe, private gigs — no forced public posting, parent-approved payouts.</li>
-            <li>• Resume-building experience that shows initiative and character.</li>
-          </ul>
+          <div className="space-y-8 text-xl">
+            <p>Earn real money — $50–$1000 per gig for gas, gear, lunch, or savings.</p>
+            <p>Local exposure to business owners and entrepreneurs in your town.</p>
+            <p>Build relationships that lead to scholarships and letters of recommendation.</p>
+            <p>Safe, private gigs — no forced public posting, parent-approved payouts.</p>
+            <p>Resume-building experience that shows initiative and character.</p>
+          </div>
         </div>
 
-        <div className="text-center">
+        <div>
           <h2 className="text-4xl mb-12 font-bold">For Local Businesses</h2>
-          <ul className="space-y-8 text-xl font-mono max-w-md mx-auto">
-            <li>• Fresh, authentic content for social media from kids parents trust.</li>
-            <li>• Become the hometown hero — visible support for local teams.</li>
-            <li>• Discover motivated teens — potential future employees.</li>
-            <li>• Better advertising than paid ads — real stories from real athletes.</li>
-            <li>• Only pay for clips you love — zero risk, total control.</li>
-          </ul>
+          <div className="space-y-8 text-xl">
+            <p>Fresh, authentic content for social media from kids parents trust.</p>
+            <p>Become the hometown hero — visible support for local teams.</p>
+            <p>Discover motivated teens — potential future employees.</p>
+            <p>Better advertising than paid ads — real stories from real athletes.</p>
+            <p>Only pay for clips you love — zero risk, total control.</p>
+          </div>
         </div>
       </div>
 
       {/* Login Form */}
       {user ? (
-        <div className="text-center space-y-8 animate-fadeIn animation-delay-900">
+        <div className="space-y-8">
           <p className="text-2xl">Logged in as {user.email}</p>
           <p className="text-lg">Redirecting to dashboard...</p>
         </div>
       ) : (
-        <div className="max-w-md mx-auto space-y-20 animate-fadeIn animation-delay-900">
+        <div className="max-w-md mx-auto space-y-20">
           <div className="space-y-8">
             <Label htmlFor="email" className="text-4xl block">Your Email</Label>
             <Input
@@ -134,11 +134,14 @@ export default function Home() {
             />
           </div>
 
-          <Button onClick={handleLogin} disabled={loading} className="w-full py-20 text-5xl border-8 border-black bg-black text-white hover:scale-105 hover:bg-gray-900 transition-all duration-300">
+          <Button onClick={handleLogin} disabled={loading} className="w-full py-20 text-5xl border-8 border-black bg-black text-white hover:bg-gray-800">
             {loading ? 'Sending...' : 'Send Login Link'}
           </Button>
         </div>
       )}
+
+      {/* Extra bottom spacing */}
+      <div className="h-32" />
     </div>
   )
 }
