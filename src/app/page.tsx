@@ -7,6 +7,7 @@ import { signOut } from '@/lib/auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import Image from 'next/image'
 
 export default function Home() {
   const [email, setEmail] = useState('')
@@ -65,14 +66,34 @@ export default function Home() {
   }, [router])
 
   return (
-    <div className="container">
-      <h1 className="text-5xl mb-12">LocalHustle</h1>
-      <p className="text-2xl mb-24">Community Driven Support for Student Athletes</p>
+    <div className="container py-32">
+      {/* Logo */}
+      <div className="text-center mb-20 animate-fadeIn">
+        <Image
+          src="/logo.jpg"
+          alt="LocalHustle Logo"
+          width={300}
+          height={300}
+          className="mx-auto hover:scale-105 transition-transform duration-300"
+          priority
+        />
+      </div>
 
-      <div className="grid md:grid-cols-2 gap-16 mb-24">
-        <div>
-          <h2 className="text-3xl mb-8">For Student Athletes</h2>
-          <ul className="space-y-6 text-lg">
+      {/* Title */}
+      <h1 className="text-center text-6xl mb-16 font-bold tracking-tight animate-fadeIn">
+        LocalHustle
+      </h1>
+
+      {/* Slogan */}
+      <p className="text-center text-4xl mb-32 font-mono animate-fadeIn animation-delay-300">
+        Community Driven Support for Student Athletes
+      </p>
+
+      {/* Benefits Grid */}
+      <div className="grid md:grid-cols-2 gap-24 mb-40 animate-fadeIn animation-delay-600">
+        <div className="text-center">
+          <h2 className="text-4xl mb-12 font-bold">For Student Athletes</h2>
+          <ul className="space-y-8 text-xl font-mono max-w-md mx-auto">
             <li>• Earn real money — $50–$1000 per gig for gas, gear, lunch, or savings.</li>
             <li>• Local exposure to business owners and entrepreneurs in your town.</li>
             <li>• Build relationships that lead to scholarships and letters of recommendation.</li>
@@ -81,9 +102,9 @@ export default function Home() {
           </ul>
         </div>
 
-        <div>
-          <h2 className="text-3xl mb-8">For Local Businesses</h2>
-          <ul className="space-y-6 text-lg">
+        <div className="text-center">
+          <h2 className="text-4xl mb-12 font-bold">For Local Businesses</h2>
+          <ul className="space-y-8 text-xl font-mono max-w-md mx-auto">
             <li>• Fresh, authentic content for social media from kids parents trust.</li>
             <li>• Become the hometown hero — visible support for local teams.</li>
             <li>• Discover motivated teens — potential future employees.</li>
@@ -93,26 +114,27 @@ export default function Home() {
         </div>
       </div>
 
+      {/* Login Form */}
       {user ? (
-        <div className="space-y-8">
-          <p className="text-lg">Logged in as {user.email}</p>
-          <p className="text-sm">Redirecting to dashboard...</p>
+        <div className="text-center space-y-8 animate-fadeIn animation-delay-900">
+          <p className="text-2xl">Logged in as {user.email}</p>
+          <p className="text-lg">Redirecting to dashboard...</p>
         </div>
       ) : (
-        <div className="space-y-16">
-          <div className="space-y-6">
-            <Label htmlFor="email" className="text-3xl block">Your Email</Label>
+        <div className="max-w-md mx-auto space-y-20 animate-fadeIn animation-delay-900">
+          <div className="space-y-8">
+            <Label htmlFor="email" className="text-4xl block">Your Email</Label>
             <Input
               id="email"
               type="email"
               placeholder="you@school.edu"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="py-12 text-2xl"
+              className="py-16 text-3xl border-4 border-black text-center"
             />
           </div>
 
-          <Button onClick={handleLogin} disabled={loading} className="py-16 text-3xl">
+          <Button onClick={handleLogin} disabled={loading} className="w-full py-20 text-5xl border-8 border-black bg-black text-white hover:scale-105 hover:bg-gray-900 transition-all duration-300">
             {loading ? 'Sending...' : 'Send Login Link'}
           </Button>
         </div>
