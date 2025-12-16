@@ -66,34 +66,33 @@ export default function Home() {
   }, [router])
 
   return (
-    <div className="min-h-screen flex flex-col justify-center py-32 font-mono text-center">
+    <div style={{ fontFamily: "'Courier New', Courier, monospace", textAlign: 'center', padding: '8rem 1rem', minHeight: '100vh' }}>
       {/* Logo */}
-      <div className="mb-24">
+      <div style={{ marginBottom: '6rem' }}>
         <Image
           src="/logo.jpg"
           alt="LocalHustle Logo"
           width={320}
           height={320}
-          className="mx-auto"
+          style={{ margin: '0 auto' }}
           priority
         />
       </div>
 
-      {/* Title */}
-      <h1 className="text-6xl mb-8 font-bold tracking-tight">
-        LocalHustle
-      </h1>
+     
 
       {/* Slogan */}
-      <p className="text-4xl mb-32">
+      <p style={{ fontSize: '3rem', marginBottom: '8rem' }}>
         Community Driven Support for Student Athletes
       </p>
 
       {/* Benefits */}
-      <div className="max-w-3xl mx-auto mb-40 space-y-32">
-        <div>
-          <h2 className="text-4xl mb-12 font-bold">For Student Athletes</h2>
-          <div className="space-y-8 text-xl">
+      <div style={{ maxWidth: '800px', margin: '0 auto 10rem auto' }}>
+        <div style={{ marginBottom: '8rem' }}>
+          <h2 style={{ fontSize: '3.5rem', fontWeight: 'bold', marginBottom: '4rem' }}>
+            For Student Athletes
+          </h2>
+          <div style={{ fontSize: '1.5rem', lineHeight: '2.2' }}>
             <p>Earn real money — $50–$1000 per gig for gas, gear, lunch, or savings.</p>
             <p>Local exposure to business owners and entrepreneurs in your town.</p>
             <p>Build relationships that lead to scholarships and letters of recommendation.</p>
@@ -103,8 +102,10 @@ export default function Home() {
         </div>
 
         <div>
-          <h2 className="text-4xl mb-12 font-bold">For Local Businesses</h2>
-          <div className="space-y-8 text-xl">
+          <h2 style={{ fontSize: '3.5rem', fontWeight: 'bold', marginBottom: '4rem' }}>
+            For Local Businesses
+          </h2>
+          <div style={{ fontSize: '1.5rem', lineHeight: '2.2' }}>
             <p>Fresh, authentic content for social media from kids parents trust.</p>
             <p>Become the hometown hero — visible support for local teams.</p>
             <p>Discover motivated teens — potential future employees.</p>
@@ -116,32 +117,48 @@ export default function Home() {
 
       {/* Login Form */}
       {user ? (
-        <div className="space-y-8">
-          <p className="text-2xl">Logged in as {user.email}</p>
-          <p className="text-lg">Redirecting to dashboard...</p>
+        <div style={{ marginTop: '6rem' }}>
+          <p style={{ fontSize: '2rem' }}>Logged in as {user.email}</p>
+          <p style={{ fontSize: '1.5rem' }}>Redirecting to dashboard...</p>
         </div>
       ) : (
-        <div className="max-w-md mx-auto space-y-20">
-          <div className="space-y-8">
-            <Label htmlFor="email" className="text-4xl block">Your Email</Label>
+        <div style={{ maxWidth: '500px', margin: '0 auto', paddingBottom: '10rem' }}>
+          <div style={{ marginBottom: '6rem' }}>
+            <Label htmlFor="email" style={{ fontSize: '3rem', display: 'block', marginBottom: '2rem' }}>
+              Your Email
+            </Label>
             <Input
               id="email"
               type="email"
               placeholder="you@school.edu"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="py-16 text-3xl border-4 border-black text-center"
+              style={{
+                width: '50%',
+                padding: '3rem',
+                fontSize: '2.5rem',
+                border: '4px solid black',
+                textAlign: 'center',
+              }}
             />
           </div>
 
-          <Button onClick={handleLogin} disabled={loading} className="w-full py-20 text-5xl border-8 border-black bg-black text-white hover:bg-gray-800">
+          <Button
+            onClick={handleLogin}
+            disabled={loading}
+            style={{
+              width: '50%',
+              padding: '4rem',
+              fontSize: '3.5rem',
+              border: '2px solid black',
+              backgroundColor: 'black',
+              color: 'white',
+            }}
+          >
             {loading ? 'Sending...' : 'Send Login Link'}
           </Button>
         </div>
       )}
-
-      {/* Extra bottom spacing */}
-      <div className="h-32" />
     </div>
   )
 }
