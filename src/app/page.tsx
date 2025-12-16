@@ -69,6 +69,30 @@ export default function Home() {
       <h1 className="text-center text-5xl mb-12">LocalHustle</h1>
       <p className="text-center mb-12 text-xl">Community Driven Support for Student Athletes</p>
 
+      <div className="grid md:grid-cols-2 gap-16 mb-24">
+        <div>
+          <h2 className="text-3xl mb-6">For Student Athletes</h2>
+          <ul className="space-y-4 text-lg">
+            <li>• Earn real spending money for gas, gear, or lunch — $50–$1000 per gig.</li>
+            <li>• Get local exposure to business owners and entrepreneurs in your town.</li>
+            <li>• Build relationships that lead to scholarships and letters of recommendation.</li>
+            <li>• No public posting required — private clips keep it safe and simple.</li>
+            <li>• Parent-approved every step — money goes to family, you stay in control.</li>
+          </ul>
+        </div>
+
+        <div>
+          <h2 className="text-3xl mb-6">For Local Businesses</h2>
+          <ul className="space-y-4 text-lg">
+            <li>• Get fresh, authentic user-generated content for social media — from kids parents trust.</li>
+            <li>• Easy way to support local teams and become the hometown hero.</li>
+            <li>• Discover potential future employees with hustle and character.</li>
+            <li>• Better advertising than paid ads — real stories from real athletes.</li>
+            <li>• Only pay for clips you love — zero risk, total control.</li>
+          </ul>
+        </div>
+      </div>
+
       {user ? (
         <div className="max-w-md mx-auto space-y-8 text-center">
           <p className="text-lg">Logged in as {user.email}</p>
