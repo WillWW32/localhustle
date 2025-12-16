@@ -12,8 +12,8 @@ export default function RootLayout({
       <head>
         <link rel="icon" href="/favicon.ico" />
       </head>
-      <body className="min-h-screen bg-white text-black">
-        {/* Single Logo Header */}
+      <body>
+        {/* Header with Logo */}
         <header className="py-12 border-b-4 border-black">
           <div className="container text-center">
             <Link href="/">
@@ -29,7 +29,9 @@ export default function RootLayout({
           </div>
         </header>
 
-        <main>{children}</main>
+        <main className="fade-in">
+          {children}
+        </main>
       </body>
     </html>
   )
