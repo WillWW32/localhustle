@@ -12,23 +12,25 @@ export default function RootLayout({
       <head>
         <link rel="icon" href="/favicon.ico" />
       </head>
-      <body>
-        <header className="py-8 mb-12">
+      <body className="min-h-screen bg-white text-black">
+        <header className="py-8 mb-12 border-b-4 border-black">
           <div className="container text-center">
             <Link href="/">
               <Image
                 src="/logo.jpg"
                 alt="LocalHustle Logo"
-                width={300}
-                height={300}
-                className="mx-auto"
+                width={250}
+                height={250}
+                className="mx-auto transition-transform hover:scale-105"
                 priority
               />
             </Link>
           </div>
         </header>
 
-        <main>{children}</main>
+        <main className="animate-fadeIn">
+          {children}
+        </main>
       </body>
     </html>
   )
