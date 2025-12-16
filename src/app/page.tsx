@@ -68,48 +68,48 @@ export default function Home() {
   return (
     <div className="container py-20">
       {/* Logo */}
-      <div className="text-center mb-12">
+      <div className="text-center mb-16">
         <Image
-          src="/assets/logo.jpg"
+          src="/logo.jpg"
           alt="LocalHustle Logo"
-          width={300}
-          height={300}
+          width={250}
+          height={250}
           className="mx-auto"
           priority
         />
       </div>
 
-      {/* Slogan - 4x bigger, centered */}
+      {/* Slogan */}
       <h2 className="text-center text-6xl mb-24 font-serif tracking-tight">
         Community Driven Support for Student Athletes
       </h2>
 
       {/* Benefits Grid */}
-      <div className="grid md:grid-cols-2 gap-16 mb-24">
+      <div className="grid md:grid-cols-2 gap-16 mb-32">
         <div>
-          <h3 className="text-3xl mb-6">For Student Athletes</h3>
-          <ul className="space-y-4 text-lg">
-            <li>• Earn real money — $50–$1000 per gig for gas, gear, lunch, or savings.</li>
-            <li>• Local exposure to business owners and entrepreneurs in your town.</li>
-            <li>• Build relationships that lead to scholarships and letters of recommendation.</li>
-            <li>• Safe, private gigs — no forced public posting, parent-approved payouts.</li>
-            <li>• Resume-building experience that shows initiative and character.</li>
+          <h3 className="text-3xl mb-8 font-serif">For Student Athletes</h3>
+          <ul className="space-y-6 text-lg">
+            <li><span className="font-mono text-2xl mr-2">••</span> Earn real money — $50–$1000 per gig for gas, gear, lunch, or savings.</li>
+            <li><span className="font-mono text-2xl mr-2">••</span> Local exposure to business owners and entrepreneurs in your town.</li>
+            <li><span className="font-mono text-2xl mr-2">••</span> Build relationships that lead to scholarships and letters of recommendation.</li>
+            <li><span className="font-mono text-2xl mr-2">••</span> Safe, private gigs — no forced public posting, parent-approved payouts.</li>
+            <li><span className="font-mono text-2xl mr-2">••</span> Resume-building experience that shows initiative and character.</li>
           </ul>
         </div>
 
         <div>
-          <h3 className="text-3xl mb-6">For Local Businesses</h3>
-          <ul className="space-y-4 text-lg">
-            <li>• Fresh, authentic content for social media from kids parents trust.</li>
-            <li>• Become the hometown hero — visible support for local teams.</li>
-            <li>• Discover motivated teens — potential future employees.</li>
-            <li>• Better advertising than paid ads — real stories from real athletes.</li>
-            <li>• Only pay for clips you love — zero risk, total control.</li>
+          <h3 className="text-3xl mb-8 font-serif">For Local Businesses</h3>
+          <ul className="space-y-6 text-lg">
+            <li><span className="font-mono text-2xl mr-2">••</span> Fresh, authentic content for social media from kids parents trust.</li>
+            <li><span className="font-mono text-2xl mr-2">••</span> Become the hometown hero — visible support for local teams.</li>
+            <li><span className="font-mono text-2xl mr-2">••</span> Discover motivated teens — potential future employees.</li>
+            <li><span className="font-mono text-2xl mr-2">••</span> Better advertising than paid ads — real stories from real athletes.</li>
+            <li><span className="font-mono text-2xl mr-2">••</span> Only pay for clips you love — zero risk, total control.</li>
           </ul>
         </div>
       </div>
 
-      {/* Login Form - max 400px, taller, more padding */}
+      {/* Login Form */}
       {user ? (
         <div className="max-w-md mx-auto space-y-8 text-center">
           <p className="text-lg">Logged in as {user.email}</p>
@@ -125,11 +125,11 @@ export default function Home() {
               placeholder="you@school.edu"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full max-w-sm mx-auto text-2xl py-12 border-4 border-black text-center"
+              className="w-full text-2xl py-12 border-4 border-black text-center"
             />
           </div>
 
-          <Button onClick={handleLogin} disabled={loading} className="w-full max-w-sm mx-auto text-4xl py-16 border-8 border-black hover:bg-black hover:text-white">
+          <Button onClick={handleLogin} disabled={loading} className="w-full text-4xl py-16 border-8 border-black hover:bg-black hover:text-white">
             {loading ? 'Sending...' : 'Send Login Link'}
           </Button>
         </div>
