@@ -13,14 +13,14 @@ export default function RootLayout({
         <link rel="icon" href="/favicon.ico" />
       </head>
       <body>
-        <header className="border-b-4 border-black py-8 mb-12">
+        <header className="py-8 mb-12">
           <div className="container text-center">
             <Link href="/">
               <Image
                 src="/logo.jpg"
                 alt="LocalHustle Logo"
-                width={200}
-                height={200}
+                width={300}
+                height={300}
                 className="mx-auto"
                 priority
               />
