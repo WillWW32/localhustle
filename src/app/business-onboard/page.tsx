@@ -40,9 +40,7 @@ export default function BusinessOnboard() {
   return (
     <div className="container">
       <h1 className="text-center text-5xl mb-12">Welcome, Local Business</h1>
-      <p className="text-center mb-12 text-xl">
-        An athlete invited you to support the team.
-      </p>
+      <p className="text-center mb-12 text-xl">An athlete invited you to support the team.</p>
 
       <div className="max-w-2xl mx-auto space-y-12 text-center">
         <p className="text-lg mb-8">
