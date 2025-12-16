@@ -80,18 +80,20 @@ export default function Profile() {
         </div>
 
         <div className="space-y-4">
-          <Label htmlFor="parent" className="text-2xl">Parent/Guardian Email (for payouts)</Label>
+          <Label htmlFor="parent" className="text-2xl">Parent/Guardian Email (required for payouts)</Label>
           <Input
             id="parent"
             type="email"
             value={parentEmail}
             onChange={(e) => setParentEmail(e.target.value)}
             placeholder="parent@example.com"
+            required
             className="text-2xl py-8 border-2 border-black"
           />
-          <p className="text-sm text-gray-600">
-            Your earnings are sent to your parent for safety and compliance. 
-            Please ask them to forward the money to you promptly (e.g., to your Venmo Teen or cash).
+          <p className="text-sm text-gray-600 bg-gray-100 p-4 border border-black">
+            Your earnings are sent to your parent for safety and compliance (required for minors). 
+            Please ask them to forward the money to you promptly (e.g., to your Venmo Teen or cash). 
+            This keeps everything legal and parent-approved.
           </p>
         </div>
 
