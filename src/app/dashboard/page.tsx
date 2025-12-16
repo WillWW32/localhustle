@@ -5,118 +5,272 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import { signOut } from '@/lib/auth'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 
-export default function Home() {
-  const [email, setEmail] = useState('')
-  const [user, setUser] = useState<any>(null)
-  const [loading, setLoading] = useState(false)
+export default function Dashboard() {
+  const [profile, setProfile] = useState<any>(null)
+  const [business, setBusiness] = useState<any>(null)
+  const [offers, setOffers] = useState<any[]>([])
+  const [pendingClips, setPendingClips] = useState<any[]>([])
+  const [type, setType] = useState('shoutout')
+  const [amount, setAmount] = useState('')
+  const [description, setDescription] = useState('')
   const router = useRouter()
 
-  const handleLogin = async () => {
-    setLoading(true)
-    const { error } = await supabase.auth.signInWithOtp({ email })
-    if (error) alert(error.message)
-    else alert('Check your email for the login link.')
-    setLoading(false)
-  }
-
   useEffect(() => {
-    const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      setUser(session?.user ?? null)
+    const fetchData = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
 
-      if (session?.user) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', session.user.id)
+      const { data: prof } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single()
+      setProfile(prof)
+
+      if (prof.role === 'business') {
+        const { data: biz } = await supabase
+          .from('businesses')
+          .select('*')
+          .eq('owner_id', user.id)
           .single()
+        setBusiness(biz)
 
-        if (!profile?.role) {
-          router.push('/select-role')
-        } else {
-          router.push('/dashboard')
-        }
+        const { data: clips } = await supabase
+          .from('clips')
+          .select('*, offers(*), profiles(email, parent_email)')
+          .eq('status', 'pending')
+          .in('offer_id', (await supabase.from('offers').select('id').eq('business_id', biz.id)).data?.map(o => o.id) || [])
+        setPendingClips(clips || [])
+      }
+
+      if (prof.role === 'athlete') {
+        const { data: openOffers } = await supabase
+          .from('offers')
+          .select('*')
+          .eq('status', 'active')
+          .order('created_at', { ascending: false })
+        setOffers(openOffers || [])
       }
     }
+    fetchData()
+  }, [])
 
-    checkSession()
+  const copyLetter = () => {
+    const athleteId = profile?.id || 'fallback-id'
+    const letterText = `Hey [Business Name],
 
-    const { data: listener } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      setUser(session?.user ?? null)
-      if (session?.user) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', session.user.id)
-          .single()
+I'm ${profile?.email.split('@')[0] || 'a student athlete'} from ${profile?.school || 'our local high school'} — ${profile?.sport || 'varsity athlete'}.
 
-        if (!profile?.role) {
-          router.push('/select-role')
-        } else {
-          router.push('/dashboard')
-        }
-      }
-    })
+Small ask: could you sponsor a quick 15-second thank-you clip about your spot? If you like it, send $75.
 
-    return () => listener.subscription.unsubscribe()
-  }, [router])
+It's shoes, gas, or lunch money for me and the team. No strings, parent-approved.
+
+Want to help? Tap this link to set it up (30 seconds): https://localhustle.vercel.app/business-onboard?ref=${athleteId}
+
+Thanks!
+– ${profile?.email.split('@')[0] || 'me'}`
+    navigator.clipboard.writeText(letterText)
+    alert('Letter copied to clipboard!')
+  }
+
+  const postOffer = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!business) return
+
+    // Pre-fill for Booster Club Team Event if selected
+    const finalDescription = type === 'booster' ? 'Sponsoring the team — post-game meals, gear, or event. Money split equally among roster.' : description
+    const finalAmount = type === 'booster' ? 1000 : parseFloat(amount) // default $1000 for booster
+
+    const { error } = await supabase
+      .from('offers')
+      .insert({
+        business_id: business.id,
+        type: type === 'booster' ? 'team_event' : type,
+        amount: finalAmount,
+        description: finalDescription,
+        status: 'active',
+      })
+
+    if (error) alert(error.message)
+    else {
+      alert('Offer posted!')
+      setAmount('')
+      setDescription('')
+      setType('shoutout')
+    }
+  }
+
+  const approveClip = async (clip: any) => {
+    const { error: clipError } = await supabase
+      .from('clips')
+      .update({ status: 'waiting_parent' })
+      .eq('id', clip.id)
+
+    if (clipError) {
+      alert(clipError.message)
+      return
+    }
+
+    await supabase
+      .from('businesses')
+      .update({ wallet_balance: business.wallet_balance - clip.offers.amount })
+      .eq('id', business.id)
+
+    alert(`Clip sent to parent for final approval: ${clip.profiles.parent_email || 'parent email'}`)
+    setPendingClips(pendingClips.filter(c => c.id !== clip.id))
+    setBusiness({ ...business, wallet_balance: business.wallet_balance - clip.offers.amount })
+  }
+
+  if (!profile) return <p className="container text-center">Loading...</p>
 
   return (
     <div className="container">
       <h1 className="text-center text-5xl mb-12">LocalHustle</h1>
-      <p className="text-center mb-12 text-xl">Community Driven Support for Student Athletes</p>
+      <p className="text-center mb-12 text-xl">Welcome, {profile.email}</p>
 
-      <div className="grid md:grid-cols-2 gap-16 mb-24">
-        <div>
-          <h2 className="text-3xl mb-6">For Student Athletes</h2>
-          <ul className="space-y-4 text-lg">
-            <li>• Earn real money — $50–$1000 per gig for gas, gear, lunch, or savings.</li>
-            <li>• Local exposure to business owners and entrepreneurs in your town.</li>
-            <li>• Build relationships that lead to scholarships and letters of recommendation.</li>
-            <li>• Safe, private gigs — no forced public posting, parent-approved payouts.</li>
-            <li>• Resume-building experience that shows initiative and character.</li>
-          </ul>
-        </div>
-
-        <div>
-          <h2 className="text-3xl mb-6">For Local Businesses</h2>
-          <ul className="space-y-4 text-lg">
-            <li>• Fresh, authentic content for social media from kids parents trust.</li>
-            <li>• Become the hometown hero — visible support for local teams.</li>
-            <li>• Discover motivated teens — potential future employees.</li>
-            <li>• Better advertising than paid ads — real stories from real athletes.</li>
-            <li>• Only pay for clips you love — zero risk, total control.</li>
-          </ul>
-        </div>
-      </div>
-
-      {user ? (
-        <div className="max-w-md mx-auto space-y-8 text-center">
-          <p className="text-lg">Logged in as {user.email}</p>
-          <p className="text-sm">Redirecting to dashboard...</p>
-        </div>
-      ) : (
-        <div className="max-w-md mx-auto space-y-12">
-          <div className="space-y-4">
-            <Label htmlFor="email" className="text-2xl block text-center mb-4">Your Email</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="you@school.edu"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full text-2xl py-8 border-2 border-black"
-            />
+      {profile.role === 'athlete' ? (
+        <div className="max-w-2xl mx-auto space-y-12">
+          {/* Pinned Team Hustle Ambassador Gig */}
+          <div className="border-4 border-black p-8 bg-gray-100">
+            <h2 className="text-4xl mb-6 text-center">Team Hustle Ambassador</h2>
+            <p className="text-lg mb-4"><strong>Task:</strong> Make 10–20 business connections — send the support letter to local spots.</p>
+            <p className="text-lg mb-4"><strong>Qualifications:</strong> Varsity player, manager, or photographer • 3.0 GPA or better</p>
+            <p className="text-lg mb-6"><strong>Prize:</strong> $100 bonus (1 week deadline) • 5% lifetime cut of every gig from businesses you onboard</p>
+            <p className="text-center font-bold text-xl">Be the first — start pitching today!</p>
           </div>
 
-          <Button onClick={handleLogin} disabled={loading} className="w-full text-3xl py-12 border-4 border-black hover:bg-black hover:text-white">
-            {loading ? 'Sending...' : 'Send Login Link'}
-          </Button>
+          {/* Pinned Team Manager Gig */}
+          <div className="border-4 border-black p-8 bg-gray-100">
+            <h2 className="text-4xl mb-6 text-center">Team Manager Support Gig</h2>
+            <p className="text-lg mb-4"><strong>Task:</strong> Handle logistics (gear, snacks, socials) + post 1–2 weekly updates tagging sponsor.</p>
+            <p className="text-lg mb-4"><strong>Qualifications:</strong> Current team manager/statistician • Reliable & organized</p>
+            <p className="text-lg mb-6"><strong>Prize:</strong> $150/month + free perks from sponsors</p>
+            <p className="text-center font-bold text-xl">Keep the team running — get rewarded!</p>
+          </div>
+
+          <div className="text-center">
+            <h2 className="text-3xl mb-6">Student Athlete</h2>
+            <p className="mb-8">Pitch local businesses for support — copy the letter below and send via text or email.</p>
+
+            <div className="bg-gray-100 p-8 mb-12 border border-black">
+              <pre className="font-mono text-sm whitespace-pre-wrap text-left">
+                {`Hey [Business Name],
+
+I'm ${profile.email.split('@')[0]} from ${profile.school || 'our local high school'} — ${profile.sport || 'varsity athlete'}.
+
+Small ask: could you sponsor a quick 15-second thank-you clip about your spot? If you like it, send $75.
+
+It's shoes, gas, or lunch money for me and the team. No strings, parent-approved.
+
+Want to help? Tap this link to set it up (30 seconds): https://localhustle.vercel.app/business-onboard?ref=${profile.id || 'fallback-id'}
+
+Thanks!
+– ${profile.email.split('@')[0]}`}
+              </pre>
+            </div>
+
+            <Button onClick={copyLetter} className="w-full max-w-md text-lg py-6 mb-12">
+              Copy Letter to Clipboard
+            </Button>
+          </div>
+
+          <div>
+            <h2 className="text-3xl mb-6 text-center">Open Offers</h2>
+            {offers.length === 0 ? (
+              <p className="text-center text-gray-600">No offers yet — send letters to get businesses posting!</p>
+            ) : (
+              <div className="space-y-8">
+                {offers.map((offer) => (
+                  <div key={offer.id} className="border border-black p-6 bg-white">
+                    <p className="font-bold text-xl mb-2">{offer.type.toUpperCase()} — ${offer.amount}</p>
+                    <p className="mb-4">{offer.description}</p>
+                    <Button 
+                      onClick={() => router.push(`/claim/${offer.id}`)}
+                      className="w-full text-lg py-4"
+                    >
+                      Claim Offer
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      ) : (
+        <div className="max-w-2xl mx-auto space-y-12">
+          <div className="text-center">
+            <h2 className="text-3xl mb-6">Local Business</h2>
+            <p className="mb-8">Wallet balance: ${business?.wallet_balance?.toFixed(2) || '0.00'}</p>
+            <Button 
+              onClick={() => router.push('/business-onboard')}
+              className="w-full max-w-md text-lg py-6 mb-12"
+            >
+              Add Funds to Wallet
+            </Button>
+
+            <h3 className="text-2xl mb-6">Pending Clips to Review</h3>
+            {pendingClips.length === 0 ? (
+              <p className="text-gray-600">No pending clips — post offers to get started!</p>
+            ) : (
+              <div className="space-y-8">
+                {pendingClips.map((clip) => (
+                  <div key={clip.id} className="border border-black p-6 bg-white">
+                    <p className="font-bold mb-2">From: {clip.profiles.email}</p>
+                    <p className="mb-4">Offer: {clip.offers.type} — ${clip.offers.amount}</p>
+                    <video controls className="w-full mb-4">
+                      <source src={clip.video_url} type="video/mp4" />
+                    </video>
+                    <Button 
+                      onClick={() => approveClip(clip)}
+                      className="w-full text-lg py-4"
+                    >
+                      Approve & Send to Parent
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <h3 className="text-2xl mb-6 mt-12">Post a New Offer</h3>
+            <form onSubmit={postOffer} className="space-y-4 max-w-md mx-auto">
+              <select value={type} onChange={(e) => setType(e.target.value)} className="w-full border border-black px-4 py-2">
+                <option value="shoutout">Shoutout Clip</option>
+                <option value="experience">Experience</option>
+                <option value="clinic">Clinic</option>
+                <option value="perk">Perk Pack</option>
+                <option value="pay">Pay Direct</option>
+                <option value="scholarship">Scholarship Boost</option>
+                <option value="booster">Booster Club Team Event</option>
+              </select>
+              <input
+                type="number"
+                placeholder={type === 'booster' ? "Amount ($500–$2000 recommended)" : "Amount ($50–$1000)"}
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                required
+                className="w-full border border-black px-4 py-2"
+              />
+              <textarea
+                placeholder={type === 'booster' ? "Sponsoring the team — post-game meals, gear, or event. Money split equally among roster." : "Brief description (e.g., 15-sec thank-you clip)"}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                required
+                className="w-full border border-black px-4 py-2 h-32"
+              />
+              <Button type="submit" className="w-full text-lg py-6">
+                Post Offer
+              </Button>
+            </form>
+          </div>
         </div>
       )}
+
+      <div className="text-center mt-12">
+        <Button onClick={signOut} variant="outline" className="text-lg py-6">
+          Log Out
+        </Button>
+      </div>
     </div>
   )
 }
