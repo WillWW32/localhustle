@@ -57,7 +57,7 @@ export default function Dashboard() {
   }, [])
 
   const copyLetter = () => {
-    const athleteId = profile?.id || 'fallback-id' // fallback if loading
+    const athleteId = profile?.id || 'fallback-id'
     const letterText = `Hey [Business Name],
 
 I'm ${profile?.email.split('@')[0] || 'a student athlete'} from ${profile?.school || 'our local high school'} — ${profile?.sport || 'varsity athlete'}.
@@ -119,6 +119,8 @@ Thanks!
 
   if (!profile) return <p className="container text-center">Loading...</p>
 
+  const athleteId = profile?.id || 'fallback-id'
+
   return (
     <div className="container">
       <h1 className="text-center text-5xl mb-12">LocalHustle</h1>
@@ -140,7 +142,7 @@ Small ask: could you sponsor a quick 15-second thank-you clip about your spot? I
 
 It's shoes, gas, or lunch money for me and the team. No strings, parent-approved.
 
-Want to help? Tap this link to set it up (30 seconds): https://localhustle.vercel.app/business-onboard?ref=${profile.id || 'fallback-id'}
+Want to help? Tap this link to set it up (30 seconds): https://localhustle.vercel.app/business-onboard?ref=${athleteId}
 
 Thanks!
 – ${profile.email.split('@')[0]}`}
@@ -175,6 +177,7 @@ Thanks!
           </div>
         </div>
       ) : (
+        // business view unchanged
         <div className="max-w-2xl mx-auto space-y-12">
           <div className="text-center">
             <h2 className="text-3xl mb-6">Local Business</h2>
