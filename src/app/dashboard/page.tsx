@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import { signOut } from '@/lib/auth'
 import { Button } from '@/components/ui/button'
+import Image from 'next/image'
 
 export default function Dashboard() {
   const [profile, setProfile] = useState<any>(null)
@@ -125,29 +126,41 @@ Thanks!
 
   return (
     <div className="container">
+      {/* Logo */}
+      <div className="text-center mb-12">
+        <Image
+          src="/logo.jpg"
+          alt="LocalHustle Logo"
+          width={250}
+          height={250}
+          className="mx-auto"
+          priority
+        />
+      </div>
+
       <h1 className="text-center text-5xl mb-12">LocalHustle</h1>
-      <p className="text-center mb-12 text-xl">Welcome, {profile.email}</p>
+      <p className="text-center mb-12 text-xl font-courier">Welcome, {profile.email}</p>
 
       {profile.role === 'athlete' ? (
-        <div className="max-w-2xl mx-auto space-y-12">
+        <div className="max-w-2xl mx-auto space-y-12 text-center font-courier text-lg">
           {/* Pinned Team Hustle Ambassador Gig */}
           <div className="border-4 border-black p-8 bg-gray-100">
-            <h2 className="text-4xl mb-6 text-center">Team Hustle Ambassador</h2>
-            <p className="text-lg mb-4"><span className="font-mono text-2xl">••</span> Task: Make 10–20 business connections — send the support letter to local spots.</p>
-            <p className="text-lg mb-4"><span className="font-mono text-2xl">••</span> Qualifications: Varsity player, manager, or photographer • 3.0 GPA or better</p>
-            <p className="text-lg mb-6"><span className="font-mono text-2xl">••</span> Prize: $100 bonus (1 week deadline) • 5% lifetime cut of every gig from businesses you onboard</p>
-            <p className="text-center font-bold text-xl">Be the first — start pitching today!</p>
+            <h2 className="text-4xl mb-6">Team Hustle Ambassador</h2>
+            <p className="mb-4">Task: Make 10–20 business connections — send the support letter to local spots.</p>
+            <p className="mb-4">Qualifications: Varsity player, manager, or photographer • 3.0 GPA or better</p>
+            <p className="mb-6">Prize: $100 bonus (1 week deadline) • 5% lifetime cut of every gig from businesses you onboard</p>
+            <p className="font-bold text-xl">Be the first — start pitching today!</p>
           </div>
 
           {/* Pinned Team Manager Gig */}
           <div className="border-4 border-black p-8 bg-gray-100">
-            <h2 className="text-4xl mb-6 text-center">Team Manager Support Gig</h2>
-            <p className="text-lg mb-4"><span className="font-mono text-2xl">••</span> Task: Logistics + weekly updates tagging sponsor.</p>
-            <p className="text-lg mb-4"><span className="font-mono text-2xl">••</span> Qualifications: Current manager • Reliable</p>
-            <p className="text-lg mb-6"><span className="font-mono text-2xl">••</span> Prize: $150/month + perks</p>
+            <h2 className="text-4xl mb-6">Team Manager Support Gig</h2>
+            <p className="mb-4">Task: Logistics + weekly updates tagging sponsor.</p>
+            <p className="mb-4">Qualifications: Current manager • Reliable</p>
+            <p className="mb-6">Prize: $150/month + perks</p>
           </div>
 
-          <div className="text-center">
+          <div>
             <h2 className="text-3xl mb-6">Student Athlete</h2>
             <p className="mb-8">Pitch local businesses for support — copy the letter below and send via text or email.</p>
 
@@ -174,9 +187,9 @@ Thanks!
           </div>
 
           <div>
-            <h2 className="text-3xl mb-6 text-center">Open Offers</h2>
+            <h2 className="text-3xl mb-6">Open Offers</h2>
             {offers.length === 0 ? (
-              <p className="text-center text-gray-600">No offers yet — send letters to get businesses posting!</p>
+              <p className="text-gray-600">No offers yet — send letters to get businesses posting!</p>
             ) : (
               <div className="space-y-12">
                 {offers.map((offer) => (
@@ -196,8 +209,8 @@ Thanks!
           </div>
         </div>
       ) : (
-        <div className="max-w-2xl mx-auto space-y-12">
-          <div className="text-center">
+        <div className="max-w-2xl mx-auto space-y-12 text-center font-courier text-lg">
+          <div>
             <h2 className="text-3xl mb-6">Local Business</h2>
             <p className="mb-8">Wallet balance: ${business?.wallet_balance?.toFixed(2) || '0.00'}</p>
             <Button 
