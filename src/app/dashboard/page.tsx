@@ -119,8 +119,6 @@ Thanks!
 
   if (!profile) return <p className="container text-center">Loading...</p>
 
-  const athleteId = profile?.id || 'fallback-id'
-
   return (
     <div className="container">
       <h1 className="text-center text-5xl mb-12">LocalHustle</h1>
@@ -128,6 +126,15 @@ Thanks!
 
       {profile.role === 'athlete' ? (
         <div className="max-w-2xl mx-auto space-y-12">
+          {/* Pinned Ambassador Gig */}
+          <div className="border-4 border-black p-8 bg-gray-100">
+            <h2 className="text-4xl mb-6 text-center">Team Hustle Ambassador</h2>
+            <p className="text-lg mb-4"><strong>Task:</strong> Make 10–20 business connections — send the support letter to local spots.</p>
+            <p className="text-lg mb-4"><strong>Qualifications:</strong> Varsity player, manager, or photographer • 3.0 GPA or better</p>
+            <p className="text-lg mb-6"><strong>Prize:</strong> $100 bonus (1 week deadline) • 5% lifetime cut of every gig from businesses you onboard</p>
+            <p className="text-center font-bold text-xl">Be the first — start pitching today!</p>
+          </div>
+
           <div className="text-center">
             <h2 className="text-3xl mb-6">Student Athlete</h2>
             <p className="mb-8">Pitch local businesses for support — copy the letter below and send via text or email.</p>
@@ -142,7 +149,7 @@ Small ask: could you sponsor a quick 15-second thank-you clip about your spot? I
 
 It's shoes, gas, or lunch money for me and the team. No strings, parent-approved.
 
-Want to help? Tap this link to set it up (30 seconds): https://localhustle.vercel.app/business-onboard?ref=${athleteId}
+Want to help? Tap this link to set it up (30 seconds): https://localhustle.vercel.app/business-onboard?ref=${profile.id || 'fallback-id'}
 
 Thanks!
 – ${profile.email.split('@')[0]}`}
