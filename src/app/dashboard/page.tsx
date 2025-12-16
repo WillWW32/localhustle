@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import { signOut } from '@/lib/auth'
 import { Button } from '@/components/ui/button'
+import { useToast } from '@/components/ui/toast/Toast'
 
 export default function Dashboard() {
   const [profile, setProfile] = useState<any>(null)
@@ -15,6 +16,7 @@ export default function Dashboard() {
   const [amount, setAmount] = useState('')
   const [description, setDescription] = useState('')
   const router = useRouter()
+  const { addToast } = useToast()
 
   useEffect(() => {
     const fetchData = async () => {
@@ -36,7 +38,7 @@ export default function Dashboard() {
           .single()
         setBusiness(biz)
 
-        const { data: clips } = await supabase
+        const { data: clips } = await supabase 
           .from('clips')
           .select('*, offers(*), profiles(email, parent_email)')
           .eq('status', 'pending')
@@ -71,7 +73,7 @@ Want to help? Tap this link to set it up (30 seconds): https://app.localhustle.o
 Thanks!
 – ${profile?.email.split('@')[0] || 'me'}`
     navigator.clipboard.writeText(letterText)
-    alert('Letter copied to clipboard!')
+    addToast('Letter copied to clipboard!', 'success')
   }
 
   const postOffer = async (e: React.FormEvent) => {
@@ -91,9 +93,9 @@ Thanks!
         status: 'active',
       })
 
-    if (error) alert(error.message)
+    if (error) addToast(error.message, 'error')
     else {
-      alert('Offer posted!')
+      addToast('Offer posted!', 'success')
       setAmount('')
       setDescription('')
       setType('shoutout')
@@ -107,7 +109,7 @@ Thanks!
       .eq('id', clip.id)
 
     if (clipError) {
-      alert(clipError.message)
+      addToast(clipError.message, 'error')
       return
     }
 
@@ -116,7 +118,7 @@ Thanks!
       .update({ wallet_balance: business.wallet_balance - clip.offers.amount })
       .eq('id', business.id)
 
-    alert(`Clip sent to parent for final approval: ${clip.profiles.parent_email || 'parent email'}`)
+    addToast(`Clip sent to parent for final approval: ${clip.profiles.parent_email || 'parent email'}`, 'success')
     setPendingClips(pendingClips.filter(c => c.id !== clip.id))
     setBusiness({ ...business, wallet_balance: business.wallet_balance - clip.offers.amount })
   }
@@ -125,33 +127,32 @@ Thanks!
 
   return (
     <div className="container">
-      <h1 className="text-center text-5xl mb-12">LocalHustle</h1>
       <p className="text-center mb-12 text-xl font-mono">Welcome, {profile.email}</p>
 
       {profile.role === 'athlete' ? (
         <div className="max-w-2xl mx-auto space-y-16 font-mono text-center text-lg">
           {/* Pinned Team Hustle Ambassador Gig */}
-          <div className="card-lift border-4 border-black p-12 bg-gray-100 max-w-lg mx-auto">
+          <div className="card-lift border-4 border-black p-16 bg-gray-100 max-w-lg mx-auto">
             <h2 className="text-4xl mb-8 font-bold">Team Hustle Ambassador</h2>
-            <p className="mb-4">Task: Make 10–20 business connections — send the support letter to local spots.</p>
-            <p className="mb-4">Qualifications: Varsity player, manager, or photographer • 3.0 GPA or better</p>
+            <p className="mb-6">Task: Make 10–20 business connections — send the support letter to local spots.</p>
+            <p className="mb-6">Qualifications: Varsity player, manager, or photographer • 3.0 GPA or better</p>
             <p className="mb-8">Prize: $100 bonus (1 week deadline) • 5% lifetime cut of every gig from businesses you onboard</p>
             <p className="font-bold text-xl">Be the first — start pitching today!</p>
           </div>
 
           {/* Pinned Team Manager Gig */}
-          <div className="card-lift border-4 border-black p-12 bg-gray-100 max-w-lg mx-auto">
+          <div className="card-lift border-4 border-black p-16 bg-gray-100 max-w-lg mx-auto">
             <h2 className="text-4xl mb-8 font-bold">Team Manager Support Gig</h2>
-            <p className="mb-4">Task: Logistics + weekly updates tagging sponsor.</p>
-            <p className="mb-4">Qualifications: Current manager • Reliable</p>
+            <p className="mb-6">Task: Logistics + weekly updates tagging sponsor.</p>
+            <p className="mb-6">Qualifications: Current manager • Reliable</p>
             <p className="mb-8">Prize: $150/month + perks</p>
           </div>
 
           <div>
             <h2 className="text-3xl mb-8 font-bold">Student Athlete</h2>
-            <p className="mb-8">Pitch local businesses for support — copy the letter below and send via text or email.</p>
+            <p className="mb-12">Pitch local businesses for support — copy the letter below and send via text or email.</p>
 
-            <div className="bg-gray-100 p-8 mb-12 border border-black max-w-lg mx-auto">
+            <div className="bg-gray-100 p-12 mb-16 border border-black max-w-lg mx-auto">
               <pre className="font-mono text-sm whitespace-pre-wrap text-left">
                 {`Hey [Business Name],
 
@@ -168,107 +169,4 @@ Thanks!
               </pre>
             </div>
 
-            <Button onClick={copyLetter} className="w-full max-w-md h-20 text-2xl bg-black text-white hover:bg-gray-800 mb-12">
-              Copy Letter to Clipboard
-            </Button>
-          </div>
-
-          <div>
-            <h2 className="text-3xl mb-8 font-bold">Open Offers</h2>
-            {offers.length === 0 ? (
-              <p className="text-gray-600 mb-12">No offers yet — send letters to get businesses posting!</p>
-            ) : (
-              <div className="space-y-16">
-                {offers.map((offer) => (
-                  <div key={offer.id} className="card-lift border-4 border-black p-12 bg-white max-w-lg mx-auto">
-                    <p className="font-bold text-2xl mb-4">{offer.type.toUpperCase()} — ${offer.amount}</p>
-                    <p className="mb-8">{offer.description}</p>
-                    <Button 
-                      onClick={() => router.push(`/claim/${offer.id}`)}
-                      className="w-full h-20 text-2xl bg-black text-white hover:bg-gray-800"
-                    >
-                      Claim Offer
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      ) : (
-        <div className="max-w-2xl mx-auto space-y-16 font-mono text-center text-lg">
-          <div>
-            <h2 className="text-3xl mb-8 font-bold">Local Business</h2>
-            <p className="mb-8">Wallet balance: ${business?.wallet_balance?.toFixed(2) || '0.00'}</p>
-            <Button 
-              onClick={() => router.push('/business-onboard')}
-              className="w-full max-w-md h-20 text-2xl bg-black text-white hover:bg-gray-800 mb-12"
-            >
-              Add Funds to Wallet
-            </Button>
-
-            <h3 className="text-2xl mb-8 font-bold">Pending Clips to Review</h3>
-            {pendingClips.length === 0 ? (
-              <p className="text-gray-600 mb-12">No pending clips — post offers to get started!</p>
-            ) : (
-              <div className="space-y-16">
-                {pendingClips.map((clip) => (
-                  <div key={clip.id} className="card-lift border-4 border-black p-12 bg-white max-w-lg mx-auto">
-                    <p className="font-bold mb-4">From: {clip.profiles.email}</p>
-                    <p className="mb-4">Offer: {clip.offers.type} — ${clip.offers.amount}</p>
-                    <video controls className="w-full mb-8">
-                      <source src={clip.video_url} type="video/mp4" />
-                    </video>
-                    <Button 
-                      onClick={() => approveClip(clip)}
-                      className="w-full h-20 text-2xl bg-black text-white hover:bg-gray-800"
-                    >
-                      Approve & Send to Parent
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            <h3 className="text-2xl mb-8 mt-12 font-bold">Post a New Offer</h3>
-            <form onSubmit={postOffer} className="space-y-12 max-w-md mx-auto">
-              <select value={type} onChange={(e) => setType(e.target.value)} className="w-full border-4 border-black p-6 text-xl">
-                <option value="shoutout">Shoutout Clip</option>
-                <option value="experience">Experience</option>
-                <option value="clinic">Clinic</option>
-                <option value="perk">Perk Pack</option>
-                <option value="pay">Pay Direct</option>
-                <option value="scholarship">Scholarship Boost</option>
-                <option value="booster">Booster Club Team Event</option>
-              </select>
-              <input
-                type="number"
-                placeholder={type === 'booster' ? "Amount ($500–$2000 recommended)" : "Amount ($50–$1000)"}
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                required
-                className="w-full border-4 border-black p-6 text-xl"
-              />
-              <textarea
-                placeholder={type === 'booster' ? "Sponsoring the team — post-game meals, gear, or event. Money split equally among roster." : "Brief description"}
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                required
-                className="w-full border-4 border-black p-6 h-40 text-xl"
-              />
-              <Button type="submit" className="w-full h-20 text-2xl bg-black text-white hover:bg-gray-800">
-                Post Offer
-              </Button>
-            </form>
-          </div>
-        </div>
-      )}
-
-      <div className="text-center mt-20">
-        <Button onClick={signOut} variant="outline" className="w-full max-w-md h-20 text-2xl bg-black text-white hover:bg-gray-800">
-          Log Out
-        </Button>
-      </div>
-    </div>
-  )
-}
+            <Button onClick={copyLetter} className="w-full max-w-md h-20 text-2xl bg-black text-white hover:bg-gray-800 mb-
