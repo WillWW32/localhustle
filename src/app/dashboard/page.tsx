@@ -11,6 +11,7 @@ export default function Dashboard() {
   const [business, setBusiness] = useState<any>(null)
   const [offers, setOffers] = useState<any[]>([])
   const [pendingClips, setPendingClips] = useState<any[]>([])
+  const [teamMembers, setTeamMembers] = useState<number>(0)
   const [type, setType] = useState('shoutout')
   const [amount, setAmount] = useState('')
   const [description, setDescription] = useState('')
@@ -51,6 +52,9 @@ export default function Dashboard() {
           .eq('status', 'active')
           .order('created_at', { ascending: false })
         setOffers(openOffers || [])
+
+        // Stub team member count — real in V2
+        setTeamMembers(7)
       }
     }
     fetchData()
@@ -74,13 +78,18 @@ Thanks!
     alert('Letter copied to clipboard!')
   }
 
+  const copyInviteLink = () => {
+    const inviteLink = `https://localhustle.vercel.app/invite?team=${profile.school?.replace(' ', '-').toLowerCase() || 'team'}&leader=${profile.id}`
+    navigator.clipboard.writeText(inviteLink)
+    alert('Invite link copied!')
+  }
+
   const postOffer = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!business) return
 
-    // Pre-fill for Booster Club Team Event if selected
     const finalDescription = type === 'booster' ? 'Sponsoring the team — post-game meals, gear, or event. Money split equally among roster.' : description
-    const finalAmount = type === 'booster' ? 1000 : parseFloat(amount) // default $1000 for booster
+    const finalAmount = type === 'booster' ? 1000 : parseFloat(amount)
 
     const { error } = await supabase
       .from('offers')
@@ -131,27 +140,36 @@ Thanks!
 
       {profile.role === 'athlete' ? (
         <div className="max-w-2xl mx-auto space-y-12">
-          {/* Pinned Team Hustle Ambassador Gig */}
+          {/* Team Leader Invite Section */}
           <div className="border-4 border-black p-8 bg-gray-100">
-            <h2 className="text-4xl mb-6 text-center">Team Hustle Ambassador</h2>
-            <p className="text-lg mb-4"><strong>Task:</strong> Make 10–20 business connections — send the support letter to local spots.</p>
-            <p className="text-lg mb-4"><strong>Qualifications:</strong> Varsity player, manager, or photographer • 3.0 GPA or better</p>
-            <p className="text-lg mb-6"><strong>Prize:</strong> $100 bonus (1 week deadline) • 5% lifetime cut of every gig from businesses you onboard</p>
-            <p className="text-center font-bold text-xl">Be the first — start pitching today!</p>
+            <h2 className="text-4xl mb-6 text-center">Team Leader Invite</h2>
+            <p className="text-lg mb-4">You're the first from your team — invite your teammates!</p>
+            <p className="text-lg mb-4">Progress: {teamMembers}/25 teammates joined</p>
+            <p className="text-lg mb-6">Get $10 bonus for each teammate who earns their first gig.</p>
+            <Button onClick={copyInviteLink} className="w-full text-lg py-6">
+              Copy Invite Link
+            </Button>
           </div>
 
-          {/* Pinned Team Manager Gig */}
+          {/* Pinned Ambassador */}
+          <div className="border-4 border-black p-8 bg-gray-100">
+            <h2 className="text-4xl mb-6 text-center">Team Hustle Ambassador</h2>
+            <p className="text-lg mb-4"><strong>Task:</strong> Make 10–20 business connections — send the support letter.</p>
+            <p className="text-lg mb-4"><strong>Qualifications:</strong> Varsity + 3.0 GPA</p>
+            <p className="text-lg mb-6"><strong>Prize:</strong> $100 bonus (1 week) + 5% lifetime cut</p>
+          </div>
+
+          {/* Pinned Manager */}
           <div className="border-4 border-black p-8 bg-gray-100">
             <h2 className="text-4xl mb-6 text-center">Team Manager Support Gig</h2>
-            <p className="text-lg mb-4"><strong>Task:</strong> Handle logistics (gear, snacks, socials) + post 1–2 weekly updates tagging sponsor.</p>
-            <p className="text-lg mb-4"><strong>Qualifications:</strong> Current team manager/statistician • Reliable & organized</p>
-            <p className="text-lg mb-6"><strong>Prize:</strong> $150/month + free perks from sponsors</p>
-            <p className="text-center font-bold text-xl">Keep the team running — get rewarded!</p>
+            <p className="text-lg mb-4"><strong>Task:</strong> Logistics + weekly updates tagging sponsor.</p>
+            <p className="text-lg mb-4"><strong>Qualifications:</strong> Current manager • Reliable</p>
+            <p className="text-lg mb-6"><strong>Prize:</strong> $150/month + perks</p>
           </div>
 
           <div className="text-center">
             <h2 className="text-3xl mb-6">Student Athlete</h2>
-            <p className="mb-8">Pitch local businesses for support — copy the letter below and send via text or email.</p>
+            <p className="mb-8">Pitch local businesses — copy the letter below.</p>
 
             <div className="bg-gray-100 p-8 mb-12 border border-black">
               <pre className="font-mono text-sm whitespace-pre-wrap text-left">
@@ -198,6 +216,7 @@ Thanks!
           </div>
         </div>
       ) : (
+        // business view unchanged
         <div className="max-w-2xl mx-auto space-y-12">
           <div className="text-center">
             <h2 className="text-3xl mb-6">Local Business</h2>
@@ -252,7 +271,7 @@ Thanks!
                 className="w-full border border-black px-4 py-2"
               />
               <textarea
-                placeholder={type === 'booster' ? "Sponsoring the team — post-game meals, gear, or event. Money split equally among roster." : "Brief description (e.g., 15-sec thank-you clip)"}
+                placeholder={type === 'booster' ? "Sponsoring the team — post-game meals, gear, or event. Money split equally among roster." : "Brief description"}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 required
