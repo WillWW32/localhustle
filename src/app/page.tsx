@@ -7,6 +7,7 @@ import { signOut } from '@/lib/auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import Image from 'next/image'
 
 export default function Home() {
   const [email, setEmail] = useState('')
@@ -65,22 +66,40 @@ export default function Home() {
   }, [router])
 
   return (
-    <div className="container py-32">
-      {/* Title */}
-      <h1 className="text-center text-6xl mb-16 font-bold tracking-tight">
-        LocalHustle
-      </h1>
+    <div style={{
+      fontFamily: "'Courier New', Courier, monospace",
+      textAlign: 'center',
+      padding: '10rem 2rem',
+      minHeight: '100vh',
+      backgroundColor: 'white',
+      color: 'black',
+    }}>
+      {/* Logo */}
+      <div style={{ marginBottom: '6rem' }}>
+        <Image
+          src="/logo.jpg"
+          alt="LocalHustle Logo"
+          width={280}
+          height={280}
+          style={{ margin: '0 auto' }}
+          priority
+        />
+      </div>
+
+     
 
       {/* Slogan */}
-      <p className="text-center text-4xl mb-32 font-mono">
+      <p style={{ fontSize: '5rem', marginBottom: '10rem' }}>
         Community Driven Support for Student Athletes
       </p>
 
       {/* Benefits */}
-      <div className="grid md:grid-cols-2 gap-24 mb-40">
-        <div className="text-center">
-          <h2 className="text-4xl mb-12 font-bold">For Student Athletes</h2>
-          <div className="space-y-8 text-lg font-mono max-w-md mx-auto">
+      <div style={{ maxWidth: '800px', margin: '0 auto 12rem auto' }}>
+        <div style={{ marginBottom: '10rem' }}>
+          <h2 style={{ fontSize: '3.5rem', fontWeight: 'bold', marginBottom: '6rem' }}>
+            For Student Athletes
+          </h2>
+          <div style={{ fontSize: '1.125rem', lineHeight: '2.4' }}>
             <p>Earn real money — $50–$1000 per gig for gas, gear, lunch, or savings.</p>
             <p>Local exposure to business owners and entrepreneurs in your town.</p>
             <p>Build relationships that lead to scholarships and letters of recommendation.</p>
@@ -89,9 +108,11 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="text-center">
-          <h2 className="text-4xl mb-12 font-bold">For Local Businesses</h2>
-          <div className="space-y-8 text-lg font-mono max-w-md mx-auto">
+        <div>
+          <h2 style={{ fontSize: '3.5rem', fontWeight: 'bold', marginBottom: '6rem' }}>
+            For Local Businesses
+          </h2>
+          <div style={{ fontSize: '1.125rem', lineHeight: '2.4' }}>
             <p>Fresh, authentic content for social media from kids parents trust.</p>
             <p>Become the hometown hero — visible support for local teams.</p>
             <p>Discover motivated teens — potential future employees.</p>
@@ -103,32 +124,48 @@ export default function Home() {
 
       {/* Login Form */}
       {user ? (
-        <div className="text-center space-y-8">
-          <p className="text-2xl">Logged in as {user.email}</p>
-          <p className="text-lg">Redirecting to dashboard...</p>
+        <div style={{ marginTop: '6rem' }}>
+          <p style={{ fontSize: '2rem' }}>Logged in as {user.email}</p>
+          <p style={{ fontSize: '1.5rem' }}>Redirecting to dashboard...</p>
         </div>
       ) : (
-        <div className="max-w-md mx-auto space-y-20">
-          <div className="space-y-8">
-            <Label htmlFor="email" className="text-4xl block">Your Email</Label>
+        <div style={{ maxWidth: '500px', margin: '0 auto', paddingBottom: '15rem' }}>
+          <div style={{ marginBottom: '6rem' }}>
+            <Label htmlFor="email" style={{ fontSize: '3rem', display: 'block', marginBottom: '3rem' }}>
+              Your Email
+            </Label>
             <Input
               id="email"
               type="email"
               placeholder="you@school.edu"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="py-16 text-3xl border-4 border-black text-center"
+              style={{
+                width: '60%',
+                padding: '3rem',
+                fontSize: '2rem',
+                border: '4px solid black',
+                textAlign: 'center',
+              }}
             />
           </div>
 
-          <Button onClick={handleLogin} disabled={loading} className="w-full py-20 text-5xl border-8 border-black bg-black text-white hover:bg-gray-800">
+          <Button
+            onClick={handleLogin}
+            disabled={loading}
+            style={{
+              width: '60%',
+              padding: '4rem',
+              fontSize: '2rem',
+              border: '2px solid black',
+              backgroundColor: 'black',
+              color: 'white',
+            }}
+          >
             {loading ? 'Sending...' : 'Send Login Link'}
           </Button>
         </div>
       )}
-
-      {/* Extra bottom space */}
-      <div className="h-40" />
     </div>
   )
 }
