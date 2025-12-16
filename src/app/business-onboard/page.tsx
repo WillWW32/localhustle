@@ -26,10 +26,8 @@ export default function BusinessOnboard() {
 
     const stripe = await stripePromise
     if (stripe) {
-      const { error } = await stripe.redirectToCheckout({ sessionId: id })
-      if (error) {
-        alert(error.message)
-      }
+      const { error } = await (stripe as any).redirectToCheckout({ sessionId: id })
+      if (error) alert(error.message)
     } else {
       alert('Stripe failed to load')
     }
