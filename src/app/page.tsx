@@ -73,20 +73,20 @@ export default function Home() {
         <div>
           <h2 className="text-3xl mb-6">For Student Athletes</h2>
           <ul className="space-y-4 text-lg">
-            <li>• Earn real spending money for gas, gear, or lunch — $50–$1000 per gig.</li>
-            <li>• Get local exposure to business owners and entrepreneurs in your town.</li>
+            <li>• Earn real money — $50–$1000 per gig for gas, gear, lunch, or savings.</li>
+            <li>• Local exposure to business owners and entrepreneurs in your town.</li>
             <li>• Build relationships that lead to scholarships and letters of recommendation.</li>
-            <li>• No public posting required — private clips keep it safe and simple.</li>
-            <li>• Parent-approved every step — money goes to family, you stay in control.</li>
+            <li>• Safe, private gigs — no forced public posting, parent-approved payouts.</li>
+            <li>• Resume-building experience that shows initiative and character.</li>
           </ul>
         </div>
 
         <div>
           <h2 className="text-3xl mb-6">For Local Businesses</h2>
           <ul className="space-y-4 text-lg">
-            <li>• Get fresh, authentic user-generated content for social media — from kids parents trust.</li>
-            <li>• Easy way to support local teams and become the hometown hero.</li>
-            <li>• Discover potential future employees with hustle and character.</li>
+            <li>• Fresh, authentic content for social media from kids parents trust.</li>
+            <li>• Become the hometown hero — visible support for local teams.</li>
+            <li>• Discover motivated teens — potential future employees.</li>
             <li>• Better advertising than paid ads — real stories from real athletes.</li>
             <li>• Only pay for clips you love — zero risk, total control.</li>
           </ul>
