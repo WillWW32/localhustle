@@ -70,7 +70,7 @@ Small ask: could you sponsor a quick 15-second thank-you clip about your spot? I
 
 It's shoes, gas, or lunch money for me and the team. No strings, parent-approved.
 
-Want to help? Tap this link to set it up (30 seconds): https://localhustle.vercel.app/business-onboard?ref=${athleteId}
+Want to help? Tap this link to set it up (30 seconds): https://app.localhustle.org/business-onboard?ref=${athleteId}
 
 Thanks!
 – ${profile?.email.split('@')[0] || 'me'}`
@@ -79,7 +79,8 @@ Thanks!
   }
 
   const copyInviteLink = () => {
-    const inviteLink = `https://localhustle.vercel.app/invite?team=${profile.school?.replace(' ', '-').toLowerCase() || 'team'}&leader=${profile.id}`
+    const teamSlug = (profile?.school || 'team').replace(/\s+/g, '-').toLowerCase()
+    const inviteLink = `https://app.localhustle.org/invite?team=${teamSlug}&leader=${profile?.id || 'leader'}`
     navigator.clipboard.writeText(inviteLink)
     alert('Invite link copied!')
   }
@@ -181,7 +182,7 @@ Small ask: could you sponsor a quick 15-second thank-you clip about your spot? I
 
 It's shoes, gas, or lunch money for me and the team. No strings, parent-approved.
 
-Want to help? Tap this link to set it up (30 seconds): https://localhustle.vercel.app/business-onboard?ref=${profile.id || 'fallback-id'}
+Want to help? Tap this link to set it up (30 seconds): https://app.localhustle.org/business-onboard?ref=${profile.id || 'fallback-id'}
 
 Thanks!
 – ${profile.email.split('@')[0]}`}
