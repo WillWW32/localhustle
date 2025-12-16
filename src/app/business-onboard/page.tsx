@@ -19,14 +19,14 @@ export default function BusinessOnboard() {
     const response = await fetch('/api/create-checkout-session', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ amount: 10000 }), // $100 in cents
+      body: JSON.stringify({ amount: 10000 }),
     })
 
     const { id } = await response.json()
 
     const stripe = await stripePromise
     if (stripe) {
-      const { error } = await (stripe as any).redirectToCheckout({ sessionId: id })
+      const { error } = await stripe.redirectToCheckout({ sessionId: id })
       if (error) alert(error.message)
     } else {
       alert('Stripe failed to load')
