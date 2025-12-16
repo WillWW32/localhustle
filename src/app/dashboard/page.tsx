@@ -126,32 +126,32 @@ Thanks!
   return (
     <div className="container">
       <h1 className="text-center text-5xl mb-12">LocalHustle</h1>
-      <p className="text-center mb-12 text-xl">Welcome, {profile.email}</p>
+      <p className="text-center mb-12 text-xl font-mono">Welcome, {profile.email}</p>
 
       {profile.role === 'athlete' ? (
-        <div className="max-w-2xl mx-auto space-y-12">
+        <div className="max-w-2xl mx-auto space-y-16 font-mono text-center text-lg">
           {/* Pinned Team Hustle Ambassador Gig */}
-          <div className="card-lift border-4 border-black p-8 bg-gray-100">
-            <h2 className="text-4xl mb-6 text-center">Team Hustle Ambassador</h2>
-            <p className="text-lg mb-4"><strong>Task:</strong> Make 10–20 business connections — send the support letter to local spots.</p>
-            <p className="text-lg mb-4"><strong>Qualifications:</strong> Varsity player, manager, or photographer • 3.0 GPA or better</p>
-            <p className="text-lg mb-6"><strong>Prize:</strong> $100 bonus (1 week deadline) • 5% lifetime cut of every gig from businesses you onboard</p>
-            <p className="text-center font-bold text-xl">Be the first — start pitching today!</p>
+          <div className="card-lift border-4 border-black p-12 bg-gray-100 max-w-lg mx-auto">
+            <h2 className="text-4xl mb-8 font-bold">Team Hustle Ambassador</h2>
+            <p className="mb-4">Task: Make 10–20 business connections — send the support letter to local spots.</p>
+            <p className="mb-4">Qualifications: Varsity player, manager, or photographer • 3.0 GPA or better</p>
+            <p className="mb-8">Prize: $100 bonus (1 week deadline) • 5% lifetime cut of every gig from businesses you onboard</p>
+            <p className="font-bold text-xl">Be the first — start pitching today!</p>
           </div>
 
           {/* Pinned Team Manager Gig */}
-          <div className="card-lift border-4 border-black p-8 bg-gray-100">
-            <h2 className="text-4xl mb-6 text-center">Team Manager Support Gig</h2>
-            <p className="text-lg mb-4"><strong>Task:</strong> Logistics + weekly updates tagging sponsor.</p>
-            <p className="text-lg mb-4"><strong>Qualifications:</strong> Current manager • Reliable</p>
-            <p className="text-lg mb-6"><strong>Prize:</strong> $150/month + perks</p>
+          <div className="card-lift border-4 border-black p-12 bg-gray-100 max-w-lg mx-auto">
+            <h2 className="text-4xl mb-8 font-bold">Team Manager Support Gig</h2>
+            <p className="mb-4">Task: Logistics + weekly updates tagging sponsor.</p>
+            <p className="mb-4">Qualifications: Current manager • Reliable</p>
+            <p className="mb-8">Prize: $150/month + perks</p>
           </div>
 
-          <div className="text-center">
-            <h2 className="text-3xl mb-6">Student Athlete</h2>
+          <div>
+            <h2 className="text-3xl mb-8 font-bold">Student Athlete</h2>
             <p className="mb-8">Pitch local businesses for support — copy the letter below and send via text or email.</p>
 
-            <div className="bg-gray-100 p-8 mb-12 border border-black">
+            <div className="bg-gray-100 p-8 mb-12 border border-black max-w-lg mx-auto">
               <pre className="font-mono text-sm whitespace-pre-wrap text-left">
                 {`Hey [Business Name],
 
@@ -168,24 +168,24 @@ Thanks!
               </pre>
             </div>
 
-            <Button onClick={copyLetter} className="w-full max-w-md text-lg py-6 mb-12">
+            <Button onClick={copyLetter} className="w-full max-w-md h-20 text-2xl bg-black text-white hover:bg-gray-800 mb-12">
               Copy Letter to Clipboard
             </Button>
           </div>
 
           <div>
-            <h2 className="text-3xl mb-6 text-center">Open Offers</h2>
+            <h2 className="text-3xl mb-8 font-bold">Open Offers</h2>
             {offers.length === 0 ? (
-              <p className="text-center text-gray-600">No offers yet — send letters to get businesses posting!</p>
+              <p className="text-gray-600 mb-12">No offers yet — send letters to get businesses posting!</p>
             ) : (
-              <div className="space-y-8">
+              <div className="space-y-16">
                 {offers.map((offer) => (
-                  <div key={offer.id} className="card-lift border border-black p-6 bg-white">
-                    <p className="font-bold text-xl mb-2">{offer.type.toUpperCase()} — ${offer.amount}</p>
-                    <p className="mb-4">{offer.description}</p>
+                  <div key={offer.id} className="card-lift border-4 border-black p-12 bg-white max-w-lg mx-auto">
+                    <p className="font-bold text-2xl mb-4">{offer.type.toUpperCase()} — ${offer.amount}</p>
+                    <p className="mb-8">{offer.description}</p>
                     <Button 
                       onClick={() => router.push(`/claim/${offer.id}`)}
-                      className="w-full text-lg py-4"
+                      className="w-full h-20 text-2xl bg-black text-white hover:bg-gray-800"
                     >
                       Claim Offer
                     </Button>
@@ -196,32 +196,32 @@ Thanks!
           </div>
         </div>
       ) : (
-        <div className="max-w-2xl mx-auto space-y-12">
-          <div className="text-center">
-            <h2 className="text-3xl mb-6">Local Business</h2>
+        <div className="max-w-2xl mx-auto space-y-16 font-mono text-center text-lg">
+          <div>
+            <h2 className="text-3xl mb-8 font-bold">Local Business</h2>
             <p className="mb-8">Wallet balance: ${business?.wallet_balance?.toFixed(2) || '0.00'}</p>
             <Button 
               onClick={() => router.push('/business-onboard')}
-              className="w-full max-w-md text-lg py-6 mb-12"
+              className="w-full max-w-md h-20 text-2xl bg-black text-white hover:bg-gray-800 mb-12"
             >
               Add Funds to Wallet
             </Button>
 
-            <h3 className="text-2xl mb-6">Pending Clips to Review</h3>
+            <h3 className="text-2xl mb-8 font-bold">Pending Clips to Review</h3>
             {pendingClips.length === 0 ? (
-              <p className="text-gray-600">No pending clips — post offers to get started!</p>
+              <p className="text-gray-600 mb-12">No pending clips — post offers to get started!</p>
             ) : (
-              <div className="space-y-8">
+              <div className="space-y-16">
                 {pendingClips.map((clip) => (
-                  <div key={clip.id} className="card-lift border border-black p-6 bg-white">
-                    <p className="font-bold mb-2">From: {clip.profiles.email}</p>
+                  <div key={clip.id} className="card-lift border-4 border-black p-12 bg-white max-w-lg mx-auto">
+                    <p className="font-bold mb-4">From: {clip.profiles.email}</p>
                     <p className="mb-4">Offer: {clip.offers.type} — ${clip.offers.amount}</p>
-                    <video controls className="w-full mb-4">
+                    <video controls className="w-full mb-8">
                       <source src={clip.video_url} type="video/mp4" />
                     </video>
                     <Button 
                       onClick={() => approveClip(clip)}
-                      className="w-full text-lg py-4"
+                      className="w-full h-20 text-2xl bg-black text-white hover:bg-gray-800"
                     >
                       Approve & Send to Parent
                     </Button>
@@ -230,9 +230,9 @@ Thanks!
               </div>
             )}
 
-            <h3 className="text-2xl mb-6 mt-12">Post a New Offer</h3>
-            <form onSubmit={postOffer} className="space-y-4 max-w-md mx-auto">
-              <select value={type} onChange={(e) => setType(e.target.value)} className="w-full border border-black px-4 py-2">
+            <h3 className="text-2xl mb-8 mt-12 font-bold">Post a New Offer</h3>
+            <form onSubmit={postOffer} className="space-y-12 max-w-md mx-auto">
+              <select value={type} onChange={(e) => setType(e.target.value)} className="w-full border-4 border-black p-6 text-xl">
                 <option value="shoutout">Shoutout Clip</option>
                 <option value="experience">Experience</option>
                 <option value="clinic">Clinic</option>
@@ -247,16 +247,16 @@ Thanks!
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 required
-                className="w-full border border-black px-4 py-2"
+                className="w-full border-4 border-black p-6 text-xl"
               />
               <textarea
                 placeholder={type === 'booster' ? "Sponsoring the team — post-game meals, gear, or event. Money split equally among roster." : "Brief description"}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 required
-                className="w-full border border-black px-4 py-2 h-32"
+                className="w-full border-4 border-black p-6 h-40 text-xl"
               />
-              <Button type="submit" className="w-full text-lg py-6">
+              <Button type="submit" className="w-full h-20 text-2xl bg-black text-white hover:bg-gray-800">
                 Post Offer
               </Button>
             </form>
@@ -264,8 +264,8 @@ Thanks!
         </div>
       )}
 
-      <div className="text-center mt-12">
-        <Button onClick={signOut} variant="outline" className="text-lg py-6">
+      <div className="text-center mt-20">
+        <Button onClick={signOut} variant="outline" className="w-full max-w-md h-20 text-2xl bg-black text-white hover:bg-gray-800">
           Log Out
         </Button>
       </div>
