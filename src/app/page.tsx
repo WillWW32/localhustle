@@ -74,22 +74,12 @@ export default function Home() {
       backgroundColor: 'white',
       color: 'black',
     }}>
-      {/* Logo */}
-      <div style={{ marginBottom: '6rem' }}>
-        <Image
-          src="/logo.jpg"
-          alt="LocalHustle Logo"
-          width={280}
-          height={280}
-          style={{ margin: '0 auto' }}
-          priority
-        />
-      </div>
+      
 
      
 
       {/* Slogan */}
-      <p style={{ fontSize: '5rem', marginBottom: '10rem' }}>
+      <p style={{ fontSize: '3rem', marginBottom: '10rem' }}>
         Community Driven Support for Student Athletes
       </p>
 
@@ -100,11 +90,11 @@ export default function Home() {
             For Student Athletes
           </h2>
           <div style={{ fontSize: '1.125rem', lineHeight: '2.4' }}>
-            <p>Earn real money — $50–$1000 per gig for gas, gear, lunch, or savings.</p>
-            <p>Local exposure to business owners and entrepreneurs in your town.</p>
-            <p>Build relationships that lead to scholarships and letters of recommendation.</p>
-            <p>Safe, private gigs — no forced public posting, parent-approved payouts.</p>
-            <p>Resume-building experience that shows initiative and character.</p>
+            <p>• Earn real money — $50–$1000 per gig for gas, gear, lunch, or savings.</p>
+            <p>• Local exposure to business owners and entrepreneurs in your town.</p>
+            <p>• Build relationships that lead to scholarships and letters of recommendation.</p>
+            <p>• Safe, private gigs — no forced public posting, parent-approved payouts.</p>
+            <p>• Resume-building experience that shows initiative and character.</p>
           </div>
         </div>
 
@@ -113,25 +103,25 @@ export default function Home() {
             For Local Businesses
           </h2>
           <div style={{ fontSize: '1.125rem', lineHeight: '2.4' }}>
-            <p>Fresh, authentic content for social media from kids parents trust.</p>
-            <p>Become the hometown hero — visible support for local teams.</p>
-            <p>Discover motivated teens — potential future employees.</p>
-            <p>Better advertising than paid ads — real stories from real athletes.</p>
-            <p>Only pay for clips you love — zero risk, total control.</p>
+            <p>• Fresh, authentic content for social media from kids parents trust.</p>
+            <p>• Become the hometown hero — visible support for local teams.</p>
+            <p>• Discover motivated teens — potential future employees.</p>
+            <p>• Better advertising than paid ads — real stories from real athletes.</p>
+            <p>• Only pay for clips you love — zero risk, total control.</p>
           </div>
         </div>
       </div>
 
       {/* Login Form */}
       {user ? (
-        <div style={{ marginTop: '6rem' }}>
+        <div style={{ marginTop: '5rem' }}>
           <p style={{ fontSize: '2rem' }}>Logged in as {user.email}</p>
           <p style={{ fontSize: '1.5rem' }}>Redirecting to dashboard...</p>
         </div>
       ) : (
         <div style={{ maxWidth: '500px', margin: '0 auto', paddingBottom: '15rem' }}>
           <div style={{ marginBottom: '6rem' }}>
-            <Label htmlFor="email" style={{ fontSize: '3rem', display: 'block', marginBottom: '3rem' }}>
+            <Label htmlFor="email" style={{ fontSize: '2rem', display: 'block', marginBottom: '3rem' }}>
               Your Email
             </Label>
             <Input
@@ -154,10 +144,10 @@ export default function Home() {
             onClick={handleLogin}
             disabled={loading}
             style={{
-              width: '60%',
+              width: '65%',
               padding: '4rem',
               fontSize: '2rem',
-              border: '2px solid black',
+              border: '1px solid black',
               backgroundColor: 'black',
               color: 'white',
             }}
