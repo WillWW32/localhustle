@@ -11,7 +11,6 @@ export default function Dashboard() {
   const [business, setBusiness] = useState<any>(null)
   const [offers, setOffers] = useState<any[]>([])
   const [pendingClips, setPendingClips] = useState<any[]>([])
-  const [teamMembers, setTeamMembers] = useState<number>(0)
   const [type, setType] = useState('shoutout')
   const [amount, setAmount] = useState('')
   const [description, setDescription] = useState('')
@@ -52,9 +51,6 @@ export default function Dashboard() {
           .eq('status', 'active')
           .order('created_at', { ascending: false })
         setOffers(openOffers || [])
-
-        // Stub team member count — real in V2
-        setTeamMembers(7)
       }
     }
     fetchData()
@@ -76,13 +72,6 @@ Thanks!
 – ${profile?.email.split('@')[0] || 'me'}`
     navigator.clipboard.writeText(letterText)
     alert('Letter copied to clipboard!')
-  }
-
-  const copyInviteLink = () => {
-    const teamSlug = (profile?.school || 'team').replace(/\s+/g, '-').toLowerCase()
-    const inviteLink = `https://app.localhustle.org/invite?team=${teamSlug}&leader=${profile?.id || 'leader'}`
-    navigator.clipboard.writeText(inviteLink)
-    alert('Invite link copied!')
   }
 
   const postOffer = async (e: React.FormEvent) => {
@@ -141,36 +130,26 @@ Thanks!
 
       {profile.role === 'athlete' ? (
         <div className="max-w-2xl mx-auto space-y-12">
-          {/* Team Leader Invite Section */}
-          <div className="border-4 border-black p-8 bg-gray-100">
-            <h2 className="text-4xl mb-6 text-center">Team Leader Invite</h2>
-            <p className="text-lg mb-4">You're the first from your team — invite your teammates!</p>
-            <p className="text-lg mb-4">Progress: {teamMembers}/25 teammates joined</p>
-            <p className="text-lg mb-6">Get $10 bonus for each teammate who earns their first gig.</p>
-            <Button onClick={copyInviteLink} className="w-full text-lg py-6">
-              Copy Invite Link
-            </Button>
-          </div>
-
-          {/* Pinned Ambassador */}
+          {/* Pinned Team Hustle Ambassador Gig */}
           <div className="border-4 border-black p-8 bg-gray-100">
             <h2 className="text-4xl mb-6 text-center">Team Hustle Ambassador</h2>
-            <p className="text-lg mb-4"><strong>Task:</strong> Make 10–20 business connections — send the support letter.</p>
-            <p className="text-lg mb-4"><strong>Qualifications:</strong> Varsity + 3.0 GPA</p>
-            <p className="text-lg mb-6"><strong>Prize:</strong> $100 bonus (1 week) + 5% lifetime cut</p>
+            <p className="text-lg mb-4"><span className="font-mono text-2xl">••</span> Task: Make 10–20 business connections — send the support letter to local spots.</p>
+            <p className="text-lg mb-4"><span className="font-mono text-2xl">••</span> Qualifications: Varsity player, manager, or photographer • 3.0 GPA or better</p>
+            <p className="text-lg mb-6"><span className="font-mono text-2xl">••</span> Prize: $100 bonus (1 week deadline) • 5% lifetime cut of every gig from businesses you onboard</p>
+            <p className="text-center font-bold text-xl">Be the first — start pitching today!</p>
           </div>
 
-          {/* Pinned Manager */}
+          {/* Pinned Team Manager Gig */}
           <div className="border-4 border-black p-8 bg-gray-100">
             <h2 className="text-4xl mb-6 text-center">Team Manager Support Gig</h2>
-            <p className="text-lg mb-4"><strong>Task:</strong> Logistics + weekly updates tagging sponsor.</p>
-            <p className="text-lg mb-4"><strong>Qualifications:</strong> Current manager • Reliable</p>
-            <p className="text-lg mb-6"><strong>Prize:</strong> $150/month + perks</p>
+            <p className="text-lg mb-4"><span className="font-mono text-2xl">••</span> Task: Logistics + weekly updates tagging sponsor.</p>
+            <p className="text-lg mb-4"><span className="font-mono text-2xl">••</span> Qualifications: Current manager • Reliable</p>
+            <p className="text-lg mb-6"><span className="font-mono text-2xl">••</span> Prize: $150/month + perks</p>
           </div>
 
           <div className="text-center">
             <h2 className="text-3xl mb-6">Student Athlete</h2>
-            <p className="mb-8">Pitch local businesses — copy the letter below.</p>
+            <p className="mb-8">Pitch local businesses for support — copy the letter below and send via text or email.</p>
 
             <div className="bg-gray-100 p-8 mb-12 border border-black">
               <pre className="font-mono text-sm whitespace-pre-wrap text-left">
@@ -189,7 +168,7 @@ Thanks!
               </pre>
             </div>
 
-            <Button onClick={copyLetter} className="w-full max-w-md text-lg py-6 mb-12">
+            <Button onClick={copyLetter} className="w-full max-w-xs h-16 text-xl bg-black text-white hover:bg-gray-800 mb-12">
               Copy Letter to Clipboard
             </Button>
           </div>
@@ -199,14 +178,14 @@ Thanks!
             {offers.length === 0 ? (
               <p className="text-center text-gray-600">No offers yet — send letters to get businesses posting!</p>
             ) : (
-              <div className="space-y-8">
+              <div className="space-y-12">
                 {offers.map((offer) => (
                   <div key={offer.id} className="border border-black p-6 bg-white">
                     <p className="font-bold text-xl mb-2">{offer.type.toUpperCase()} — ${offer.amount}</p>
                     <p className="mb-4">{offer.description}</p>
                     <Button 
                       onClick={() => router.push(`/claim/${offer.id}`)}
-                      className="w-full text-lg py-4"
+                      className="w-full max-w-xs h-16 text-xl bg-black text-white hover:bg-gray-800"
                     >
                       Claim Offer
                     </Button>
@@ -217,14 +196,13 @@ Thanks!
           </div>
         </div>
       ) : (
-        // business view unchanged
         <div className="max-w-2xl mx-auto space-y-12">
           <div className="text-center">
             <h2 className="text-3xl mb-6">Local Business</h2>
             <p className="mb-8">Wallet balance: ${business?.wallet_balance?.toFixed(2) || '0.00'}</p>
             <Button 
               onClick={() => router.push('/business-onboard')}
-              className="w-full max-w-md text-lg py-6 mb-12"
+              className="w-full max-w-xs h-16 text-xl bg-black text-white hover:bg-gray-800 mb-12"
             >
               Add Funds to Wallet
             </Button>
@@ -233,7 +211,7 @@ Thanks!
             {pendingClips.length === 0 ? (
               <p className="text-gray-600">No pending clips — post offers to get started!</p>
             ) : (
-              <div className="space-y-8">
+              <div className="space-y-12">
                 {pendingClips.map((clip) => (
                   <div key={clip.id} className="border border-black p-6 bg-white">
                     <p className="font-bold mb-2">From: {clip.profiles.email}</p>
@@ -243,7 +221,7 @@ Thanks!
                     </video>
                     <Button 
                       onClick={() => approveClip(clip)}
-                      className="w-full text-lg py-4"
+                      className="w-full max-w-xs h-16 text-xl bg-black text-white hover:bg-gray-800"
                     >
                       Approve & Send to Parent
                     </Button>
@@ -278,7 +256,7 @@ Thanks!
                 required
                 className="w-full border border-black px-4 py-2 h-32"
               />
-              <Button type="submit" className="w-full text-lg py-6">
+              <Button type="submit" className="w-full max-w-xs h-16 text-xl bg-black text-white hover:bg-gray-800">
                 Post Offer
               </Button>
             </form>
@@ -287,7 +265,7 @@ Thanks!
       )}
 
       <div className="text-center mt-12">
-        <Button onClick={signOut} variant="outline" className="text-lg py-6">
+        <Button onClick={signOut} variant="outline" className="w-full max-w-xs h-16 text-xl bg-black text-white hover:bg-gray-800">
           Log Out
         </Button>
       </div>
