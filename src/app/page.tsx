@@ -75,20 +75,20 @@ export default function Home() {
           <p className="text-sm">Redirecting to dashboard...</p>
         </div>
       ) : (
-        <div className="max-w-md mx-auto space-y-8">
-          <div className="space-y-2">
-            <Label htmlFor="email" className="text-lg">Your Email</Label>
+        <div className="max-w-md mx-auto space-y-12">
+          <div className="space-y-4">
+            <Label htmlFor="email" className="text-2xl block text-center mb-4">Your Email</Label>
             <Input
               id="email"
               type="email"
               placeholder="you@school.edu"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="text-lg"
+              className="w-full text-2xl py-8 border-2 border-black"
             />
           </div>
 
-          <Button onClick={handleLogin} disabled={loading} className="w-full text-lg py-6">
+          <Button onClick={handleLogin} disabled={loading} className="w-full text-3xl py-12 border-4 border-black hover:bg-black hover:text-white">
             {loading ? 'Sending...' : 'Send Login Link'}
           </Button>
         </div>
