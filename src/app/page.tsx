@@ -7,75 +7,96 @@ import { signOut } from '@/lib/auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { useToast } from '@/components/ui/toast/Toast' // assuming toast component path
 import Link from 'next/link'
 
 export default function Home() {
   const [email, setEmail] = useState('')
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(false)
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
   const router = useRouter()
-  const { addToast } = useToast()
 
   const handleLogin = async () => {
     setLoading(true)
     const { error } = await supabase.auth.signInWithOtp({ email })
     if (error) {
-      addToast(error.message, 'error')
+      setToast({ message: error.message, type: 'error' })
     } else {
-      addToast('Check your email for the login link!', 'success')
+      setToast({ message: 'Check your email for the login link!', type: 'success' })
     }
     setLoading(false)
   }
 
   useEffect(() => {
     const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      setUser(session?.user ?? null)
+      try {
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+        if (sessionError) throw sessionError
 
-      if (session?.user) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', session.user.id)
-          .single()
+        setUser(session?.user ?? null)
 
-        if (profile?.role) {
-          router.replace('/dashboard')
-        } else {
-          router.replace('/select-role')
+        if (session?.user) {
+          const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', session.user.id)
+            .single()
+
+          if (profileError) throw profileError
+
+          if (profile?.role) {
+            router.replace('/dashboard')
+          } else {
+            router.replace('/select-role')
+          }
         }
+      } catch (err) {
+        console.error('Session error:', err)
+        // Don't crash — stay on login page
       }
     }
 
     checkSession()
 
     const { data: listener } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      setUser(session?.user ?? null)
-      if (session?.user) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', session.user.id)
-          .single()
+      try {
+        setUser(session?.user ?? null)
+        if (session?.user) {
+          const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', session.user.id)
+            .single()
 
-        if (profile?.role) {
-          router.replace('/dashboard')
-        } else {
-          router.replace('/select-role')
+          if (profileError) throw profileError
+
+          if (profile?.role) {
+            router.replace('/dashboard')
+          } else {
+            router.replace('/select-role')
+          }
         }
+      } catch (err) {
+        console.error('Auth state error:', err)
       }
     })
 
     return () => listener.subscription.unsubscribe()
   }, [router])
 
+  // Simple toast fade-out
+  useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => setToast(null), 5000)
+      return () => clearTimeout(timer)
+    }
+  }, [toast])
+
   return (
     <div style={{
       fontFamily: "'Courier New', Courier, monospace",
       textAlign: 'center',
       padding: '7rem 2rem',
-      
       backgroundColor: 'white',
       color: 'black',
     }}>
@@ -108,10 +129,28 @@ export default function Home() {
             <p>• Be a Hometown Hero — visible support for local teams.</p>
             <p>• Discover motivated teens & potential future employees.</p>
             <p>• Better than paid ads — real referrals from real athletes.</p>
-            
           </div>
         </div>
       </div>
+
+      {/* Toast */}
+      {toast && (
+        <div style={{
+          position: 'fixed',
+          bottom: '2rem',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          backgroundColor: toast.type === 'success' ? 'black' : '#dc2626',
+          color: 'white',
+          padding: '1.5rem 3rem',
+          borderRadius: '0',
+          fontSize: '1.5rem',
+          boxShadow: '0 10px 20px rgba(0,0,0,0.2)',
+          zIndex: 1000,
+        }}>
+          {toast.message}
+        </div>
+      )}
 
       {/* Login Form + Log Out */}
       {user ? (
@@ -119,7 +158,7 @@ export default function Home() {
           <p style={{ fontSize: '2rem' }}>Logged in as {user.email}</p>
           <Button onClick={signOut} style={{
             width: '200px',
-            padding: '4rem',
+            height: '60px',
             fontSize: '2rem',
             border: '1px solid black',
             backgroundColor: 'black',
@@ -142,8 +181,9 @@ export default function Home() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               style={{
-                width: '100%',
-                padding: '3rem',
+                width: '200px',
+                height: '60px',
+                padding: '0',
                 fontSize: '2rem',
                 border: '4px solid black',
                 textAlign: 'center',
@@ -155,7 +195,7 @@ export default function Home() {
             disabled={loading}
             style={{
               width: '200px',
-              padding: '4rem',
+              height: '60px',
               fontSize: '2rem',
               border: '1px solid black',
               backgroundColor: 'black',
