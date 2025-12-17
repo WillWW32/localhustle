@@ -13,84 +13,57 @@ export default function Home() {
   const [email, setEmail] = useState('')
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(false)
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
   const router = useRouter()
 
   const handleLogin = async () => {
     setLoading(true)
     const { error } = await supabase.auth.signInWithOtp({ email })
-    if (error) {
-      setToast({ message: error.message, type: 'error' })
-    } else {
-      setToast({ message: 'Check your email for the login link!', type: 'success' })
-    }
+    if (error) alert(error.message)
+    else alert('Check your email for the login link.')
     setLoading(false)
   }
 
   useEffect(() => {
     const checkSession = async () => {
-      try {
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession()
-        if (sessionError) throw sessionError
+      const { data: { session } } = await supabase.auth.getSession()
+      setUser(session?.user ?? null)
 
-        setUser(session?.user ?? null)
+      if (session?.user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', session.user.id)
+          .single()
 
-        if (session?.user) {
-          const { data: profile, error: profileError } = await supabase
-            .from('profiles')
-            .select('role')
-            .eq('id', session.user.id)
-            .single()
-
-          if (profileError) throw profileError
-
-          if (profile?.role) {
-            router.replace('/dashboard')
-          } else {
-            router.replace('/select-role')
-          }
+        if (!profile?.role) {
+          router.push('/select-role')
+        } else {
+          router.push('/dashboard')
         }
-      } catch (err) {
-        console.error('Session error:', err)
-        // Don't crash — stay on login page
       }
     }
 
     checkSession()
 
     const { data: listener } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      try {
-        setUser(session?.user ?? null)
-        if (session?.user) {
-          const { data: profile, error: profileError } = await supabase
-            .from('profiles')
-            .select('role')
-            .eq('id', session.user.id)
-            .single()
+      setUser(session?.user ?? null)
+      if (session?.user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', session.user.id)
+          .single()
 
-          if (profileError) throw profileError
-
-          if (profile?.role) {
-            router.replace('/dashboard')
-          } else {
-            router.replace('/select-role')
-          }
+        if (!profile?.role) {
+          router.push('/select-role')
+        } else {
+          router.push('/dashboard')
         }
-      } catch (err) {
-        console.error('Auth state error:', err)
       }
     })
 
     return () => listener.subscription.unsubscribe()
   }, [router])
-
-  // Simple toast fade-out
-  useEffect(() => {
-    if (toast) {
-      const timer = setTimeout(() => setToast(null), 5000)
-      return () => clearTimeout(timer)
-    }
-  }, [toast])
 
   return (
     <div style={{
@@ -106,9 +79,9 @@ export default function Home() {
       </p>
 
       {/* Benefits */}
-      <div style={{ maxWidth: '600px', margin: '0 auto 12rem auto' }}>
+      <div style={{ maxWidth: '700px', margin: '0 auto 12rem auto' }}>
         <div style={{ marginBottom: '10rem' }}>
-          <h2 style={{ fontSize: '3.5rem', fontWeight: 'bold', marginBottom: '6rem' }}>
+          <h2 style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '6rem' }}>
             Student Athletes
           </h2>
           <div style={{ fontSize: '1.125rem', lineHeight: '2.4' }}>
@@ -133,43 +106,28 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Toast */}
-      {toast && (
-        <div style={{
-          position: 'fixed',
-          bottom: '2rem',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          backgroundColor: toast.type === 'success' ? 'black' : '#dc2626',
-          color: 'white',
-          padding: '1.5rem 3rem',
-          borderRadius: '0',
-          fontSize: '1.5rem',
-          boxShadow: '0 10px 20px rgba(0,0,0,0.2)',
-          zIndex: 1000,
-        }}>
-          {toast.message}
-        </div>
-      )}
-
       {/* Login Form + Log Out */}
       {user ? (
         <div style={{ marginTop: '2rem' }}>
           <p style={{ fontSize: '2rem' }}>Logged in as {user.email}</p>
           <Button onClick={signOut} style={{
-            width: '200px',
+            width: '250px',
             height: '60px',
             fontSize: '2rem',
             border: '1px solid black',
             backgroundColor: 'black',
             color: 'white',
             marginTop: '4rem',
+            padding: '0',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
           }}>
             Log Out
           </Button>
         </div>
       ) : (
-        <div style={{ maxWidth: '200px', margin: '0 auto', paddingBottom: '5rem' }}>
+        <div style={{ maxWidth: '250px', margin: '0 auto', paddingBottom: '5rem' }}>
           <div style={{ marginBottom: '6rem' }}>
             <Label htmlFor="email" style={{ fontSize: '2rem', display: 'block', marginBottom: '3rem' }}>
               Your Email
@@ -181,12 +139,13 @@ export default function Home() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               style={{
-                width: '200px',
+                width: '250px',
                 height: '60px',
                 padding: '0',
                 fontSize: '2rem',
                 border: '4px solid black',
                 textAlign: 'center',
+                fontFamily: "'Courier New', Courier, monospace",
               }}
             />
           </div>
@@ -194,12 +153,16 @@ export default function Home() {
             onClick={handleLogin}
             disabled={loading}
             style={{
-              width: '200px',
+              width: '250px',
               height: '60px',
               fontSize: '2rem',
               border: '1px solid black',
               backgroundColor: 'black',
               color: 'white',
+              padding: '0',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
             }}
           >
             {loading ? 'Sending...' : 'Send Login Link'}
@@ -207,15 +170,21 @@ export default function Home() {
         </div>
       )}
 
-      {/* Site-map Footer */}
+      {/* Site-map Footer — responsive stack on mobile */}
       <footer style={{ marginTop: '8rem', paddingTop: '4rem', borderTop: '4px solid black' }}>
-        <nav style={{ marginBottom: '2rem' }}>
-          <Link href="/" style={{ margin: '0 1rem', textDecoration: 'underline' }}>Home</Link>
-          <Link href="/dashboard" style={{ margin: '0 1rem', textDecoration: 'underline' }}>Dashboard</Link>
-          <Link href="/profile" style={{ margin: '0 1rem', textDecoration: 'underline' }}>Profile</Link>
-          <Link href="/compliance" style={{ margin: '0 1rem', textDecoration: 'underline' }}>Compliance</Link>
-          <Link href="/privacy" style={{ margin: '0 1rem', textDecoration: 'underline' }}>Privacy</Link>
-          <Link href="/terms" style={{ margin: '0 1rem', textDecoration: 'underline' }}>Terms</Link>
+        <nav style={{
+          marginBottom: '2rem',
+          display: 'flex',
+          flexWrap: 'wrap',
+          justifyContent: 'center',
+          gap: '1rem',
+        }}>
+          <Link href="/" style={{ textDecoration: 'underline' }}>Home</Link>
+          <Link href="/dashboard" style={{ textDecoration: 'underline' }}>Dashboard</Link>
+          <Link href="/profile" style={{ textDecoration: 'underline' }}>Profile</Link>
+          <Link href="/compliance" style={{ textDecoration: 'underline' }}>Compliance</Link>
+          <Link href="/privacy" style={{ textDecoration: 'underline' }}>Privacy</Link>
+          <Link href="/terms" style={{ textDecoration: 'underline' }}>Terms</Link>
         </nav>
         <p style={{ fontSize: '1rem' }}>
           © 2025 LocalHustle — Community Driven Support for Student Athletes
