@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import { signOut } from '@/lib/auth'
 import { Button } from '@/components/ui/button'
-import Link from 'next/link'
 
 export default function Dashboard() {
   const [profile, setProfile] = useState<any>(null)
@@ -79,6 +78,39 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
     alert('Letter copied to clipboard!')
   }
 
+  const shareLetter = () => {
+    const athleteId = profile?.id || 'fallback-id'
+    const letterText = `Hey [Business Name],
+
+I've been coming to [Your Spot] for years before and after practice.
+
+Our team has joined a new app that helps us get community support for our athletic journey. I'm reaching out to my favorite spots to see if you would consider a sponsorship.
+
+Here's what you would get: a short thank-you clip from me about your place. You can use the clip for social media if you want.
+
+I'd probably get some new shoes or gear and be set for our roadtrips. It'd mean a lot for the team and I'd love to rep a local business that's got our back.
+
+Interested? This link sets it up in like 30 seconds: https://app.localhustle.org/business-onboard?ref=${athleteId}
+
+Thanks either way!
+
+– ${profile?.email.split('@')[0] || 'me'}
+${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athlete'}`
+
+    if (navigator.share) {
+      navigator.share({
+        title: 'LocalHustle Sponsorship',
+        text: letterText,
+      }).catch(() => {
+        navigator.clipboard.writeText(letterText)
+        alert('Letter copied to clipboard!')
+      })
+    } else {
+      navigator.clipboard.writeText(letterText)
+      alert('Letter copied to clipboard!')
+    }
+  }
+
   const postOffer = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!business) return
@@ -130,16 +162,17 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
 
   return (
     <div className="container">
-      <p className="text-center mb-12 text-xl font-mono">Welcome, {profile.email}</p>
+      <h1 className="text-center text-5xl mb-12">LocalHustle</h1>
+      <p className="text-center mb-12 text-xl">Welcome, {profile.email}</p>
 
       {profile.role === 'athlete' ? (
-        <div className="max-w-2xl mx-auto space-y-16 font-mono text-center text-lg">
+        <div className="max-w-2xl mx-auto space-y-16">
           {/* Letter first */}
-          <div>
-            <h2 className="text-3xl mb-8 font-bold">Student Athlete</h2>
-            <p className="mb-12">Pitch local businesses for support — copy the letter below and send via text or email.</p>
+          <div className="text-center">
+            <h2 className="text-3xl mb-8">Pitch Local Businesses</h2>
+            <p className="mb-12">Copy or share the letter below to your favorite spots.</p>
 
-            <div className="bg-gray-100 p-12 mb-16 border border-black max-w-lg mx-auto">
+            <div className="bg-gray-100 p-12 mb-12 border border-black max-w-lg mx-auto">
               <pre className="font-mono text-sm whitespace-pre-wrap text-left">
                 {`Hey [Business Name],
 
@@ -160,25 +193,66 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
               </pre>
             </div>
 
-            <Button onClick={copyLetter} className="w-72 h-20 text-2xl bg-black text-white hover:bg-gray-800 mb-16">
-              Copy Letter to Clipboard
-            </Button>
+            <div className="space-y-8">
+              <Button onClick={shareLetter} className="w-full max-w-md text-lg py-6">
+                Share Letter (Text, Instagram, etc.)
+              </Button>
+              <Button onClick={copyLetter} variant="outline" className="w-full max-w-md text-lg py-6">
+                Copy Letter to Clipboard
+              </Button>
+            </div>
+          </div>
+
+          {/* How Do I Earn? Table */}
+          <div>
+            <h2 className="text-3xl mb-8">How Do I Earn?</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-12 max-w-4xl mx-auto">
+              <div className="border-4 border-black p-12 bg-gray-100">
+                <h3 className="text-2xl font-bold mb-4">ShoutOut</h3>
+                <p className="font-bold mb-4">$50</p>
+                <p>Visit a favorite business and make a quick shoutout 15-sec reel about what you like.</p>
+              </div>
+
+              <div className="border-4 border-black p-12 bg-gray-100">
+                <h3 className="text-2xl font-bold mb-4">Youth Clinic</h3>
+                <p className="font-bold mb-4">Up to $500</p>
+                <p>Run 30 min - 60 min sessions for younger athletes (with teammates).</p>
+              </div>
+
+              <div className="border-4 border-black p-12 bg-gray-100">
+                <h3 className="text-2xl font-bold mb-4">Team Sponsor</h3>
+                <p className="font-bold mb-4">$500+</p>
+                <p>Business sponsors team meals/gear — money split equally.</p>
+              </div>
+
+              <div className="border-4 border-black p-12 bg-gray-100">
+                <h3 className="text-2xl font-bold mb-4">Product Review</h3>
+                <p className="font-bold mb-4">$50 + Perks</p>
+                <p>Post your order - Get free coffee for a month (example).</p>
+              </div>
+
+              <div className="border-4 border-black p-12 bg-gray-100">
+                <h3 className="text-2xl font-bold mb-4">Cameo</h3>
+                <p className="font-bold mb-4">$50-$200</p>
+                <p>Impact the next gen. (Birthdays, Pep Talks).</p>
+              </div>
+            </div>
           </div>
 
           {/* Open Offers */}
           <div>
-            <h2 className="text-3xl mb-8 font-bold">Open Offers</h2>
+            <h2 className="text-3xl mb-8 text-center">Open Offers</h2>
             {offers.length === 0 ? (
-              <p className="text-gray-600 mb-12">No offers yet — send letters to get businesses posting!</p>
+              <p className="text-center text-gray-600">No offers yet — send letters to get businesses posting!</p>
             ) : (
-              <div className="space-y-16">
+              <div className="space-y-8">
                 {offers.map((offer) => (
-                  <div key={offer.id} className="card-lift border-4 border-black p-16 bg-white max-w-lg mx-auto">
-                    <p className="font-bold text-2xl mb-6">{offer.type.toUpperCase()} — ${offer.amount}</p>
-                    <p className="mb-12">{offer.description}</p>
+                  <div key={offer.id} className="border border-black p-6 bg-white">
+                    <p className="font-bold text-xl mb-2">{offer.type.toUpperCase()} — ${offer.amount}</p>
+                    <p className="mb-4">{offer.description}</p>
                     <Button 
                       onClick={() => router.push(`/claim/${offer.id}`)}
-                      className="w-72 h-20 text-2xl bg-black text-white hover:bg-gray-800"
+                      className="w-full text-lg py-4"
                     >
                       Claim Offer
                     </Button>
@@ -187,53 +261,44 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
               </div>
             )}
           </div>
-
-          {/* Pinned gigs at bottom */}
-          <div className="space-y-16">
-            <div className="card-lift border-4 border-black p-20 bg-gray-100 max-w-lg mx-auto">
-              <h3 className="text-2xl mb-8 font-bold">Team Hustle Ambassador</h3>
-              <p className="mb-6 text-left">Task: Make 10–20 business connections — send the support letter to local spots.</p>
-              <p className="mb-6 text-left">Qualifications: Varsity player, manager, or photographer • 3.0 GPA or better</p>
-              <p className="mb-8 text-left">Prize: $100 bonus (1 week deadline) • 5% lifetime cut of every gig from businesses you onboard</p>
-              <p className="font-bold text-xl text-left">Be the first — start pitching today!</p>
-            </div>
-
-            <div className="card-lift border-4 border-black p-20 bg-gray-100 max-w-lg mx-auto">
-              <h3 className="text-2xl mb-8 font-bold">Team Manager Support Gig</h3>
-              <p className="mb-6 text-left">Task: Logistics + weekly updates tagging sponsor.</p>
-              <p className="mb-6 text-left">Qualifications: Current manager • Reliable</p>
-              <p className="mb-8 text-left">Prize: $150/month + perks</p>
-            </div>
-          </div>
         </div>
       ) : (
-        // Business view unchanged
-        <div className="max-w-2xl mx-auto space-y-16 font-mono text-center text-lg">
-          <div>
-            <h2 className="text-3xl mb-8 font-bold">Local Business</h2>
+        <div className="max-w-2xl mx-auto space-y-12">
+          {/* Low Balance Warning */}
+          {business?.wallet_balance < 100 && (
+            <div className="text-center mb-12">
+              <p className="text-2xl text-red-600 mb-4">Low balance — add funds to post more offers</p>
+              <Button onClick={() => router.push('/business-onboard')} className="w-full max-w-md text-lg py-6">
+                Add Funds
+              </Button>
+            </div>
+          )}
+
+          <div className="text-center">
+            <h2 className="text-3xl mb-6">Local Business</h2>
             <p className="mb-8">Wallet balance: ${business?.wallet_balance?.toFixed(2) || '0.00'}</p>
             <Button 
               onClick={() => router.push('/business-onboard')}
-              className="w-72 h-20 text-2xl bg-black text-white hover:bg-gray-800 mb-12"
+              className="w-full max-w-md text-lg py-6 mb-12"
             >
               Add Funds to Wallet
             </Button>
 
-            <h3 className="text-2xl mb-8 font-bold">Pending Clips to Review</h3>
+            <h3 className="text-2xl mb-6">Pending Clips to Review</h3>
             {pendingClips.length === 0 ? (
-              <p className="text-gray-600 mb-12">No pending clips — post offers to get started!</p>
+              <p className="text-gray-600">No pending clips — post offers to get started!</p>
             ) : (
-              <div className="space-y-16">
+              <div className="space-y-8">
                 {pendingClips.map((clip) => (
-                  <div key={clip.id} className="card-lift border-4 border-black p-20 bg-white max-w-lg mx-auto">
-                    <p className="font-bold mb-6 text-left">From: {clip.profiles.email}</p>
-                    <p className="mb-6 text-left">Offer: {clip.offers.type} — ${clip.offers.amount}</p>
-                    <video controls className="w-full mb-8">
+                  <div key={clip.id} className="border border-black p-6 bg-white">
+                    <p className="font-bold mb-2">From: {clip.profiles.email}</p>
+                    <p className="mb-4">Offer: {clip.offers.type} — ${clip.offers.amount}</p>
+                    <video controls className="w-full mb-4">
                       <source src={clip.video_url} type="video/mp4" />
                     </video>
                     <Button 
                       onClick={() => approveClip(clip)}
-                      className="w-72 h-20 text-2xl bg-black text-white hover:bg-gray-800"
+                      className="w-full text-lg py-4"
                     >
                       Approve & Send to Parent
                     </Button>
@@ -242,9 +307,9 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
               </div>
             )}
 
-            <h3 className="text-2xl mb-8 mt-12 font-bold">Post a New Offer</h3>
-            <form onSubmit={postOffer} className="space-y-12 max-w-md mx-auto">
-              <select value={type} onChange={(e) => setType(e.target.value)} className="w-full border-4 border-black p-6 text-xl">
+            <h3 className="text-2xl mb-6 mt-12">Post a New Offer</h3>
+            <form onSubmit={postOffer} className="space-y-4 max-w-md mx-auto">
+              <select value={type} onChange={(e) => setType(e.target.value)} className="w-full border border-black px-4 py-2">
                 <option value="shoutout">Shoutout Clip</option>
                 <option value="experience">Experience</option>
                 <option value="clinic">Clinic</option>
@@ -259,16 +324,16 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 required
-                className="w-full border-4 border-black p-6 text-xl"
+                className="w-full border border-black px-4 py-2"
               />
               <textarea
                 placeholder={type === 'booster' ? "Sponsoring the team — post-game meals, gear, or event. Money split equally among roster." : "Brief description"}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 required
-                className="w-full border-4 border-black p-6 h-40 text-xl"
+                className="w-full border border-black px-4 py-2 h-32"
               />
-              <Button type="submit" className="w-72 h-20 text-2xl bg-black text-white hover:bg-gray-800">
+              <Button type="submit" className="w-full text-lg py-6">
                 Post Offer
               </Button>
             </form>
@@ -276,33 +341,11 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
         </div>
       )}
 
-      {/* Small Log Out at bottom */}
-      <div className="text-center mt-32 mb-20">
-        <Button onClick={signOut} variant="outline" className="text-base py-4 px-8">
+      <div className="text-center mt-12">
+        <Button onClick={signOut} variant="outline" className="text-lg py-6">
           Log Out
         </Button>
       </div>
-
-      {/* Site-map Footer — responsive stack on mobile */}
-      <footer style={{ marginTop: '8rem', paddingTop: '4rem', borderTop: '4px solid black' }}>
-        <nav style={{
-          marginBottom: '2rem',
-          display: 'flex',
-          flexWrap: 'wrap',
-          justifyContent: 'center',
-          gap: '1rem',
-        }}>
-          <Link href="/" style={{ textDecoration: 'underline' }}>Home</Link>
-          <Link href="/dashboard" style={{ textDecoration: 'underline' }}>Dashboard</Link>
-          <Link href="/profile" style={{ textDecoration: 'underline' }}>Profile</Link>
-          <Link href="/compliance" style={{ textDecoration: 'underline' }}>Compliance</Link>
-          <Link href="/privacy" style={{ textDecoration: 'underline' }}>Privacy</Link>
-          <Link href="/terms" style={{ textDecoration: 'underline' }}>Terms</Link>
-        </nav>
-        <p style={{ fontSize: '1rem' }}>
-          © 2025 LocalHustle — Community Driven Support for Student Athletes
-        </p>
-      </footer>
     </div>
   )
 }
