@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import { signOut } from '@/lib/auth'
 import { Button } from '@/components/ui/button'
+import Link from 'next/link'
 
 export default function Dashboard() {
   const [profile, setProfile] = useState<any>(null)
@@ -133,7 +134,7 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
 
       {profile.role === 'athlete' ? (
         <div className="max-w-2xl mx-auto space-y-16 font-mono text-center text-lg">
-          {/* Letter first — right under welcome (30px space via mb-12) */}
+          {/* Letter first */}
           <div>
             <h2 className="text-3xl mb-8 font-bold">Student Athlete</h2>
             <p className="mb-12">Pitch local businesses for support — copy the letter below and send via text or email.</p>
@@ -164,25 +165,15 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
             </Button>
           </div>
 
-          {/* Open Offers — Ambassador pinned inside Offers */}
+          {/* Open Offers */}
           <div>
             <h2 className="text-3xl mb-8 font-bold">Open Offers</h2>
-
-            {/* Ambassador pinned in Offers */}
-            <div className="border-4 border-black p-16 bg-gray-100 max-w-lg mx-auto mb-16">
-              <h3 className="text-3xl mb-8 font-bold">Team Hustle Ambassador</h3>
-              <p className="mb-6 text-left">Task: Make 10–20 business connections — send the support letter to local spots.</p>
-              <p className="mb-6 text-left">Qualifications: Varsity player, manager, or photographer • 3.0 GPA or better</p>
-              <p className="mb-8 text-left">Prize: $100 bonus (1 week deadline) • 5% lifetime cut of every gig from businesses you onboard</p>
-              <p className="font-bold text-xl text-left">Be the first — start pitching today!</p>
-            </div>
-
             {offers.length === 0 ? (
               <p className="text-gray-600 mb-12">No offers yet — send letters to get businesses posting!</p>
             ) : (
               <div className="space-y-16">
                 {offers.map((offer) => (
-                  <div key={offer.id} className="border-4 border-black p-16 bg-white max-w-lg mx-auto">
+                  <div key={offer.id} className="card-lift border-4 border-black p-16 bg-white max-w-lg mx-auto">
                     <p className="font-bold text-2xl mb-6">{offer.type.toUpperCase()} — ${offer.amount}</p>
                     <p className="mb-12">{offer.description}</p>
                     <Button 
@@ -197,19 +188,29 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
             )}
           </div>
 
-          {/* Manager gig smaller at bottom */}
-          <div className="border-2 border-black p-12 bg-gray-100 max-w-lg mx-auto mt-32">
-            <h3 className="text-2xl mb-6 font-bold">Team Manager Support Gig</h3>
-            <p className="mb-4 text-left">Task: Logistics + weekly updates tagging sponsor.</p>
-            <p className="mb-4 text-left">Qualifications: Current manager • Reliable</p>
-            <p className="mb-6 text-left">Prize: $150/month + perks</p>
+          {/* Pinned gigs at bottom */}
+          <div className="space-y-16">
+            <div className="card-lift border-4 border-black p-20 bg-gray-100 max-w-lg mx-auto">
+              <h3 className="text-2xl mb-8 font-bold">Team Hustle Ambassador</h3>
+              <p className="mb-6 text-left">Task: Make 10–20 business connections — send the support letter to local spots.</p>
+              <p className="mb-6 text-left">Qualifications: Varsity player, manager, or photographer • 3.0 GPA or better</p>
+              <p className="mb-8 text-left">Prize: $100 bonus (1 week deadline) • 5% lifetime cut of every gig from businesses you onboard</p>
+              <p className="font-bold text-xl text-left">Be the first — start pitching today!</p>
+            </div>
+
+            <div className="card-lift border-4 border-black p-20 bg-gray-100 max-w-lg mx-auto">
+              <h3 className="text-2xl mb-8 font-bold">Team Manager Support Gig</h3>
+              <p className="mb-6 text-left">Task: Logistics + weekly updates tagging sponsor.</p>
+              <p className="mb-6 text-left">Qualifications: Current manager • Reliable</p>
+              <p className="mb-8 text-left">Prize: $150/month + perks</p>
+            </div>
           </div>
         </div>
       ) : (
         // Business view unchanged
-        <div className="max-w-2xl mx-auto space-y-16">
-          <div className="text-center">
-            <h2 className="text-3xl mb-6">Local Business</h2>
+        <div className="max-w-2xl mx-auto space-y-16 font-mono text-center text-lg">
+          <div>
+            <h2 className="text-3xl mb-8 font-bold">Local Business</h2>
             <p className="mb-8">Wallet balance: ${business?.wallet_balance?.toFixed(2) || '0.00'}</p>
             <Button 
               onClick={() => router.push('/business-onboard')}
@@ -218,21 +219,21 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
               Add Funds to Wallet
             </Button>
 
-            <h3 className="text-2xl mb-6">Pending Clips to Review</h3>
+            <h3 className="text-2xl mb-8 font-bold">Pending Clips to Review</h3>
             {pendingClips.length === 0 ? (
-              <p className="text-gray-600">No pending clips — post offers to get started!</p>
+              <p className="text-gray-600 mb-12">No pending clips — post offers to get started!</p>
             ) : (
-              <div className="space-y-8">
+              <div className="space-y-16">
                 {pendingClips.map((clip) => (
-                  <div key={clip.id} className="border border-black p-6 bg-white">
-                    <p className="font-bold mb-2">From: {clip.profiles.email}</p>
-                    <p className="mb-4">Offer: {clip.offers.type} — ${clip.offers.amount}</p>
-                    <video controls className="w-full mb-4">
+                  <div key={clip.id} className="card-lift border-4 border-black p-20 bg-white max-w-lg mx-auto">
+                    <p className="font-bold mb-6 text-left">From: {clip.profiles.email}</p>
+                    <p className="mb-6 text-left">Offer: {clip.offers.type} — ${clip.offers.amount}</p>
+                    <video controls className="w-full mb-8">
                       <source src={clip.video_url} type="video/mp4" />
                     </video>
                     <Button 
                       onClick={() => approveClip(clip)}
-                      className="w-full text-lg py-4"
+                      className="w-72 h-20 text-2xl bg-black text-white hover:bg-gray-800"
                     >
                       Approve & Send to Parent
                     </Button>
@@ -241,9 +242,9 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
               </div>
             )}
 
-            <h3 className="text-2xl mb-6 mt-12">Post a New Offer</h3>
-            <form onSubmit={postOffer} className="space-y-4 max-w-md mx-auto">
-              <select value={type} onChange={(e) => setType(e.target.value)} className="w-full border border-black px-4 py-2">
+            <h3 className="text-2xl mb-8 mt-12 font-bold">Post a New Offer</h3>
+            <form onSubmit={postOffer} className="space-y-12 max-w-md mx-auto">
+              <select value={type} onChange={(e) => setType(e.target.value)} className="w-full border-4 border-black p-6 text-xl">
                 <option value="shoutout">Shoutout Clip</option>
                 <option value="experience">Experience</option>
                 <option value="clinic">Clinic</option>
@@ -258,16 +259,16 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 required
-                className="w-full border border-black px-4 py-2"
+                className="w-full border-4 border-black p-6 text-xl"
               />
               <textarea
                 placeholder={type === 'booster' ? "Sponsoring the team — post-game meals, gear, or event. Money split equally among roster." : "Brief description"}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 required
-                className="w-full border border-black px-4 py-2 h-32"
+                className="w-full border-4 border-black p-6 h-40 text-xl"
               />
-              <Button type="submit" className="w-full text-lg py-6">
+              <Button type="submit" className="w-72 h-20 text-2xl bg-black text-white hover:bg-gray-800">
                 Post Offer
               </Button>
             </form>
@@ -275,12 +276,33 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
         </div>
       )}
 
-      {/* Single small Log Out at bottom */}
-      <div className="text-center mt-32">
+      {/* Small Log Out at bottom */}
+      <div className="text-center mt-32 mb-20">
         <Button onClick={signOut} variant="outline" className="text-base py-4 px-8">
           Log Out
         </Button>
       </div>
+
+      {/* Site-map Footer — responsive stack on mobile */}
+      <footer style={{ marginTop: '8rem', paddingTop: '4rem', borderTop: '4px solid black' }}>
+        <nav style={{
+          marginBottom: '2rem',
+          display: 'flex',
+          flexWrap: 'wrap',
+          justifyContent: 'center',
+          gap: '1rem',
+        }}>
+          <Link href="/" style={{ textDecoration: 'underline' }}>Home</Link>
+          <Link href="/dashboard" style={{ textDecoration: 'underline' }}>Dashboard</Link>
+          <Link href="/profile" style={{ textDecoration: 'underline' }}>Profile</Link>
+          <Link href="/compliance" style={{ textDecoration: 'underline' }}>Compliance</Link>
+          <Link href="/privacy" style={{ textDecoration: 'underline' }}>Privacy</Link>
+          <Link href="/terms" style={{ textDecoration: 'underline' }}>Terms</Link>
+        </nav>
+        <p style={{ fontSize: '1rem' }}>
+          © 2025 LocalHustle — Community Driven Support for Student Athletes
+        </p>
+      </footer>
     </div>
   )
 }
