@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
-import { signOut } from '@/lib/auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -65,54 +64,93 @@ export default function Home() {
   }, [router])
 
   return (
-    <div className="container py-20">
-      <h1 className="text-center text-5xl mb-12">LocalHustle</h1>
-      <p className="text-center mb-12 text-xl">Community Driven Support for Student Athletes</p>
+    <div style={{
+      fontFamily: "'Courier New', Courier, monospace",
+      textAlign: 'center',
+      padding: '10rem 2rem',
+      minHeight: '100vh',
+      backgroundColor: 'white',
+      color: 'black',
+    }}>
+      {/* Title */}
+      <h1 style={{ fontSize: '5rem', fontWeight: 'bold', marginBottom: '4rem' }}>
+        LocalHustle
+      </h1>
 
-      <div className="grid md:grid-cols-2 gap-16 mb-24">
-        <div>
-          <h2 className="text-3xl mb-6">For Student Athletes</h2>
-          <ul className="space-y-4 text-lg">
-            <li>• Earn real money — $50–$1000 per gig for gas, gear, lunch, or savings.</li>
-            <li>• Local exposure to business owners and entrepreneurs in your town.</li>
-            <li>• Build relationships that lead to scholarships and letters of recommendation.</li>
-            <li>• Safe, private gigs — no forced public posting, parent-approved payouts.</li>
-            <li>• Resume-building experience that shows initiative and character.</li>
-          </ul>
+      {/* Slogan */}
+      <p style={{ fontSize: '3rem', marginBottom: '10rem' }}>
+        Community Driven Support for Student Athletes
+      </p>
+
+      {/* Benefits */}
+      <div style={{ maxWidth: '800px', margin: '0 auto 12rem auto' }}>
+        <div style={{ marginBottom: '10rem' }}>
+          <h2 style={{ fontSize: '3.5rem', fontWeight: 'bold', marginBottom: '6rem' }}>
+            For Student Athletes
+          </h2>
+          <div style={{ fontSize: '1.125rem', lineHeight: '2.4' }}>
+            <p>Earn real money — $50–$1000 per gig for gas, gear, lunch, or savings.</p>
+            <p>Local exposure to business owners and entrepreneurs in your town.</p>
+            <p>Build relationships that lead to scholarships and letters of recommendation.</p>
+            <p>Safe, private gigs — no forced public posting, parent-approved payouts.</p>
+            <p>Resume-building experience that shows initiative and character.</p>
+          </div>
         </div>
 
         <div>
-          <h2 className="text-3xl mb-6">For Local Businesses</h2>
-          <ul className="space-y-4 text-lg">
-            <li>• Fresh, authentic content for social media from kids parents trust.</li>
-            <li>• Become the hometown hero — visible support for local teams.</li>
-            <li>• Discover motivated teens — potential future employees.</li>
-            <li>• Better advertising than paid ads — real stories from real athletes.</li>
-            <li>• Only pay for clips you love — zero risk, total control.</li>
-          </ul>
+          <h2 style={{ fontSize: '3.5rem', fontWeight: 'bold', marginBottom: '6rem' }}>
+            For Local Businesses
+          </h2>
+          <div style={{ fontSize: '1.125rem', lineHeight: '2.4' }}>
+            <p>Fresh, authentic content for social media from kids parents trust.</p>
+            <p>Become the hometown hero — visible support for local teams.</p>
+            <p>Discover motivated teens — potential future employees.</p>
+            <p>Better advertising than paid ads — real stories from real athletes.</p>
+            <p>Only pay for clips you love — zero risk, total control.</p>
+          </div>
         </div>
       </div>
 
+      {/* Login Form */}
       {user ? (
-        <div className="max-w-md mx-auto space-y-8 text-center">
-          <p className="text-lg">Logged in as {user.email}</p>
-          <p className="text-sm">Redirecting to dashboard...</p>
+        <div style={{ marginTop: '6rem' }}>
+          <p style={{ fontSize: '2rem' }}>Logged in as {user.email}</p>
+          <p style={{ fontSize: '1.5rem' }}>Redirecting to dashboard...</p>
         </div>
       ) : (
-        <div className="max-w-md mx-auto space-y-12">
-          <div className="space-y-4">
-            <Label htmlFor="email" className="text-2xl block text-center mb-4">Your Email</Label>
+        <div style={{ maxWidth: '500px', margin: '0 auto', paddingBottom: '15rem' }}>
+          <div style={{ marginBottom: '6rem' }}>
+            <Label htmlFor="email" style={{ fontSize: '3rem', display: 'block', marginBottom: '3rem' }}>
+              Your Email
+            </Label>
             <Input
               id="email"
               type="email"
               placeholder="you@school.edu"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full text-2xl py-12 border-4 border-black text-center"
+              style={{
+                width: '100%',
+                padding: '3rem',
+                fontSize: '2.5rem',
+                border: '4px solid black',
+                textAlign: 'center',
+              }}
             />
           </div>
 
-          <Button onClick={handleLogin} disabled={loading} className="w-full text-4xl py-16 border-8 border-black bg-black text-white hover:bg-gray-800">
+          <Button
+            onClick={handleLogin}
+            disabled={loading}
+            style={{
+              width: '100%',
+              padding: '4rem',
+              fontSize: '3.5rem',
+              border: '8px solid black',
+              backgroundColor: 'black',
+              color: 'white',
+            }}
+          >
             {loading ? 'Sending...' : 'Send Login Link'}
           </Button>
         </div>
