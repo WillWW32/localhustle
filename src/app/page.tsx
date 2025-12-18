@@ -11,6 +11,7 @@ import Link from 'next/link'
 
 export default function Home() {
   const [email, setEmail] = useState('')
+  const [name, setName] = useState('')
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(false)
   const router = useRouter()
@@ -109,6 +110,11 @@ export default function Home() {
         </div>
       </div>
 
+      {/* Subtitle above email field */}
+      <p style={{ fontSize: '2rem', marginBottom: '3rem' }}>
+        Enter Here to Find Out How to Get In
+      </p>
+
       {/* Login Form + Log Out */}
       {user ? (
         <div style={{ marginTop: '2rem' }}>
@@ -131,6 +137,30 @@ export default function Home() {
         </div>
       ) : (
         <div style={{ maxWidth: '250px', margin: '0 auto', paddingBottom: '5rem' }}>
+          {/* Name field */}
+          <div style={{ marginBottom: '6rem' }}>
+            <Label htmlFor="name" style={{ fontSize: '2rem', display: 'block', marginBottom: '3rem' }}>
+              Your Name
+            </Label>
+            <Input
+              id="name"
+              type="text"
+              placeholder="Your Name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              style={{
+                width: '250px',
+                height: '60px',
+                padding: '0',
+                fontSize: '2rem',
+                border: '4px solid black',
+                textAlign: 'center',
+                fontFamily: "'Courier New', Courier, monospace",
+              }}
+            />
+          </div>
+
+          {/* Email field */}
           <div style={{ marginBottom: '6rem' }}>
             <Label htmlFor="email" style={{ fontSize: '2rem', display: 'block', marginBottom: '3rem' }}>
               Your Email
@@ -152,6 +182,7 @@ export default function Home() {
               }}
             />
           </div>
+
           <Button
             onClick={handleLogin}
             disabled={loading}
