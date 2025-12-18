@@ -69,14 +69,13 @@ export default function BusinessOnboard() {
           <div key={gig.title}>
             <Button
               onClick={() => handleGigSelect(gig)}
-              className="w-full h-72 p-12 flex flex-col justify-center items-center"
+              className="w-full h-72 p-12 flex flex-col justify-center items-center rounded-none shadow-none"
               style={{
                 backgroundColor: selectedGig?.title === gig.title ? '#333' : 'black',
                 color: 'white',
                 fontFamily: "'Courier New', Courier, monospace",
                 fontSize: '30px',
                 border: 'none',
-                boxShadow: 'none',
               }}
             >
               <span style={{ marginBottom: '1rem' }}>{gig.title}</span>
