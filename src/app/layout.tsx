@@ -42,7 +42,7 @@ export default function RootLayout({
 
         <main>{children}</main>
 
-        {/* Global Share Button — fixed bottom */}
+        {/* Global Share Button */}
         <button
           onClick={handleShare}
           style={{
@@ -63,7 +63,6 @@ export default function RootLayout({
           Share with Teammates
         </button>
 
-        {/* Your exact footer */}
         <footer style={{ marginTop: '8rem', paddingTop: '4rem', borderTop: '4px solid black' }}>
           <nav style={{
             marginBottom: '2rem',

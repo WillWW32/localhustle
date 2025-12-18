@@ -65,7 +65,11 @@ export default function ClaimOffer() {
     if (error) {
       alert(error.message)
     } else {
-      alert(deliveryOption === 'public' ? 'Clip uploaded! Post on IG/TT and tag @localhustleapp + business for $10 bonus.' : 'Clip uploaded! Business will review soon.')
+      if (deliveryOption === 'public') {
+        alert('Clip uploaded! Post on IG/TT and tag @localhustl + business for $10 bonus.')
+      } else {
+        alert('Clip uploaded! Business will review soon.')
+      }
       router.push('/dashboard')
     }
 
@@ -101,7 +105,7 @@ export default function ClaimOffer() {
             </label>
             {deliveryOption === 'public' && (
               <p className="text-sm text-gray-600">
-                Must tag @localhustleapp and the business. Caption example: "Shoutout to [Business] for supporting local athletes! #LocalHustle"
+                Must tag @localhustl and the business. Caption example: "Shoutout to [Business] for supporting local athletes! #LocalHustle"
               </p>
             )}
           </div>
