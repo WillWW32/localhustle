@@ -14,86 +14,149 @@ export default function Dashboard() {
   const [type, setType] = useState('shoutout')
   const [amount, setAmount] = useState('')
   const [description, setDescription] = useState('')
-  const [sessionError, setSessionError] = useState<string | null>(null)
   const router = useRouter()
 
   useEffect(() => {
     const fetchData = async () => {
-      try {
-        let { data: { session }, error: sessionError } = await supabase.auth.getSession()
-        if (sessionError || !session) {
-          setSessionError('Session expired — please log in again.')
-          return
-        }
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
 
-        // Auto-refresh if close to expiry
-        if (session.expires_at && session.expires_at * 1000 < Date.now() + 60000) {
-          const { error: refreshError } = await supabase.auth.refreshSession()
-          if (refreshError) throw refreshError
-          const { data } = await supabase.auth.getSession()
-          session = data.session
-        }
+      const { data: prof } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single()
+      setProfile(prof)
 
-        if (!session?.user) {
-          setSessionError('No user in session — please log in again.')
-          return
-        }
-
-        const { data: prof, error: profError } = await supabase
-          .from('profiles')
+      if (prof.role === 'business') {
+        const { data: biz } = await supabase
+          .from('businesses')
           .select('*')
-          .eq('id', session.user.id)
+          .eq('owner_id', user.id)
           .single()
+        setBusiness(biz)
 
-        if (profError) throw profError
+        const { data: clips } = await supabase
+          .from('clips')
+          .select('*, offers(*), profiles(email, parent_email)')
+          .eq('status', 'pending')
+          .in('offer_id', (await supabase.from('offers').select('id').eq('business_id', biz.id)).data?.map(o => o.id) || [])
+        setPendingClips(clips || [])
+      }
 
-        setProfile(prof)
-
-        if (prof.role === 'business') {
-          const { data: biz } = await supabase
-            .from('businesses')
-            .select('*')
-            .eq('owner_id', session.user.id)
-            .single()
-          setBusiness(biz)
-
-          const { data: clips } = await supabase
-            .from('clips')
-            .select('*, offers(*), profiles(email, parent_email)')
-            .eq('status', 'pending')
-            .in('offer_id', (await supabase.from('offers').select('id').eq('business_id', biz.id)).data?.map(o => o.id) || [])
-          setPendingClips(clips || [])
-        }
-
-        if (prof.role === 'athlete') {
-          const { data: openOffers } = await supabase
-            .from('offers')
-            .select('*')
-            .eq('status', 'active')
-            .order('created_at', { ascending: false })
-          setOffers(openOffers || [])
-        }
-      } catch (err) {
-        setSessionError('Session expired — please log in again.')
-        console.error(err)
+      if (prof.role === 'athlete') {
+        const { data: openOffers } = await supabase
+          .from('offers')
+          .select('*')
+          .eq('status', 'active')
+          .order('created_at', { ascending: false })
+        setOffers(openOffers || [])
       }
     }
-
     fetchData()
-  }, [router])
+  }, [])
 
-  if (sessionError) {
-    return (
-      <div className="container text-center py-32">
-        <p className="text-2xl mb-8">{sessionError}</p>
-        <Button onClick={signOut} className="w-72 h-20 text-2xl">
-          Log Out & Log In Again
-        </Button>
-      </div>
-    )
+  const copyLetter = () => {
+    const athleteId = profile?.id || 'fallback-id'
+    const letterText = `Hey [Business Name],
+
+I've been coming to [Your Spot] for years before and after practice.
+
+Our team has joined a new app that helps us get community support for our athletic journey. I'm reaching out to my favorite spots to see if you would consider a sponsorship.
+
+Here's what you would get: a short thank-you clip from me about your place. You can use the clip for social media if you want.
+
+I'd probably get some new shoes or gear and be set for our roadtrips. It means a lot for me and the team and I'd love to rep a local business that's got our back.
+
+This link has all the details for how it works: https://app.localhustle.org/business-onboard?ref=${athleteId}
+
+Thanks either way!
+
+– ${profile?.email.split('@')[0] || 'me'}
+${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athlete'}`
+    navigator.clipboard.writeText(letterText)
+    alert('Letter copied to clipboard!')
   }
 
-  if (!profile) return <p className="container text-center py-32">Loading...</p>
+  const shareLetter = () => {
+    const athleteId = profile?.id || 'fallback-id'
+    const letterText = `Hey [Business Name],
+
+I've been coming to [Your Spot] for years before and after practice.
+
+Our team has joined a new app that helps us get community support for our athletic journey. I'm reaching out to my favorite spots to see if you would consider a sponsorship.
+
+Here's what you would get: a short thank-you clip from me about your place. You can use the clip for social media if you want.
+
+I'd probably get some new shoes or gear and be set for our roadtrips. It means a lot for me and the team and I'd love to rep a local business that's got our back.
+
+This link has all the details for how it works: https://app.localhustle.org/business-onboard?ref=${athleteId}
+
+Thanks either way!
+
+– ${profile?.email.split('@')[0] || 'me'}
+${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athlete'}`
+
+    if (navigator.share) {
+      navigator.share({
+        title: 'LocalHustle Sponsorship',
+        text: letterText,
+      }).catch(() => {
+        copyLetter()
+      })
+    } else {
+      copyLetter()
+    }
+  }
+
+  const postOffer = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!business) return
+
+    const finalDescription = type === 'booster' ? 'Sponsoring the team — post-game meals, gear, or event. Money split equally among roster.' : description
+    const finalAmount = type === 'booster' ? 1000 : parseFloat(amount)
+
+    const { error } = await supabase
+      .from('offers')
+      .insert({
+        business_id: business.id,
+        type: type === 'booster' ? 'team_event' : type,
+        amount: finalAmount,
+        description: finalDescription,
+        status: 'active',
+      })
+
+    if (error) alert(error.message)
+    else {
+      alert('Offer posted!')
+      setAmount('')
+      setDescription('')
+      setType('shoutout')
+    }
+  }
+
+  const approveClip = async (clip: any) => {
+    const { error: clipError } = await supabase
+      .from('clips')
+      .update({ status: 'waiting_parent' })
+      .eq('id', clip.id)
+
+    if (clipError) {
+      alert(clipError.message)
+      return
+    }
+
+    await supabase
+      .from('businesses')
+      .update({ wallet_balance: business.wallet_balance - clip.offers.amount })
+      .eq('id', business.id)
+
+    alert(`Clip sent to parent for final approval: ${clip.profiles.parent_email || 'parent email'}`)
+    setPendingClips(pendingClips.filter(c => c.id !== clip.id))
+    setBusiness({ ...business, wallet_balance: business.wallet_balance - clip.offers.amount })
+  }
+
+  if (!profile) return <p className="container text-center">Loading...</p>
 
   return (
     <div className="container">
@@ -104,7 +167,7 @@ export default function Dashboard() {
           {/* Letter first */}
           <div>
             <h2 className="text-3xl mb-8 font-bold">Student Athlete</h2>
-            <p className="mb-12">Pitch local businesses for support — copy the letter below and send via text or email.</p>
+            <p className="mb-12">Pitch local businesses for support — copy or share the letter below.</p>
 
             <div className="bg-gray-100 p-12 mb-16 border border-black max-w-lg mx-auto">
               <pre className="font-mono text-sm whitespace-pre-wrap text-left">
@@ -127,9 +190,14 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
               </pre>
             </div>
 
-            <Button onClick={copyLetter} className="w-72 h-20 text-2xl bg-black text-white hover:bg-gray-800 mb-16">
-              Copy Letter to Clipboard
-            </Button>
+            <div className="space-y-8">
+              <Button onClick={shareLetter} className="w-full max-w-md h-20 text-2xl bg-black text-white hover:bg-gray-800">
+                Share Letter (Text, Instagram, etc.)
+              </Button>
+              <Button onClick={copyLetter} variant="outline" className="w-full max-w-md h-20 text-2xl">
+                Copy Letter to Clipboard
+              </Button>
+            </div>
           </div>
 
           {/* Open Offers */}
@@ -243,7 +311,6 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
         </div>
       )}
 
-      {/* Small Log Out at bottom */}
       <div className="text-center mt-32">
         <Button onClick={signOut} variant="outline" className="text-base py-4 px-8">
           Log Out
