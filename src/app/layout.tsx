@@ -13,7 +13,7 @@ export default function RootLayout({
         <link rel="icon" href="/favicon.ico" />
       </head>
       <body>
-        <header className="py-4 border-b-4 border-black">
+        <header className="py-3 border-b-4 border-black">
           <div className="container text-center">
             <Link href="/">
               <Image
