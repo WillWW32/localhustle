@@ -93,4 +93,67 @@ export default function BusinessOnboard() {
             {selectedGig?.title === gig.title && (
               <div style={{ marginTop: '2rem', backgroundColor: '#f5f5f5', padding: '2rem', border: '1px solid black', maxWidth: '500px', marginLeft: 'auto', marginRight: 'auto' }}>
                 <h3 style={{ fontSize: '24px', marginBottom: '2rem', fontWeight: 'bold' }}>Customize Your {gig.title}</h3>
-                <div style={{ display: 'flex', flexDirection: 'column',
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '20px', marginBottom: '0.5rem' }}>Offer Amount</label>
+                    <Input
+                      placeholder="Enter Offer Amount - Min $50"
+                      value={amount}
+                      onChange={(e) => setAmount(e.target.value)}
+                      style={{ fontFamily: "'Courier New', Courier, monospace" }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '20px', marginBottom: '0.5rem' }}>Custom Details</label>
+                    <textarea
+                      placeholder="Add your details (e.g., Come to Bridge Pizza this Friday)"
+                      value={customDetails}
+                      onChange={(e) => setCustomDetails(e.target.value)}
+                      style={{ width: '100%', height: '160px', padding: '1rem', fontSize: '20px', fontFamily: "'Courier New', Courier, monospace'", border: '4px solid black' }}
+                    />
+                  </div>
+                  <Button onClick={handlePost} style={{
+                    width: '100%',
+                    height: '80px',
+                    fontSize: '30px',
+                    backgroundColor: 'black',
+                    color: 'white',
+                    fontFamily: "'Courier New', Courier, monospace'",
+                  }}>
+                    Fund & Post Offer
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+      {/* Banner at bottom */}
+      <div style={{ backgroundColor: '#f0f0f0', padding: '2rem', marginTop: '4rem', borderTop: '4px solid black' }}>
+        <p style={{ fontSize: '24px', fontWeight: 'bold' }}>
+          Business can add scholarships after successful gig completion.
+        </p>
+      </div>
+      {/* Payment Popup */}
+      <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
+        <Button onClick={() => setShowPaymentPopup(true)} variant="outline" style={{ fontSize: '20px', padding: '1rem 2rem' }}>
+          How payments work?
+        </Button>
+      </div>
+      {showPaymentPopup && (
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
+          <div style={{ backgroundColor: 'white', padding: '3rem', border: '4px solid black', maxWidth: '600px' }}>
+            <h2 style={{ fontSize: '30px', marginBottom: '2rem', fontWeight: 'bold' }}>How Payments Work</h2>
+            <p style={{ marginBottom: '1rem' }}>1. Athlete uploads clip</p>
+            <p style={{ marginBottom: '1rem' }}>2. You review & approve</p>
+            <p style={{ marginBottom: '1rem' }}>3. Parent approves (for minors)</p>
+            <p style={{ marginBottom: '2rem' }}>4. $ sent — only pay for clips you love</p>
+            <Button onClick={() => setShowPaymentPopup(false)} style={{ width: '100%', height: '60px', fontSize: '20px' }}>
+              Got it
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
