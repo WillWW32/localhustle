@@ -116,16 +116,21 @@ export default function BusinessOnboard() {
                       style={{ width: '100%', height: '160px', padding: '1rem', fontSize: '20px', fontFamily: "'Courier New', Courier, monospace'", border: '4px solid black' }}
                     />
                   </div>
-                  <Button onClick={handlePost} style={{
-                    width: '100%',
-                    height: '80px',
-                    fontSize: '30px',
-                    backgroundColor: '#90ee90',  // light green
-                    color: 'black',
-                    fontFamily: "'Courier New', Courier, monospace'",
-                  }}>
+                  <button
+                    onClick={handlePost}
+                    style={{
+                      width: '100%',
+                      height: '80px',
+                      fontSize: '30px',
+                      backgroundColor: '#90ee90',  // light green
+                      color: 'black',
+                      fontFamily: "'Courier New', Courier, monospace'",
+                      border: 'none',
+                      cursor: 'pointer',
+                    }}
+                  >
                     Fund & Post Offer
-                  </Button>
+                  </button>
                 </div>
               </div>
             )}
