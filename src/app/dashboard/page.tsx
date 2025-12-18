@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import { signOut } from '@/lib/auth'
 import { Button } from '@/components/ui/button'
-import Link from 'next/link'
 
 export default function Dashboard() {
   const [profile, setProfile] = useState<any>(null)
@@ -130,16 +129,16 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
 
   return (
     <div className="container">
-      <p className="text-center mb-12 text-xl">Welcome, {profile.email}</p>
+      <p className="text-center mb-12 text-xl font-mono">Welcome, {profile.email}</p>
 
       {profile.role === 'athlete' ? (
-        <div className="max-w-4xl mx-auto space-y-16">
+        <div className="max-w-2xl mx-auto space-y-16 font-mono text-center text-lg">
           {/* Letter first */}
-          <div className="text-center">
-            <h2 className="text-3xl mb-8">Student Athletes Pitch Local</h2>
-            <p className="mb-12">Copy or share the letter below to your favorite spots.</p>
+          <div>
+            <h2 className="text-3xl mb-8 font-bold">Student Athlete</h2>
+            <p className="mb-12">Pitch local businesses for support — copy the letter below and send via text or email.</p>
 
-            <div className="bg-gray-100 p-12 mb-12 border border-black max-w-lg mx-auto">
+            <div className="bg-gray-100 p-12 mb-16 border border-black max-w-lg mx-auto">
               <pre className="font-mono text-sm whitespace-pre-wrap text-left">
                 {`Hey [Business Name],
 
@@ -165,23 +164,64 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
             </Button>
           </div>
 
-          {/* Open Offers — 2 rows of 3 smaller boxes */}
+          {/* 6 Gig Containers — 2 columns, 280px wide, hairline border, padding, card-lift */}
           <div>
-            <h2 className="text-3xl mb-12 text-center">Open Offers</h2>
+            <h2 className="text-3xl mb-12 font-bold">How Do I Earn?</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-12 max-w-4xl mx-auto">
+              <div className="card-lift border border-black p-12 bg-white">
+                <h3 className="text-2xl font-bold mb-4">ShoutOut</h3>
+                <p className="font-bold mb-4">$50</p>
+                <p>Visit a favorite business and make a quick shoutout 15-sec reel about what you like.</p>
+              </div>
+
+              <div className="card-lift border border-black p-12 bg-white">
+                <h3 className="text-2xl font-bold mb-4">Youth Clinic</h3>
+                <p className="font-bold mb-4">Up to $500</p>
+                <p>Run 30 min - 60 min sessions for younger athletes (with teammates).</p>
+              </div>
+
+              <div className="card-lift border border-black p-12 bg-white">
+                <h3 className="text-2xl font-bold mb-4">Team Sponsor</h3>
+                <p className="font-bold mb-4">$500+</p>
+                <p>Business sponsors team meals/gear — money split equally.</p>
+              </div>
+
+              <div className="card-lift border border-black p-12 bg-white">
+                <h3 className="text-2xl font-bold mb-4">Product Review</h3>
+                <p className="font-bold mb-4">$50 + Perks</p>
+                <p>Post your order - Get free coffee for a month (example).</p>
+              </div>
+
+              <div className="card-lift border border-black p-12 bg-white">
+                <h3 className="text-2xl font-bold mb-4">Cameo</h3>
+                <p className="font-bold mb-4">$50-$200</p>
+                <p>Impact the next gen. (Birthdays, Pep Talks).</p>
+              </div>
+
+              <div className="card-lift border border-black p-12 bg-white">
+                <h3 className="text-2xl font-bold mb-4">Impact the Next Generation</h3>
+                <p className="font-bold mb-4">$50-$200</p>
+                <p>Inspire younger kids with your story (birthdays, pep talks).</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Open Offers */}
+          <div>
+            <h2 className="text-3xl mb-8 font-bold">Open Offers</h2>
             {offers.length === 0 ? (
-              <p className="text-center text-gray-600 mb-12">No offers yet — send letters to get businesses posting!</p>
+              <p className="text-gray-600 mb-12">No offers yet — send letters to get businesses posting!</p>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-12">
+              <div className="space-y-16">
                 {offers.map((offer) => (
-                  <div key={offer.id} className="card-lift border-4 border-black p-12 bg-white">
-                    <p className="font-bold text-2xl mb-4 text-center">{offer.type.toUpperCase()}</p>
-                    <p className="font-bold text-3xl mb-6 text-center">${offer.amount}</p>
-                    <p className="mb-8 text-center">{offer.description}</p>
+                  <div key={offer.id} className="card-lift border-4 border-black p-16 bg-white max-w-lg mx-auto">
+                    <p className="font-bold text-2xl mb-6">{offer.type.toUpperCase()} — ${offer.amount}</p>
+                    <p className="mb-12">{offer.description}</p>
                     <Button 
                       onClick={() => router.push(`/claim/${offer.id}`)}
-                      className="w-full h-20 text-2xl bg-black text-white hover:bg-gray-800"
+                      className="w-72 h-20 text-2xl bg-black text-white hover:bg-gray-800"
                     >
-                      Claim This Gig
+                      Claim Offer
                     </Button>
                   </div>
                 ))}
@@ -189,7 +229,7 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
             )}
           </div>
 
-          {/* Pre-populating gigs at bottom — smaller */}
+          {/* Pinned gigs at bottom */}
           <div className="space-y-16 mt-32">
             <div className="card-lift border-2 border-black p-12 bg-gray-100 max-w-md mx-auto">
               <h3 className="text-2xl mb-6 font-bold">Team Hustle Ambassador</h3>
@@ -208,7 +248,7 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
           </div>
         </div>
       ) : (
-        // Business view unchanged for now
+        // Business view unchanged
         <div className="max-w-2xl mx-auto space-y-12">
           <div className="text-center">
             <h2 className="text-3xl mb-6">Local Business</h2>
@@ -277,23 +317,11 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
         </div>
       )}
 
-      {/* Responsive site-map footer (gray links) */}
-      <footer className="mt-32 py-12 border-t-4 border-black">
-        <div className="container text-center">
-          <nav className="flex flex-wrap justify-center gap-4 mb-8 text-gray-600">
-            <Link href="/" className="hover:underline">Home</Link>
-            <Link href="/dashboard" className="hover:underline">Dashboard</Link>
-            <Link href="/profile" className="hover:underline">Profile</Link>
-            <Link href="/open-gigs" className="hover:underline">Open Gigs</Link>
-            <Link href="/compliance" className="hover:underline">Compliance</Link>
-            <Link href="/privacy" className="hover:underline">Privacy</Link>
-            <Link href="/terms" className="hover:underline">Terms</Link>
-          </nav>
-          <p className="text-sm">
-            © 2025 LocalHustle — Community Driven Support for Student Athletes
-          </p>
-        </div>
-      </footer>
+      <div className="text-center mt-12">
+        <Button onClick={signOut} variant="outline" className="text-lg py-6">
+          Log Out
+        </Button>
+      </div>
     </div>
   )
 }
