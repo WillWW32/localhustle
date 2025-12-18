@@ -1,8 +1,11 @@
 'use client'
 
 import { useState } from 'react'
+import { loadStripe } from '@stripe/stripe-js'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
 
 const gigTypes = [
   { title: 'ShoutOut', baseAmount: 50, description: 'Visit a favorite business and make a quick shoutout 15-sec reel about what you like.' },
@@ -18,11 +21,13 @@ export default function BusinessOnboard() {
   const [customDetails, setCustomDetails] = useState('')
   const [amount, setAmount] = useState('')
   const [showPaymentPopup, setShowPaymentPopup] = useState(false)
+  const [loadingStripe, setLoadingStripe] = useState(false)
+  const [autoRebill, setAutoRebill] = useState(false)
 
   const handleGigSelect = (gig: typeof gigTypes[0]) => {
     setSelectedGig(gig)
     setNumAthletes(1)
-    setAmount(gig.baseAmount.toString())
+    setAmount('')
     setCustomDetails('')
   }
 
@@ -34,18 +39,38 @@ export default function BusinessOnboard() {
     }
   }
 
+  const handleStripeCheckout = async () => {
+    setLoadingStripe(true)
+
+    const response = await fetch('/api/create-checkout-session', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ amount: 10000, autoRebill }), // $100 in cents
+    })
+
+    const { id } = await response.json()
+
+    const stripe = await stripePromise
+    if (stripe) {
+      const { error } = await stripe.redirectToCheckout({ sessionId: id })
+      if (error) alert(error.message)
+    }
+
+    setLoadingStripe(false)
+  }
+
   const handlePost = async () => {
-    alert('Offer posted and wallet funded (test mode)!')
+    alert('Offer posted (test mode)!')
   }
 
   return (
-    <div className="container py-12">
+    <div className="container py-8">
       {/* Small header */}
       <h1 className="text-center text-3xl mb-4 font-bold">Welcome Local Business</h1>
       <p className="text-center text-xl mb-4">An athlete invited you to support the team.</p>
       <p className="text-center text-xl mb-12">Here's How:</p>
 
-      {/* Tiny black downward arrow */}
+      {/* Arrow */}
       <div className="text-center mb-12">
         <div style={{ fontSize: '2rem' }}>▼</div>
       </div>
@@ -70,7 +95,7 @@ export default function BusinessOnboard() {
           <div key={gig.title}>
             <Button
               onClick={() => handleGigSelect(gig)}
-              className={`w-full h-48 text-3xl p-12 flex flex-col justify-center font-mono font-bold ${
+              className={`w-full h-52 text-3xl p-12 flex flex-col justify-center font-mono font-bold ${
                 selectedGig?.title === gig.title ? 'bg-gray-800' : 'bg-black'
               } text-white hover:bg-gray-800`}
             >
@@ -79,7 +104,7 @@ export default function BusinessOnboard() {
               <span className="text-xl">{gig.description}</span>
             </Button>
 
-            {/* Form appears directly below selected gig */}
+            {/* Form below selected gig */}
             {selectedGig?.title === gig.title && (
               <div className="mt-12 bg-gray-100 p-12 border border-black max-w-md mx-auto">
                 <h3 className="text-2xl mb-8 font-bold">Customize Your {gig.title}</h3>
@@ -122,13 +147,32 @@ export default function BusinessOnboard() {
                   </div>
 
                   <Button onClick={handlePost} className="w-full h-20 text-3xl bg-black text-white hover:bg-gray-800 font-mono font-bold">
-                    Fund & Post Offer
+                    Post Offer
                   </Button>
                 </div>
               </div>
             )}
           </div>
         ))}
+      </div>
+
+      {/* Stripe Funding + Auto-Rebill */}
+      <div className="max-w-md mx-auto space-y-12 mb-32">
+        <Button onClick={handleStripeCheckout} disabled={loadingStripe} className="w-full h-20 text-3xl bg-black text-white hover:bg-gray-800">
+          {loadingStripe ? 'Processing...' : 'Add Funds to Wallet'}
+        </Button>
+
+        <div className="flex items-center justify-center space-x-4">
+          <input
+            type="checkbox"
+            id="autorebill"
+            checked={autoRebill}
+            onChange={(e) => setAutoRebill(e.target.checked)}
+          />
+          <label htmlFor="autorebill" className="text-xl">
+            Auto-add $100 when balance < $50
+          </label>
+        </div>
       </div>
 
       {/* Payment Popup */}
