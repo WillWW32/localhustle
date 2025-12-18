@@ -4,6 +4,8 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 
+export const dynamic = 'force-dynamic'  // <--- This line fixes the prerender error
+
 const gigTypes = [
   { title: 'ShoutOut', amount: '50', description: 'Visit a favorite business and make a quick shoutout 15-sec reel about what you like.' },
   { title: 'Youth Clinic', amount: '500+', description: 'Run 30–60 min sessions for younger athletes (with teammates).' },
@@ -30,25 +32,31 @@ export default function BusinessOnboard() {
   }
 
   return (
-    <div className="container py-8">
+    <div style={{
+      fontFamily: "'Courier New', Courier, monospace",
+      textAlign: 'center',
+      padding: '2rem 2rem',
+      backgroundColor: 'white',
+      color: 'black',
+    }}>
       {/* Title */}
-      <h1 className="text-center text-3xl mb-4 font-bold">Welcome Local Business</h1>
-      <p className="text-center text-xl mb-4">An athlete invited you to support the team.</p>
-      <p className="text-center text-xl mb-12">Here's How:</p>
+      <h1 style={{ fontSize: '22px', fontWeight: 'bold', marginBottom: '1rem' }}>
+        A Local Student Athlete Personally Requested Your Business
+      </h1>
+      <p style={{ fontSize: '20px', marginBottom: '1rem' }}>An athlete invited you to support the team.</p>
+      <p style={{ fontSize: '20px', marginBottom: '2rem' }}>Here's How:</p>
 
       {/* Arrow */}
-      <div className="text-center mb-12">
-        <div style={{ fontSize: '2rem' }}>▼</div>
-      </div>
+      <div style={{ fontSize: '2rem', marginBottom: '2rem' }}>▼</div>
 
       {/* Gig Descriptions */}
-      <div className="max-w-4xl mx-auto mb-32">
-        <div className="border border-black p-12 bg-white">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+      <div style={{ maxWidth: '1000px', margin: '0 auto 4rem auto' }}>
+        <div style={{ border: '1px solid black', padding: '2rem', backgroundColor: 'white' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem' }}>
             {gigTypes.map((gig) => (
               <div key={gig.title}>
-                <h3 className="text-2xl font-bold mb-4">{gig.title}</h3>
-                <p className="font-bold mb-4">${gig.amount}</p>
+                <h3 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '1rem' }}>{gig.title}</h3>
+                <p style={{ fontWeight: 'bold', marginBottom: '1rem' }}>${gig.amount}</p>
                 <p>{gig.description}</p>
               </div>
             ))}
@@ -56,50 +64,68 @@ export default function BusinessOnboard() {
         </div>
       </div>
 
-      {/* Giant Gig Buttons — shadcn Button with custom styles */}
-      <h2 className="text-center text-3xl mb-12 font-bold">Choose a Gig to Sponsor</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-20 max-w-4xl mx-auto mb-32">
+      {/* Giant Gig Buttons — raw styles */}
+      <h2 style={{ fontSize: '30px', fontWeight: 'bold', marginBottom: '2rem' }}>Choose a Gig to Sponsor</h2>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '2rem', maxWidth: '1000px', margin: '0 auto 4rem auto' }}>
         {gigTypes.map((gig) => (
           <div key={gig.title}>
-            <Button
+            <button
               onClick={() => handleGigSelect(gig)}
-              className="w-full h-52 text-3xl p-12 flex flex-col justify-center font-mono text-white hover:bg-gray-800"
               style={{
+                width: '100%',
+                height: '300px',
                 backgroundColor: selectedGig?.title === gig.title ? '#333' : 'black',
+                color: 'white',
                 fontFamily: "'Courier New', Courier, monospace",
+                fontSize: '30px',
+                padding: '2rem',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                alignItems: 'center',
+                cursor: 'pointer',
+                border: 'none',
+                transition: 'background-color 0.3s',
               }}
+              onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#333'}
+              onMouseOut={(e) => e.currentTarget.style.backgroundColor = selectedGig?.title === gig.title ? '#333' : 'black'}
             >
-              <span className="mb-4">{gig.title}</span>
-              <span className="mb-4">${gig.amount}</span>
-              <span className="text-xl">{gig.description}</span>
-            </Button>
+              <span style={{ marginBottom: '1rem' }}>{gig.title}</span>
+              <span style={{ marginBottom: '1rem' }}>${gig.amount}</span>
+              <span style={{ fontSize: '20px' }}>{gig.description}</span>
+            </button>
 
             {/* Form below selected gig */}
             {selectedGig?.title === gig.title && (
-              <div className="mt-12 bg-gray-100 p-12 border border-black max-w-md mx-auto">
-                <h3 className="text-2xl mb-8 font-bold">Customize Your {gig.title}</h3>
-                <div className="space-y-8">
+              <div style={{ marginTop: '2rem', backgroundColor: '#f5f5f5', padding: '2rem', border: '1px solid black', maxWidth: '500px', marginLeft: 'auto', marginRight: 'auto' }}>
+                <h3 style={{ fontSize: '24px', marginBottom: '2rem', fontWeight: 'bold' }}>Customize Your {gig.title}</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
                   <div>
-                    <label className="block text-xl mb-2">Offer Amount</label>
+                    <label style={{ display: 'block', fontSize: '20px', marginBottom: '0.5rem' }}>Offer Amount</label>
                     <Input
                       placeholder="Enter Offer Amount - Min $50"
                       value={amount}
                       onChange={(e) => setAmount(e.target.value)}
-                      className="font-mono"
-                      style={{ color: '#666' }}
+                      style={{ fontFamily: "'Courier New', Courier, monospace" }}
                     />
                   </div>
                   <div>
-                    <label className="block text-xl mb-2">Custom Details</label>
+                    <label style={{ display: 'block', fontSize: '20px', marginBottom: '0.5rem' }}>Custom Details</label>
                     <textarea
                       placeholder="Add your details (e.g., Come to Bridge Pizza this Friday)"
                       value={customDetails}
                       onChange={(e) => setCustomDetails(e.target.value)}
-                      className="w-full border-4 border-black p-6 h-40 text-xl font-mono"
-                      style={{ color: '#666' }}
+                      style={{ width: '100%', height: '160px', padding: '1rem', fontSize: '20px', fontFamily: "'Courier New', Courier, monospace'", border: '4px solid black' }}
                     />
                   </div>
-                  <Button onClick={handlePost} className="w-full h-20 text-3xl bg-black text-white hover:bg-gray-800 font-mono font-bold">
+                  <Button onClick={handlePost} style={{
+                    width: '100%',
+                    height: '80px',
+                    fontSize: '30px',
+                    backgroundColor: '#90ee90',
+                    color: 'black',
+                    fontFamily: "'Courier New', Courier, monospace'",
+                  }}>
                     Fund & Post Offer
                   </Button>
                 </div>
@@ -109,22 +135,29 @@ export default function BusinessOnboard() {
         ))}
       </div>
 
+      {/* Banner at bottom */}
+      <div style={{ backgroundColor: '#f0f0f0', padding: '2rem', marginTop: '4rem', borderTop: '4px solid black' }}>
+        <p style={{ fontSize: '24px', fontWeight: 'bold' }}>
+          Business can add scholarships after successful gig completion.
+        </p>
+      </div>
+
       {/* Payment Popup */}
-      <div className="text-center mb-20">
-        <Button onClick={() => setShowPaymentPopup(true)} variant="outline" className="text-xl py-6">
+      <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
+        <Button onClick={() => setShowPaymentPopup(true)} variant="outline" style={{ fontSize: '20px', padding: '1rem 2rem' }}>
           How payments work?
         </Button>
       </div>
 
       {showPaymentPopup && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-12 border-4 border-black max-w-lg">
-            <h2 className="text-3xl mb-8 font-bold">How Payments Work</h2>
-            <p className="mb-4">1. Athlete uploads clip</p>
-            <p className="mb-4">2. You review & approve</p>
-            <p className="mb-4">3. Parent approves (for minors)</p>
-            <p className="mb-8">4. $ sent — clips you love</p>
-            <Button onClick={() => setShowPaymentPopup(false)} className="w-full text-xl py-6">
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
+          <div style={{ backgroundColor: 'white', padding: '3rem', border: '4px solid black', maxWidth: '600px' }}>
+            <h2 style={{ fontSize: '30px', marginBottom: '2rem', fontWeight: 'bold' }}>How Payments Work</h2>
+            <p style={{ marginBottom: '1rem' }}>1. Athlete uploads clip</p>
+            <p style={{ marginBottom: '1rem' }}>2. You review & approve</p>
+            <p style={{ marginBottom: '1rem' }}>3. Parent approves (for minors)</p>
+            <p style={{ marginBottom: '2rem' }}>4. $ sent — clips you love</p>
+            <Button onClick={() => setShowPaymentPopup(false)} style={{ width: '100%', height: '60px', fontSize: '20px' }}>
               Got it
             </Button>
           </div>
