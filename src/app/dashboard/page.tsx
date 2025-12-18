@@ -21,9 +21,7 @@ export default function Dashboard() {
     const fetchData = async () => {
       try {
         let { data: { session }, error: sessionError } = await supabase.auth.getSession()
-        if (sessionError) throw sessionError
-
-        if (!session) {
+        if (sessionError || !session) {
           setSessionError('Session expired — please log in again.')
           return
         }
@@ -34,6 +32,11 @@ export default function Dashboard() {
           if (refreshError) throw refreshError
           const { data } = await supabase.auth.getSession()
           session = data.session
+        }
+
+        if (!session?.user) {
+          setSessionError('No user in session — please log in again.')
+          return
         }
 
         const { data: prof, error: profError } = await supabase
@@ -113,11 +116,9 @@ Our team has joined a new app that helps us get community support for our athlet
 
 Here's what you would get: a short thank-you clip from me about your place. You can use the clip for social media if you want.
 
-I'd probably get some new shoes or gear and be set for our roadtrips. This means a lot for me and the team and I'd love to rep a local business that's got our back.
+I'd probably get some new shoes or gear and be set for our roadtrips. It means a lot for me and the team and I'd love to rep a local business that's got our back.
 
-Check this link for the details on how it works:
-
-https://app.localhustle.org/business-onboard?ref=${profile.id || 'fallback-id'}
+This link has all the details for how it works: https://app.localhustle.org/business-onboard?ref=${profile.id || 'fallback-id'}
 
 Thanks either way!
 
@@ -173,7 +174,7 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
           </div>
         </div>
       ) : (
-        // Business view
+        // Business view unchanged
         <div className="max-w-2xl mx-auto space-y-16 font-mono text-center text-lg">
           <div>
             <h2 className="text-3xl mb-8 font-bold">Local Business</h2>
