@@ -69,7 +69,7 @@ export default function Home() {
     <div style={{
       fontFamily: "'Courier New', Courier, monospace",
       textAlign: 'center',
-      padding: '7rem 2rem',
+      padding: '5rem 2rem',
       backgroundColor: 'white',
       color: 'black',
     }}>
