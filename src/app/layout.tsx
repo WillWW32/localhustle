@@ -10,14 +10,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-  <link rel="icon" href="/favicon.ico" sizes="any" />
-  <link rel="icon" href="/favicon-16x16.png" type="image/png" sizes="16x16" />
-  <link rel="icon" href="/favicon-32x32.png" type="image/png" sizes="32x32" />
-  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-  <link rel="manifest" href="/site.webmanifest" /> {/* optional for PWA */}
-</head>
+        <link rel="icon" href="/favicon.ico" />
+      </head>
       <body>
-        <header className="py-5 border-b-4 border-black">
+        <header className="py-4 border-b-4 border-black">
           <div className="container text-center">
             <Link href="/">
               <Image
@@ -32,9 +28,25 @@ export default function RootLayout({
           </div>
         </header>
 
-        <main className="fade-in">
-          {children}
-        </main>
+        <main>{children}</main>
+
+        {/* Site-map Footer — small gray links */}
+        <footer className="py-12 border-t-4 border-black mt-32">
+          <div className="container text-center">
+            <nav className="flex flex-wrap justify-center gap-6 mb-8 text-sm text-gray-600">
+              <Link href="/" className="hover:underline">Home</Link>
+              <Link href="/dashboard" className="hover:underline">Dashboard</Link>
+              <Link href="/profile" className="hover:underline">Profile</Link>
+              <Link href="/open-gigs" className="hover:underline">Open Gigs</Link>
+              <Link href="/compliance" className="hover:underline">Compliance</Link>
+              <Link href="/privacy" className="hover:underline">Privacy</Link>
+              <Link href="/terms" className="hover:underline">Terms</Link>
+            </nav>
+            <p className="text-xs text-gray-600">
+              © 2025 LocalHustle — Community Driven Support for Student Athletes
+            </p>
+          </div>
+        </footer>
       </body>
     </html>
   )
