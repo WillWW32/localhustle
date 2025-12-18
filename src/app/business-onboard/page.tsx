@@ -1,81 +1,55 @@
 'use client'
 
 import { useState } from 'react'
-import { loadStripe } from '@stripe/stripe-js'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
 
 const gigTypes = [
   { title: 'ShoutOut', baseAmount: 50, description: 'Visit a favorite business and make a quick shoutout 15-sec reel about what you like.' },
   { title: 'Youth Clinic', baseAmount: 500, description: 'Run 30–60 min sessions for younger athletes (with teammates).' },
   { title: 'Team Sponsor', baseAmount: 1000, description: 'Business sponsors team meals/gear — money split equally.' },
   { title: 'Product Review', baseAmount: 50, description: '$50 + Perks (e.g., post your order — get free coffee for a month).' },
-  { title: 'Cameo', baseAmount: 200, description: '$50–$200 — Impact the next gen (birthdays, pep talks).' },
+  { title: 'Cameo', baseAmount: 100, description: 'Custom 15-Sec Video for Younger Athletes (birthdays, pre-game pep talks).' },
 ]
 
 export default function BusinessOnboard() {
   const [selectedGig, setSelectedGig] = useState<typeof gigTypes[0] | null>(null)
-  const [numAthletes, setNumAthletes] = useState(1)
   const [customDetails, setCustomDetails] = useState('')
   const [amount, setAmount] = useState('')
   const [showPaymentPopup, setShowPaymentPopup] = useState(false)
-  const [loadingStripe, setLoadingStripe] = useState(false)
-  const [autoRebill, setAutoRebill] = useState(false)
 
   const handleGigSelect = (gig: typeof gigTypes[0]) => {
     setSelectedGig(gig)
-    setNumAthletes(1)
-    setAmount('')
+    setAmount(gig.baseAmount.toString())
     setCustomDetails('')
   }
 
-  const handleAthletesChange = (value: number) => {
-    setNumAthletes(value)
-    if (selectedGig) {
-      const total = selectedGig.baseAmount + (value - 1) * 75
-      setAmount(total.toString())
-    }
-  }
-
-  const handleStripeCheckout = async () => {
-    setLoadingStripe(true)
-
-    const response = await fetch('/api/create-checkout-session', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ amount: 10000, autoRebill }), // $100 in cents
-    })
-
-    const { id } = await response.json()
-
-    const stripe = await stripePromise
-    if (stripe) {
-      const { error } = await stripe.redirectToCheckout({ sessionId: id })
-      if (error) alert(error.message)
-    }
-
-    setLoadingStripe(false)
-  }
-
   const handlePost = async () => {
-    alert('Offer posted (test mode)!')
+    alert('Offer posted and wallet funded (test mode)!')
   }
 
   return (
     <div className="container py-8">
-      {/* Small header */}
-      <h1 className="text-center text-3xl mb-4 font-bold">Welcome Local Business</h1>
-      <p className="text-center text-xl mb-4">An athlete invited you to support the team.</p>
-      <p className="text-center text-xl mb-12">Here's How:</p>
+      {/* Trigger heading */}
+      <h1 className="text-center text-3xl mb-4 font-bold">
+        You were hand-picked by a local athlete — be one of the first 10 sponsors
+      </h1>
+
+      {/* Authority + liking + commitment */}
+      <p className="text-center text-xl mb-4 italic">
+        The only NIL-compliant and approved platform for local high school teams and players.
+      </p>
+
+      <p className="text-center text-xl mb-12">
+        The athlete said: "I can only do 4 max this month and I want you to be one because you're my favorite."
+      </p>
 
       {/* Arrow */}
       <div className="text-center mb-12">
         <div style={{ fontSize: '2rem' }}>▼</div>
       </div>
 
-      {/* Gig Descriptions — thin hairline border */}
+      {/* Gig Descriptions */}
       <div className="max-w-4xl mx-auto mb-32">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
           {gigTypes.map((gig) => (
@@ -147,32 +121,13 @@ export default function BusinessOnboard() {
                   </div>
 
                   <Button onClick={handlePost} className="w-full h-20 text-3xl bg-black text-white hover:bg-gray-800 font-mono font-bold">
-                    Post Offer
+                    Fund & Post Offer
                   </Button>
                 </div>
               </div>
             )}
           </div>
         ))}
-      </div>
-
-      {/* Stripe Funding + Auto-Rebill */}
-      <div className="max-w-md mx-auto space-y-12 mb-32">
-        <Button onClick={handleStripeCheckout} disabled={loadingStripe} className="w-full h-20 text-3xl bg-black text-white hover:bg-gray-800">
-          {loadingStripe ? 'Processing...' : 'Add Funds to Wallet'}
-        </Button>
-
-        <div className="flex items-center justify-center space-x-4">
-          <input
-            type="checkbox"
-            id="autorebill"
-            checked={autoRebill}
-            onChange={(e) => setAutoRebill(e.target.checked)}
-          />
-          <label htmlFor="autorebill" className="text-xl">
-            Auto-add $100 when balance < $50
-          </label>
-        </div>
       </div>
 
       {/* Payment Popup */}
@@ -189,7 +144,7 @@ export default function BusinessOnboard() {
             <p className="mb-4">1. Athlete uploads clip</p>
             <p className="mb-4">2. You review & approve</p>
             <p className="mb-4">3. Parent approves (for minors)</p>
-            <p className="mb-8">4. $ sent — only pay for clips you love</p>
+            <p className="mb-8">4. $ sent - real customers come</p>
             <Button onClick={() => setShowPaymentPopup(false)} className="w-full text-xl py-6">
               Got it
             </Button>

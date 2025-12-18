@@ -10,6 +10,7 @@ export default function ClaimOffer() {
   const router = useRouter()
   const [offer, setOffer] = useState<any>(null)
   const [videoFile, setVideoFile] = useState<File | null>(null)
+  const [deliveryOption, setDeliveryOption] = useState<'private' | 'public'>('private')
   const [uploading, setUploading] = useState(false)
 
   useEffect(() => {
@@ -58,12 +59,13 @@ export default function ClaimOffer() {
         athlete_id: user.id,
         video_url: urlData.publicUrl,
         status: 'pending',
+        delivery_option: deliveryOption,
       })
 
     if (error) {
       alert(error.message)
     } else {
-      alert('Clip uploaded! Business will review soon.')
+      alert(deliveryOption === 'public' ? 'Clip uploaded! Post on IG/TT and tag @localhustleapp + business for $10 bonus.' : 'Clip uploaded! Business will review soon.')
       router.push('/dashboard')
     }
 
@@ -76,7 +78,6 @@ export default function ClaimOffer() {
     <div className="container py-20">
       <h1 className="text-center text-5xl mb-12">Claim Offer</h1>
 
-      {/* Offer card with card-lift */}
       <div className="card-lift border-4 border-black p-12 bg-gray-100 max-w-2xl mx-auto mb-20">
         <p className="text-4xl font-bold mb-6 text-center">{offer.type.toUpperCase()} — ${offer.amount}</p>
         <p className="text-2xl mb-12 text-center">{offer.description}</p>
@@ -84,22 +85,49 @@ export default function ClaimOffer() {
 
       <div className="max-w-md mx-auto space-y-20">
         <div className="space-y-8">
-          <label htmlFor="video" className="block text-3xl text-center mb-8">
+          <label className="block text-3xl text-center mb-8">
             Record or Upload Your Clip
           </label>
-          <input
-            id="video"
-            type="file"
-            accept="video/*"
-            capture="environment"
-            onChange={(e) => setVideoFile(e.target.files?.[0] || null)}
-            className="w-full py-20 text-2xl border-4 border-black text-center block mx-auto bg-white"
-          />
+
+          {/* Delivery Options */}
+          <div className="space-y-4 mb-12">
+            <label className="flex items-center space-x-4">
+              <input type="radio" name="delivery" value="private" checked={deliveryOption === 'private'} onChange={(e) => setDeliveryOption(e.target.value as 'private')} />
+              <span className="text-xl">Private Video Send (upload here — business sees only)</span>
+            </label>
+            <label className="flex items-center space-x-4">
+              <input type="radio" name="delivery" value="public" checked={deliveryOption === 'public'} onChange={(e) => setDeliveryOption(e.target.value as 'public')} />
+              <span className="text-xl">Public Social Post (IG or TT — $10 bonus)</span>
+            </label>
+            {deliveryOption === 'public' && (
+              <p className="text-sm text-gray-600">
+                Must tag @localhustleapp and the business. Caption example: "Shoutout to [Business] for supporting local athletes! #LocalHustle"
+              </p>
+            )}
+          </div>
+
+          {deliveryOption === 'private' && (
+            <input
+              type="file"
+              accept="video/*"
+              capture="environment"
+              onChange={(e) => setVideoFile(e.target.files?.[0] || null)}
+              className="w-full py-20 text-2xl border-4 border-black text-center block mx-auto bg-white"
+            />
+          )}
         </div>
 
-        <Button onClick={handleUpload} disabled={uploading || !videoFile} className="w-full py-20 text-4xl border-8 border-black bg-black text-white hover:bg-gray-800">
-          {uploading ? 'Uploading...' : 'Upload Clip & Claim'}
-        </Button>
+        {deliveryOption === 'private' && (
+          <Button onClick={handleUpload} disabled={uploading || !videoFile} className="w-full py-20 text-4xl border-8 border-black bg-black text-white hover:bg-gray-800">
+            {uploading ? 'Uploading...' : 'Upload Clip & Claim'}
+          </Button>
+        )}
+
+        {deliveryOption === 'public' && (
+          <Button onClick={() => router.push('/dashboard')} className="w-full py-20 text-4xl border-8 border-black bg-black text-white hover:bg-gray-800">
+            I'll Post on Social & Claim
+          </Button>
+        )}
       </div>
     </div>
   )

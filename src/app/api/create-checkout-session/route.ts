@@ -1,12 +1,10 @@
 import { NextResponse } from 'next/server'
 import Stripe from 'stripe'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2025-11-17.clover' as const,
-})
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
 
 export async function POST(request: Request) {
-  const { amount } = await request.json() // amount in cents
+  const { amount } = await request.json()
 
   const session = await stripe.checkout.sessions.create({
     payment_method_types: ['card'],
@@ -15,7 +13,7 @@ export async function POST(request: Request) {
         price_data: {
           currency: 'usd',
           product_data: {
-            name: 'Wallet Funds',
+            name: 'LocalHustle Wallet Funds',
           },
           unit_amount: amount,
         },
@@ -23,8 +21,8 @@ export async function POST(request: Request) {
       },
     ],
     mode: 'payment',
-    success_url: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/wallet-success?session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/business-onboard`,
+    success_url: `${process.env.NEXT_PUBLIC_URL}/dashboard?success=true`,
+    cancel_url: `${process.env.NEXT_PUBLIC_URL}/business-onboard?canceled=true`,
   })
 
   return NextResponse.json({ id: session.id })
