@@ -1,9 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  experimental: {
-    turbopack: false, // Turn off Turbopack — fixes the prerender error
-  },
+  // No change needed — production build uses Webpack
+  // Turbopack is only for dev
 };
 
 export default nextConfig;
