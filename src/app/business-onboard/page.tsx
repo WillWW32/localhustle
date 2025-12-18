@@ -1,8 +1,11 @@
 'use client'
 
 import { useState } from 'react'
+import { loadStripe } from '@stripe/stripe-js'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
 
 const gigTypes = [
   { title: 'ShoutOut', amount: '50', description: 'Visit a favorite business and make a quick shoutout 15-sec reel about what you like.' },
@@ -18,6 +21,7 @@ export default function BusinessOnboard() {
   const [customDetails, setCustomDetails] = useState('')
   const [amount, setAmount] = useState('')
   const [showPaymentPopup, setShowPaymentPopup] = useState(false)
+  const [loadingStripe, setLoadingStripe] = useState(false)
 
   const handleGigSelect = (gig: typeof gigTypes[0]) => {
     setSelectedGig(gig)
@@ -25,8 +29,34 @@ export default function BusinessOnboard() {
     setCustomDetails('')
   }
 
+  const handleStripeCheckout = async () => {
+    setLoadingStripe(true)
+
+    const response = await fetch('/api/create-checkout-session', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ amount: 10000 }), // $100 in cents — adjust as needed
+    })
+
+    const { id, error } = await response.json()
+
+    if (error) {
+      alert(error)
+      setLoadingStripe(false)
+      return
+    }
+
+    const stripe = await stripePromise
+    if (stripe) {
+      const { error: stripeError } = await stripe.redirectToCheckout({ sessionId: id })
+      if (stripeError) alert(stripeError.message)
+    }
+
+    setLoadingStripe(false)
+  }
+
   const handlePost = async () => {
-    alert('Offer posted and wallet funded (test mode)!')
+    alert('Offer posted (test mode)!')
   }
 
   return (
@@ -116,26 +146,35 @@ export default function BusinessOnboard() {
                       style={{ width: '100%', height: '160px', padding: '1rem', fontSize: '20px', fontFamily: "'Courier New', Courier, monospace'", border: '4px solid black' }}
                     />
                   </div>
-                  <button
-                    onClick={handlePost}
-                    style={{
-                      width: '100%',
-                      height: '80px',
-                      fontSize: '30px',
-                      backgroundColor: '#90ee90',  // light green
-                      color: 'black',
-                      fontFamily: "'Courier New', Courier, monospace'",
-                      border: 'none',
-                      cursor: 'pointer',
-                    }}
-                  >
+                  <Button onClick={handlePost} style={{
+                    width: '100%',
+                    height: '80px',
+                    fontSize: '30px',
+                    backgroundColor: '#90ee90',
+                    color: 'black',
+                    fontFamily: "'Courier New', Courier, monospace'",
+                  }}>
                     Fund & Post Offer
-                  </button>
+                  </Button>
                 </div>
               </div>
             )}
           </div>
         ))}
+      </div>
+
+      {/* Stripe Funding */}
+      <div style={{ maxWidth: '500px', margin: '0 auto 4rem auto' }}>
+        <Button onClick={handleStripeCheckout} disabled={loadingStripe} style={{
+          width: '100%',
+          height: '80px',
+          fontSize: '30px',
+          backgroundColor: '#90ee90',
+          color: 'black',
+          fontFamily: "'Courier New', Courier, monospace'",
+        }}>
+          {loadingStripe ? 'Processing...' : 'Add Funds to Wallet'}
+        </Button>
       </div>
 
       {/* Banner at bottom */}
@@ -159,7 +198,7 @@ export default function BusinessOnboard() {
             <p style={{ marginBottom: '1rem' }}>1. Athlete uploads clip</p>
             <p style={{ marginBottom: '1rem' }}>2. You review & approve</p>
             <p style={{ marginBottom: '1rem' }}>3. Parent approves (for minors)</p>
-            <p style={{ marginBottom: '2rem' }}>4. $ sent = clips you love</p>
+            <p style={{ marginBottom: '2rem' }}>4. $ sent — only pay for clips you love</p>
             <Button onClick={() => setShowPaymentPopup(false)} style={{ width: '100%', height: '60px', fontSize: '20px' }}>
               Got it
             </Button>
