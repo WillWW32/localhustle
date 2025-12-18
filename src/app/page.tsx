@@ -69,21 +69,20 @@ export default function Home() {
     <div style={{
       fontFamily: "'Courier New', Courier, monospace",
       textAlign: 'center',
-      padding: '5rem 2rem',
+      padding: '7rem 2rem',
       backgroundColor: 'white',
       color: 'black',
     }}>
       {/* Slogan */}
-      <p style={{ fontSize: '2rem', marginBottom: '10rem' }}>
+      <p style={{ fontSize: '2rem', marginBottom: '6rem' }}>
         Community Driven Support for Student Athletes
       </p>
-{/* Tiny black downward triangle to indicate scroll */}
-<div className="text-center my-12">
-  <div style={{ fontSize: '3rem' }}>▼</div>
-</div>
+
+      {/* Black downward arrow */}
+      <div style={{ fontSize: '3rem', marginBottom: '6rem' }}>▼</div>
 
       {/* Benefits */}
-      <div style={{ maxWidth: '800px', margin: '0 auto 12rem auto' }}>
+      <div style={{ maxWidth: '700px', margin: '0 auto 12rem auto' }}>
         <div style={{ marginBottom: '10rem' }}>
           <h2 style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '6rem' }}>
             Student Athletes
@@ -146,7 +145,7 @@ export default function Home() {
                 width: '250px',
                 height: '60px',
                 padding: '0',
-                fontSize: '1.5rem',
+                fontSize: '2rem',
                 border: '4px solid black',
                 textAlign: 'center',
                 fontFamily: "'Courier New', Courier, monospace",
@@ -173,7 +172,6 @@ export default function Home() {
           </Button>
         </div>
       )}
-
-      
+    </div>
   )
 }
