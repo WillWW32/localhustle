@@ -5,11 +5,11 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 
 const gigTypes = [
-  { type: 'shoutout', title: 'ShoutOut', amount: 50, description: 'Visit a favorite business and make a quick shoutout 15-sec reel about what you like.' },
-  { type: 'clinic', title: 'Youth Clinic', amount: 500, description: 'Run 30–60 min sessions for younger athletes (with teammates).' },
-  { type: 'team', title: 'Team Sponsor', amount: 1000, description: 'Business sponsors team meals/gear — money split equally.' },
-  { type: 'review', title: 'Product Review', amount: 50, description: '$50 + Perks (e.g., post your order — get free coffee for a month).' },
-  { type: 'cameo', title: 'Cameo', amount: 200, description: '$50–$200 — Impact the next gen (birthdays, pep talks).' },
+  { title: 'ShoutOut', amount: 50, description: 'Visit a favorite business and make a quick shoutout 15-sec reel about what you like.' },
+  { title: 'Youth Clinic', amount: 500, description: 'Run 30–60 min sessions for younger athletes (with teammates).' },
+  { title: 'Team Sponsor', amount: 1000, description: 'Business sponsors team meals/gear — money split equally.' },
+  { title: 'Product Review', amount: 50, description: '$50 + Perks (e.g., post your order — get free coffee for a month).' },
+  { title: 'Cameo', amount: 200, description: '$50–$200 — Impact the next gen (birthdays, pep talks).' },
 ]
 
 export default function BusinessOnboard() {
@@ -20,7 +20,7 @@ export default function BusinessOnboard() {
 
   const handleGigSelect = (gig: typeof gigTypes[0]) => {
     setSelectedGig(gig)
-    setAmount(gig.amount.toString())
+    setAmount('')
     setCustomDetails('')
   }
 
@@ -29,36 +29,38 @@ export default function BusinessOnboard() {
   }
 
   return (
-    <div className="container py-20">
-      {/* Small header */}
-      <h1 className="text-center text-4xl mb-16 font-bold">Welcome, Local Business</h1>
-      <p className="text-center text-2xl mb-20">An athlete invited you to support the team.</p>
+    <div className="container py-12">
+      {/* Smaller heading/title, reduced padding above */}
+      <h1 className="text-center text-3xl mb-4 font-bold">Welcome, Local Business</h1>
+      <p className="text-center text-xl mb-8">An athlete invited you to support the team.</p>
 
-      {/* How Athletes Earn Table */}
-      <div className="max-w-4xl mx-auto mb-32">
-        <h2 className="text-3xl mb-12 text-center font-bold">How Athletes Earn</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-          {gigTypes.map((gig) => (
-            <div key={gig.type} className="border-4 border-black p-12 bg-gray-100">
-              <h3 className="text-2xl font-bold mb-4">{gig.title}</h3>
-              <p className="font-bold mb-4">${gig.amount}{gig.type === 'cameo' ? '–$200' : gig.type === 'clinic' ? '+' : ''}</p>
-              <p>{gig.description}</p>
-            </div>
-          ))}
-        </div>
+      {/* Tiny black downward triangle to indicate scroll */}
+      <div className="text-center mb-12">
+        <div style={{ fontSize: '2rem' }}>▼</div>
       </div>
 
-      {/* Giant Gig Buttons with description inside */}
-      <h2 className="text-3xl mb-12 text-center font-bold">Choose a Gig to Sponsor</h2>
+      {/* Gig Containers — 280px wide, hairline border, padding */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-12 max-w-4xl mx-auto mb-20">
+        {gigTypes.map((gig) => (
+          <div key={gig.title} className="border border-black p-12 bg-white max-w-sm mx-auto">
+            <h3 className="text-2xl font-bold mb-4">{gig.title}</h3>
+            <p className="font-bold mb-4">${gig.amount}{gig.title === 'Cameo' ? '–$200' : gig.title === 'Youth Clinic' ? '+' : ''}</p>
+            <p>{gig.description}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Giant Gig Buttons with description inside — space between (gap-12) */}
+      <h2 className="text-center text-3xl mb-12 font-bold">Choose a Gig to Sponsor</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-12 max-w-4xl mx-auto mb-32">
         {gigTypes.map((gig) => (
           <Button
-            key={gig.type}
+            key={gig.title}
             onClick={() => handleGigSelect(gig)}
-            className="h-40 text-2xl bg-black text-white hover:bg-gray-800 p-8 flex flex-col justify-center"
+            className="h-40 text-2xl bg-black text-white hover:bg-gray-800 p-8 flex flex-col justify-center font-mono font-bold"
           >
-            <span className="font-bold text-3xl mb-4">{gig.title}</span>
-            <span className="font-bold mb-2">${gig.amount}+</span>
+            <span className="text-3xl mb-4">{gig.title}</span>
+            <span className="mb-2">${gig.amount}+</span>
             <span className="text-lg">{gig.description}</span>
           </Button>
         ))}
@@ -70,7 +72,7 @@ export default function BusinessOnboard() {
           <div>
             <h3 className="text-2xl mb-8 font-bold">Customize Your {selectedGig.title}</h3>
             <Input
-              placeholder="Amount"
+              placeholder="Enter Offer Amount - Min $50"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               className="mb-8"
