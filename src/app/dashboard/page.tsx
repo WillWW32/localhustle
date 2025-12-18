@@ -242,11 +242,21 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
           </div>
         </div>
       ) : (
-        // Business view unchanged
         <div className="max-w-2xl mx-auto space-y-16 font-mono text-center text-lg">
           <div>
             <h2 className="text-3xl mb-8 font-bold">Local Business</h2>
             <p className="mb-8">Wallet balance: ${business?.wallet_balance?.toFixed(2) || '0.00'}</p>
+
+            {/* Low balance warning */}
+            {business?.wallet_balance < 100 && (
+              <div className="text-center mb-12">
+                <p className="text-2xl text-red-600 mb-4">Low balance — add funds to post more offers</p>
+                <Button onClick={() => router.push('/business-onboard')} className="w-full max-w-md h-20 text-2xl">
+                  Add Funds
+                </Button>
+              </div>
+            )}
+
             <Button 
               onClick={() => router.push('/business-onboard')}
               className="w-72 h-20 text-2xl bg-black text-white hover:bg-gray-800 mb-12"
