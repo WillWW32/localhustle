@@ -7,13 +7,25 @@ export default function RootLayout({
 }: {
   children: React.ReactNode
 }) {
+  const handleShare = () => {
+    if (navigator.share) {
+      navigator.share({
+        title: 'LocalHustle',
+        text: 'Join LocalHustle — earn from local business sponsorships as a high school athlete!',
+        url: 'https://app.localhustle.org',
+      }).catch(console.error)
+    } else {
+      alert('Copy this link to share: https://app.localhustle.org')
+    }
+  }
+
   return (
     <html lang="en">
       <head>
         <link rel="icon" href="/favicon.ico" />
       </head>
       <body>
-        <header className="py-3 border-b-4 border-black">
+        <header className="py-4 border-b-4 border-black">
           <div className="container text-center">
             <Link href="/">
               <Image
@@ -30,7 +42,28 @@ export default function RootLayout({
 
         <main>{children}</main>
 
-        {/* Your exact footer code — swapped in */}
+        {/* Global Share Button — fixed bottom */}
+        <button
+          onClick={handleShare}
+          style={{
+            position: 'fixed',
+            bottom: '2rem',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 100,
+            backgroundColor: 'black',
+            color: 'white',
+            fontFamily: "'Courier New', Courier, monospace",
+            fontSize: '20px',
+            padding: '1rem 2rem',
+            border: '4px solid black',
+            cursor: 'pointer',
+          }}
+        >
+          Share with Teammates
+        </button>
+
+        {/* Your exact footer */}
         <footer style={{ marginTop: '8rem', paddingTop: '4rem', borderTop: '4px solid black' }}>
           <nav style={{
             marginBottom: '2rem',
