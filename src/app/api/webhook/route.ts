@@ -26,8 +26,12 @@ export async function POST(request: Request) {
     if (businessId && amount) {
       const { error } = await supabase
         .from('businesses')
-        .update({ wallet_balance: supabase.raw('wallet_balance + ?', [amount / 100]) })
+        .update({ wallet_balance: supabase.rpc('increment_wallet', { add_amount: amount / 100 }) })
         .eq('id', businessId)
+
+      // Alternative simple way if no RPC:
+      // const { data: biz } = await supabase.from('businesses').select('wallet_balance').eq('id', businessId).single()
+      // await supabase.from('businesses').update({ wallet_balance: (biz.wallet_balance || 0) + (amount / 100) }).eq('id', businessId)
 
       if (error) console.error('Wallet update error:', error)
     }
