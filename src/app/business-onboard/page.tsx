@@ -1,11 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { loadStripe } from '@stripe/stripe-js'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
 
 const gigTypes = [
   { title: 'ShoutOut', amount: '50', description: 'Visit a favorite business and make a quick shoutout 15-sec reel about what you like.' },
@@ -21,7 +18,6 @@ export default function BusinessOnboard() {
   const [customDetails, setCustomDetails] = useState('')
   const [amount, setAmount] = useState('')
   const [showPaymentPopup, setShowPaymentPopup] = useState(false)
-  const [loadingStripe, setLoadingStripe] = useState(false)
 
   const handleGigSelect = (gig: typeof gigTypes[0]) => {
     setSelectedGig(gig)
@@ -29,34 +25,8 @@ export default function BusinessOnboard() {
     setCustomDetails('')
   }
 
-  const handleStripeCheckout = async () => {
-    setLoadingStripe(true)
-
-    const response = await fetch('/api/create-checkout-session', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ amount: 10000 }), // $100 in cents — adjust as needed
-    })
-
-    const { id, error } = await response.json()
-
-    if (error) {
-      alert(error)
-      setLoadingStripe(false)
-      return
-    }
-
-    const stripe = await stripePromise
-    if (stripe) {
-      const { error: stripeError } = await stripe.redirectToCheckout({ sessionId: id })
-      if (stripeError) alert(stripeError.message)
-    }
-
-    setLoadingStripe(false)
-  }
-
   const handlePost = async () => {
-    alert('Offer posted (test mode)!')
+    alert('Offer posted and wallet funded (test mode)!')
   }
 
   return (
@@ -67,10 +37,28 @@ export default function BusinessOnboard() {
       backgroundColor: 'white',
       color: 'black',
     }}>
-      {/* Title */}
+      {/* New title */}
       <h1 style={{ fontSize: '22px', fontWeight: 'bold', marginBottom: '1rem' }}>
         A Local Student Athlete Personally Requested Your Business
       </h1>
+
+      {/* A Better Way to Advertise section */}
+      <div style={{ maxWidth: '800px', margin: '0 auto 4rem auto', padding: '2rem', backgroundColor: '#f0f0f0', border: '1px solid black' }}>
+        <h2 style={{ fontSize: '28px', fontWeight: 'bold', marginBottom: '1rem' }}>A Better Way to Advertise</h2>
+        <p style={{ fontSize: '20px', marginBottom: '1rem' }}>
+          The best form of advertising in 2025 is still word of mouth.
+        </p>
+        <p style={{ fontSize: '20px', marginBottom: '2rem' }}>
+          88% of consumers trust recommendations from people they know more than any other channel.
+        </p>
+        <p style={{ fontSize: '20px' }}>
+          A real thank-you from a local kid parents trust beats any paid ad.
+        </p>
+        <p style={{ fontSize: '20px' }}>
+          Become the hometown hero — authentic content + real community support.
+        </p>
+      </div>
+
       <p style={{ fontSize: '20px', marginBottom: '1rem' }}>An athlete invited you to support the team.</p>
       <p style={{ fontSize: '20px', marginBottom: '2rem' }}>Here's How:</p>
 
@@ -163,20 +151,6 @@ export default function BusinessOnboard() {
         ))}
       </div>
 
-      {/* Stripe Funding */}
-      <div style={{ maxWidth: '500px', margin: '0 auto 4rem auto' }}>
-        <Button onClick={handleStripeCheckout} disabled={loadingStripe} style={{
-          width: '100%',
-          height: '80px',
-          fontSize: '30px',
-          backgroundColor: '#90ee90',
-          color: 'black',
-          fontFamily: "'Courier New', Courier, monospace'",
-        }}>
-          {loadingStripe ? 'Processing...' : 'Add Funds to Wallet'}
-        </Button>
-      </div>
-
       {/* Banner at bottom */}
       <div style={{ backgroundColor: '#f0f0f0', padding: '2rem', marginTop: '4rem', borderTop: '4px solid black' }}>
         <p style={{ fontSize: '24px', fontWeight: 'bold' }}>
@@ -198,7 +172,7 @@ export default function BusinessOnboard() {
             <p style={{ marginBottom: '1rem' }}>1. Athlete uploads clip</p>
             <p style={{ marginBottom: '1rem' }}>2. You review & approve</p>
             <p style={{ marginBottom: '1rem' }}>3. Parent approves (for minors)</p>
-            <p style={{ marginBottom: '2rem' }}>4. $ sent — only pay for clips you love</p>
+            <p style={{ marginBottom: '2rem' }}>4. $ sent = clips you love</p>
             <Button onClick={() => setShowPaymentPopup(false)} style={{ width: '100%', height: '60px', fontSize: '20px' }}>
               Got it
             </Button>
