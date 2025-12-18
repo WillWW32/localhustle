@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 
 const gigTypes = [
@@ -62,7 +61,7 @@ export default function BusinessOnboard() {
         </div>
       </div>
 
-      {/* Giant Gig Buttons — raw styles */}
+      {/* Giant Gig Buttons — plain HTML button with inline styles */}
       <h2 style={{ fontSize: '30px', fontWeight: 'bold', marginBottom: '2rem' }}>Choose a Gig to Sponsor</h2>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '2rem', maxWidth: '1000px', margin: '0 auto 4rem auto' }}>
         {gigTypes.map((gig) => (
@@ -116,16 +115,21 @@ export default function BusinessOnboard() {
                       style={{ width: '100%', height: '160px', padding: '1rem', fontSize: '20px', fontFamily: "'Courier New', Courier, monospace'", border: '4px solid black' }}
                     />
                   </div>
-                  <Button onClick={handlePost} style={{
-                    width: '100%',
-                    height: '80px',
-                    fontSize: '30px',
-                    backgroundColor: '#90ee90',
-                    color: 'black',
-                    fontFamily: "'Courier New', Courier, monospace'",
-                  }}>
+                  <button
+                    onClick={handlePost}
+                    style={{
+                      width: '100%',
+                      height: '80px',
+                      fontSize: '30px',
+                      backgroundColor: '#90ee90',
+                      color: 'black',
+                      fontFamily: "'Courier New', Courier, monospace'",
+                      border: 'none',
+                      cursor: 'pointer',
+                    }}
+                  >
                     Fund & Post Offer
-                  </Button>
+                  </button>
                 </div>
               </div>
             )}
@@ -142,9 +146,12 @@ export default function BusinessOnboard() {
 
       {/* Payment Popup */}
       <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
-        <Button onClick={() => setShowPaymentPopup(true)} variant="outline" style={{ fontSize: '20px', padding: '1rem 2rem' }}>
+        <button
+          onClick={() => setShowPaymentPopup(true)}
+          style={{ fontSize: '20px', padding: '1rem 2rem', border: '1px solid black', backgroundColor: 'white', cursor: 'pointer' }}
+        >
           How payments work?
-        </Button>
+        </button>
       </div>
 
       {showPaymentPopup && (
@@ -154,10 +161,13 @@ export default function BusinessOnboard() {
             <p style={{ marginBottom: '1rem' }}>1. Athlete uploads clip</p>
             <p style={{ marginBottom: '1rem' }}>2. You review & approve</p>
             <p style={{ marginBottom: '1rem' }}>3. Parent approves (for minors)</p>
-            <p style={{ marginBottom: '2rem' }}>4. $ sent — clips you love</p>
-            <Button onClick={() => setShowPaymentPopup(false)} style={{ width: '100%', height: '60px', fontSize: '20px' }}>
+            <p style={{ marginBottom: '2rem' }}>4. $ sent — only pay for clips you love</p>
+            <button
+              onClick={() => setShowPaymentPopup(false)}
+              style={{ width: '100%', height: '60px', fontSize: '20px', backgroundColor: 'black', color: 'white' }}
+            >
               Got it
-            </Button>
+            </button>
           </div>
         </div>
       )}
