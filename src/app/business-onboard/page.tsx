@@ -8,37 +8,25 @@ import { Input } from '@/components/ui/input'
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
 
 const gigTypes = [
-  { title: 'ShoutOut', baseAmount: 50, description: 'Visit a favorite business and make a quick shoutout 15-sec reel about what you like.' },
-  { title: 'Youth Clinic', baseAmount: 500, description: 'Run 30–60 min sessions for younger athletes (with teammates).' },
-  { title: 'Team Sponsor', baseAmount: 1000, description: 'Business sponsors team meals/gear — money split equally.' },
-  { title: 'Product Review', baseAmount: 50, description: '$50 + Perks (e.g., post your order — get free coffee for a month).' },
-  { title: 'Cameo', baseAmount: 100, description: 'Custom 15-Sec Video for Younger Athletes (birthdays, pre-game pep talks).' },
-  { title: 'Custom Gig', baseAmount: 200, description: 'Create a gig and offer it.' },
+  { title: 'ShoutOut', amount: '50', description: 'Visit a favorite business and make a quick shoutout 15-sec reel about what you like.' },
+  { title: 'Youth Clinic', amount: '500+', description: 'Run 30–60 min sessions for younger athletes (with teammates).' },
+  { title: 'Team Sponsor', amount: '1000', description: 'Business sponsors team meals/gear — money split equally.' },
+  { title: 'Product Review', amount: '50', description: '$50 + Perks (e.g., post your order — get free coffee for a month).' },
+  { title: 'Cameo', amount: '100', description: 'Custom 15-Sec Video for Younger Athletes (birthdays, pre-game pep talks).' },
+  { title: 'Custom Gig', amount: '200+', description: 'Create a gig and offer it.' },
 ]
 
 export default function BusinessOnboard() {
   const [selectedGig, setSelectedGig] = useState<typeof gigTypes[0] | null>(null)
-  const [numAthletes, setNumAthletes] = useState(1)
   const [customDetails, setCustomDetails] = useState('')
   const [amount, setAmount] = useState('')
-  const [isRecurring, setIsRecurring] = useState(false)
   const [showPaymentPopup, setShowPaymentPopup] = useState(false)
   const [loadingStripe, setLoadingStripe] = useState(false)
 
   const handleGigSelect = (gig: typeof gigTypes[0]) => {
     setSelectedGig(gig)
-    setNumAthletes(1)
     setAmount('')
     setCustomDetails('')
-    setIsRecurring(false)
-  }
-
-  const handleAthletesChange = (value: number) => {
-    setNumAthletes(value)
-    if (selectedGig) {
-      const total = selectedGig.baseAmount + (value - 1) * 75
-      setAmount(total.toString())
-    }
   }
 
   const handleStripeCheckout = async () => {
@@ -47,15 +35,21 @@ export default function BusinessOnboard() {
     const response = await fetch('/api/create-checkout-session', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ amount: parseFloat(amount) * 100 }), // cents
+      body: JSON.stringify({ amount: 10000 }), // $100 in cents
     })
 
-    const { id } = await response.json()
+    const { id, error } = await response.json()
+
+    if (error) {
+      alert(error)
+      setLoadingStripe(false)
+      return
+    }
 
     const stripe = await stripePromise
     if (stripe) {
-      const { error } = await stripe.redirectToCheckout({ sessionId: id })
-      if (error) alert(error.message)
+      const { error: stripeError } = await stripe.redirectToCheckout({ sessionId: id })
+      if (stripeError) alert(stripeError.message)
     }
 
     setLoadingStripe(false)
@@ -66,25 +60,31 @@ export default function BusinessOnboard() {
   }
 
   return (
-    <div className="container py-8">
-      {/* Small header */}
-      <h1 className="text-center text-3xl mb-4 font-bold">Welcome Local Business</h1>
-      <p className="text-center text-xl mb-4">An athlete invited you to support the team.</p>
-      <p className="text-center text-xl mb-12">Here's How:</p>
+    <div style={{
+      fontFamily: "'Courier New', Courier, monospace",
+      textAlign: 'center',
+      padding: '2rem 2rem',
+      backgroundColor: 'white',
+      color: 'black',
+    }}>
+      {/* Title */}
+      <h1 style={{ fontSize: '22px', fontWeight: 'bold', marginBottom: '1rem' }}>
+        A Local Student Athlete Personally Requested Your Business
+      </h1>
+      <p style={{ fontSize: '20px', marginBottom: '1rem' }}>An athlete invited you to support the team.</p>
+      <p style={{ fontSize: '20px', marginBottom: '2rem' }}>Here's How:</p>
 
       {/* Arrow */}
-      <div className="text-center mb-12">
-        <div style={{ fontSize: '2rem' }}>▼</div>
-      </div>
+      <div style={{ fontSize: '2rem', marginBottom: '2rem' }}>▼</div>
 
       {/* Gig Descriptions */}
-      <div className="max-w-4xl mx-auto mb-32">
-        <div className="border border-black p-12 bg-white">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+      <div style={{ maxWidth: '1000px', margin: '0 auto 4rem auto' }}>
+        <div style={{ border: '1px solid black', padding: '2rem', backgroundColor: 'white' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem' }}>
             {gigTypes.map((gig) => (
               <div key={gig.title}>
-                <h3 className="text-2xl font-bold mb-4">{gig.title}</h3>
-                <p className="font-bold mb-4">${gig.baseAmount}+</p>
+                <h3 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '1rem' }}>{gig.title}</h3>
+                <p style={{ fontWeight: 'bold', marginBottom: '1rem' }}>${gig.amount}</p>
                 <p>{gig.description}</p>
               </div>
             ))}
@@ -93,8 +93,8 @@ export default function BusinessOnboard() {
       </div>
 
       {/* Giant Gig Buttons */}
-      <h2 className="text-center text-3xl mb-12 font-bold">Choose a Gig to Sponsor</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-20 max-w-4xl mx-auto mb-32">
+      <h2 style={{ fontSize: '30px', fontWeight: 'bold', marginBottom: '2rem' }}>Choose a Gig to Sponsor</h2>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '2rem', maxWidth: '1000px', margin: '0 auto 4rem auto' }}>
         {gigTypes.map((gig) => (
           <div key={gig.title}>
             <button
@@ -119,7 +119,7 @@ export default function BusinessOnboard() {
               onMouseOut={(e) => e.currentTarget.style.backgroundColor = selectedGig?.title === gig.title ? '#333' : 'black'}
             >
               <span style={{ marginBottom: '1rem' }}>{gig.title}</span>
-              <span style={{ marginBottom: '1rem' }}>${gig.baseAmount}+</span>
+              <span style={{ marginBottom: '1rem' }}>${gig.amount}</span>
               <span style={{ fontSize: '20px' }}>{gig.description}</span>
             </button>
 
@@ -129,20 +129,6 @@ export default function BusinessOnboard() {
                 <h3 style={{ fontSize: '24px', marginBottom: '2rem', fontWeight: 'bold' }}>Customize Your {gig.title}</h3>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
                   <div>
-                    <label style={{ display: 'block', fontSize: '20px', marginBottom: '0.5rem' }}>Number of Athletes</label>
-                    <select
-                      value={numAthletes}
-                      onChange={(e) => handleAthletesChange(Number(e.target.value))}
-                      style={{ width: '100%', padding: '1rem', fontSize: '20px', border: '4px solid black' }}
-                    >
-                      {[1,2,3,4,5,6,7,8,9,10].map(n => (
-                        <option key={n} value={n}>{n} athlete{n > 1 ? 's' : ''}</option>
-                      ))}
-                    </select>
-                    <p style={{ fontSize: '14px', marginTop: '0.5rem' }}>+ $75 per additional athlete</p>
-                  </div>
-
-                  <div>
                     <label style={{ display: 'block', fontSize: '20px', marginBottom: '0.5rem' }}>Offer Amount</label>
                     <Input
                       placeholder="Enter Offer Amount - Min $50"
@@ -151,7 +137,6 @@ export default function BusinessOnboard() {
                       style={{ fontFamily: "'Courier New', Courier, monospace" }}
                     />
                   </div>
-
                   <div>
                     <label style={{ display: 'block', fontSize: '20px', marginBottom: '0.5rem' }}>Custom Details</label>
                     <textarea
@@ -161,14 +146,6 @@ export default function BusinessOnboard() {
                       style={{ width: '100%', height: '160px', padding: '1rem', fontSize: '20px', fontFamily: "'Courier New', Courier, monospace'", border: '4px solid black' }}
                     />
                   </div>
-
-                  <div>
-                    <label style={{ display: 'block', fontSize: '20px', marginBottom: '0.5rem' }}>
-                      <input type="checkbox" checked={isRecurring} onChange={(e) => setIsRecurring(e.target.checked)} />
-                      Make this recurring monthly
-                    </label>
-                  </div>
-
                   <Button onClick={handlePost} style={{
                     width: '100%',
                     height: '80px',
@@ -184,6 +161,20 @@ export default function BusinessOnboard() {
             )}
           </div>
         ))}
+      </div>
+
+      {/* Stripe Funding */}
+      <div style={{ maxWidth: '500px', margin: '0 auto 4rem auto' }}>
+        <Button onClick={handleStripeCheckout} disabled={loadingStripe} style={{
+          width: '100%',
+          height: '80px',
+          fontSize: '30px',
+          backgroundColor: '#90ee90',
+          color: 'black',
+          fontFamily: "'Courier New', Courier, monospace'",
+        }}>
+          {loadingStripe ? 'Processing...' : 'Add Funds to Wallet'}
+        </Button>
       </div>
 
       {/* Banner at bottom */}
