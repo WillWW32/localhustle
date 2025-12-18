@@ -17,7 +17,7 @@ export default function RootLayout({
   <link rel="manifest" href="/site.webmanifest" /> {/* optional for PWA */}
 </head>
       <body>
-        <header className="py-12 border-b-4 border-black">
+        <header className="py-5 border-b-4 border-black">
           <div className="container text-center">
             <Link href="/">
               <Image
