@@ -51,13 +51,13 @@ export default function BusinessOnboard() {
           {gigTypes.map((gig) => (
             <div key={gig.title} className="border border-black p-12 bg-white">
               <h3 className="text-2xl font-bold mb-4">{gig.title}</h3>
-              <p className="font-bold mb-4">${gig.baseAmount}{gig.title === 'Cameo' ? '–$200' : gig.title === 'Youth Clinic' ? '+' : ''}</p>
+              <p className="font-bold mb-4">${gig.baseAmount}{gig.title === 'Cameo' ? '$200' : gig.title === 'Youth Clinic' ? '+' : ''}</p>
               <p>{gig.description}</p>
             </div>
           ))}
         </div>
       </div>
-      {/* Giant Gig Buttons — mono bold */}
+      {/* Giant Gig Buttons */}
       <h2 className="text-center text-3xl mb-12 font-bold">Choose a Gig to Sponsor</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-20 max-w-4xl mx-auto mb-32">
         {gigTypes.map((gig) => (
@@ -78,23 +78,6 @@ export default function BusinessOnboard() {
               <div className="mt-12 bg-gray-100 p-12 border border-black max-w-md mx-auto">
                 <h3 className="text-2xl mb-8 font-bold">Customize Your {gig.title}</h3>
                 <div className="space-y-8">
-                  {/* No additional athletes for Team Sponsor */}
-                  {gig.title !== 'Team Sponsor' && (
-                    <div>
-                      <label className="block text-xl mb-2">Number of Athletes</label>
-                      <select
-                        value={numAthletes}
-                        onChange={(e) => handleAthletesChange(Number(e.target.value))}
-                        className="w-full border-4 border-black p-4 text-xl"
-                      >
-                        {[1,2,3,4,5,6,7,8,9,10].map(n => (
-                          <option key={n} value={n}>{n} athlete{n > 1 ? 's' : ''}</option>
-                        ))}
-                      </select>
-                      <p className="text-sm mt-2">+$75 per additional athlete</p>
-                    </div>
-                  )}
-
                   <div>
                     <label className="block text-xl mb-2">Offer Amount</label>
                     <Input
@@ -105,7 +88,6 @@ export default function BusinessOnboard() {
                       style={{ color: '#666' }}
                     />
                   </div>
-
                   <div>
                     <label className="block text-xl mb-2">Custom Details</label>
                     <textarea
@@ -116,7 +98,6 @@ export default function BusinessOnboard() {
                       style={{ color: '#666' }}
                     />
                   </div>
-
                   <Button onClick={handlePost} className="w-full h-20 text-3xl bg-black text-white hover:bg-gray-800 font-mono font-bold">
                     Fund & Post Offer
                   </Button>
