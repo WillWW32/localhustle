@@ -34,22 +34,18 @@ export default function BusinessOnboard() {
       <h1 className="text-center text-3xl mb-4 font-bold">
         You were hand-picked by a local athlete — be one of the first 10 sponsors
       </h1>
-
       {/* Authority + liking + commitment */}
       <p className="text-center text-xl mb-4 italic">
         The only NIL-compliant and approved platform for local high school teams and players.
       </p>
-
       <p className="text-center text-xl mb-12">
         The athlete said: "I can only do 4 max this month and I want you to be one because you're my favorite."
       </p>
-
       {/* Arrow */}
       <div className="text-center mb-12">
         <div style={{ fontSize: '2rem' }}>▼</div>
       </div>
-
-      {/* Gig Descriptions */}
+      {/* Gig Descriptions — thin hairline border */}
       <div className="max-w-4xl mx-auto mb-32">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
           {gigTypes.map((gig) => (
@@ -61,8 +57,7 @@ export default function BusinessOnboard() {
           ))}
         </div>
       </div>
-
-      {/* Giant Gig Buttons */}
+      {/* Giant Gig Buttons — mono bold */}
       <h2 className="text-center text-3xl mb-12 font-bold">Choose a Gig to Sponsor</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-20 max-w-4xl mx-auto mb-32">
         {gigTypes.map((gig) => (
@@ -82,21 +77,23 @@ export default function BusinessOnboard() {
             {selectedGig?.title === gig.title && (
               <div className="mt-12 bg-gray-100 p-12 border border-black max-w-md mx-auto">
                 <h3 className="text-2xl mb-8 font-bold">Customize Your {gig.title}</h3>
-
                 <div className="space-y-8">
-                  <div>
-                    <label className="block text-xl mb-2">Number of Athletes</label>
-                    <select
-                      value={numAthletes}
-                      onChange={(e) => handleAthletesChange(Number(e.target.value))}
-                      className="w-full border-4 border-black p-4 text-xl"
-                    >
-                      {[1,2,3,4,5,6,7,8,9,10].map(n => (
-                        <option key={n} value={n}>{n} athlete{n > 1 ? 's' : ''}</option>
-                      ))}
-                    </select>
-                    <p className="text-sm mt-2">+$75 per additional athlete</p>
-                  </div>
+                  {/* No additional athletes for Team Sponsor */}
+                  {gig.title !== 'Team Sponsor' && (
+                    <div>
+                      <label className="block text-xl mb-2">Number of Athletes</label>
+                      <select
+                        value={numAthletes}
+                        onChange={(e) => handleAthletesChange(Number(e.target.value))}
+                        className="w-full border-4 border-black p-4 text-xl"
+                      >
+                        {[1,2,3,4,5,6,7,8,9,10].map(n => (
+                          <option key={n} value={n}>{n} athlete{n > 1 ? 's' : ''}</option>
+                        ))}
+                      </select>
+                      <p className="text-sm mt-2">+$75 per additional athlete</p>
+                    </div>
+                  )}
 
                   <div>
                     <label className="block text-xl mb-2">Offer Amount</label>
@@ -129,14 +126,12 @@ export default function BusinessOnboard() {
           </div>
         ))}
       </div>
-
       {/* Payment Popup */}
       <div className="text-center mb-20">
         <Button onClick={() => setShowPaymentPopup(true)} variant="outline" className="text-xl py-6">
           How payments work?
         </Button>
       </div>
-
       {showPaymentPopup && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-12 border-4 border-black max-w-lg">
