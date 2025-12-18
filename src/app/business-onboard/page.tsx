@@ -4,8 +4,6 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 
-export const dynamic = 'force-dynamic'  // <--- This line fixes the prerender error
-
 const gigTypes = [
   { title: 'ShoutOut', amount: '50', description: 'Visit a favorite business and make a quick shoutout 15-sec reel about what you like.' },
   { title: 'Youth Clinic', amount: '500+', description: 'Run 30–60 min sessions for younger athletes (with teammates).' },
@@ -64,36 +62,27 @@ export default function BusinessOnboard() {
         </div>
       </div>
 
-      {/* Giant Gig Buttons — raw styles */}
+      {/* Giant Gig Buttons — shadcn Button with your exact style */}
       <h2 style={{ fontSize: '30px', fontWeight: 'bold', marginBottom: '2rem' }}>Choose a Gig to Sponsor</h2>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '2rem', maxWidth: '1000px', margin: '0 auto 4rem auto' }}>
         {gigTypes.map((gig) => (
           <div key={gig.title}>
-            <button
+            <Button
               onClick={() => handleGigSelect(gig)}
+              className="w-full h-72 p-0 flex flex-col justify-center items-center"
               style={{
-                width: '100%',
-                height: '300px',
                 backgroundColor: selectedGig?.title === gig.title ? '#333' : 'black',
                 color: 'white',
                 fontFamily: "'Courier New', Courier, monospace",
                 fontSize: '30px',
-                padding: '2rem',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center',
-                alignItems: 'center',
-                cursor: 'pointer',
                 border: 'none',
-                transition: 'background-color 0.3s',
+                boxShadow: 'none',
               }}
-              onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#333'}
-              onMouseOut={(e) => e.currentTarget.style.backgroundColor = selectedGig?.title === gig.title ? '#333' : 'black'}
             >
               <span style={{ marginBottom: '1rem' }}>{gig.title}</span>
               <span style={{ marginBottom: '1rem' }}>${gig.amount}</span>
               <span style={{ fontSize: '20px' }}>{gig.description}</span>
-            </button>
+            </Button>
 
             {/* Form below selected gig */}
             {selectedGig?.title === gig.title && (
@@ -156,7 +145,7 @@ export default function BusinessOnboard() {
             <p style={{ marginBottom: '1rem' }}>1. Athlete uploads clip</p>
             <p style={{ marginBottom: '1rem' }}>2. You review & approve</p>
             <p style={{ marginBottom: '1rem' }}>3. Parent approves (for minors)</p>
-            <p style={{ marginBottom: '2rem' }}>4. $ sent — clips you love</p>
+            <p style={{ marginBottom: '2rem' }}>4. $ sent — only pay for clips you love</p>
             <Button onClick={() => setShowPaymentPopup(false)} style={{ width: '100%', height: '60px', fontSize: '20px' }}>
               Got it
             </Button>
