@@ -38,6 +38,7 @@ function ParentApproveContent() {
       return
     }
 
+    // Send to payout API
     const response = await fetch('/api/payout', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

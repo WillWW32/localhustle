@@ -1,102 +1,224 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabaseClient'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+
+const gigTypes = [
+  { title: 'ShoutOut',  description: 'Visit a favorite business and make a quick shoutout 15-sec reel about what you like.' },
+  { title: 'Youth Clinic',  description: 'Run 30–60 min sessions for younger athletes (with teammates).' },
+  { title: 'Team Sponsor',  description: 'Business sponsors team meals/gear — money split equally.' },
+  { title: 'Product Review',  description: '$50 + Perks (e.g., post your order — get free coffee for a month).' },
+  { title: 'Cameo',  description: 'Custom 15-Sec Video for Younger Athletes (birthdays, pre-game pep talks).' },
+  { title: 'Custom Gig',  description: 'Create a gig and offer it.' },
+]
 
 export default function BusinessOnboard() {
-  const [name, setName] = useState('')
-  const [email, setEmail] = useState('')
-  const [loading, setLoading] = useState(false)
-  const router = useRouter()
+  const [selectedGig, setSelectedGig] = useState<typeof gigTypes[0] | null>(null)
+  const [numAthletes, setNumAthletes] = useState(1)
+  const [customDetails, setCustomDetails] = useState('')
+  const [amount, setAmount] = useState('')
+  const [date, setDate] = useState('')
+  const [location, setLocation] = useState('')
+  const [businessPhone, setBusinessPhone] = useState('')
+  const [isRecurring, setIsRecurring] = useState(false)
+  const [showPaymentPopup, setShowPaymentPopup] = useState(false)
 
-  const handleSubmit = async () => {
-    if (!name || !email) {
-      alert('Please enter your name and email')
-      return
+  const handleGigSelect = (gig: typeof gigTypes[0]) => {
+    setSelectedGig(gig)
+    setNumAthletes(1)
+    setAmount(gig.baseAmount.toString())
+    setCustomDetails('')
+    setDate('')
+    setLocation('')
+    setBusinessPhone('')
+    setIsRecurring(false)
+  }
+
+  const handleAthletesChange = (value: number) => {
+    setNumAthletes(value)
+    if (selectedGig) {
+      const total = selectedGig.baseAmount + (value - 1) * 75
+      setAmount(total.toString())
     }
+  }
 
-    setLoading(true)
-
-    // Sign in with magic link
-    const { error } = await supabase.auth.signInWithOtp({ 
-      email,
-      options: {
-        data: { name, role: 'business' } // pass name + role to profile
-      }
-    })
-
-    if (error) {
-      alert(error.message)
-    } else {
-      alert('Check your email for the login link!')
-      // Auto redirect on success (listener in layout handles)
-    }
-
-    setLoading(false)
+  const handlePost = async () => {
+    alert('Offer posted (live mode)!')
   }
 
   return (
     <div style={{
       fontFamily: "'Courier New', Courier, monospace",
       textAlign: 'center',
-      padding: '5rem 2rem',
+      padding: '2rem 2rem',
       backgroundColor: 'white',
       color: 'black',
     }}>
-      <h1 style={{ fontSize: '30px', fontWeight: 'bold', marginBottom: '2rem' }}>
-        Welcome Local Business
+      {/* Title */}
+      <h1 style={{ fontSize: '22px', fontWeight: 'bold', marginBottom: '1rem' }}>
+        A Local Student Athlete Personally Requested Your Business
       </h1>
-      <p style={{ fontSize: '20px', marginBottom: '4rem' }}>
-        Enter your name and email to get started — we'll send a login link.
-      </p>
 
-      <div style={{ maxWidth: '400px', margin: '0 auto' }}>
-        <div style={{ marginBottom: '2rem' }}>
-          <Label htmlFor="name" style={{ fontSize: '20px', display: 'block', marginBottom: '1rem' }}>
-            Your Name
-          </Label>
-          <Input
-            id="name"
-            type="text"
-            placeholder="Your Name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            style={{ width: '100%', height: '60px', fontSize: '20px', border: '4px solid black', textAlign: 'center' }}
-          />
+      {/* Arrow */}
+      <div style={{ fontSize: '2rem', marginBottom: '2rem' }}>▼</div>
+
+      {/* Gig Descriptions */}
+      <div style={{ maxWidth: '1000px', margin: '0 auto 4rem auto' }}>
+        <div style={{ border: '1px solid black', padding: '2rem', backgroundColor: 'white' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem' }}>
+            {gigTypes.map((gig) => (
+              <div key={gig.title}>
+                <h3 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '1rem' }}>{gig.title}</h3>
+                <p style={{ fontWeight: 'bold', marginBottom: '1rem' }}>${gig.baseAmount}+</p>
+                <p>{gig.description}</p>
+              </div>
+            ))}
+          </div>
         </div>
+      </div>
 
-        <div style={{ marginBottom: '4rem' }}>
-          <Label htmlFor="email" style={{ fontSize: '20px', display: 'block', marginBottom: '1rem' }}>
-            Your Email
-          </Label>
-          <Input
-            id="email"
-            type="email"
-            placeholder="business@email.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            style={{ width: '100%', height: '60px', fontSize: '20px', border: '4px solid black', textAlign: 'center' }}
-          />
-        </div>
+      {/* Giant Gig Buttons */}
+      <h2 style={{ fontSize: '30px', fontWeight: 'bold', marginBottom: '2rem' }}>Choose a Gig to Sponsor</h2>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '2rem', maxWidth: '1000px', margin: '0 auto 4rem auto' }}>
+        {gigTypes.map((gig) => (
+          <div key={gig.title}>
+            <button
+              onClick={() => handleGigSelect(gig)}
+              style={{
+                width: '100%',
+                height: '300px',
+                backgroundColor: selectedGig?.title === gig.title ? '#333' : 'black',
+                color: 'white',
+                fontFamily: "'Courier New', Courier, monospace",
+                fontSize: '30px',
+                padding: '2rem',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                alignItems: 'center',
+                cursor: 'pointer',
+                border: 'none',
+                transition: 'background-color 0.3s',
+              }}
+              onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#333'}
+              onMouseOut={(e) => e.currentTarget.style.backgroundColor = selectedGig?.title === gig.title ? '#333' : 'black'}
+            >
+              <span style={{ marginBottom: '1rem' }}>{gig.title}</span>
+              <span style={{ marginBottom: '1rem' }}>${gig.baseAmount}+</span>
+              <span style={{ fontSize: '20px' }}>{gig.description}</span>
+            </button>
 
-        <Button onClick={handleSubmit} disabled={loading} style={{
-          width: '100%',
-          height: '80px',
-          fontSize: '30px',
-          backgroundColor: 'black',
-          color: 'white',
-        }}>
-          {loading ? 'Sending...' : 'Send Login Link'}
+            {/* Form below selected gig */}
+            {selectedGig?.title === gig.title && (
+              <div style={{ marginTop: '2rem', backgroundColor: '#f5f5f5', padding: '2rem', border: '1px solid black', maxWidth: '500px', marginLeft: 'auto', marginRight: 'auto' }}>
+                <h3 style={{ fontSize: '24px', marginBottom: '2rem', fontWeight: 'bold' }}>Customize Your {gig.title}</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                  {/* Teammates */}
+                  <div>
+                    <label style={{ display: 'block', fontSize: '20px', marginBottom: '0.5rem' }}>Number of Athletes</label>
+                    <select
+                      value={numAthletes}
+                      onChange={(e) => handleAthletesChange(Number(e.target.value))}
+                      style={{ width: '100%', padding: '1rem', fontSize: '20px', border: '4px solid black' }}
+                    >
+                      {[1,2,3,4,5,6,7,8,9,10].map(n => (
+                        <option key={n} value={n}>{n} athlete{n > 1 ? 's' : ''}</option>
+                      ))}
+                    </select>
+                    <p style={{ fontSize: '14px', marginTop: '0.5rem' }}>+ $75 per additional athlete</p>
+                  </div>
+
+                  {/* Date */}
+                  <div>
+                    <label style={{ display: 'block', fontSize: '20px', marginBottom: '0.5rem' }}>Date</label>
+                    <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+                  </div>
+
+                  {/* Location */}
+                  <div>
+                    <label style={{ display: 'block', fontSize: '20px', marginBottom: '0.5rem' }}>Location</label>
+                    <Input placeholder="e.g., Bridge Pizza" value={location} onChange={(e) => setLocation(e.target.value)} />
+                  </div>
+
+                  {/* Business Phone */}
+                  <div>
+                    <label style={{ display: 'block', fontSize: '20px', marginBottom: '0.5rem' }}>Your Phone (for athlete contact)</label>
+                    <Input placeholder="(555) 123-4567" value={businessPhone} onChange={(e) => setBusinessPhone(e.target.value)} />
+                  </div>
+
+                  {/* Recurring */}
+                  <div>
+                    <label style={{ display: 'block', fontSize: '20px', marginBottom: '0.5rem' }}>
+                      <input type="checkbox" checked={isRecurring} onChange={(e) => setIsRecurring(e.target.checked)} />
+                      Make this recurring monthly
+                    </label>
+                  </div>
+
+                  {/* Amount & Details */}
+                  <div>
+                    <label style={{ display: 'block', fontSize: '20px', marginBottom: '0.5rem' }}>Offer Amount</label>
+                    <Input
+                      placeholder="Enter Offer Amount - Min $50"
+                      value={amount}
+                      onChange={(e) => setAmount(e.target.value)}
+                      style={{ fontFamily: "'Courier New', Courier, monospace" }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '20px', marginBottom: '0.5rem' }}>Custom Details</label>
+                    <textarea
+                      placeholder="Add your details (e.g., Come to Bridge Pizza this Friday)"
+                      value={customDetails}
+                      onChange={(e) => setCustomDetails(e.target.value)}
+                      style={{ width: '100%', height: '160px', padding: '1rem', fontSize: '20px', fontFamily: "'Courier New', Courier, monospace'", border: '4px solid black' }}
+                    />
+                  </div>
+                  <Button onClick={handlePost} style={{
+                    width: '100%',
+                    height: '80px',
+                    fontSize: '30px',
+                    backgroundColor: '#90ee90',
+                    color: 'black',
+                    fontFamily: "'Courier New', Courier, monospace'",
+                  }}>
+                    Fund & Post Offer
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* Banner at bottom */}
+      <div style={{ backgroundColor: '#f0f0f0', padding: '2rem', marginTop: '4rem', borderTop: '4px solid black' }}>
+        <p style={{ fontSize: '24px', fontWeight: 'bold' }}>
+          Business can add scholarships after successful gig completion.
+        </p>
+      </div>
+
+      {/* Payment Popup */}
+      <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
+        <Button onClick={() => setShowPaymentPopup(true)} variant="outline" style={{ fontSize: '20px', padding: '1rem 2rem' }}>
+          How payments work?
         </Button>
       </div>
 
-      <p style={{ fontSize: '18px', marginTop: '4rem' }}>
-        You'll be logged in and taken to your dashboard to post gigs.
-      </p>
+      {showPaymentPopup && (
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
+          <div style={{ backgroundColor: 'white', padding: '3rem', border: '4px solid black', maxWidth: '600px' }}>
+            <h2 style={{ fontSize: '30px', marginBottom: '2rem', fontWeight: 'bold' }}>How Payments Work</h2>
+            <p style={{ marginBottom: '1rem' }}>1. Athlete uploads clip</p>
+            <p style={{ marginBottom: '1rem' }}>2. You review & approve</p>
+            <p style={{ marginBottom: '1rem' }}>3. Parent approves (for minors)</p>
+            <p style={{ marginBottom: '2rem' }}>4. $ sent — only pay for clips you love</p>
+            <Button onClick={() => setShowPaymentPopup(false)} style={{ width: '100%', height: '60px', fontSize: '20px' }}>
+              Got it
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
