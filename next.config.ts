@@ -1,10 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Force Webpack (disable Turbopack for build)
-  experimental: {
-    turbopack: false,
-  },
+  // No experimental flags needed
+  // Production build uses Webpack automatically
+  // Turbopack is only for `next dev` and Vercel preview
 };
 
 export default nextConfig;
