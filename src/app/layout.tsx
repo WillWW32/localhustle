@@ -1,3 +1,7 @@
+'use client'
+
+export const dynamic = 'force-dynamic'  // <--- Add this line (global)
+
 import './globals.css'
 import Image from 'next/image'
 import Link from 'next/link'
