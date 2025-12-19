@@ -14,26 +14,27 @@ export async function POST(request: Request) {
   try {
     event = stripe.webhooks.constructEvent(body, sig, webhookSecret!)
   } catch (err) {
-    return NextResponse.json({ error: 'Webhook signature verification failed' }, { status: 400 })
+    console.error('Webhook signature verification failed.', err)
+    return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
   }
 
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object as Stripe.Checkout.Session
 
     const businessId = session.metadata?.business_id
-    const amount = session.amount_total // in cents
+    const amountTotal = session.amount_total // in cents
 
-    if (businessId && amount) {
+    if (businessId && amountTotal) {
+      const amount = amountTotal / 100 // dollars
+
       const { error } = await supabase
         .from('businesses')
-        .update({ wallet_balance: supabase.rpc('increment_wallet', { add_amount: amount / 100 }) })
+        .update({ wallet_balance: supabase.raw('wallet_balance + ?', [amount]) })
         .eq('id', businessId)
 
-      // Alternative simple way if no RPC:
-      // const { data: biz } = await supabase.from('businesses').select('wallet_balance').eq('id', businessId).single()
-      // await supabase.from('businesses').update({ wallet_balance: (biz.wallet_balance || 0) + (amount / 100) }).eq('id', businessId)
-
-      if (error) console.error('Wallet update error:', error)
+      if (error) {
+        console.error('Wallet update error:', error)
+      }
     }
   }
 

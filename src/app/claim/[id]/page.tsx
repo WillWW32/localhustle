@@ -85,6 +85,8 @@ export default function ClaimOffer() {
       <div className="card-lift border-4 border-black p-12 bg-gray-100 max-w-2xl mx-auto mb-20">
         <p className="text-4xl font-bold mb-6 text-center">{offer.type.toUpperCase()} — ${offer.amount}</p>
         <p className="text-2xl mb-12 text-center">{offer.description}</p>
+        {offer.date && <p className="text-xl mb-4">Date: {offer.date}</p>}
+        {offer.location && <p className="text-xl mb-4">Location: {offer.location}</p>}
       </div>
 
       <div className="max-w-md mx-auto space-y-20">

@@ -38,7 +38,6 @@ function ParentApproveContent() {
       return
     }
 
-    // Send payment method + clip_id to server for payout
     const response = await fetch('/api/payout', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -51,7 +50,6 @@ function ParentApproveContent() {
       alert(result.error)
     } else {
       alert('Payout sent to your card!')
-      // Update clip status
       await supabase.from('clips').update({ status: 'paid' }).eq('id', clip_id)
     }
 
