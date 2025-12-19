@@ -25,14 +25,14 @@ export default function RootLayout({
         <link rel="icon" href="/favicon.ico" />
       </head>
       <body>
-        {/* Header — even less padding, logo 225px */}
-        <header className="py-1 border-b-4 border-black"> {/* reduced from py-2 to py-1 */}
+        {/* Header — less padding, logo 225px */}
+        <header className="py-1 border-b-4 border-black">
           <div className="container text-center">
             <Link href="/">
               <Image
                 src="/logo.jpg"
                 alt="LocalHustle Logo"
-                width={225}   {/* reduced from 280 to 225 */}
+                width={225}
                 height={225}
                 className="mx-auto"
                 priority
