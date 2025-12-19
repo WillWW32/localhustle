@@ -9,27 +9,18 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 
 export default function Home() {
-  const [role, setRole] = useState<'athlete' | 'business' | null>(null)
+  const [role, setRole] = useState<'athlete' | 'business'>('athlete') // default athlete
   const [email, setEmail] = useState('')
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(false)
   const router = useRouter()
 
-  const handleShare = () => {
-    if (navigator.share) {
-      navigator.share({
-        title: 'LocalHustle',
-        text: 'Join LocalHustle — earn from local business sponsorships as a high school athlete!',
-        url: 'https://app.localhustle.org',
-      }).catch(console.error)
-    } else {
-      alert('Copy this link to share: https://app.localhustle.org')
-    }
-  }
-
   const handleLogin = async () => {
     setLoading(true)
-    const { error } = await supabase.auth.signInWithOtp({ email })
+    const { error } = await supabase.auth.signInWithOtp({ 
+      email,
+      options: { data: { role } } // pass role to profile
+    })
     if (error) alert(error.message)
     else alert('Check your email for the login link.')
     setLoading(false)
@@ -77,58 +68,62 @@ export default function Home() {
     return () => listener.subscription.unsubscribe()
   }, [router])
 
-  if (role === 'business') {
-    router.push('/business-onboard')
-    return null
-  }
-
   return (
     <div style={{
       fontFamily: "'Courier New', Courier, monospace",
       textAlign: 'center',
-      padding: '5rem 2rem',
+      padding: '2rem 2rem', // less space
       backgroundColor: 'white',
       color: 'black',
     }}>
       {/* Slogan */}
-      <p style={{ fontSize: '2rem', marginBottom: '6rem' }}>
+      <p style={{ fontSize: '2rem', marginBottom: '4rem' }}>
         Community Driven Support for Student Athletes
       </p>
 
-      {/* Role Toggle */}
+      {/* Role Toggle Switch */}
       <div style={{ marginBottom: '4rem' }}>
         <p style={{ fontSize: '24px', marginBottom: '2rem' }}>Who are you?</p>
-        <div style={{ display: 'flex', justifyContent: 'center', gap: '2rem' }}>
-          <Button onClick={() => setRole('athlete')} className="text-2xl px-8 py-6">
+        <div style={{ display: 'inline-flex', alignItems: 'center', backgroundColor: '#f0f0f0', borderRadius: '50px', padding: '0.5rem' }}>
+          <button
+            onClick={() => setRole('athlete')}
+            style={{
+              padding: '1rem 3rem',
+              fontSize: '24px',
+              backgroundColor: role === 'athlete' ? 'black' : 'transparent',
+              color: role === 'athlete' ? 'white' : 'black',
+              borderRadius: '50px',
+              border: 'none',
+              cursor: 'pointer',
+              fontFamily: "'Courier New', Courier, monospace",
+            }}
+          >
             Student Athlete
-          </Button>
-          <Button onClick={() => setRole('business')} className="text-2xl px-8 py-6">
+          </button>
+          <button
+            onClick={() => setRole('business')}
+            style={{
+              padding: '1rem 3rem',
+              fontSize: '24px',
+              backgroundColor: role === 'business' ? 'black' : 'transparent',
+              color: role === 'business' ? 'white' : 'black',
+              borderRadius: '50px',
+              border: 'none',
+              cursor: 'pointer',
+              fontFamily: "'Courier New', Courier, monospace",
+            }}
+          >
             Local Business
-          </Button>
+          </button>
         </div>
       </div>
 
       {/* Black downward arrow */}
-      <div style={{ fontSize: '3rem', marginBottom: '6rem' }}>▼</div>
+      <div style={{ fontSize: '3rem', marginBottom: '4rem' }}>▼</div>
 
       {/* Benefits */}
-      <div style={{ maxWidth: '700px', margin: '0 auto 12rem auto' }}>
-        {/* ... your benefits ... */}
-      </div>
-
-      {/* Share with Teammates button on landing */}
-      <div style={{ margin: '4rem 0' }}>
-        <Button onClick={handleShare} style={{
-          width: '100%',
-          maxWidth: '500px',
-          height: '80px',
-          fontSize: '30px',
-          backgroundColor: 'black',
-          color: 'white',
-          fontFamily: "'Courier New', Courier, monospace'",
-        }}>
-          Share with Teammates
-        </Button>
+      <div style={{ maxWidth: '700px', margin: '0 auto 8rem auto' }}>
+        {/* ... your benefits code ... */}
       </div>
 
       {/* Login Form */}
