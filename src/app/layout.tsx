@@ -1,6 +1,9 @@
+'use client'
+
 import './globals.css'
 import Image from 'next/image'
 import Link from 'next/link'
+import { Button } from '@/components/ui/button'  // <--- Added this import
 
 export default function RootLayout({
   children,
@@ -26,14 +29,14 @@ export default function RootLayout({
       </head>
       <body>
         {/* Header — reduced padding */}
-        <header className="py-2 border-b-4 border-black">
+        <header className="py-2 border-b-3 border-black">
           <div className="container text-center">
             <Link href="/">
               <Image
                 src="/logo.jpg"
                 alt="LocalHustle Logo"
-                width={280}
-                height={280}
+                width={250}
+                height={250}
                 className="mx-auto"
                 priority
               />
