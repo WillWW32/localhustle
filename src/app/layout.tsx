@@ -26,14 +26,14 @@ export default function RootLayout({
       </head>
       <body>
         {/* Header — reduced padding */}
-        <header className="py-2 border-b-4 border-black"> {/* py-4 → py-2 */}
+        <header className="py-2 border-b-4 border-black">
           <div className="container text-center">
             <Link href="/">
               <Image
                 src="/logo.jpg"
                 alt="LocalHustle Logo"
-                width={250}
-                height={250}
+                width={280}
+                height={280}
                 className="mx-auto"
                 priority
               />
@@ -43,29 +43,14 @@ export default function RootLayout({
 
         <main>{children}</main>
 
-        {/* Share button pinned above footer */}
-        <div style={{ position: 'sticky', bottom: '0', backgroundColor: 'white', padding: '1rem', borderTop: '4px solid black', zIndex: 90 }}>
-          <button
-            onClick={handleShare}
-            style={{
-              width: '100%',
-              maxWidth: '500px',
-              margin: '0 auto',
-              display: 'block',
-              backgroundColor: 'black',
-              color: 'white',
-              fontFamily: "'Courier New', Courier, monospace",
-              fontSize: '20px',
-              padding: '1rem 2rem',
-              border: '4px solid black',
-              cursor: 'pointer',
-            }}
-          >
+        {/* Pinned Share Button — above footer */}
+        <div style={{ padding: '2rem 0', backgroundColor: 'white' }}>
+          <Button onClick={handleShare} className="w-full max-w-md h-20 text-2xl bg-black text-white hover:bg-gray-800 mx-auto block">
             Share with Teammates
-          </button>
+          </Button>
         </div>
 
-        <footer style={{ marginTop: '4rem', paddingTop: '4rem', borderTop: '4px solid black' }}>
+        <footer style={{ marginTop: '8rem', paddingTop: '4rem', borderTop: '4px solid black' }}>
           <nav style={{
             marginBottom: '2rem',
             display: 'flex',
