@@ -16,18 +16,6 @@ export default function Dashboard() {
   const [description, setDescription] = useState('')
   const router = useRouter()
 
-  const handleShare = () => {
-    if (navigator.share) {
-      navigator.share({
-        title: 'LocalHustle',
-        text: 'Join LocalHustle — earn from local business sponsorships as a high school athlete!',
-        url: 'https://app.localhustle.org',
-      }).catch(console.error)
-    } else {
-      alert('Copy this link to share: https://app.localhustle.org')
-    }
-  }
-
   useEffect(() => {
     const fetchData = async () => {
       const { data: { user } } = await supabase.auth.getUser()
@@ -178,21 +166,6 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
     <div className="container">
       <p className="text-center mb-12 text-xl font-mono">Welcome, {profile.email}</p>
 
-      {/* Share button on dashboard */}
-      <div style={{ margin: '4rem 0', textAlign: 'center' }}>
-        <Button onClick={handleShare} style={{
-          width: '100%',
-          maxWidth: '500px',
-          height: '80px',
-          fontSize: '30px',
-          backgroundColor: 'black',
-          color: 'white',
-          fontFamily: "'Courier New', Courier, monospace'",
-        }}>
-          Share with Teammates
-        </Button>
-      </div>
-
       {profile.role === 'athlete' ? (
         <div className="max-w-2xl mx-auto space-y-16 font-mono text-center text-lg">
           {/* Letter first */}
@@ -276,4 +249,82 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
             {/* Low balance warning */}
             {business?.wallet_balance < 100 && (
               <div className="text-center mb-12">
-                <p className
+                <p className="text-2xl text-red-600 mb-4">Low balance — add funds to post more offers</p>
+                <Button onClick={() => router.push('/business-onboard')} className="w-full max-w-md h-20 text-2xl">
+                  Add Funds
+                </Button>
+              </div>
+            )}
+
+            <Button 
+              onClick={() => router.push('/business-onboard')}
+              className="w-72 h-20 text-2xl bg-black text-white hover:bg-gray-800 mb-12"
+            >
+              Add Funds to Wallet
+            </Button>
+
+            <h3 className="text-2xl mb-8 font-bold">Pending Clips to Review</h3>
+            {pendingClips.length === 0 ? (
+              <p className="text-gray-600 mb-12">No pending clips — post offers to get started!</p>
+            ) : (
+              <div className="space-y-16">
+                {pendingClips.map((clip) => (
+                  <div key={clip.id} className="card-lift border-4 border-black p-20 bg-white max-w-lg mx-auto">
+                    <p className="font-bold mb-6 text-left">From: {clip.profiles.email}</p>
+                    <p className="mb-6 text-left">Offer: {clip.offers.type} — ${clip.offers.amount}</p>
+                    <video controls className="w-full mb-8">
+                      <source src={clip.video_url} type="video/mp4" />
+                    </video>
+                    <Button 
+                      onClick={() => approveClip(clip)}
+                      className="w-72 h-20 text-2xl bg-black text-white hover:bg-gray-800"
+                    >
+                      Approve & Send to Parent
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <h3 className="text-2xl mb-8 mt-12 font-bold">Post a New Offer</h3>
+            <form onSubmit={postOffer} className="space-y-12 max-w-md mx-auto">
+              <select value={type} onChange={(e) => setType(e.target.value)} className="w-full border-4 border-black p-6 text-xl">
+                <option value="shoutout">Shoutout Clip</option>
+                <option value="experience">Experience</option>
+                <option value="clinic">Clinic</option>
+                <option value="perk">Perk Pack</option>
+                <option value="pay">Pay Direct</option>
+                <option value="scholarship">Scholarship Boost</option>
+                <option value="booster">Booster Club Team Event</option>
+              </select>
+              <input
+                type="number"
+                placeholder={type === 'booster' ? "Amount ($500–$2000 recommended)" : "Amount ($50–$1000)"}
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                required
+                className="w-full border-4 border-black p-6 text-xl"
+              />
+              <textarea
+                placeholder={type === 'booster' ? "Sponsoring the team — post-game meals, gear, or event. Money split equally among roster." : "Brief description"}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                required
+                className="w-full border-4 border-black p-6 h-40 text-xl"
+              />
+              <Button type="submit" className="w-72 h-20 text-2xl bg-black text-white hover:bg-gray-800">
+                Post Offer
+              </Button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      <div className="text-center mt-32">
+        <Button onClick={signOut} variant="outline" className="text-base py-4 px-8">
+          Log Out
+        </Button>
+      </div>
+    </div>
+  )
+}
