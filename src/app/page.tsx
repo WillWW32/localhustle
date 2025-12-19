@@ -83,7 +83,7 @@ export default function Home() {
         Community Driven Support for Student Athletes
       </p>
 
-      {/* Role Toggle — above name/email */}
+      {/* Role Toggle */}
       <div style={{ marginBottom: '4rem' }}>
         <p style={{ fontSize: '24px', marginBottom: '2rem' }}>Who are you?</p>
         <div style={{ display: 'flex', justifyContent: 'center', gap: '2rem' }}>
@@ -100,11 +100,25 @@ export default function Home() {
       <div style={{ fontSize: '3rem', marginBottom: '6rem' }}>▼</div>
 
       {/* Benefits */}
-      {/* ... your benefits code ... */}
+      <div style={{ maxWidth: '700px', margin: '0 auto 12rem auto' }}>
+        {/* ... your benefits code ... */}
+      </div>
 
       {/* Login Form */}
       {user ? (
-        // logged in view
+        <div style={{ marginTop: '2rem' }}>
+          <p style={{ fontSize: '2rem' }}>Logged in as {user.email}</p>
+          <Button onClick={signOut} style={{
+            width: '250px',
+            height: '60px',
+            fontSize: '2rem',
+            backgroundColor: 'black',
+            color: 'white',
+            marginTop: '4rem',
+          }}>
+            Log Out
+          </Button>
+        </div>
       ) : (
         <div style={{ maxWidth: '250px', margin: '0 auto', paddingBottom: '5rem' }}>
           <div style={{ marginBottom: '6rem' }}>
@@ -134,7 +148,6 @@ export default function Home() {
               width: '250px',
               height: '60px',
               fontSize: '2rem',
-              border: '1px solid black',
               backgroundColor: 'black',
               color: 'white',
             }}
