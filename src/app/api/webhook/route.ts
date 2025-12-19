@@ -14,8 +14,7 @@ export async function POST(request: Request) {
   try {
     event = stripe.webhooks.constructEvent(body, sig, webhookSecret!)
   } catch (err) {
-    console.error('Webhook signature verification failed.', err)
-    return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
+    return NextResponse.json({ error: 'Webhook signature verification failed' }, { status: 400 })
   }
 
   if (event.type === 'checkout.session.completed') {
@@ -27,13 +26,28 @@ export async function POST(request: Request) {
     if (businessId && amountTotal) {
       const amount = amountTotal / 100 // dollars
 
-      const { error } = await supabase
+      // Fetch current balance
+      const { data: business, error: fetchError } = await supabase
         .from('businesses')
-        .update({ wallet_balance: supabase.raw('wallet_balance + ?', [amount]) })
+        .select('wallet_balance')
+        .eq('id', businessId)
+        .single()
+
+      if (fetchError || !business) {
+        console.error('Business fetch error:', fetchError)
+        return NextResponse.json({ error: 'Business not found' }, { status: 404 })
+      }
+
+      const newBalance = business.wallet_balance + amount
+
+      // Update wallet
+      const { error: updateError } = await supabase
+        .from('businesses')
+        .update({ wallet_balance: newBalance })
         .eq('id', businessId)
 
-      if (error) {
-        console.error('Wallet update error:', error)
+      if (updateError) {
+        console.error('Wallet update error:', updateError)
       }
     }
   }
