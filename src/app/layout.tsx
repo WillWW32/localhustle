@@ -1,7 +1,3 @@
-'use client'
-
-export const dynamic = 'force-dynamic'  // <--- Add this line (global)
-
 import './globals.css'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -29,14 +25,15 @@ export default function RootLayout({
         <link rel="icon" href="/favicon.ico" />
       </head>
       <body>
-        <header className="py-4 border-b-4 border-black">
+        {/* Header — reduced padding */}
+        <header className="py-2 border-b-4 border-black"> {/* py-4 → py-2 */}
           <div className="container text-center">
             <Link href="/">
               <Image
                 src="/logo.jpg"
                 alt="LocalHustle Logo"
-                width={280}
-                height={280}
+                width={250}
+                height={250}
                 className="mx-auto"
                 priority
               />
@@ -46,28 +43,29 @@ export default function RootLayout({
 
         <main>{children}</main>
 
-        {/* Global Share Button */}
-        <button
-          onClick={handleShare}
-          style={{
-            position: 'fixed',
-            bottom: '2rem',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            zIndex: 100,
-            backgroundColor: 'black',
-            color: 'white',
-            fontFamily: "'Courier New', Courier, monospace",
-            fontSize: '20px',
-            padding: '1rem 2rem',
-            border: '4px solid black',
-            cursor: 'pointer',
-          }}
-        >
-          Share with Teammates
-        </button>
+        {/* Share button pinned above footer */}
+        <div style={{ position: 'sticky', bottom: '0', backgroundColor: 'white', padding: '1rem', borderTop: '4px solid black', zIndex: 90 }}>
+          <button
+            onClick={handleShare}
+            style={{
+              width: '100%',
+              maxWidth: '500px',
+              margin: '0 auto',
+              display: 'block',
+              backgroundColor: 'black',
+              color: 'white',
+              fontFamily: "'Courier New', Courier, monospace",
+              fontSize: '20px',
+              padding: '1rem 2rem',
+              border: '4px solid black',
+              cursor: 'pointer',
+            }}
+          >
+            Share with Teammates
+          </button>
+        </div>
 
-        <footer style={{ marginTop: '8rem', paddingTop: '4rem', borderTop: '4px solid black' }}>
+        <footer style={{ marginTop: '4rem', paddingTop: '4rem', borderTop: '4px solid black' }}>
           <nav style={{
             marginBottom: '2rem',
             display: 'flex',

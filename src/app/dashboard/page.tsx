@@ -9,10 +9,8 @@ import { Button } from '@/components/ui/button'
 export default function Dashboard() {
   const [profile, setProfile] = useState<any>(null)
   const [business, setBusiness] = useState<any>(null)
-  const [proposals, setProposals] = useState<any[]>([]) // proposals from kids
   const [offers, setOffers] = useState<any[]>([])
   const [pendingClips, setPendingClips] = useState<any[]>([])
-  const [activeTab, setActiveTab] = useState<'unclaimed' | 'active' | 'complete'>('unclaimed')
   const router = useRouter()
 
   useEffect(() => {
@@ -35,27 +33,11 @@ export default function Dashboard() {
           .single()
         setBusiness(biz)
 
-        // Proposals received from athletes (stub — real from pitches)
-        const { data: props } = await supabase
-          .from('proposals') // new table or stub
-          .select('*')
-          .eq('business_id', biz.id)
-        setProposals(props || [])
-
-        // Offers
-        const { data: allOffers } = await supabase
-          .from('offers')
-          .select('*')
-          .eq('business_id', biz.id)
-
-        setOffers(allOffers || [])
-
-        // Pending clips
         const { data: clips } = await supabase
           .from('clips')
           .select('*, offers(*), profiles(email, parent_email)')
           .eq('status', 'pending')
-          .eq('business_id', biz.id)
+          .in('offer_id', (await supabase.from('offers').select('id').eq('business_id', biz.id)).data?.map(o => o.id) || [])
         setPendingClips(clips || [])
       }
 
@@ -71,10 +53,7 @@ export default function Dashboard() {
     fetchData()
   }, [])
 
-  const copyLetter = () => { /* ... your code ... */ }
-  const shareLetter = () => { /* ... your code ... */ }
-  const postOffer = async (e: React.FormEvent) => { /* ... your code ... */ }
-  const approveClip = async (clip: any) => { /* ... your code ... */ }
+  // ... your copyLetter, shareLetter, postOffer, approveClip functions ...
 
   if (!profile) return <p className="container text-center">Loading...</p>
 
@@ -83,71 +62,39 @@ export default function Dashboard() {
       <p className="text-center mb-12 text-xl font-mono">Welcome, {profile.email}</p>
 
       {profile.role === 'athlete' ? (
-        // Athlete dashboard unchanged
+        // Full athlete dashboard — letter, offers, pinned gigs
         <div className="max-w-2xl mx-auto space-y-16 font-mono text-center text-lg">
-          {/* ... your full athlete code ... */}
+          {/* ... your full athlete code from before ... */}
         </div>
       ) : (
-        <div className="max-w-4xl mx-auto space-y-16 font-mono text-center text-lg">
+        // Full business dashboard — wallet, pending clips, post offer
+        <div className="max-w-2xl mx-auto space-y-16 font-mono text-center text-lg">
           <div>
-            <h2 className="text-3xl mb-8 font-bold">Local Business Dashboard</h2>
+            <h2 className="text-3xl mb-8 font-bold">Local Business</h2>
             <p className="mb-8">Wallet balance: ${business?.wallet_balance?.toFixed(2) || '0.00'}</p>
 
-            {/* Proposals Received */}
-            <h3 className="text-2xl mb-8 font-bold">Proposals Received</h3>
-            {proposals.length === 0 ? (
-              <p className="mb-12">No proposals yet — kids will pitch you soon!</p>
-            ) : (
-              <div className="space-y-8 mb-16">
-                {proposals.map((prop) => (
-                  <div key={prop.id} className="border-4 border-black p-8 bg-white">
-                    <p className="text-xl mb-4">{prop.athlete_name} proposes: {prop.gigs.join(', ')}</p>
-                    <p className="mb-4">{prop.message}</p>
-                    <Button className="mr-4">Accept</Button>
-                    <Button variant="outline">Reject</Button>
-                  </div>
-                ))}
+            {/* Low balance warning */}
+            {business?.wallet_balance < 100 && (
+              <div className="text-center mb-12">
+                <p className="text-2xl text-red-600 mb-4">Low balance — add funds to post more offers</p>
+                <Button onClick={() => router.push('/business-onboard')} className="w-full max-w-md h-20 text-2xl">
+                  Add Funds
+                </Button>
               </div>
             )}
 
-            {/* Create Gig */}
-            <Button onClick={() => router.push('/business-onboard')} className="w-full max-w-md h-20 text-2xl bg-black text-white hover:bg-gray-800 mb-16">
-              Create Your Own Gig
+            <Button
+              onClick={() => router.push('/business-onboard')}
+              className="w-72 h-20 text-2xl bg-black text-white hover:bg-gray-800 mb-12"
+            >
+              Add Funds to Wallet
             </Button>
 
-            {/* Tabs */}
-            <h3 className="text-2xl mb-8 font-bold">Your Offers</h3>
-            <div className="flex justify-center gap-8 mb-8">
-              <Button onClick={() => setActiveTab('unclaimed')} variant={activeTab === 'unclaimed' ? 'default' : 'outline'}>
-                Unclaimed
-              </Button>
-              <Button onClick={() => setActiveTab('active')} variant={activeTab === 'active' ? 'default' : 'outline'}>
-                Active
-              </Button>
-              <Button onClick={() => setActiveTab('complete')} variant={activeTab === 'complete' ? 'default' : 'outline'}>
-                Complete
-              </Button>
-            </div>
-
-            {/* Offers list */}
-            <div className="space-y-16">
-              {offers.filter(o => {
-                if (activeTab === 'unclaimed') return !o.claimed
-                if (activeTab === 'active') return o.claimed && o.status === 'active'
-                if (activeTab === 'complete') return o.status === 'complete'
-                return true
-              }).map((offer) => (
-                <div key={offer.id} className="border-4 border-black p-12 bg-white">
-                  <p className="text-2xl font-bold mb-4">{offer.type} — ${offer.amount}</p>
-                  <p className="mb-8">{offer.description}</p>
-                  <p>Status: {offer.claimed ? 'Claimed' : 'Unclaimed'}</p>
-                </div>
-              ))}
-            </div>
-
             {/* Pending Clips */}
-            <h3 className="text-2xl mb-8 mt-16 font-bold">Pending Clips to Review</h3>
             {/* ... your pending clips code ... */}
+
+            {/* Post New Offer */}
+            {/* ... your post offer form ... */}
           </div>
         </div>
       )}
