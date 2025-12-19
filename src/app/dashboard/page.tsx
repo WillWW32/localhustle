@@ -16,6 +16,18 @@ export default function Dashboard() {
   const [description, setDescription] = useState('')
   const router = useRouter()
 
+  const handleShare = () => {
+    if (navigator.share) {
+      navigator.share({
+        title: 'LocalHustle',
+        text: 'Join LocalHustle — earn from local business sponsorships as a high school athlete!',
+        url: 'https://app.localhustle.org',
+      }).catch(console.error)
+    } else {
+      alert('Copy this link to share: https://app.localhustle.org')
+    }
+  }
+
   useEffect(() => {
     const fetchData = async () => {
       const { data: { user } } = await supabase.auth.getUser()
@@ -58,13 +70,6 @@ export default function Dashboard() {
     }
 
     fetchData()
-
-    // Keep session alive
-    const interval = setInterval(async () => {
-      await supabase.auth.getSession()
-    }, 5 * 60 * 1000)
-
-    return () => clearInterval(interval)
   }, [router])
 
   const copyLetter = () => {
@@ -173,6 +178,21 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
     <div className="container">
       <p className="text-center mb-12 text-xl font-mono">Welcome, {profile.email}</p>
 
+      {/* Share with Teammates button on dashboard */}
+      <div style={{ margin: '4rem 0', textAlign: 'center' }}>
+        <Button onClick={handleShare} style={{
+          width: '100%',
+          maxWidth: '500px',
+          height: '80px',
+          fontSize: '30px',
+          backgroundColor: 'black',
+          color: 'white',
+          fontFamily: "'Courier New', Courier, monospace",
+        }}>
+          Share with Teammates
+        </Button>
+      </div>
+
       {profile.role === 'athlete' ? (
         <div className="max-w-2xl mx-auto space-y-16 font-mono text-center text-lg">
           {/* Letter first */}
@@ -222,7 +242,7 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
                   <div key={offer.id} className="card-lift border-4 border-black p-16 bg-white max-w-lg mx-auto">
                     <p className="font-bold text-2xl mb-6">{offer.type.toUpperCase()} — ${offer.amount}</p>
                     <p className="mb-12">{offer.description}</p>
-                    <Button
+                    <Button 
                       onClick={() => router.push(`/claim/${offer.id}`)}
                       className="w-72 h-20 text-2xl bg-black text-white hover:bg-gray-800"
                     >
@@ -263,7 +283,7 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
               </div>
             )}
 
-            <Button
+            <Button 
               onClick={() => router.push('/business-onboard')}
               className="w-72 h-20 text-2xl bg-black text-white hover:bg-gray-800 mb-12"
             >
@@ -282,7 +302,7 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
                     <video controls className="w-full mb-8">
                       <source src={clip.video_url} type="video/mp4" />
                     </video>
-                    <Button
+                    <Button 
                       onClick={() => approveClip(clip)}
                       className="w-72 h-20 text-2xl bg-black text-white hover:bg-gray-800"
                     >
