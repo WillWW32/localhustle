@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 
 export default function Home() {
-  const [role, setRole] = useState<'athlete' | 'business' | null>(null)
+  const [role, setRole] = useState<'athlete' | 'business'>('athlete') // default athlete
   const [email, setEmail] = useState('')
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(false)
@@ -17,7 +17,10 @@ export default function Home() {
 
   const handleLogin = async () => {
     setLoading(true)
-    const { error } = await supabase.auth.signInWithOtp({ email })
+    const { error } = await supabase.auth.signInWithOtp({ 
+      email,
+      options: { data: { role } } // pass role to profile
+    })
     if (error) alert(error.message)
     else alert('Check your email for the login link.')
     setLoading(false)
@@ -65,11 +68,6 @@ export default function Home() {
     return () => listener.subscription.unsubscribe()
   }, [router])
 
-  if (role === 'business') {
-    router.push('/business-onboard')
-    return null
-  }
-
   return (
     <div style={{
       fontFamily: "'Courier New', Courier, monospace",
@@ -83,16 +81,40 @@ export default function Home() {
         Community Driven Support for Student Athletes
       </p>
 
-      {/* Role Toggle */}
+      {/* Toggle Switch */}
       <div style={{ marginBottom: '4rem' }}>
         <p style={{ fontSize: '24px', marginBottom: '2rem' }}>Who are you?</p>
-        <div style={{ display: 'flex', justifyContent: 'center', gap: '2rem' }}>
-          <Button onClick={() => setRole('athlete')} className="text-2xl px-8 py-6">
+        <div style={{ display: 'inline-flex', alignItems: 'center', backgroundColor: '#f0f0f0', borderRadius: '50px', padding: '0.5rem' }}>
+          <button
+            onClick={() => setRole('athlete')}
+            style={{
+              padding: '1rem 3rem',
+              fontSize: '24px',
+              backgroundColor: role === 'athlete' ? 'black' : 'transparent',
+              color: role === 'athlete' ? 'white' : 'black',
+              borderRadius: '50px',
+              border: 'none',
+              cursor: 'pointer',
+              fontFamily: "'Courier New', Courier, monospace",
+            }}
+          >
             Student Athlete
-          </Button>
-          <Button onClick={() => setRole('business')} className="text-2xl px-8 py-6">
+          </button>
+          <button
+            onClick={() => setRole('business')}
+            style={{
+              padding: '1rem 3rem',
+              fontSize: '24px',
+              backgroundColor: role === 'business' ? 'black' : 'transparent',
+              color: role === 'business' ? 'white' : 'black',
+              borderRadius: '50px',
+              border: 'none',
+              cursor: 'pointer',
+              fontFamily: "'Courier New', Courier, monospace",
+            }}
+          >
             Local Business
-          </Button>
+          </button>
         </div>
       </div>
 
@@ -100,9 +122,7 @@ export default function Home() {
       <div style={{ fontSize: '3rem', marginBottom: '6rem' }}>▼</div>
 
       {/* Benefits */}
-      <div style={{ maxWidth: '700px', margin: '0 auto 12rem auto' }}>
-        {/* ... your benefits code ... */}
-      </div>
+      {/* ... your benefits ... */}
 
       {/* Login Form */}
       {user ? (
@@ -115,6 +135,7 @@ export default function Home() {
             backgroundColor: 'black',
             color: 'white',
             marginTop: '4rem',
+            fontFamily: "'Courier New', Courier, monospace",
           }}>
             Log Out
           </Button>
@@ -150,6 +171,7 @@ export default function Home() {
               fontSize: '2rem',
               backgroundColor: 'black',
               color: 'white',
+              fontFamily: "'Courier New', Courier, monospace",
             }}
           >
             {loading ? 'Sending...' : 'Send Login Link'}
