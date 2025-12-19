@@ -10,8 +10,8 @@ import { Label } from '@/components/ui/label'
 import Link from 'next/link'
 
 export default function Home() {
+  const [role, setRole] = useState<'athlete' | 'business' | 'creative' | 'fan' | null>(null)
   const [email, setEmail] = useState('')
-  const [name, setName] = useState('')
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(false)
   const router = useRouter()
@@ -66,6 +66,11 @@ export default function Home() {
     return () => listener.subscription.unsubscribe()
   }, [router])
 
+  if (role === 'business') {
+    router.push('/business-onboard')
+    return null
+  }
+
   return (
     <div style={{
       fontFamily: "'Courier New', Courier, monospace",
@@ -78,6 +83,25 @@ export default function Home() {
       <p style={{ fontSize: '2rem', marginBottom: '6rem' }}>
         Community Driven Support for Student Athletes
       </p>
+
+      {/* Role Toggle */}
+      <div style={{ marginBottom: '4rem' }}>
+        <p style={{ fontSize: '24px', marginBottom: '2rem' }}>Who are you?</p>
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '2rem', flexWrap: 'wrap' }}>
+          <Button onClick={() => setRole('athlete')} className="text-2xl px-8 py-6">
+            Student Athlete
+          </Button>
+          <Button onClick={() => setRole('business')} className="text-2xl px-8 py-6">
+            Local Business
+          </Button>
+          <Button onClick={() => setRole('creative')} className="text-2xl px-8 py-6">
+            Creative Talent
+          </Button>
+          <Button onClick={() => setRole('fan')} className="text-2xl px-8 py-6">
+            Fan / Parent
+          </Button>
+        </div>
+      </div>
 
       {/* Black downward arrow */}
       <div style={{ fontSize: '3rem', marginBottom: '6rem' }}>▼</div>
@@ -110,12 +134,7 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Subtitle above email field */}
-      <p style={{ fontSize: '2rem', marginBottom: '3rem' }}>
-        Enter Here to Find Out How to Get In
-      </p>
-
-      {/* Login Form + Log Out */}
+      {/* Login Form */}
       {user ? (
         <div style={{ marginTop: '2rem' }}>
           <p style={{ fontSize: '2rem' }}>Logged in as {user.email}</p>
@@ -127,40 +146,12 @@ export default function Home() {
             backgroundColor: 'black',
             color: 'white',
             marginTop: '4rem',
-            padding: '0',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
           }}>
             Log Out
           </Button>
         </div>
       ) : (
         <div style={{ maxWidth: '250px', margin: '0 auto', paddingBottom: '5rem' }}>
-          {/* Name field */}
-          <div style={{ marginBottom: '6rem' }}>
-            <Label htmlFor="name" style={{ fontSize: '2rem', display: 'block', marginBottom: '3rem' }}>
-              Your Name
-            </Label>
-            <Input
-              id="name"
-              type="text"
-              placeholder="Your Name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              style={{
-                width: '250px',
-                height: '60px',
-                padding: '0',
-                fontSize: '2rem',
-                border: '4px solid black',
-                textAlign: 'center',
-                fontFamily: "'Courier New', Courier, monospace",
-              }}
-            />
-          </div>
-
-          {/* Email field */}
           <div style={{ marginBottom: '6rem' }}>
             <Label htmlFor="email" style={{ fontSize: '2rem', display: 'block', marginBottom: '3rem' }}>
               Your Email
@@ -174,7 +165,6 @@ export default function Home() {
               style={{
                 width: '250px',
                 height: '60px',
-                padding: '0',
                 fontSize: '2rem',
                 border: '4px solid black',
                 textAlign: 'center',
@@ -182,7 +172,6 @@ export default function Home() {
               }}
             />
           </div>
-
           <Button
             onClick={handleLogin}
             disabled={loading}
@@ -193,10 +182,6 @@ export default function Home() {
               border: '1px solid black',
               backgroundColor: 'black',
               color: 'white',
-              padding: '0',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
             }}
           >
             {loading ? 'Sending...' : 'Send Login Link'}
