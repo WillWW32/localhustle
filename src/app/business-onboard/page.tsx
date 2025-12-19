@@ -5,46 +5,28 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 
 const gigTypes = [
-  { title: 'ShoutOut',  description: 'Visit a favorite business and make a quick shoutout 15-sec reel about what you like.' },
-  { title: 'Youth Clinic',  description: 'Run 30–60 min sessions for younger athletes (with teammates).' },
-  { title: 'Team Sponsor',  description: 'Business sponsors team meals/gear — money split equally.' },
-  { title: 'Product Review',  description: '$50 + Perks (e.g., post your order — get free coffee for a month).' },
-  { title: 'Cameo',  description: 'Custom 15-Sec Video for Younger Athletes (birthdays, pre-game pep talks).' },
-  { title: 'Custom Gig',  description: 'Create a gig and offer it.' },
+  { title: 'ShoutOut', description: 'Visit a favorite business and make a quick shoutout 15-sec reel about what you like.' },
+  { title: 'Youth Clinic', description: 'Run 30–60 min sessions for younger athletes (with teammates).' },
+  { title: 'Team Sponsor', description: 'Business sponsors team meals/gear — money split equally.' },
+  { title: 'Product Review', description: 'Perks + post your order (e.g., get free coffee for a month).' },
+  { title: 'Cameo', description: 'Custom 15-Sec Video for Younger Athletes (birthdays, pre-game pep talks).' },
+  { title: 'Custom Gig', description: 'Create a gig and offer it.' },
 ]
 
 export default function BusinessOnboard() {
   const [selectedGig, setSelectedGig] = useState<typeof gigTypes[0] | null>(null)
-  const [numAthletes, setNumAthletes] = useState(1)
   const [customDetails, setCustomDetails] = useState('')
   const [amount, setAmount] = useState('')
-  const [date, setDate] = useState('')
-  const [location, setLocation] = useState('')
-  const [businessPhone, setBusinessPhone] = useState('')
-  const [isRecurring, setIsRecurring] = useState(false)
   const [showPaymentPopup, setShowPaymentPopup] = useState(false)
 
   const handleGigSelect = (gig: typeof gigTypes[0]) => {
     setSelectedGig(gig)
-    setNumAthletes(1)
-    setAmount(gig.baseAmount.toString())
+    setAmount('')
     setCustomDetails('')
-    setDate('')
-    setLocation('')
-    setBusinessPhone('')
-    setIsRecurring(false)
-  }
-
-  const handleAthletesChange = (value: number) => {
-    setNumAthletes(value)
-    if (selectedGig) {
-      const total = selectedGig.baseAmount + (value - 1) * 75
-      setAmount(total.toString())
-    }
   }
 
   const handlePost = async () => {
-    alert('Offer posted (live mode)!')
+    alert('Offer posted and wallet funded (test mode)!')
   }
 
   return (
@@ -60,17 +42,21 @@ export default function BusinessOnboard() {
         A Local Student Athlete Personally Requested Your Business
       </h1>
 
+      {/* Starting at $50 paragraph */}
+      <p style={{ fontSize: '20px', marginBottom: '4rem', maxWidth: '800px', marginLeft: 'auto', marginRight: 'auto' }}>
+        Gigs starting at $50 — you set the amount.
+      </p>
+
       {/* Arrow */}
       <div style={{ fontSize: '2rem', marginBottom: '2rem' }}>▼</div>
 
-      {/* Gig Descriptions */}
+      {/* Gig Descriptions — no prices */}
       <div style={{ maxWidth: '1000px', margin: '0 auto 4rem auto' }}>
         <div style={{ border: '1px solid black', padding: '2rem', backgroundColor: 'white' }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem' }}>
             {gigTypes.map((gig) => (
               <div key={gig.title}>
                 <h3 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '1rem' }}>{gig.title}</h3>
-                <p style={{ fontWeight: 'bold', marginBottom: '1rem' }}>${gig.baseAmount}+</p>
                 <p>{gig.description}</p>
               </div>
             ))}
@@ -78,7 +64,7 @@ export default function BusinessOnboard() {
         </div>
       </div>
 
-      {/* Giant Gig Buttons */}
+      {/* Giant Gig Buttons — no prices */}
       <h2 style={{ fontSize: '30px', fontWeight: 'bold', marginBottom: '2rem' }}>Choose a Gig to Sponsor</h2>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '2rem', maxWidth: '1000px', margin: '0 auto 4rem auto' }}>
         {gigTypes.map((gig) => (
@@ -105,7 +91,6 @@ export default function BusinessOnboard() {
               onMouseOut={(e) => e.currentTarget.style.backgroundColor = selectedGig?.title === gig.title ? '#333' : 'black'}
             >
               <span style={{ marginBottom: '1rem' }}>{gig.title}</span>
-              <span style={{ marginBottom: '1rem' }}>${gig.baseAmount}+</span>
               <span style={{ fontSize: '20px' }}>{gig.description}</span>
             </button>
 
@@ -114,52 +99,10 @@ export default function BusinessOnboard() {
               <div style={{ marginTop: '2rem', backgroundColor: '#f5f5f5', padding: '2rem', border: '1px solid black', maxWidth: '500px', marginLeft: 'auto', marginRight: 'auto' }}>
                 <h3 style={{ fontSize: '24px', marginBottom: '2rem', fontWeight: 'bold' }}>Customize Your {gig.title}</h3>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-                  {/* Teammates */}
-                  <div>
-                    <label style={{ display: 'block', fontSize: '20px', marginBottom: '0.5rem' }}>Number of Athletes</label>
-                    <select
-                      value={numAthletes}
-                      onChange={(e) => handleAthletesChange(Number(e.target.value))}
-                      style={{ width: '100%', padding: '1rem', fontSize: '20px', border: '4px solid black' }}
-                    >
-                      {[1,2,3,4,5,6,7,8,9,10].map(n => (
-                        <option key={n} value={n}>{n} athlete{n > 1 ? 's' : ''}</option>
-                      ))}
-                    </select>
-                    <p style={{ fontSize: '14px', marginTop: '0.5rem' }}>+ $75 per additional athlete</p>
-                  </div>
-
-                  {/* Date */}
-                  <div>
-                    <label style={{ display: 'block', fontSize: '20px', marginBottom: '0.5rem' }}>Date</label>
-                    <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
-                  </div>
-
-                  {/* Location */}
-                  <div>
-                    <label style={{ display: 'block', fontSize: '20px', marginBottom: '0.5rem' }}>Location</label>
-                    <Input placeholder="e.g., Bridge Pizza" value={location} onChange={(e) => setLocation(e.target.value)} />
-                  </div>
-
-                  {/* Business Phone */}
-                  <div>
-                    <label style={{ display: 'block', fontSize: '20px', marginBottom: '0.5rem' }}>Your Phone (for athlete contact)</label>
-                    <Input placeholder="(555) 123-4567" value={businessPhone} onChange={(e) => setBusinessPhone(e.target.value)} />
-                  </div>
-
-                  {/* Recurring */}
-                  <div>
-                    <label style={{ display: 'block', fontSize: '20px', marginBottom: '0.5rem' }}>
-                      <input type="checkbox" checked={isRecurring} onChange={(e) => setIsRecurring(e.target.checked)} />
-                      Make this recurring monthly
-                    </label>
-                  </div>
-
-                  {/* Amount & Details */}
                   <div>
                     <label style={{ display: 'block', fontSize: '20px', marginBottom: '0.5rem' }}>Offer Amount</label>
                     <Input
-                      placeholder="Enter Offer Amount - Min $50"
+                      placeholder="Enter Offer Amount - Starting at $50"
                       value={amount}
                       onChange={(e) => setAmount(e.target.value)}
                       style={{ fontFamily: "'Courier New', Courier, monospace" }}
