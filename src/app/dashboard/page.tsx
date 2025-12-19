@@ -222,7 +222,7 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
                   <div key={offer.id} className="card-lift border-4 border-black p-16 bg-white max-w-lg mx-auto">
                     <p className="font-bold text-2xl mb-6">{offer.type.toUpperCase()} — ${offer.amount}</p>
                     <p className="mb-12">{offer.description}</p>
-                    <Button 
+                    <Button
                       onClick={() => router.push(`/claim/${offer.id}`)}
                       className="w-72 h-20 text-2xl bg-black text-white hover:bg-gray-800"
                     >
@@ -263,7 +263,7 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
               </div>
             )}
 
-            <Button 
+            <Button
               onClick={() => router.push('/business-onboard')}
               className="w-72 h-20 text-2xl bg-black text-white hover:bg-gray-800 mb-12"
             >
@@ -282,7 +282,7 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
                     <video controls className="w-full mb-8">
                       <source src={clip.video_url} type="video/mp4" />
                     </video>
-                    <Button 
+                    <Button
                       onClick={() => approveClip(clip)}
                       className="w-72 h-20 text-2xl bg-black text-white hover:bg-gray-800"
                     >
