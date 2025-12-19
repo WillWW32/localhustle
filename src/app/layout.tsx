@@ -1,6 +1,7 @@
 import './globals.css'
 import Image from 'next/image'
 import Link from 'next/link'
+import { Button } from '@/components/ui/button'  // <--- Added this line
 
 export default function RootLayout({
   children,
@@ -25,7 +26,7 @@ export default function RootLayout({
         <link rel="icon" href="/favicon.ico" />
       </head>
       <body>
-        {/* Header — less padding, logo 225px */}
+        {/* Header — reduced padding, logo 225px */}
         <header className="py-1 border-b-4 border-black">
           <div className="container text-center">
             <Link href="/">
@@ -43,7 +44,7 @@ export default function RootLayout({
 
         <main>{children}</main>
 
-        {/* Pinned Share Button */}
+        {/* Pinned Share Button — above footer */}
         <div style={{ padding: '2rem 0', backgroundColor: 'white' }}>
           <Button onClick={handleShare} className="w-full max-w-md h-20 text-2xl bg-black text-white hover:bg-gray-800 mx-auto block">
             Share with Teammates
