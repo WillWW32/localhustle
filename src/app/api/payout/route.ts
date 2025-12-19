@@ -15,21 +15,27 @@ export async function POST(request: Request) {
 
   if (!clip) return NextResponse.json({ error: 'Clip not found' }, { status: 404 })
 
-  // Save payment method to profile (stub — real would attach to customer)
-  // For now, payout directly
-
-  const payout = await stripe.transfers.create({
-    amount: clip.offers.amount * 100 * 0.85, // 85% to athlete (15% platform)
-    currency: 'usd',
-    destination: 'acct_test', // real would use connected account or saved method
-    source_transaction: 'ch_test', // from business payment
-  })
-
-  // Deduct from business wallet
-  await supabase
+  // Fetch current wallet balance
+  const { data: business, error: fetchError } = await supabase
     .from('businesses')
-    .update({ wallet_balance: supabase.raw('wallet_balance - ?', [clip.offers.amount]) })
+    .select('wallet_balance')
     .eq('id', clip.offers.business_id)
+    .single()
+
+  if (fetchError || !business) return NextResponse.json({ error: 'Business not found' }, { status: 404 })
+
+  const newBalance = business.wallet_balance - clip.offers.amount
+
+  // Update wallet
+  const { error: updateError } = await supabase
+    .from('businesses')
+    .update({ wallet_balance: newBalance })
+    .eq('id', clip.offers.business_id)
+
+  if (updateError) return NextResponse.json({ error: 'Wallet update failed' }, { status: 500 })
+
+  // Real payout (stub — replace with real transfer when ready)
+  // await stripe.transfers.create({ ... })
 
   return NextResponse.json({ success: true })
 }
