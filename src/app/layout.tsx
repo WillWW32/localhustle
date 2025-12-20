@@ -3,7 +3,7 @@
 import './globals.css'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Button } from '@/components/ui/button'  // <--- Added this line
+import { Button } from '@/components/ui/button'
 
 export default function RootLayout({
   children,
@@ -28,7 +28,7 @@ export default function RootLayout({
         <link rel="icon" href="/favicon.ico" />
       </head>
       <body>
-        {/* Header — reduced padding, logo 225px */}
+        {/* Header — reduced padding */}
         <header className="py-1 border-b-4 border-black">
           <div className="container text-center">
             <Link href="/">
@@ -44,9 +44,19 @@ export default function RootLayout({
           </div>
         </header>
 
+        {/* Slogan — less top padding, closer to logo */}
+        <div style={{ textAlign: 'center', padding: '1rem 2rem 0' }}>
+          <p style={{ fontSize: '2rem', margin: '0 0 1rem 0' }}>
+            Community Driven Support for Student Athletes
+          </p>
+
+          {/* Triangle — always after slogan */}
+          <div style={{ fontSize: '3rem', marginBottom: '2rem' }}>▼</div>
+        </div>
+
         <main>{children}</main>
 
-        {/* Pinned Share Button — above footer */}
+        {/* Pinned Share Button */}
         <div style={{ padding: '2rem 0', backgroundColor: 'white' }}>
           <Button onClick={handleShare} className="w-full max-w-md h-20 text-2xl bg-black text-white hover:bg-gray-800 mx-auto block">
             Share with Teammates
