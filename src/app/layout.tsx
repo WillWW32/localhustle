@@ -4,12 +4,16 @@ import './globals.css'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
+import { useEffect, useState } from 'react'
 
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  const [displayedSlogan, setDisplayedSlogan] = useState('')
+  const slogan = "Community Driven Support for Student Athletes"
+
   const handleShare = () => {
     if (navigator.share) {
       navigator.share({
@@ -22,13 +26,26 @@ export default function RootLayout({
     }
   }
 
+  useEffect(() => {
+    let index = 0
+    const interval = setInterval(() => {
+      if (index <= slogan.length) {
+        setDisplayedSlogan(slogan.slice(0, index))
+        index++
+      } else {
+        clearInterval(interval)
+      }
+    }, 50)
+
+    return () => clearInterval(interval)
+  }, [])
+
   return (
     <html lang="en">
       <head>
         <link rel="icon" href="/favicon.ico" />
       </head>
       <body>
-        {/* Header — reduced padding */}
         <header className="py-1 border-b-4 border-black">
           <div className="container text-center">
             <Link href="/">
@@ -44,19 +61,17 @@ export default function RootLayout({
           </div>
         </header>
 
-        {/* Slogan — less top padding, closer to logo */}
-        <div style={{ textAlign: 'center', padding: '1rem 2rem 0' }}>
-          <p style={{ fontSize: '2rem', margin: '0 0 1rem 0' }}>
-            Community Driven Support for Student Athletes
+        {/* Slogan + Typewriter + Triangle */}
+        <div className="text-center py-2">
+          <p style={{ fontSize: '2rem', margin: '0' }}>
+            {displayedSlogan}
+            <span style={{ animation: 'blink 1s step-end infinite' }}>|</span>
           </p>
-
-          {/* Triangle — always after slogan */}
-          <div style={{ fontSize: '3rem', marginBottom: '2rem' }}>▼</div>
+          <div style={{ fontSize: '3rem', margin: '1rem 0' }}>▼</div>
         </div>
 
         <main>{children}</main>
 
-        {/* Pinned Share Button */}
         <div style={{ padding: '2rem 0', backgroundColor: 'white' }}>
           <Button onClick={handleShare} className="w-full max-w-md h-20 text-2xl bg-black text-white hover:bg-gray-800 mx-auto block">
             Share with Teammates

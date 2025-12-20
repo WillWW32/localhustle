@@ -5,16 +5,43 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import { signOut } from '@/lib/auth'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+
+const gigTypes = [
+  { title: 'ShoutOut', baseAmount: 50, description: 'Visit a favorite business and make a quick shoutout 15-sec reel about what you like or your favorite order.' },
+  { title: 'Youth Clinic', baseAmount: 500, description: 'Run 30–60 min sessions for younger athletes (with teammates).' },
+  { title: 'Team Sponsor', baseAmount: 1000, description: 'Business sponsors team meals/gear — money split equally.' },
+  { title: 'Cameo', baseAmount: 100, description: 'Custom 15-Sec Video for Younger Athletes (birthdays, pre-game pep talks).' },
+  { title: 'Player Training', baseAmount: 100, description: 'Varsity athlete 40-minute training with young player.' },
+  { title: 'Custom Gig', baseAmount: 200, description: 'Create a gig and offer it.' },
+]
 
 export default function Dashboard() {
   const [profile, setProfile] = useState<any>(null)
   const [business, setBusiness] = useState<any>(null)
   const [offers, setOffers] = useState<any[]>([])
   const [pendingClips, setPendingClips] = useState<any[]>([])
-  const [type, setType] = useState('shoutout')
+  const [selectedGig, setSelectedGig] = useState<any>(null)
+  const [numAthletes, setNumAthletes] = useState(1)
+  const [customDetails, setCustomDetails] = useState('')
   const [amount, setAmount] = useState('')
-  const [description, setDescription] = useState('')
+  const [date, setDate] = useState('')
+  const [location, setLocation] = useState('')
+  const [businessPhone, setBusinessPhone] = useState('')
+  const [isRecurring, setIsRecurring] = useState(false)
   const router = useRouter()
+
+  const handleShare = () => {
+    if (navigator.share) {
+      navigator.share({
+        title: 'LocalHustle',
+        text: 'Join LocalHustle — earn from local business sponsorships as a high school athlete!',
+        url: 'https://app.localhustle.org',
+      }).catch(console.error)
+    } else {
+      alert('Copy this link to share: https://app.localhustle.org')
+    }
+  }
 
   useEffect(() => {
     const fetchData = async () => {
@@ -59,6 +86,29 @@ export default function Dashboard() {
 
     fetchData()
   }, [router])
+
+  const handleGigSelect = (gig: any) => {
+    setSelectedGig(gig)
+    setNumAthletes(1)
+    setAmount(gig.baseAmount.toString())
+    setCustomDetails('')
+    setDate('')
+    setLocation('')
+    setBusinessPhone('')
+    setIsRecurring(false)
+  }
+
+  const handleAthletesChange = (value: number) => {
+    setNumAthletes(value)
+    if (selectedGig) {
+      const total = selectedGig.baseAmount + (value - 1) * 75
+      setAmount(total.toString())
+    }
+  }
+
+  const handlePost = async () => {
+    alert('Offer posted (live mode)!')
+  }
 
   const copyLetter = () => {
     const athleteId = profile?.id || 'fallback-id'
@@ -113,32 +163,6 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
     }
   }
 
-  const postOffer = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!business) return
-
-    const finalDescription = type === 'booster' ? 'Sponsoring the team — post-game meals, gear, or event. Money split equally among roster.' : description
-    const finalAmount = type === 'booster' ? 1000 : parseFloat(amount)
-
-    const { error } = await supabase
-      .from('offers')
-      .insert({
-        business_id: business.id,
-        type: type === 'booster' ? 'team_event' : type,
-        amount: finalAmount,
-        description: finalDescription,
-        status: 'active',
-      })
-
-    if (error) alert(error.message)
-    else {
-      alert('Offer posted!')
-      setAmount('')
-      setDescription('')
-      setType('shoutout')
-    }
-  }
-
   const approveClip = async (clip: any) => {
     const { error: clipError } = await supabase
       .from('clips')
@@ -163,8 +187,25 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
   if (!profile) return <p className="container text-center py-32">Loading...</p>
 
   return (
-    <div className="container">
+    <div className="container py-8">
       <p className="text-center mb-12 text-xl font-mono">Welcome, {profile.email}</p>
+
+      {/* Share button — only for athlete */}
+      {profile.role === 'athlete' && (
+        <div style={{ margin: '4rem 0', textAlign: 'center' }}>
+          <Button onClick={handleShare} style={{
+            width: '100%',
+            maxWidth: '500px',
+            height: '80px',
+            fontSize: '30px',
+            backgroundColor: 'black',
+            color: 'white',
+            fontFamily: "'Courier New', Courier, monospace'",
+          }}>
+            Share with Teammates
+          </Button>
+        </div>
+      )}
 
       {profile.role === 'athlete' ? (
         <div className="max-w-2xl mx-auto space-y-16 font-mono text-center text-lg">
@@ -241,28 +282,138 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
           </div>
         </div>
       ) : (
-        <div className="max-w-2xl mx-auto space-y-16 font-mono text-center text-lg">
+        <div className="max-w-4xl mx-auto space-y-16 font-mono text-center text-lg">
           <div>
-            <h2 className="text-3xl mb-8 font-bold">Local Business</h2>
+            <h2 className="text-3xl mb-8 font-bold">Business Admin Console</h2>
             <p className="mb-8">Wallet balance: ${business?.wallet_balance?.toFixed(2) || '0.00'}</p>
 
-            {/* Low balance warning */}
-            {business?.wallet_balance < 100 && (
-              <div className="text-center mb-12">
-                <p className="text-2xl text-red-600 mb-4">Low balance — add funds to post more offers</p>
-                <Button onClick={() => router.push('/business-onboard')} className="w-full max-w-md h-20 text-2xl">
-                  Add Funds
-                </Button>
-              </div>
-            )}
+            {/* Gig buttons + customize */}
+            <h3 className="text-2xl mb-8 font-bold">Create a Gig</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-20 mb-32">
+              {gigTypes.map((gig) => (
+                <div key={gig.title}>
+                  <button
+                    onClick={() => handleGigSelect(gig)}
+                    style={{
+                      width: '100%',
+                      height: '300px',
+                      backgroundColor: selectedGig?.title === gig.title ? '#333' : 'black',
+                      color: 'white',
+                      fontFamily: "'Courier New', Courier, monospace",
+                      fontSize: '30px',
+                      padding: '2rem',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      cursor: 'pointer',
+                      border: 'none',
+                      transition: 'background-color 0.3s',
+                    }}
+                    onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#333'}
+                    onMouseOut={(e) => e.currentTarget.style.backgroundColor = selectedGig?.title === gig.title ? '#333' : 'black'}
+                  >
+                    <span style={{ marginBottom: '1rem' }}>{gig.title}</span>
+                    <span style={{ marginBottom: '1rem' }}>${gig.baseAmount}+</span>
+                    <span style={{ fontSize: '20px' }}>{gig.description}</span>
+                  </button>
 
-            <Button 
-              onClick={() => router.push('/business-onboard')}
-              className="w-72 h-20 text-2xl bg-black text-white hover:bg-gray-800 mb-12"
-            >
-              Add Funds to Wallet
-            </Button>
+                  {selectedGig?.title === gig.title && (
+                    <div style={{ marginTop: '2rem', backgroundColor: '#f5f5f5', padding: '2rem', border: '1px solid black', maxWidth: '500px', marginLeft: 'auto', marginRight: 'auto' }}>
+                      <h3 style={{ fontSize: '24px', marginBottom: '2rem', fontWeight: 'bold' }}>Customize Your {gig.title}</h3>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                        <div>
+                          <label style={{ display: 'block', fontSize: '20px', marginBottom: '0.5rem' }}>Number of Athletes</label>
+                          <select
+                            value={numAthletes}
+                            onChange={(e) => handleAthletesChange(Number(e.target.value))}
+                            style={{ width: '100%', padding: '1rem', fontSize: '20px', border: '4px solid black' }}
+                          >
+                            {[1,2,3,4,5,6,7,8,9,10].map(n => (
+                              <option key={n} value={n}>{n} athlete{n > 1 ? 's' : ''}</option>
+                            ))}
+                          </select>
+                          <p style={{ fontSize: '14px', marginTop: '0.5rem' }}>+ $75 per additional athlete</p>
+                        </div>
 
+                        <div>
+                          <label style={{ display: 'block', fontSize: '20px', marginBottom: '0.5rem' }}>Date</label>
+                          <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+                        </div>
+
+                        <div>
+                          <label style={{ display: 'block', fontSize: '20px', marginBottom: '0.5rem' }}>Location</label>
+                          <Input placeholder="e.g., Bridge Pizza" value={location} onChange={(e) => setLocation(e.target.value)} />
+                        </div>
+
+                        <div>
+                          <label style={{ display: 'block', fontSize: '20px', marginBottom: '0.5rem' }}>Your Phone (for athlete contact)</label>
+                          <Input placeholder="(555) 123-4567" value={businessPhone} onChange={(e) => setBusinessPhone(e.target.value)} />
+                        </div>
+
+                        <div>
+                          <label style={{ display: 'block', fontSize: '20px', marginBottom: '0.5rem' }}>
+                            <input type="checkbox" checked={isRecurring} onChange={(e) => setIsRecurring(e.target.checked)} />
+                            Make this recurring monthly
+                          </label>
+                        </div>
+
+                        <div>
+                          <label style={{ display: 'block', fontSize: '20px', marginBottom: '0.5rem' }}>Offer Amount</label>
+                          <Input
+                            placeholder="Enter Offer Amount - Min $50"
+                            value={amount}
+                            onChange={(e) => setAmount(e.target.value)}
+                            style={{ fontFamily: "'Courier New', Courier, monospace" }}
+                          />
+                        </div>
+
+                        <div>
+                          <label style={{ display: 'block', fontSize: '20px', marginBottom: '0.5rem' }}>Custom Details</label>
+                          <textarea
+                            placeholder="Add your details (e.g., Come to Bridge Pizza this Friday)"
+                            value={customDetails}
+                            onChange={(e) => setCustomDetails(e.target.value)}
+                            style={{ width: '100%', height: '160px', padding: '1rem', fontSize: '20px', fontFamily: "'Courier New', Courier, monospace'", border: '4px solid black' }}
+                          />
+                        </div>
+
+                        <Button onClick={handlePost} style={{
+                          width: '100%',
+                          height: '80px',
+                          fontSize: '30px',
+                          backgroundColor: '#90ee90',
+                          color: 'black',
+                          fontFamily: "'Courier New', Courier, monospace'",
+                        }}>
+                          Fund & Post Offer
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {/* Proposals Received */}
+            <h3 className="text-2xl mb-8 font-bold">Proposals Received</h3>
+            <p className="mb-12">No proposals yet — kids will pitch you soon!</p>
+
+            {/* Tabs */}
+            <h3 className="text-2xl mb-8 font-bold">Your Offers</h3>
+            <div className="flex justify-center gap-8 mb-8">
+              <Button variant="outline">
+                Unclaimed
+              </Button>
+              <Button variant="outline">
+                Active
+              </Button>
+              <Button variant="outline">
+                Complete
+              </Button>
+            </div>
+
+            {/* Pending Clips */}
             <h3 className="text-2xl mb-8 font-bold">Pending Clips to Review</h3>
             {pendingClips.length === 0 ? (
               <p className="text-gray-600 mb-12">No pending clips — post offers to get started!</p>
@@ -285,37 +436,6 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
                 ))}
               </div>
             )}
-
-            <h3 className="text-2xl mb-8 mt-12 font-bold">Post a New Offer</h3>
-            <form onSubmit={postOffer} className="space-y-12 max-w-md mx-auto">
-              <select value={type} onChange={(e) => setType(e.target.value)} className="w-full border-4 border-black p-6 text-xl">
-                <option value="shoutout">Shoutout Clip</option>
-                <option value="experience">Experience</option>
-                <option value="clinic">Clinic</option>
-                <option value="perk">Perk Pack</option>
-                <option value="pay">Pay Direct</option>
-                <option value="scholarship">Scholarship Boost</option>
-                <option value="booster">Booster Club Team Event</option>
-              </select>
-              <input
-                type="number"
-                placeholder={type === 'booster' ? "Amount ($500–$2000 recommended)" : "Amount ($50–$1000)"}
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                required
-                className="w-full border-4 border-black p-6 text-xl"
-              />
-              <textarea
-                placeholder={type === 'booster' ? "Sponsoring the team — post-game meals, gear, or event. Money split equally among roster." : "Brief description"}
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                required
-                className="w-full border-4 border-black p-6 h-40 text-xl"
-              />
-              <Button type="submit" className="w-72 h-20 text-2xl bg-black text-white hover:bg-gray-800">
-                Post Offer
-              </Button>
-            </form>
           </div>
         </div>
       )}

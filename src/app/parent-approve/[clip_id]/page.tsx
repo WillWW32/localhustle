@@ -38,7 +38,7 @@ function ParentApproveContent() {
       return
     }
 
-    // Send to payout API
+    // Save card + payout
     const response = await fetch('/api/payout', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -50,7 +50,7 @@ function ParentApproveContent() {
     if (result.error) {
       alert(result.error)
     } else {
-      alert('Payout sent to your card!')
+      alert('Payout sent to your card! Thank you for supporting your athlete.')
       await supabase.from('clips').update({ status: 'paid' }).eq('id', clip_id)
     }
 
@@ -58,10 +58,23 @@ function ParentApproveContent() {
   }
 
   return (
-    <div className="container py-20">
-      <h1 className="text-center text-5xl mb-12">Parent Approval</h1>
-      <p className="text-center text-2xl mb-20">Your child earned from a gig.</p>
+    <div className="container py-20 text-center">
+      {/* Subtitle */}
+      <div style={{ backgroundColor: 'black', color: 'white', padding: '2rem', marginBottom: '4rem' }}>
+        <h1 style={{ fontSize: '1.8rem', margin: '0' }}>
+          Parent Approval Required
+        </h1>
+      </div>
 
+      {/* Detail */}
+      <div style={{ backgroundColor: 'black', color: 'white', padding: '2rem', marginBottom: '4rem' }}>
+        <p style={{ fontSize: '1.2rem', lineHeight: '1.8' }}>
+          Your child earned from a gig.<br />
+          Enter your card to receive the payout (saved for future gigs).
+        </p>
+      </div>
+
+      {/* Main Content */}
       <div className="max-w-md mx-auto space-y-12">
         <div className="p-8 border-4 border-black bg-white">
           <CardElement
@@ -79,7 +92,14 @@ function ParentApproveContent() {
           />
         </div>
 
-        <Button onClick={handleApprove} disabled={loading || !cardComplete} className="w-full h-20 text-3xl bg-black text-white hover:bg-gray-800">
+        <Button onClick={handleApprove} disabled={loading || !cardComplete} style={{
+          width: '100%',
+          height: '80px',
+          fontSize: '30px',
+          backgroundColor: '#90ee90',
+          color: 'black',
+          fontFamily: "'Courier New', Courier, monospace'",
+        }}>
           {loading ? 'Processing...' : 'Enter Card & Approve Payout'}
         </Button>
       </div>
