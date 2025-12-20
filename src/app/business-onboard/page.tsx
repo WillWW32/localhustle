@@ -5,24 +5,27 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 
 const gigTypes = [
-  { title: 'ShoutOut', description: 'Visit a favorite business and make a quick shoutout 15-sec reel about what you like.' },
-  { title: 'Youth Clinic', description: 'Run 30–60 min sessions for younger athletes (with teammates).' },
-  { title: 'Team Sponsor', description: 'Business sponsors team meals/gear — money split equally.' },
-  { title: 'Product Review', description: 'Perks + post your order (e.g., get free coffee for a month).' },
-  { title: 'Cameo', description: 'Custom 15-Sec Video for Younger Athletes (birthdays, pre-game pep talks).' },
-  { title: 'Custom Gig', description: 'Create a gig and offer it.' },
+  { title: 'ShoutOut', amount: '50', description: 'Visit a favorite business and make a quick shoutout 15-sec reel about what you like.' },
+  { title: 'Youth Clinic', amount: '500+', description: 'Run 30–60 min sessions for younger athletes (with teammates).' },
+  { title: 'Team Sponsor', amount: '1000', description: 'Business sponsors team meals/gear — money split equally.' },
+  { title: 'Product Review', amount: '50', description: '$50 + Perks (e.g., post your order — get free coffee for a month).' },
+  { title: 'Cameo', amount: '100', description: 'Custom 15-Sec Video for Younger Athletes (birthdays, pre-game pep talks).' },
+  { title: 'Custom Gig', amount: '200+', description: 'Create a gig and offer it.' },
+  { title: 'Player Training', amount: '100', description: 'Varsity athlete trains youth athlete 40 mins.' },
 ]
 
 export default function BusinessOnboard() {
   const [selectedGig, setSelectedGig] = useState<typeof gigTypes[0] | null>(null)
   const [customDetails, setCustomDetails] = useState('')
   const [amount, setAmount] = useState('')
+  const [scriptGuidelines, setScriptGuidelines] = useState('')
   const [showPaymentPopup, setShowPaymentPopup] = useState(false)
 
   const handleGigSelect = (gig: typeof gigTypes[0]) => {
     setSelectedGig(gig)
     setAmount('')
     setCustomDetails('')
+    setScriptGuidelines('')
   }
 
   const handlePost = async () => {
@@ -42,21 +45,17 @@ export default function BusinessOnboard() {
         A Local Student Athlete Personally Requested Your Business
       </h1>
 
-      {/* Starting at $50 paragraph */}
-      <p style={{ fontSize: '20px', marginBottom: '4rem', maxWidth: '800px', marginLeft: 'auto', marginRight: 'auto' }}>
-        Gigs starting at $50 — you set the amount.
-      </p>
-
       {/* Arrow */}
       <div style={{ fontSize: '2rem', marginBottom: '2rem' }}>▼</div>
 
-      {/* Gig Descriptions — no prices */}
+      {/* Gig Descriptions */}
       <div style={{ maxWidth: '1000px', margin: '0 auto 4rem auto' }}>
         <div style={{ border: '1px solid black', padding: '2rem', backgroundColor: 'white' }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem' }}>
             {gigTypes.map((gig) => (
               <div key={gig.title}>
                 <h3 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '1rem' }}>{gig.title}</h3>
+                <p style={{ fontWeight: 'bold', marginBottom: '1rem' }}>${gig.amount}</p>
                 <p>{gig.description}</p>
               </div>
             ))}
@@ -64,7 +63,7 @@ export default function BusinessOnboard() {
         </div>
       </div>
 
-      {/* Giant Gig Buttons — no prices */}
+      {/* Giant Gig Buttons */}
       <h2 style={{ fontSize: '30px', fontWeight: 'bold', marginBottom: '2rem' }}>Choose a Gig to Sponsor</h2>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '2rem', maxWidth: '1000px', margin: '0 auto 4rem auto' }}>
         {gigTypes.map((gig) => (
@@ -91,6 +90,7 @@ export default function BusinessOnboard() {
               onMouseOut={(e) => e.currentTarget.style.backgroundColor = selectedGig?.title === gig.title ? '#333' : 'black'}
             >
               <span style={{ marginBottom: '1rem' }}>{gig.title}</span>
+              <span style={{ marginBottom: '1rem' }}>${gig.amount}</span>
               <span style={{ fontSize: '20px' }}>{gig.description}</span>
             </button>
 
@@ -102,7 +102,7 @@ export default function BusinessOnboard() {
                   <div>
                     <label style={{ display: 'block', fontSize: '20px', marginBottom: '0.5rem' }}>Offer Amount</label>
                     <Input
-                      placeholder="Enter Offer Amount - Starting at $50"
+                      placeholder="Enter Offer Amount - Min $50"
                       value={amount}
                       onChange={(e) => setAmount(e.target.value)}
                       style={{ fontFamily: "'Courier New', Courier, monospace" }}
@@ -114,6 +114,15 @@ export default function BusinessOnboard() {
                       placeholder="Add your details (e.g., Come to Bridge Pizza this Friday)"
                       value={customDetails}
                       onChange={(e) => setCustomDetails(e.target.value)}
+                      style={{ width: '100%', height: '160px', padding: '1rem', fontSize: '20px', fontFamily: "'Courier New', Courier, monospace'", border: '4px solid black' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '20px', marginBottom: '0.5rem' }}>Script or Guidelines (optional — athlete can wing it)</label>
+                    <textarea
+                      placeholder="Provide a script or guidelines for the clip (optional)"
+                      value={scriptGuidelines}
+                      onChange={(e) => setScriptGuidelines(e.target.value)}
                       style={{ width: '100%', height: '160px', padding: '1rem', fontSize: '20px', fontFamily: "'Courier New', Courier, monospace'", border: '4px solid black' }}
                     />
                   </div>
