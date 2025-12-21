@@ -2,16 +2,30 @@ import { NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabaseClient'
 
 export async function POST(request: Request) {
-  const { clip_id, post_url } = await request.json()
+  const { clip_id } = await request.json()
 
-  // Check if post tags @localhustl (Instagram/TikTok API stub — real in V3)
-  const hasTag = true // stub
+  // Fetch clip with null check
+  const { data: clip, error: fetchError } = await supabase
+    .from('clips')
+    .select('amount')
+    .eq('id', clip_id)
+    .single()
 
-  if (hasTag) {
-    // Add $10 bonus
-    const { data: clip } = await supabase.from('clips').select('amount').eq('id', clip_id).single()
-    await supabase.from('clips').update({ amount: clip.amount + 10 }).eq('id', clip_id)
+  if (fetchError || !clip) {
+    console.error('Clip fetch error:', fetchError)
+    return NextResponse.json({ error: 'Clip not found' }, { status: 404 })
   }
 
-  return NextResponse.json({ bonus: hasTag })
+  // Add $10 bonus
+  const { error: updateError } = await supabase
+    .from('clips')
+    .update({ amount: clip.amount + 10 })
+    .eq('id', clip_id)
+
+  if (updateError) {
+    console.error('Bonus update error:', updateError)
+    return NextResponse.json({ error: 'Failed to add bonus' }, { status: 500 })
+  }
+
+  return NextResponse.json({ bonus: true })
 }
