@@ -8,6 +8,11 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 
+export const metadata = {
+  title: 'LocalHustle — Community Driven Support for Student Athletes',
+  description: 'LocalHustle connects high school athletes with local businesses for NIL deals. Earn money for gas, gear, and meals through simple gigs like shoutouts, clinics, and team sponsorships.',
+}
+
 export default function Home() {
   const [role, setRole] = useState<'athlete' | 'business'>('athlete')
   const [email, setEmail] = useState('')
@@ -124,14 +129,15 @@ See you inside! 🚀
         Enter Below for How to Get an NIL Deal
       </p>
 
-      {/* Role Toggle */}
+      {/* Role Toggle — smaller, fixed layout */}
       <div style={{ marginBottom: '4rem' }}>
-        <div style={{ display: 'inline-flex', alignItems: 'center', backgroundColor: '#f0f0f0', borderRadius: '50px', padding: '0.5rem' }}>
+        <div style={{ display: 'inline-flex', alignItems: 'center', backgroundColor: '#f0f0f0', borderRadius: '50px', padding: '0.5rem', maxWidth: '90%', margin: '0 auto' }}>
           <button
             onClick={() => setRole('athlete')}
             style={{
-              padding: '1rem 3rem',
-              fontSize: '1.5rem',
+              flex: 1,
+              padding: '1rem 1.5rem',
+              fontSize: '1.3rem',
               backgroundColor: role === 'athlete' ? 'black' : 'transparent',
               color: role === 'athlete' ? 'white' : 'black',
               borderRadius: '50px',
@@ -145,8 +151,9 @@ See you inside! 🚀
           <button
             onClick={() => setRole('business')}
             style={{
-              padding: '1rem 3rem',
-              fontSize: '1.5rem',
+              flex: 1,
+              padding: '1rem 1.5rem',
+              fontSize: '1.3rem',
               backgroundColor: role === 'business' ? 'black' : 'transparent',
               color: role === 'business' ? 'white' : 'black',
               borderRadius: '50px',
