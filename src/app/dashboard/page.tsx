@@ -5,15 +5,14 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import { signOut } from '@/lib/auth'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 
-const gigTypes = [
-  { title: 'ShoutOut', baseAmount: 50, description: 'Visit a favorite business and make a quick shoutout 15-sec reel about what you like or your favorite order.' },
-  { title: 'Youth Clinic', baseAmount: 500, description: 'Run 30–60 min sessions for younger athletes (with teammates).' },
-  { title: 'Team Sponsor', baseAmount: 1000, description: 'Business sponsors team meals/gear — money split equally.' },
-  { title: 'Cameo', baseAmount: 50, description: 'Custom 15-Sec Video for Younger Athletes (birthdays, pre-game pep talks).' },
-  { title: 'Player Training', baseAmount: 100, description: 'Varsity athlete 40-minute training with young player.' },
-  { title: 'Custom Gig', baseAmount: 200, description: 'Create a gig and offer it.' },
+const allGigTypes = [
+  { title: 'ShoutOut', description: 'Visit a favorite business and make a quick shoutout 15-sec reel about what you like or your favorite order.' },
+  { title: 'Youth Clinic', description: 'Run 30–60 min sessions for younger athletes (with teammates).' },
+  { title: 'Team Sponsor', description: 'Business sponsors team meals/gear — money split equally.' },
+  { title: 'Cameo', description: 'Custom 15-Sec Video for Younger Athletes (birthdays, pre-game pep talks).' },
+  { title: 'Player Training', description: 'Varsity athlete 40-minute training with young player.' },
+  { title: 'Custom Gig', description: 'Create a gig and offer it.' },
 ]
 
 export default function Dashboard() {
@@ -21,27 +20,11 @@ export default function Dashboard() {
   const [business, setBusiness] = useState<any>(null)
   const [offers, setOffers] = useState<any[]>([])
   const [pendingClips, setPendingClips] = useState<any[]>([])
-  const [selectedGig, setSelectedGig] = useState<any>(null)
-  const [numAthletes, setNumAthletes] = useState(1)
-  const [customDetails, setCustomDetails] = useState('')
+  const [selectedGigs, setSelectedGigs] = useState<string[]>([])
+  const [selectedGigForCreate, setSelectedGigForCreate] = useState<any>(null)
   const [amount, setAmount] = useState('')
-  const [date, setDate] = useState('')
-  const [location, setLocation] = useState('')
-  const [businessPhone, setBusinessPhone] = useState('')
-  const [isRecurring, setIsRecurring] = useState(false)
+  const [customDetails, setCustomDetails] = useState('')
   const router = useRouter()
-
-  const handleShare = () => {
-    if (navigator.share) {
-      navigator.share({
-        title: 'LocalHustle',
-        text: 'Join LocalHustle — earn from local business sponsorships as a high school athlete!',
-        url: 'https://app.localhustle.org',
-      }).catch(console.error)
-    } else {
-      alert('Copy this link to share: https://app.localhustle.org')
-    }
-  }
 
   useEffect(() => {
     const fetchData = async () => {
@@ -57,6 +40,11 @@ export default function Dashboard() {
         .eq('id', user.id)
         .single()
       setProfile(prof)
+
+      // Load athlete selected gigs
+      if (prof.role === 'athlete' && prof.selected_gigs) {
+        setSelectedGigs(prof.selected_gigs)
+      }
 
       if (prof.role === 'business') {
         const { data: biz } = await supabase
@@ -87,178 +75,166 @@ export default function Dashboard() {
     fetchData()
   }, [router])
 
-  const handleGigSelect = (gig: any) => {
-    setSelectedGig(gig)
-    setNumAthletes(1)
-    setAmount(gig.baseAmount.toString())
+  const toggleGigSelection = async (title: string) => {
+    const newSelected = selectedGigs.includes(title)
+      ? selectedGigs.filter(g => g !== title)
+      : [...selectedGigs, title]
+
+    setSelectedGigs(newSelected)
+
+    // Save to profile
+    await supabase
+      .from('profiles')
+      .update({ selected_gigs: newSelected })
+      .eq('id', profile.id)
+  }
+
+  const handleGigCreateSelect = (gig: any) => {
+    setSelectedGigForCreate(gig)
+    setAmount(gig.baseAmount?.toString() || '')
     setCustomDetails('')
-    setDate('')
-    setLocation('')
-    setBusinessPhone('')
-    setIsRecurring(false)
   }
 
-  const handleAthletesChange = (value: number) => {
-    setNumAthletes(value)
-    if (selectedGig) {
-      const total = selectedGig.baseAmount + (value - 1) * 75
-      setAmount(total.toString())
-    }
+  const handleCreateOffer = async () => {
+    if (!business || !selectedGigForCreate) return
+
+    const { error } = await supabase
+      .from('offers')
+      .insert({
+        business_id: business.id,
+        type: selectedGigForCreate.title,
+        amount: parseFloat(amount || selectedGigForCreate.baseAmount || 50),
+        description: customDetails || selectedGigForCreate.description,
+        status: 'active',
+      })
+
+    if (error) alert(error.message)
+    else alert('Offer posted!')
   }
 
-  const handlePost = async () => {
-    alert('Offer posted (live mode)!')
-  }
-
-  const copyLetter = () => {
+  const copyLetter = (gigTitle: string) => {
     const athleteId = profile?.id || 'fallback-id'
     const letterText = `Hey [Business Name],
 
-I've been coming to [Your Spot] for years before and after practice.
+I'm a local high school athlete and I'd love to partner with you on a ${gigTitle} gig through LocalHustle.
 
-Our team has joined a new app that helps us get community support for our athletic journey. I'm reaching out to my favorite spots to see if you would consider a sponsorship.
+Here's what you'd get: ${gigTypes.find(g => g.title === gigTitle)?.description || 'a great clip featuring your business'}.
 
-Here's what you would get: a short thank-you clip from me about your place. You can use the clip for social media if you want.
+This link has all the details: https://app.localhustle.org/business-onboard?ref=${athleteId}
 
-I'd probably get some new shoes or gear and be set for our roadtrips. It means a lot for me and the team and I'd love to rep a local business that's got our back.
+Thanks!
 
-This link has all the details for how it works: https://app.localhustle.org/business-onboard?ref=${athleteId}
-
-Thanks either way!
-
-– ${profile?.email.split('@')[0] || 'me'}
-${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athlete'}`
+– ${profile?.email.split('@')[0] || 'me'}`
     navigator.clipboard.writeText(letterText)
-    alert('Letter copied to clipboard!')
+    alert(`${gigTitle} letter copied!`)
   }
 
-  const shareLetter = () => {
+  const shareLetter = (gigTitle: string) => {
     const athleteId = profile?.id || 'fallback-id'
     const letterText = `Hey [Business Name],
 
-I've been coming to [Your Spot] for years before and after practice.
+I'm a local high school athlete and I'd love to partner with you on a ${gigTitle} gig through LocalHustle.
 
-Our team has joined a new app that helps us get community support for our athletic journey. I'm reaching out to my favorite spots to see if you would consider a sponsorship.
+Here's what you'd get: ${gigTypes.find(g => g.title === gigTitle)?.description || 'a great clip featuring your business'}.
 
-Here's what you would get: a short thank-you clip from me about your place. You can use the clip for social media if you want.
+This link has all the details: https://app.localhustle.org/business-onboard?ref=${athleteId}
 
-I'd probably get some new shoes or gear and be set for our roadtrips. It means a lot for me and the team and I'd love to rep a local business that's got our back.
+Thanks!
 
-This link has all the details for how it works: https://app.localhustle.org/business-onboard?ref=${athleteId}
-
-Thanks either way!
-
-– ${profile?.email.split('@')[0] || 'me'}
-${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athlete'}`
+– ${profile?.email.split('@')[0] || 'me'}`
 
     if (navigator.share) {
       navigator.share({
-        title: 'LocalHustle Sponsorship',
+        title: `LocalHustle ${gigTitle} Proposal`,
         text: letterText,
-      }).catch(() => {
-        copyLetter()
       })
     } else {
-      copyLetter()
+      copyLetter(gigTitle)
     }
-  }
-
-  const approveClip = async (clip: any) => {
-    const { error: clipError } = await supabase
-      .from('clips')
-      .update({ status: 'waiting_parent' })
-      .eq('id', clip.id)
-
-    if (clipError) {
-      alert(clipError.message)
-      return
-    }
-
-    await supabase
-      .from('businesses')
-      .update({ wallet_balance: business.wallet_balance - clip.offers.amount })
-      .eq('id', business.id)
-
-    alert(`Clip sent to parent for final approval: ${clip.profiles.parent_email || 'parent email'}`)
-    setPendingClips(pendingClips.filter(c => c.id !== clip.id))
-    setBusiness({ ...business, wallet_balance: business.wallet_balance - clip.offers.amount })
   }
 
   if (!profile) return <p className="container text-center py-32">Loading...</p>
 
   return (
     <div className="container py-8">
+      {/* Welcome */}
       <p className="text-center mb-12 text-xl font-mono">Welcome, {profile.email}</p>
 
-      {/* Share button — only for athlete */}
-      {profile.role === 'athlete' && (
-        <div style={{ margin: '4rem 0', textAlign: 'center' }}>
-          <Button onClick={handleShare} style={{
-            width: '100%',
-            maxWidth: '500px',
-            height: '80px',
-            fontSize: '30px',
-            backgroundColor: 'black',
-            color: 'white',
-            fontFamily: "'Courier New', Courier, monospace'",
-          }}>
-            Share with Teammates
-          </Button>
-        </div>
-      )}
+      {/* Subtitle — black block */}
+      <div style={{ backgroundColor: 'black', color: 'white', padding: '2rem', marginBottom: '4rem' }}>
+        <h1 style={{ fontSize: '1.8rem', margin: '0' }}>
+          {profile.role === 'athlete' ? 'Your Athlete Dashboard' : 'Your Business Admin Console'}
+        </h1>
+      </div>
+
+      {/* How it Works — black block */}
+      <div style={{ backgroundColor: 'black', color: 'white', padding: '2rem', marginBottom: '4rem' }}>
+        <p style={{ fontSize: '1.2rem', lineHeight: '1.8' }}>
+          {profile.role === 'athlete' ? 'Select gigs you offer → pitch businesses → claim funded gigs → record clip → get paid' : 'Fund wallet → create gigs → review clips → approve payouts'}
+        </p>
+      </div>
 
       {profile.role === 'athlete' ? (
-        <div className="max-w-2xl mx-auto space-y-16 font-mono text-center text-lg">
-          {/* Athlete dashboard content */}
+        <div className="max-w-4xl mx-auto space-y-16 font-mono text-center text-lg">
+          {/* Gigs athlete can offer — smaller, selectable */}
           <div>
-            <h2 className="text-3xl mb-8 font-bold">Student Athlete</h2>
-            <p className="mb-12">Pitch local businesses for support — copy or share the letter below.</p>
-
-            <div className="bg-gray-100 p-12 mb-16 border border-black max-w-lg mx-auto">
-              <pre className="font-mono text-sm whitespace-pre-wrap text-left">
-                {`Hey [Business Name],
-
-I've been coming to [Your Spot] for years before and after practice.
-
-Our team has joined a new app that helps us get community support for our athletic journey. I'm reaching out to my favorite spots to see if you would consider a sponsorship.
-
-Here's what you would get: a short thank-you clip from me about your place. You can use the clip for social media if you want.
-
-I'd probably get some new shoes or gear and be set for our roadtrips. It means a lot for me and the team and I'd love to rep a local business that's got our back.
-
-This link has all the details for how it works: https://app.localhustle.org/business-onboard?ref=${profile.id || 'fallback-id'}
-
-Thanks either way!
-
-– ${profile?.email.split('@')[0] || 'me'}
-${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athlete'}`}
-              </pre>
-            </div>
-
-            <div className="space-y-8">
-              <Button onClick={shareLetter} className="w-full max-w-md h-20 text-2xl bg-black text-white hover:bg-gray-800">
-                Share Letter (Text, Instagram, etc.)
-              </Button>
-              <Button onClick={copyLetter} variant="outline" className="w-full max-w-md h-20 text-2xl">
-                Copy Letter to Clipboard
-              </Button>
+            <h2 className="text-2xl mb-8 font-bold">Gigs You Offer</h2>
+            <p className="mb-8">Select the gigs you're willing to do — businesses will see these.</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+              {allGigTypes.map((gig) => (
+                <div key={gig.title} style={{
+                  border: '2px solid black',
+                  padding: '2rem',
+                  backgroundColor: selectedGigs.includes(gig.title) ? '#333' : '#f5f5f5',
+                  color: selectedGigs.includes(gig.title) ? 'white' : 'black',
+                }}>
+                  <h3 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '1rem' }}>{gig.title}</h3>
+                  <p style={{ fontSize: '1.1rem', marginBottom: '2rem' }}>{gig.description}</p>
+                  <Button 
+                    onClick={() => toggleGigSelection(gig.title)}
+                    style={{
+                      width: '100%',
+                      height: '60px',
+                      fontSize: '1.2rem',
+                      backgroundColor: selectedGigs.includes(gig.title) ? 'white' : 'black',
+                      color: selectedGigs.includes(gig.title) ? 'black' : 'white',
+                    }}
+                  >
+                    {selectedGigs.includes(gig.title) ? 'Selected' : 'Select This Gig'}
+                  </Button>
+                  <div style={{ marginTop: '1rem', display: 'flex', gap: '1rem' }}>
+                    <Button onClick={() => copyLetter(gig.title)} variant="outline" style={{ flex: 1 }}>
+                      Copy Letter
+                    </Button>
+                    <Button onClick={() => shareLetter(gig.title)} style={{ flex: 1 }}>
+                      Share Letter
+                    </Button>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
 
           {/* Open Offers */}
           <div>
-            <h2 className="text-3xl mb-8 font-bold">Open Offers</h2>
+            <h2 className="text-2xl mb-8 font-bold">Open Offers</h2>
             {offers.length === 0 ? (
-              <p className="text-gray-600 mb-12">No offers yet — send letters to get businesses posting!</p>
+              <p className="text-gray-600 mb-12">No offers yet — select gigs above and pitch businesses!</p>
             ) : (
               <div className="space-y-16">
                 {offers.map((offer) => (
-                  <div key={offer.id} className="card-lift border-4 border-black p-16 bg-white max-w-lg mx-auto">
-                    <p className="font-bold text-2xl mb-6">{offer.type.toUpperCase()} — ${offer.amount}</p>
+                  <div key={offer.id} className="border-4 border-black p-16 bg-gray-100 max-w-lg mx-auto">
+                    <p className="font-bold text-2xl mb-6">{offer.type.toUpperCase()}</p>
                     <p className="mb-12">{offer.description}</p>
                     <Button 
                       onClick={() => router.push(`/claim/${offer.id}`)}
-                      className="w-72 h-20 text-2xl bg-black text-white hover:bg-gray-800"
+                      style={{
+                        width: '100%',
+                        height: '60px',
+                        fontSize: '1.5rem',
+                        backgroundColor: 'black',
+                        color: 'white',
+                      }}
                     >
                       Claim Offer
                     </Button>
@@ -268,20 +244,25 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
             )}
           </div>
 
-          {/* Pinned gigs at bottom */}
-          <div className="space-y-16 mt-32">
-            <div className="card-lift border-2 border-black p-12 bg-gray-100 max-w-md mx-auto">
-              <h3 className="text-2xl mb-6 font-bold">Apply to Be Team Hustle Ambassador</h3>
-              <p className="mb-4 text-left">Task: Make 10–20 business connections — send the support letter to local spots.</p>
-              <p className="mb-4 text-left">Qualifications: Varsity player, manager, or photographer • 3.0 GPA or better</p>
-              <p className="mb-6 text-left">Prize: $100 bonus (1 week deadline) • 5% lifetime cut of every gig from businesses you onboard</p>
-              <Button className="w-full h-20 text-2xl bg-black text-white hover:bg-gray-800">
-                Apply Now
-              </Button>
-            </div>
+          {/* Booster Events Link */}
+          <div className="mt-32">
+            <Button 
+              onClick={() => router.push('/booster-events')}
+              style={{
+                width: '100%',
+                maxWidth: '500px',
+                height: '80px',
+                fontSize: '1.8rem',
+                backgroundColor: '#90ee90',
+                color: 'black',
+              }}
+            >
+              Create Booster Club Event
+            </Button>
           </div>
         </div>
       ) : (
+        // Business view
         <div className="max-w-4xl mx-auto space-y-16 font-mono text-center text-lg">
           <div>
             <h2 className="text-3xl mb-8 font-bold">Business Admin Console</h2>
@@ -290,7 +271,7 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
             {/* Gig buttons + customize */}
             <h3 className="text-2xl mb-8 font-bold">Create a Gig</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-20 mb-32">
-              {gigTypes.map((gig) => (
+              {allGigTypes.map((gig) => (
                 <div key={gig.title}>
                   <button
                     onClick={() => handleGigSelect(gig)}
@@ -314,7 +295,6 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
                     onMouseOut={(e) => e.currentTarget.style.backgroundColor = selectedGig?.title === gig.title ? '#333' : 'black'}
                   >
                     <span style={{ marginBottom: '1rem' }}>{gig.title}</span>
-                    <span style={{ marginBottom: '1rem' }}>${gig.baseAmount}+</span>
                     <span style={{ fontSize: '20px' }}>{gig.description}</span>
                   </button>
 
@@ -323,51 +303,14 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
                       <h3 style={{ fontSize: '24px', marginBottom: '2rem', fontWeight: 'bold' }}>Customize Your {gig.title}</h3>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
                         <div>
-                          <label style={{ display: 'block', fontSize: '20px', marginBottom: '0.5rem' }}>Number of Athletes</label>
-                          <select
-                            value={numAthletes}
-                            onChange={(e) => handleAthletesChange(Number(e.target.value))}
-                            style={{ width: '100%', padding: '1rem', fontSize: '20px', border: '4px solid black' }}
-                          >
-                            {[1,2,3,4,5,6,7,8,9,10].map(n => (
-                              <option key={n} value={n}>{n} athlete{n > 1 ? 's' : ''}</option>
-                            ))}
-                          </select>
-                          <p style={{ fontSize: '14px', marginTop: '0.5rem' }}>+ $75 per additional athlete</p>
-                        </div>
-
-                        <div>
-                          <label style={{ display: 'block', fontSize: '20px', marginBottom: '0.5rem' }}>Date</label>
-                          <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
-                        </div>
-
-                        <div>
-                          <label style={{ display: 'block', fontSize: '20px', marginBottom: '0.5rem' }}>Location</label>
-                          <Input placeholder="e.g., Bridge Pizza" value={location} onChange={(e) => setLocation(e.target.value)} />
-                        </div>
-
-                        <div>
-                          <label style={{ display: 'block', fontSize: '20px', marginBottom: '0.5rem' }}>Your Phone (for athlete contact)</label>
-                          <Input placeholder="(555) 123-4567" value={businessPhone} onChange={(e) => setBusinessPhone(e.target.value)} />
-                        </div>
-
-                        <div>
-                          <label style={{ display: 'block', fontSize: '20px', marginBottom: '0.5rem' }}>
-                            <input type="checkbox" checked={isRecurring} onChange={(e) => setIsRecurring(e.target.checked)} />
-                            Make this recurring monthly
-                          </label>
-                        </div>
-
-                        <div>
                           <label style={{ display: 'block', fontSize: '20px', marginBottom: '0.5rem' }}>Offer Amount</label>
                           <Input
-                            placeholder="Enter Offer Amount - Min $50"
+                            placeholder="Enter Offer Amount - Starting at $50"
                             value={amount}
                             onChange={(e) => setAmount(e.target.value)}
                             style={{ fontFamily: "'Courier New', Courier, monospace" }}
                           />
                         </div>
-
                         <div>
                           <label style={{ display: 'block', fontSize: '20px', marginBottom: '0.5rem' }}>Custom Details</label>
                           <textarea
@@ -377,7 +320,6 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
                             style={{ width: '100%', height: '160px', padding: '1rem', fontSize: '20px', fontFamily: "'Courier New', Courier, monospace'", border: '4px solid black' }}
                           />
                         </div>
-
                         <Button onClick={handlePost} style={{
                           width: '100%',
                           height: '80px',
@@ -420,7 +362,7 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
             ) : (
               <div className="space-y-16">
                 {pendingClips.map((clip) => (
-                  <div key={clip.id} className="card-lift border-4 border-black p-20 bg-white max-w-lg mx-auto">
+                  <div key={clip.id} className="border-4 border-black p-20 bg-white max-w-lg mx-auto">
                     <p className="font-bold mb-6 text-left">From: {clip.profiles.email}</p>
                     <p className="mb-6 text-left">Offer: {clip.offers.type} — ${clip.offers.amount}</p>
                     <video controls className="w-full mb-8">
@@ -428,7 +370,13 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
                     </video>
                     <Button 
                       onClick={() => approveClip(clip)}
-                      className="w-72 h-20 text-2xl bg-black text-white hover:bg-gray-800"
+                      style={{
+                        width: '100%',
+                        height: '60px',
+                        fontSize: '1.5rem',
+                        backgroundColor: 'black',
+                        color: 'white',
+                      }}
                     >
                       Approve & Send to Parent
                     </Button>
