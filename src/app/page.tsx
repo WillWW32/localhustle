@@ -8,10 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 
-export const metadata = {
-  title: 'LocalHustle — Community Driven Support for Student Athletes',
-  description: 'LocalHustle connects high school athletes with local businesses for NIL deals. Earn money for gas, gear, and meals through simple gigs like shoutouts, clinics, and team sponsorships.',
-}
+
 
 export default function Home() {
   const [role, setRole] = useState<'athlete' | 'business'>('athlete')
