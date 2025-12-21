@@ -19,14 +19,12 @@ export default function BoosterEvents() {
 
     setLoading(true)
 
-    // Create event (stub — real would insert to Supabase)
+    // Generate slug + share link
     const slug = eventName.toLowerCase().replace(/ /g, '-').replace(/[^a-z0-9-]/g, '')
     const link = `https://app.localhustle.org/fund/${slug}`
 
     setShareLink(link)
     setLoading(false)
-
-    // Real would save to DB + generate unique ID
   }
 
   return (
@@ -56,25 +54,25 @@ export default function BoosterEvents() {
       </p>
 
       {/* Form */}
-      <div style={{ maxWidth: '500px', margin: '0 auto', spaceY: '2rem' }}>
+      <div style={{ maxWidth: '500px', margin: '0 auto' }}>
         <Input
           placeholder="Event Name (e.g., Post-Game Meals for Road Trips)"
           value={eventName}
           onChange={(e) => setEventName(e.target.value)}
-          style={{ height: '60px', fontSize: '1.5rem', border: '4px solid black' }}
+          style={{ height: '60px', fontSize: '1.5rem', border: '4px solid black', marginBottom: '2rem' }}
         />
         <Input
           type="number"
           placeholder="Funding Goal (e.g., 1000)"
           value={goal}
           onChange={(e) => setGoal(e.target.value)}
-          style={{ height: '60px', fontSize: '1.5rem', border: '4px solid black' }}
+          style={{ height: '60px', fontSize: '1.5rem', border: '4px solid black', marginBottom: '2rem' }}
         />
         <textarea
           placeholder="Description (e.g., Meals for away games — help keep our athletes fueled!)"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          style={{ width: '100%', height: '200px', padding: '1rem', fontSize: '1.5rem', border: '4px solid black', fontFamily: "'Courier New', Courier, monospace'" }}
+          style={{ width: '100%', height: '200px', padding: '1rem', fontSize: '1.5rem', border: '4px solid black', marginBottom: '2rem', fontFamily: "'Courier New', Courier, monospace'" }}
         />
         <Button 
           onClick={handleCreate}
