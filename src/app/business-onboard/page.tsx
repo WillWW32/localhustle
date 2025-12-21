@@ -1,8 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 
 const gigTypes = [
   { title: 'ShoutOut', description: 'Visit a favorite business and make a quick shoutout 15-sec reel about what you like or your favorite order.' },
@@ -14,20 +13,7 @@ const gigTypes = [
 ]
 
 export default function BusinessOnboard() {
-  const [selectedGig, setSelectedGig] = useState<typeof gigTypes[0] | null>(null)
-  const [customDetails, setCustomDetails] = useState('')
-  const [amount, setAmount] = useState('')
-  const [showPaymentPopup, setShowPaymentPopup] = useState(false)
-
-  const handleGigSelect = (gig: typeof gigTypes[0]) => {
-    setSelectedGig(gig)
-    setAmount('')
-    setCustomDetails('')
-  }
-
-  const handlePost = async () => {
-    alert('Offer posted and wallet funded (test mode)!')
-  }
+  const router = useRouter()
 
   return (
     <div style={{
@@ -42,17 +28,31 @@ export default function BusinessOnboard() {
         A Local Student Athlete Personally Requested Your Business
       </h1>
 
-      {/* Starting at $50 paragraph */}
+      {/* Arrow */}
+      <div style={{ fontSize: '2rem', marginBottom: '2rem' }}>▼</div>
+
+      {/* "Why it's the best advertising" — black block */}
+      <div style={{ backgroundColor: 'black', color: 'white', padding: '2rem', marginBottom: '4rem' }}>
+        <h2 style={{ fontSize: '28px', fontWeight: 'bold', marginBottom: '2rem' }}>
+          Why this is the best advertising
+        </h2>
+        <p style={{ fontSize: '20px', lineHeight: '1.8' }}>
+          • Real word-of-mouth from kids parents trust (88% trust recommendations from people they know).<br />
+          • Authentic content — better than paid ads.<br />
+          • Be the hometown hero — visible support for local teams.<br />
+          • Discover motivated teens & future employees.<br />
+          • Zero risk — only pay for clips you love.
+        </p>
+      </div>
+
+      {/* "Gigs starting at $50" paragraph */}
       <p style={{ fontSize: '20px', marginBottom: '4rem', maxWidth: '800px', marginLeft: 'auto', marginRight: 'auto' }}>
         Gigs starting at $50 — you set the amount.
       </p>
 
-      {/* Arrow */}
-      <div style={{ fontSize: '2rem', marginBottom: '2rem' }}>▼</div>
-
-      {/* Gig Descriptions */}
+      {/* Gig Descriptions — no prices, no border */}
       <div style={{ maxWidth: '1000px', margin: '0 auto 4rem auto' }}>
-        <div style={{ border: '1px solid black', padding: '2rem', backgroundColor: 'white' }}>
+        <div style={{ padding: '2rem', backgroundColor: 'white' }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem' }}>
             {gigTypes.map((gig) => (
               <div key={gig.title}>
@@ -64,74 +64,29 @@ export default function BusinessOnboard() {
         </div>
       </div>
 
-      {/* Giant Gig Buttons */}
-      <h2 style={{ fontSize: '30px', fontWeight: 'bold', marginBottom: '2rem' }}>Choose a Gig to Sponsor</h2>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '2rem', maxWidth: '1000px', margin: '0 auto 4rem auto' }}>
-        {gigTypes.map((gig) => (
-          <div key={gig.title}>
-            <button
-              onClick={() => handleGigSelect(gig)}
-              style={{
-                width: '100%',
-                height: '300px',
-                backgroundColor: selectedGig?.title === gig.title ? '#333' : 'black',
-                color: 'white',
-                fontFamily: "'Courier New', Courier, monospace",
-                fontSize: '30px',
-                padding: '2rem',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center',
-                alignItems: 'center',
-                cursor: 'pointer',
-                border: 'none',
-                transition: 'background-color 0.3s',
-              }}
-              onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#333'}
-              onMouseOut={(e) => e.currentTarget.style.backgroundColor = selectedGig?.title === gig.title ? '#333' : 'black'}
-            >
-              <span style={{ marginBottom: '1rem' }}>{gig.title}</span>
-              <span style={{ fontSize: '20px' }}>{gig.description}</span>
-            </button>
+      {/* Reassurance paragraph */}
+      <p style={{ fontSize: '20px', marginBottom: '4rem', maxWidth: '800px', marginLeft: 'auto', marginRight: 'auto' }}>
+        Ready to become the hometown hero?<br />
+        Fund a gig — get authentic content + support a local athlete.<br />
+        Only pay for clips you love.
+      </p>
 
-            {/* Form below selected gig */}
-            {selectedGig?.title === gig.title && (
-              <div style={{ marginTop: '2rem', backgroundColor: '#f5f5f5', padding: '2rem', border: '1px solid black', maxWidth: '500px', marginLeft: 'auto', marginRight: 'auto' }}>
-                <h3 style={{ fontSize: '24px', marginBottom: '2rem', fontWeight: 'bold' }}>Customize Your {gig.title}</h3>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-                  <div>
-                    <label style={{ display: 'block', fontSize: '20px', marginBottom: '0.5rem' }}>Offer Amount</label>
-                    <Input
-                      placeholder="Enter Offer Amount - Starting at $50"
-                      value={amount}
-                      onChange={(e) => setAmount(e.target.value)}
-                      style={{ fontFamily: "'Courier New', Courier, monospace" }}
-                    />
-                  </div>
-                  <div>
-                    <label style={{ display: 'block', fontSize: '20px', marginBottom: '0.5rem' }}>Custom Details</label>
-                    <textarea
-                      placeholder="Add your details (e.g., Come to Bridge Pizza this Friday)"
-                      value={customDetails}
-                      onChange={(e) => setCustomDetails(e.target.value)}
-                      style={{ width: '100%', height: '160px', padding: '1rem', fontSize: '20px', fontFamily: "'Courier New', Courier, monospace'", border: '4px solid black' }}
-                    />
-                  </div>
-                  <Button onClick={handlePost} style={{
-                    width: '100%',
-                    height: '80px',
-                    fontSize: '30px',
-                    backgroundColor: '#90ee90',
-                    color: 'black',
-                    fontFamily: "'Courier New', Courier, monospace'",
-                  }}>
-                    Fund & Post Offer
-                  </Button>
-                </div>
-              </div>
-            )}
-          </div>
-        ))}
+      {/* CTA to dashboard */}
+      <div style={{ marginBottom: '4rem' }}>
+        <Button 
+          onClick={() => router.push('/dashboard')}
+          style={{
+            width: '100%',
+            maxWidth: '500px',
+            height: '80px',
+            fontSize: '30px',
+            backgroundColor: '#90ee90',
+            color: 'black',
+            fontFamily: "'Courier New', Courier, monospace'",
+          }}
+        >
+          Go to Admin Console & Make an Offer
+        </Button>
       </div>
 
       {/* Banner at bottom */}
@@ -140,28 +95,6 @@ export default function BusinessOnboard() {
           Business can add scholarships after successful gig completion.
         </p>
       </div>
-
-      {/* Payment Popup */}
-      <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
-        <Button onClick={() => setShowPaymentPopup(true)} variant="outline" style={{ fontSize: '20px', padding: '1rem 2rem' }}>
-          How payments work?
-        </Button>
-      </div>
-
-      {showPaymentPopup && (
-        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
-          <div style={{ backgroundColor: 'white', padding: '3rem', border: '4px solid black', maxWidth: '600px' }}>
-            <h2 style={{ fontSize: '30px', marginBottom: '2rem', fontWeight: 'bold' }}>How Payments Work</h2>
-            <p style={{ marginBottom: '1rem' }}>1. Athlete uploads clip</p>
-            <p style={{ marginBottom: '1rem' }}>2. You review & approve</p>
-            <p style={{ marginBottom: '1rem' }}>3. Parent approves (for minors)</p>
-            <p style={{ marginBottom: '2rem' }}>4. $ sent — only pay for clips you love</p>
-            <Button onClick={() => setShowPaymentPopup(false)} style={{ width: '100%', height: '60px', fontSize: '20px' }}>
-              Got it
-            </Button>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

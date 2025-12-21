@@ -7,7 +7,15 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
 export async function POST(request: Request) {
   const { amount, business_id } = await request.json()
 
-  const { data: business } = await supabase.from('businesses').select('stripe_account_id').eq('id', business_id).single()
+  const { data: business } = await supabase
+    .from('businesses')
+    .select('stripe_account_id')
+    .eq('id', business_id)
+    .single()
+
+  if (!business || !business.stripe_account_id) {
+    return NextResponse.json({ error: 'Business or Stripe account not found' }, { status: 400 })
+  }
 
   const session = await stripe.checkout.sessions.create({
     payment_method_types: ['card'],
