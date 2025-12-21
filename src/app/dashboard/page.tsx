@@ -11,7 +11,7 @@ const gigTypes = [
   { title: 'ShoutOut', baseAmount: 50, description: 'Visit a favorite business and make a quick shoutout 15-sec reel about what you like or your favorite order.' },
   { title: 'Youth Clinic', baseAmount: 500, description: 'Run 30–60 min sessions for younger athletes (with teammates).' },
   { title: 'Team Sponsor', baseAmount: 1000, description: 'Business sponsors team meals/gear — money split equally.' },
-  { title: 'Cameo', baseAmount: 100, description: 'Custom 15-Sec Video for Younger Athletes (birthdays, pre-game pep talks).' },
+  { title: 'Cameo', baseAmount: 50, description: 'Custom 15-Sec Video for Younger Athletes (birthdays, pre-game pep talks).' },
   { title: 'Player Training', baseAmount: 100, description: 'Varsity athlete 40-minute training with young player.' },
   { title: 'Custom Gig', baseAmount: 200, description: 'Create a gig and offer it.' },
 ]
@@ -209,7 +209,7 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
 
       {profile.role === 'athlete' ? (
         <div className="max-w-2xl mx-auto space-y-16 font-mono text-center text-lg">
-          {/* Letter first */}
+          {/* Athlete dashboard content */}
           <div>
             <h2 className="text-3xl mb-8 font-bold">Student Athlete</h2>
             <p className="mb-12">Pitch local businesses for support — copy or share the letter below.</p>
