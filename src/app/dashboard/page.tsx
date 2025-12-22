@@ -249,105 +249,121 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
 
       {profile.role === 'athlete' ? (
         <div className="max-w-4xl mx-auto space-y-16 font-mono text-center text-lg">
-          {/* Player Profile Section */}
-          <div style={{ maxWidth: '600px', margin: '0 auto 6rem auto', padding: '3rem', border: '2px solid black', backgroundColor: '#f5f5f5' }}>
-            <h2 style={{ fontSize: '1.8rem', marginBottom: '3rem' }}>
-              Your Player Profile
-            </h2>
+          {/* Player Profile Section — Direct Upload */}
+<div style={{ maxWidth: '600px', margin: '0 auto 6rem auto', padding: '3rem', border: '2px solid black', backgroundColor: '#f5f5f5' }}>
+  <h2 style={{ fontSize: '1.8rem', marginBottom: '3rem' }}>
+    Your Player Profile
+  </h2>
 
-            {/* Circle Photo Upload */}
-            <div style={{ marginBottom: '3rem' }}>
-              <div style={{ width: '150px', height: '150px', borderRadius: '50%', backgroundColor: '#ddd', margin: '0 auto', overflow: 'hidden', border: '4px solid black' }}>
-                {profilePic ? (
-                  <img src={profilePic} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                ) : (
-                  <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#ccc' }}>
-                    <p style={{ fontSize: '1rem', color: '#666' }}>Tap to Upload</p>
-                  </div>
-                )}
-              </div>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => {
-                  const file = e.target.files?.[0]
-                  if (file) {
-                    const reader = new FileReader()
-                    reader.onloadend = () => {
-                      setProfilePic(reader.result as string)
-                    }
-                    reader.readAsDataURL(file)
-                  }
-                }}
-                style={{ display: 'none' }}
-                id="profile-pic-upload"
-              />
-              <label htmlFor="profile-pic-upload">
-                <Button style={{
-                  marginTop: '1rem',
-                  width: '100%',
-                  height: '60px',
-                  fontSize: '1.5rem',
-                  backgroundColor: 'black',
-                  color: 'white',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontFamily: "'Courier New', Courier, monospace'",
-                }}>
-                  Upload Photo
-                </Button>
-              </label>
-            </div>
+  {/* Circle Photo Upload */}
+  <div style={{ marginBottom: '3rem' }}>
+    <div style={{ width: '150px', height: '150px', borderRadius: '50%', backgroundColor: '#ddd', margin: '0 auto', overflow: 'hidden', border: '4px solid black', cursor: 'pointer' }}>
+      {profilePic ? (
+        <img src={profilePic} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+      ) : (
+        <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#ccc' }}>
+          <p style={{ fontSize: '1rem', color: '#666' }}>Tap to Add Photo</p>
+        </div>
+      )}
+    </div>
+    <input
+      type="file"
+      accept="image/*"
+      capture="environment"
+      onChange={async (e) => {
+        const file = e.target.files?.[0]
+        if (!file || !profile) return
 
-            {/* Name & School */}
-            <div style={{ marginBottom: '2rem' }}>
-              <label style={{ display: 'block', fontSize: '1.2rem', marginBottom: '0.5rem' }}>Name</label>
-              <Input placeholder="Your Name" value={profile?.full_name || ''} onChange={() => {}} disabled />
-            </div>
+        const fileExt = file.name.split('.').pop()
+        const fileName = `${profile.id}.${fileExt}`
+        const filePath = `${profile.id}/${fileName}`
 
-            <div style={{ marginBottom: '2rem' }}>
-              <label style={{ display: 'block', fontSize: '1.2rem', marginBottom: '0.5rem' }}>School</label>
-              <Input placeholder="Your School" value={profile?.school || ''} onChange={() => {}} disabled />
-            </div>
+        const { error: uploadError } = await supabase.storage
+          .from('profile-pics')
+          .upload(filePath, file, { upsert: true })
 
-            {/* Highlight Link */}
-            <div style={{ marginBottom: '2rem' }}>
-              <label style={{ display: 'block', fontSize: '1.2rem', marginBottom: '0.5rem' }}>Highlight Reel Link</label>
-              <Input placeholder="YouTube / Hudl link" value={highlightLink} onChange={(e) => setHighlightLink(e.target.value)} />
-            </div>
+        if (uploadError) {
+          alert('Upload failed: ' + uploadError.message)
+          return
+        }
 
-            {/* Social Followers */}
-            <div style={{ marginBottom: '2rem' }}>
-              <label style={{ display: 'block', fontSize: '1.2rem', marginBottom: '0.5rem' }}>Total Social Followers</label>
-              <Input placeholder="e.g., 5,000" value={socialFollowers} onChange={(e) => setSocialFollowers(e.target.value)} />
-            </div>
+        const { data: urlData } = supabase.storage
+          .from('profile-pics')
+          .getPublicUrl(filePath)
 
-            {/* Bio */}
-            <div style={{ marginBottom: '3rem' }}>
-              <label style={{ display: 'block', fontSize: '1.2rem', marginBottom: '0.5rem' }}>Bio</label>
-              <textarea
-                placeholder="Short bio about you and your sport"
-                value={bio}
-                onChange={(e) => setBio(e.target.value)}
-                style={{ width: '100%', height: '160px', padding: '1rem', fontSize: '1.2rem', border: '4px solid black', fontFamily: "'Courier New', Courier, monospace'" }}
-              />
-            </div>
+        setProfilePic(urlData.publicUrl)
 
-            <Button onClick={handleSaveProfile} style={{
-              width: '100%',
-              height: '60px',
-              fontSize: '1.5rem',
-              backgroundColor: 'black',
-              color: 'white',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontFamily: "'Courier New', Courier, monospace'",
-            }}>
-              Save Profile
-            </Button>
-          </div>
+        await supabase
+          .from('profiles')
+          .update({ profile_pic: urlData.publicUrl })
+          .eq('id', profile.id)
+      }}
+      style={{ display: 'none' }}
+      id="photo-upload"
+    />
+    <label htmlFor="photo-upload">
+      <div style={{
+        marginTop: '1rem',
+        padding: '1rem',
+        backgroundColor: 'black',
+        color: 'white',
+        textAlign: 'center',
+        cursor: 'pointer',
+        fontSize: '1.2rem',
+      }}>
+        Upload Photo
+      </div>
+    </label>
+  </div>
+
+  {/* Name & School */}
+  <div style={{ marginBottom: '2rem' }}>
+    <label style={{ display: 'block', fontSize: '1.2rem', marginBottom: '0.5rem' }}>Name</label>
+    <Input placeholder="Your Name" value={profile?.full_name || ''} onChange={() => {}} disabled style={{ textAlign: 'center' }} />
+  </div>
+
+  <div style={{ marginBottom: '2rem' }}>
+    <label style={{ display: 'block', fontSize: '1.2rem', marginBottom: '0.5rem' }}>School</label>
+    <Input placeholder="Your School" value={profile?.school || ''} onChange={(e) => setSchool(e.target.value)} />
+  </div>
+
+  {/* Highlight Link */}
+  <div style={{ marginBottom: '2rem' }}>
+    <label style={{ display: 'block', fontSize: '1.2rem', marginBottom: '0.5rem' }}>Highlight Reel Link</label>
+    <Input placeholder="YouTube / Hudl link" value={highlightLink} onChange={(e) => setHighlightLink(e.target.value)} />
+  </div>
+
+  {/* Social Followers */}
+  <div style={{ marginBottom: '2rem' }}>
+    <label style={{ display: 'block', fontSize: '1.2rem', marginBottom: '0.5rem' }}>Total Social Followers</label>
+    <Input placeholder="e.g., 5,000" value={socialFollowers} onChange={(e) => setSocialFollowers(e.target.value)} />
+  </div>
+
+  {/* Bio */}
+  <div style={{ marginBottom: '3rem' }}>
+    <label style={{ display: 'block', fontSize: '1.2rem', marginBottom: '0.5rem' }}>Bio</label>
+    <textarea
+      placeholder="Short bio about you and your sport"
+      value={bio}
+      onChange={(e) => setBio(e.target.value)}
+      style={{ width: '100%', height: '160px', padding: '1rem', fontSize: '1.2rem', border: '4px solid black', fontFamily: "'Courier New', Courier, monospace'" }}
+    />
+  </div>
+
+  <Button onClick={handleSaveProfile} style={{
+    width: '100%',
+    height: '60px',
+    fontSize: '1.5rem',
+    backgroundColor: 'black',
+    color: 'white',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontFamily: "'Courier New', Courier, monospace'",
+  }}>
+    Save Profile
+  </Button>
+</div>
 
           {/* Gig Selection */}
           <div>
@@ -675,9 +691,78 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
             </div>
 
             {/* Proposals Received */}
-            <h3 className="text-2xl mb-8 font-bold">Proposals Received</h3>
-            <p className="mb-12">No proposals yet — kids will pitch you soon!</p>
+<h3 className="text-2xl mb-8 font-bold">Proposals Received</h3>
+{pendingProposals.length === 0 ? (
+  <p className="mb-12">No proposals yet — kids will pitch you soon!</p>
+) : (
+  <div className="space-y-16">
+    {pendingProposals.map((proposal) => (
+      <div key={proposal.id} className="border-4 border-black p-20 bg-white max-w-lg mx-auto">
+        <p className="font-bold mb-6 text-left">From: {proposal.athlete_email}</p>
+        <p className="mb-6 text-left">Message: {proposal.message}</p>
 
+        {/* Athlete Profile Preview */}
+        <div style={{ marginTop: '2rem', padding: '2rem', backgroundColor: '#f5f5f5', border: '2px solid black' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '2rem', marginBottom: '2rem' }}>
+            <div style={{ width: '100px', height: '100px', borderRadius: '50%', overflow: 'hidden', border: '2px solid black' }}>
+              {proposal.profile_pic ? (
+                <img src={proposal.profile_pic} alt="Athlete" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              ) : (
+                <div style={{ backgroundColor: '#ccc', width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <p>No Photo</p>
+                </div>
+              )}
+            </div>
+            <div>
+              <p className="font-bold text-xl">{proposal.full_name || proposal.athlete_email}</p>
+              <p>{proposal.school} • {proposal.sport}</p>
+              {proposal.social_followers && <p>Followers: {proposal.social_followers}</p>}
+            </div>
+          </div>
+
+          {proposal.bio && <p className="mb-4">{proposal.bio}</p>}
+
+          {proposal.selected_gigs && proposal.selected_gigs.length > 0 && (
+            <div>
+              <p className="font-bold mb-2">Gigs Offered:</p>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
+                {proposal.selected_gigs.map((gig: string) => (
+                  <span key={gig} style={{ padding: '0.5rem 1rem', backgroundColor: 'black', color: 'white' }}>
+                    {gig}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <Button 
+            onClick={() => router.push(`/athlete/${proposal.athlete_id}`)}
+            style={{
+              marginTop: '2rem',
+              width: '100%',
+              height: '60px',
+              fontSize: '1.5rem',
+              backgroundColor: 'black',
+              color: 'white',
+            }}
+          >
+            View Full Profile
+          </Button>
+        </div>
+
+        {/* Accept/Reject Buttons */}
+        <div style={{ marginTop: '2rem', display: 'flex', gap: '1rem' }}>
+          <Button style={{ flex: 1, backgroundColor: '#90ee90', color: 'black' }}>
+            Accept
+          </Button>
+          <Button variant="outline" style={{ flex: 1 }}>
+            Reject
+          </Button>
+        </div>
+      </div>
+    ))}
+  </div>
+)}
             {/* Tabs */}
             <h3 className="text-2xl mb-8 font-bold">Your Offers</h3>
             <div className="flex justify-center gap-8 mb-8">
@@ -767,7 +852,7 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
       </div>
     </div>
 {/* Connect with Stripe — only if not connected */}
-{!business?.stripe_account_id && (
+{business && !business.stripe_account_id && (
   <div style={{ margin: '4rem 0' }}>
     <p style={{ fontSize: '1.2rem', marginBottom: '2rem' }}>
       Connect your Stripe account to receive payouts directly (we take 15% platform fee).

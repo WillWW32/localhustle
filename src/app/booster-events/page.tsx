@@ -1,6 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { supabase } from '@/lib/supabaseClient'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 
@@ -10,19 +12,71 @@ export default function BoosterEvents() {
   const [description, setDescription] = useState('')
   const [shareLink, setShareLink] = useState('')
   const [loading, setLoading] = useState(false)
+  const [profile, setProfile] = useState<any>(null)
+  const router = useRouter()
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const { data: prof } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('id', user.id)
+          .single()
+        setProfile(prof)
+      }
+    }
+    fetchProfile()
+  }, [])
 
   const handleCreate = async () => {
-    if (!eventName || !goal) {
-      alert('Please enter event name and goal')
+    if (!eventName || !goal || !profile) {
+      alert('Please fill all fields and be logged in')
       return
     }
 
     setLoading(true)
 
-    // Generate slug + share link
-    const slug = eventName.toLowerCase().replace(/ /g, '-').replace(/[^a-z0-9-]/g, '')
-    const link = `https://app.localhustle.org/fund/${slug}`
+    // Generate unique slug
+    let slug = eventName.toLowerCase().replace(/ /g, '-').replace(/[^a-z0-9-]/g, '')
+    let uniqueSlug = slug
+    let counter = 1
 
+    // Check uniqueness
+    while (true) {
+      const { data: existing } = await supabase
+        .from('booster_events')
+        .select('id')
+        .eq('slug', uniqueSlug)
+        .single()
+
+      if (!existing) break
+      uniqueSlug = `${slug}-${counter}`
+      counter++
+    }
+
+    // Insert to table
+    const { data, error } = await supabase
+      .from('booster_events')
+      .insert({
+        creator_id: profile.id,
+        name: eventName,
+        slug: uniqueSlug,
+        description,
+        goal: parseFloat(goal),
+        raised: 0,
+      })
+      .select()
+      .single()
+
+    if (error) {
+      alert('Error creating event: ' + error.message)
+      setLoading(false)
+      return
+    }
+
+    const link = `${window.location.origin}/fund/${data.slug}`
     setShareLink(link)
     setLoading(false)
   }
@@ -90,7 +144,7 @@ export default function BoosterEvents() {
         </Button>
       </div>
 
-      {/* Share Link */}
+      {/* Share Link + Progress Meter */}
       {shareLink && (
         <div style={{ marginTop: '6rem', padding: '2rem', backgroundColor: '#f0f0f0', border: '4px solid black', maxWidth: '600px', marginLeft: 'auto', marginRight: 'auto' }}>
           <p style={{ fontSize: '1.8rem', marginBottom: '2rem' }}>
@@ -99,6 +153,20 @@ export default function BoosterEvents() {
           <p style={{ fontSize: '1.5rem', wordBreak: 'break-all', marginBottom: '2rem' }}>
             {shareLink}
           </p>
+
+          {/* Progress Meter (placeholder — real would fetch raised) */}
+          <div style={{ marginBottom: '2rem' }}>
+            <p style={{ fontSize: '1.5rem' }}>
+              $0 raised of ${goal}
+            </p>
+            <div style={{ height: '40px', backgroundColor: '#ddd', border: '4px solid black', position: 'relative' }}>
+              <div style={{ width: '0%', height: '100%', backgroundColor: '#90ee90', transition: 'width 0.5s' }}></div>
+              <p style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', fontSize: '1.5rem', fontWeight: 'bold' }}>
+                0%
+              </p>
+            </div>
+          </div>
+
           <Button onClick={() => navigator.clipboard.writeText(shareLink)} style={{
             width: '100%',
             height: '60px',
