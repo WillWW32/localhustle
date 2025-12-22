@@ -3,6 +3,7 @@
 import { useParams } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabaseClient'
+import { Button } from '@/components/ui/button'
 
 const gigTypes = [
   { title: 'ShoutOut', description: 'Visit a favorite business and make a quick shoutout 15-sec reel about what you like or your favorite order.' },
