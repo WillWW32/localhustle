@@ -446,7 +446,7 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
 
                         <div>
                           <label style={{ display: 'block', fontSize: '20px', marginBottom: '0.5rem' }}>Date</label>
-                          <oninput type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+                          <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
                         </div>
 
                         <div>
