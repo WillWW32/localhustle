@@ -530,21 +530,31 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
             </div>
 
             <div style={{ textAlign: 'center' }}>
-              <Button style={{
-                width: '100%',
-                maxWidth: '400px',
-                height: '70px',
-                fontSize: '1.6rem',
-                backgroundColor: 'black',
-                color: 'white',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontFamily: "'Courier New', Courier, monospace'",
-              }}>
-                Apply Now
-              </Button>
-            </div>
+  <Button 
+    onClick={() => {
+      const subject = encodeURIComponent('Team Hustle Ambassador Application')
+      const body = encodeURIComponent(
+        `Hi Jesse,\n\nI'd like to apply to be a Team Hustle Ambassador.\n\nName: ${profile?.full_name || profile?.email || 'Not provided'}\nSchool: ${profile?.school || 'Not provided'}\nSport: ${profile?.sport || 'Not provided'}\nEmail: ${profile?.email}\n\nThanks!`
+      )
+      window.location.href = `mailto:jesse@entreartists.com?subject=${subject}&body=${body}`
+      alert('Application received! Email opened — send it to jesse@entreartists.com and we\'ll review within 48 hours.')
+    }}
+    style={{
+      width: '100%',
+      maxWidth: '400px',
+      height: '70px',
+      fontSize: '1.6rem',
+      backgroundColor: 'black',
+      color: 'white',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      fontFamily: "'Courier New', Courier, monospace'",
+    }}
+  >
+    Apply Now
+  </Button>
+</div>
           </div>
         </div>
       ) : (
