@@ -5,15 +5,22 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import { signOut } from '@/lib/auth'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 
-const gigTypes = [
+const athleteGigTypes = [
   { title: 'ShoutOut', description: 'Visit a favorite business and make a quick shoutout 15-sec reel about what you like or your favorite order.' },
   { title: 'Youth Clinic', description: 'Run 30–60 min sessions for younger athletes (with teammates).' },
-  { title: 'Team Sponsor', description: 'Business sponsors team meals/gear — money split equally.' },
   { title: 'Cameo', description: 'Custom 15-Sec Video for Younger Athletes (birthdays, pre-game pep talks).' },
   { title: 'Player Training', description: 'Varsity athlete 40-minute training with young player.' },
   { title: 'Custom Gig', description: 'Create a gig and offer it.' },
+]
+
+const businessGigTypes = [
+  { title: 'ShoutOut', baseAmount: 50, description: 'Visit a favorite business and make a quick shoutout 15-sec reel about what you like or your favorite order.' },
+  { title: 'Youth Clinic', baseAmount: 500, description: 'Run 30–60 min sessions for younger athletes (with teammates).' },
+  { title: 'Team Sponsor', baseAmount: 1000, description: 'Business sponsors team meals/gear — money split equally.' },
+  { title: 'Cameo', baseAmount: 50, description: 'Custom 15-Sec Video for Younger Athletes (birthdays, pre-game pep talks).' },
+  { title: 'Player Training', baseAmount: 100, description: 'Varsity athlete 40-minute training with young player.' },
+  { title: 'Custom Gig', baseAmount: 200, description: 'Create a gig and offer it.' },
 ]
 
 export default function Dashboard() {
@@ -112,7 +119,7 @@ export default function Dashboard() {
   const handleAthletesChange = (value: number) => {
     setNumAthletes(value)
     if (selectedGig) {
-      const total = 50 + (value - 1) * 75 // base $50
+      const total = selectedGig.baseAmount + (value - 1) * 75
       setAmount(total.toString())
     }
   }
@@ -223,7 +230,7 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
             <h2 className="text-2xl mb-8 font-bold">Gigs You Offer</h2>
             <p className="mb-8">Select the gigs you're willing to do — businesses will see these.</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-              {gigTypes.map((gig) => (
+              {athleteGigTypes.map((gig) => (
                 <div key={gig.title} style={{
                   border: '2px solid black',
                   padding: '2rem',
@@ -240,6 +247,10 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
                       fontSize: '1.2rem',
                       backgroundColor: selectedGigs.includes(gig.title) ? 'white' : 'black',
                       color: selectedGigs.includes(gig.title) ? 'black' : 'white',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontFamily: "'Courier New', Courier, monospace'",
                     }}
                   >
                     {selectedGigs.includes(gig.title) ? 'Selected' : 'Select This Gig'}
@@ -258,7 +269,7 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
               <div className="space-y-16">
                 {offers.map((offer) => (
                   <div key={offer.id} className="border-4 border-black p-16 bg-gray-100 max-w-lg mx-auto">
-                    <p className="font-bold text-2xl mb-6">{offer.type.toUpperCase()}</p>
+                    <p className="font-bold text-2xl mb-6">{offer.type.toUpperCase()} — ${offer.amount}</p>
                     <p className="mb-12">{offer.description}</p>
                     <Button 
                       onClick={() => router.push(`/claim/${offer.id}`)}
@@ -268,6 +279,10 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
                         fontSize: '1.5rem',
                         backgroundColor: 'black',
                         color: 'white',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontFamily: "'Courier New', Courier, monospace'",
                       }}
                     >
                       Claim Offer
@@ -310,6 +325,10 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
                 fontSize: '1.5rem',
                 backgroundColor: 'black',
                 color: 'white',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontFamily: "'Courier New', Courier, monospace'",
               }}>
                 Share Letter
               </Button>
@@ -317,6 +336,10 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
                 height: '60px',
                 fontSize: '1.5rem',
                 border: '4px solid black',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontFamily: "'Courier New', Courier, monospace'",
               }}>
                 Copy Letter
               </Button>
@@ -332,6 +355,10 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
               fontSize: '2rem',
               backgroundColor: '#90ee90',
               color: 'black',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontFamily: "'Courier New', Courier, monospace'",
             }}>
               Build a Squad and Earn with Friends
             </Button>
@@ -358,37 +385,42 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
           </div>
 
           {/* Ambassador */}
-          <div className="max-w-md mx-auto mt-32 padding-12 bg-gray-100 border-2 border-black">
-            <h2 className="text-2xl mb-6 font-bold">Apply to Be Team Hustle Ambassador</h2>
-            <p className="mb-4 text-left">Task: Make 10–20 business connections — send the support letter to local spots.</p>
-            <p className="mb-4 text-left">Qualifications: Varsity player, manager, or photographer • 3.0 GPA or better</p>
-            <p className="mb-6 text-left">Prize: $100 bonus (1 week deadline) • 5% lifetime cut of every gig from businesses you onboard</p>
-            <Button style={{
-              width: '100%',
-              height: '60px',
-              fontSize: '1.5rem',
-              backgroundColor: 'black',
-              color: 'white',
-            }}>
-              Apply Now
-            </Button>
-          </div>
+          <div style={{ maxWidth: '600px', margin: '0 auto 8rem auto', padding: '3rem', border: '2px solid black', backgroundColor: '#f5f5f5' }}>
+            <h2 style={{ fontSize: '1.8rem', marginBottom: '3rem' }}>
+              Become a Team Hustle Ambassador
+            </h2>
 
-          {/* Booster Events CTA */}
-          <div className="mt-32">
-            <Button 
-              onClick={() => router.push('/booster-events')}
-              style={{
+            <div style={{ fontSize: '1.2rem', lineHeight: '2', textAlign: 'left' }}>
+              <p style={{ marginBottom: '1.5rem' }}>
+                <strong>Task:</strong> Make 10–20 business connections — send the support letter to local spots.
+              </p>
+              <p style={{ marginBottom: '1.5rem' }}>
+                <strong>Qualifications:</strong> Varsity player, manager, or photographer • 3.0 GPA or better
+              </p>
+              <p style={{ marginBottom: '1.5rem' }}>
+                <strong>Prize:</strong> $100 bonus (1 week deadline) • 5% lifetime cut of every gig from businesses you onboard
+              </p>
+              <p style={{ marginBottom: '3rem' }}>
+                <strong>Deadline:</strong> Complete within 7 days of applying
+              </p>
+            </div>
+
+            <div style={{ textAlign: 'center' }}>
+              <Button style={{
                 width: '100%',
-                maxWidth: '500px',
-                height: '80px',
-                fontSize: '1.8rem',
-                backgroundColor: '#90ee90',
-                color: 'black',
-              }}
-            >
-              View Booster Club Events
-            </Button>
+                maxWidth: '400px',
+                height: '70px',
+                fontSize: '1.6rem',
+                backgroundColor: 'black',
+                color: 'white',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontFamily: "'Courier New', Courier, monospace'",
+              }}>
+                Apply Now
+              </Button>
+            </div>
           </div>
         </div>
       ) : (
@@ -400,7 +432,7 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
             {/* Gig buttons + customize */}
             <h3 className="text-2xl mb-8 font-bold">Create a Gig</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-20 mb-32">
-              {gigTypes.map((gig) => (
+              {businessGigTypes.map((gig) => (
                 <div key={gig.title}>
                   <button
                     onClick={() => handleGigSelect(gig)}
@@ -424,6 +456,7 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
                     onMouseOut={(e) => e.currentTarget.style.backgroundColor = selectedGig?.title === gig.title ? '#333' : 'black'}
                   >
                     <span style={{ marginBottom: '1rem' }}>{gig.title}</span>
+                    <span style={{ marginBottom: '1rem' }}>${gig.baseAmount}+</span>
                     <span style={{ fontSize: '20px' }}>{gig.description}</span>
                   </button>
 
@@ -543,6 +576,10 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
                         fontSize: '1.5rem',
                         backgroundColor: 'black',
                         color: 'white',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontFamily: "'Courier New', Courier, monospace'",
                       }}
                     >
                       Approve & Send to Parent
@@ -564,6 +601,10 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
                 fontSize: '1.8rem',
                 backgroundColor: '#90ee90',
                 color: 'black',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontFamily: "'Courier New', Courier, monospace'",
               }}
             >
               Create Booster Club Event
@@ -572,8 +613,19 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
         </div>
       )}
 
+      {/* Log Out — half size */}
       <div className="text-center mt-32">
-        <Button onClick={signOut} variant="outline" className="text-base py-4 px-8">
+        <Button onClick={signOut} variant="outline" style={{
+          width: '50%',
+          maxWidth: '250px',
+          height: '50px',
+          fontSize: '1.2rem',
+          border: '4px solid black',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontFamily: "'Courier New', Courier, monospace'",
+        }}>
           Log Out
         </Button>
       </div>
