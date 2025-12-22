@@ -851,11 +851,11 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
         </Button>
       </div>
     </div>
-{/* Connect with Stripe — only if not connected */}
+
 {business && !business.stripe_account_id && (
   <div style={{ margin: '4rem 0' }}>
     <p style={{ fontSize: '1.2rem', marginBottom: '2rem' }}>
-      Connect your Stripe account to receive payouts directly (we take 15% platform fee).
+      Connect your Stripe account to automatically fund all approved gigs.
     </p>
     <Button 
       onClick={async () => {
