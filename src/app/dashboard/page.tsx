@@ -249,7 +249,7 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
 
       {profile.role === 'athlete' ? (
         <div className="max-w-4xl mx-auto space-y-16 font-mono text-center text-lg">
-          {/* Player Profile Section — Direct Upload */}
+    {/* Player Profile Section */}
 <div style={{ maxWidth: '600px', margin: '0 auto 6rem auto', padding: '3rem', border: '2px solid black', backgroundColor: '#f5f5f5' }}>
   <h2 style={{ fontSize: '1.8rem', marginBottom: '3rem' }}>
     Your Player Profile
@@ -257,12 +257,12 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
 
   {/* Circle Photo Upload */}
   <div style={{ marginBottom: '3rem' }}>
-    <div style={{ width: '150px', height: '150px', borderRadius: '50%', backgroundColor: '#ddd', margin: '0 auto', overflow: 'hidden', border: '4px solid black', cursor: 'pointer' }}>
+    <div style={{ width: '150px', height: '150px', borderRadius: '50%', backgroundColor: '#ddd', margin: '0 auto', overflow: 'hidden', border: '4px solid black' }}>
       {profilePic ? (
         <img src={profilePic} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
       ) : (
-        <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#ccc' }}>
-          <p style={{ fontSize: '1rem', color: '#666' }}>Tap to Add Photo</p>
+        <div style={{ width: '100%', height: '100%', backgroundColor: '#ccc', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <p style={{ fontSize: '1rem', color: '#666' }}>Tap to Upload</p>
         </div>
       )}
     </div>
@@ -292,11 +292,6 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
           .getPublicUrl(filePath)
 
         setProfilePic(urlData.publicUrl)
-
-        await supabase
-          .from('profiles')
-          .update({ profile_pic: urlData.publicUrl })
-          .eq('id', profile.id)
       }}
       style={{ display: 'none' }}
       id="photo-upload"
@@ -316,15 +311,16 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
     </label>
   </div>
 
-  {/* Name & School */}
+  {/* Name */}
   <div style={{ marginBottom: '2rem' }}>
     <label style={{ display: 'block', fontSize: '1.2rem', marginBottom: '0.5rem' }}>Name</label>
-    <Input placeholder="Your Name" value={profile?.full_name || ''} onChange={() => {}} disabled style={{ textAlign: 'center' }} />
+    <Input placeholder="Your Name" value={profile?.full_name || ''} onChange={() => {}} disabled />
   </div>
 
+  {/* School */}
   <div style={{ marginBottom: '2rem' }}>
     <label style={{ display: 'block', fontSize: '1.2rem', marginBottom: '0.5rem' }}>School</label>
-    <Input placeholder="Your School" value={profile?.school || ''} onChange={(e) => setSchool(e.target.value)} />
+    <Input placeholder="Your School" value={profile?.school || ''} onChange={() => {}} disabled />
   </div>
 
   {/* Highlight Link */}
