@@ -76,19 +76,41 @@ export default function ClaimOffer() {
     setUploading(false)
   }
 
-  if (!offer) return <p className="container text-center">Loading offer...</p>
+  if (!offer) return <p className="container text-center py-32">Loading offer...</p>
 
   return (
-    <div className="container py-20">
-      <h1 className="text-center text-5xl mb-12">Claim Offer</h1>
+    <div style={{
+      fontFamily: "'Courier New', Courier, monospace",
+      textAlign: 'center',
+      padding: '2rem',
+      backgroundColor: 'white',
+      color: 'black',
+      minHeight: '100vh',
+    }}>
+      {/* Slogan + Triangle */}
+      <p style={{ fontSize: '2rem', marginBottom: '1rem' }}>
+        Community Driven Support for Student Athletes
+      </p>
+      <div style={{ fontSize: '3rem', marginBottom: '4rem' }}>▼</div>
 
-      <div className="card-lift border-4 border-black p-12 bg-gray-100 max-w-2xl mx-auto mb-20">
-        <p className="text-4xl font-bold mb-6 text-center">{offer.type.toUpperCase()}</p>
-        <p className="text-2xl mb-12 text-center">{offer.description}</p>
-        {offer.date && <p className="text-xl mb-4">Date: {offer.date}</p>}
-        {offer.location && <p className="text-xl mb-4">Location: {offer.location}</p>}
+      {/* Subtitle — black block */}
+      <div style={{ backgroundColor: 'black', color: 'white', padding: '2rem', marginBottom: '4rem' }}>
+        <h1 style={{ fontSize: '1.8rem', margin: '0' }}>
+          Claim This Gig
+        </h1>
       </div>
 
+      {/* Detail — black block */}
+      <div style={{ backgroundColor: 'black', color: 'white', padding: '2rem', marginBottom: '4rem' }}>
+        <p style={{ fontSize: '1.2rem', lineHeight: '1.8' }}>
+          {offer.type.toUpperCase()}<br />
+          {offer.description}<br />
+          {offer.date && `Date: ${offer.date}`}<br />
+          {offer.location && `Location: ${offer.location}`}
+        </p>
+      </div>
+
+      {/* Main Content */}
       <div className="max-w-md mx-auto space-y-20">
         <div className="space-y-8">
           <label className="block text-3xl text-center mb-8">
@@ -118,19 +140,40 @@ export default function ClaimOffer() {
               accept="video/*"
               capture="environment"
               onChange={(e) => setVideoFile(e.target.files?.[0] || null)}
-              className="w-full py-20 text-2xl border-4 border-black text-center block mx-auto bg-white"
+              style={{
+                width: '100%',
+                padding: '2rem',
+                fontSize: '1.5rem',
+                border: '4px solid black',
+                textAlign: 'center',
+                backgroundColor: 'white',
+              }}
             />
           )}
         </div>
 
         {deliveryOption === 'private' && (
-          <Button onClick={handleUpload} disabled={uploading || !videoFile} className="w-full py-20 text-4xl border-8 border-black bg-black text-white hover:bg-gray-800">
+          <Button onClick={handleUpload} disabled={uploading || !videoFile} style={{
+            width: '100%',
+            height: '80px',
+            fontSize: '2rem',
+            backgroundColor: '#90ee90',
+            color: 'black',
+            fontFamily: "'Courier New', Courier, monospace'",
+          }}>
             {uploading ? 'Uploading...' : 'Upload Clip & Claim'}
           </Button>
         )}
 
         {deliveryOption === 'public' && (
-          <Button onClick={() => router.push('/dashboard')} className="w-full py-20 text-4xl border-8 border-black bg-black text-white hover:bg-gray-800">
+          <Button onClick={() => router.push('/dashboard')} style={{
+            width: '100%',
+            height: '80px',
+            fontSize: '2rem',
+            backgroundColor: '#90ee90',
+            color: 'black',
+            fontFamily: "'Courier New', Courier, monospace'",
+          }}>
             I'll Post on Social & Claim
           </Button>
         )}

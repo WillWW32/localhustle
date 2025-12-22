@@ -38,7 +38,6 @@ function ParentApproveContent() {
       return
     }
 
-    // Save card + payout
     const response = await fetch('/api/payout', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -58,16 +57,29 @@ function ParentApproveContent() {
   }
 
   return (
-    <div className="container py-20 text-center">
-      {/* Subtitle */}
+    <div style={{
+      fontFamily: "'Courier New', Courier, monospace",
+      textAlign: 'center',
+      padding: '2rem',
+      backgroundColor: 'white',
+      color: 'black',
+      minHeight: '100vh',
+    }}>
+      {/* Slogan + Triangle (global, but repeated for consistency if layout doesn't cover) */}
+      <p style={{ fontSize: '2rem', marginBottom: '1rem' }}>
+        Community Driven Support for Student Athletes
+      </p>
+      <div style={{ fontSize: '3rem', marginBottom: '4rem' }}>▼</div>
+
+      {/* Subtitle — black block */}
       <div style={{ backgroundColor: 'black', color: 'white', padding: '2rem', marginBottom: '4rem' }}>
         <h1 style={{ fontSize: '1.8rem', margin: '0' }}>
           Parent Approval Required
         </h1>
       </div>
 
-      {/* Detail */}
-      <div style={{ backgroundColor: 'black', color: 'white', padding: '2rem', marginBottom: '4rem' }}>
+      {/* Detail — black block */}
+      <div style={{ backgroundColor: 'black', color: 'white', padding: '2rem', marginBottom: '6rem' }}>
         <p style={{ fontSize: '1.2rem', lineHeight: '1.8' }}>
           Your child earned from a gig.<br />
           Enter your card to receive the payout (saved for future gigs).

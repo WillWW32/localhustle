@@ -8,21 +8,32 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 
-
-
 export default function Home() {
-  const [role, setRole] = useState<'athlete' | 'business'>('athlete')
+  const [role, setRole] = useState<'athlete' | 'business' | null>(null)
+  const [level, setLevel] = useState<'high_school' | 'college' | null>(null)
   const [email, setEmail] = useState('')
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(false)
   const router = useRouter()
 
   const handleLogin = async () => {
+    if (!role || (role === 'athlete' && !level)) {
+      alert('Please select your role and level')
+      return
+    }
+
     setLoading(true)
+
     const { error } = await supabase.auth.signInWithOtp({ 
       email,
-      options: { data: { role } }
+      options: { 
+        data: { 
+          role,
+          level: role === 'athlete' ? level : null 
+        } 
+      }
     })
+
     if (error) alert(error.message)
     else {
       alert(`
@@ -126,62 +137,77 @@ See you inside! 🚀
         Enter Below for How to Get an NIL Deal
       </p>
 
-      {/* Role Toggle — smaller, fixed layout */}
-      <div style={{ marginBottom: '4rem' }}>
-        <div style={{ display: 'inline-flex', alignItems: 'center', backgroundColor: '#f0f0f0', borderRadius: '50px', padding: '0.5rem', maxWidth: '90%', margin: '0 auto' }}>
-          <button
-            onClick={() => setRole('athlete')}
-            style={{
-              flex: 1,
-              padding: '1rem 1.5rem',
-              fontSize: '1.3rem',
-              backgroundColor: role === 'athlete' ? 'black' : 'transparent',
-              color: role === 'athlete' ? 'white' : 'black',
-              borderRadius: '50px',
-              border: 'none',
-              cursor: 'pointer',
-              fontFamily: "'Courier New', Courier, monospace",
-            }}
-          >
-            Student Athlete
-          </button>
-          <button
-            onClick={() => setRole('business')}
-            style={{
-              flex: 1,
-              padding: '1rem 1.5rem',
-              fontSize: '1.3rem',
-              backgroundColor: role === 'business' ? 'black' : 'transparent',
-              color: role === 'business' ? 'white' : 'black',
-              borderRadius: '50px',
-              border: 'none',
-              cursor: 'pointer',
-              fontFamily: "'Courier New', Courier, monospace",
-            }}
-          >
-            Local Business
-          </button>
+      {/* Role Selector */}
+      {!role && (
+        <div style={{ marginBottom: '4rem' }}>
+          <p style={{ fontSize: '1.5rem', marginBottom: '2rem' }}>Who are you?</p>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '2rem', flexWrap: 'wrap' }}>
+            <Button 
+              onClick={() => setRole('athlete')}
+              style={{
+                padding: '1.5rem 3rem',
+                fontSize: '1.5rem',
+                backgroundColor: 'black',
+                color: 'white',
+              }}
+            >
+              Student Athlete
+            </Button>
+            <Button 
+              onClick={() => setRole('business')}
+              style={{
+                padding: '1.5rem 3rem',
+                fontSize: '1.5rem',
+                backgroundColor: 'black',
+                color: 'white',
+              }}
+            >
+              Local Business
+            </Button>
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* Login Form */}
-      {user ? (
-        <div>
-          <p style={{ fontSize: '1.5rem' }}>Logged in as {user.email}</p>
-          <Button onClick={signOut} style={{
-            width: '80%',
-            maxWidth: '300px',
-            height: '60px',
-            fontSize: '1.5rem',
-            backgroundColor: 'black',
-            color: 'white',
-            marginTop: '2rem',
-            fontFamily: "'Courier New', Courier, monospace",
-          }}>
-            Log Out
+      {/* Level Selector — only for athlete */}
+      {role === 'athlete' && !level && (
+        <div style={{ marginBottom: '4rem' }}>
+          <p style={{ fontSize: '1.5rem', marginBottom: '2rem' }}>High School or College?</p>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '2rem', flexWrap: 'wrap' }}>
+            <Button 
+              onClick={() => setLevel('high_school')}
+              style={{
+                padding: '1.5rem 3rem',
+                fontSize: '1.5rem',
+                backgroundColor: 'black',
+                color: 'white',
+              }}
+            >
+              High School
+            </Button>
+            <Button 
+              onClick={() => setLevel('college')}
+              style={{
+                padding: '1.5rem 3rem',
+                fontSize: '1.5rem',
+                backgroundColor: 'black',
+                color: 'white',
+              }}
+            >
+              College
+            </Button>
+          </div>
+          <Button 
+            onClick={() => setRole(null)}
+            variant="outline"
+            style={{ marginTop: '2rem', fontSize: '1.2rem' }}
+          >
+            Back
           </Button>
         </div>
-      ) : (
+      )}
+
+      {/* Email Form — only after role/level selected */}
+      {(role === 'business' || level) && (
         <div style={{ maxWidth: '300px', margin: '0 auto' }}>
           <Label htmlFor="email" style={{ fontSize: '1.5rem', display: 'block', marginBottom: '1rem' }}>
             Your Email
@@ -215,6 +241,35 @@ See you inside! 🚀
             }}
           >
             {loading ? 'Sending...' : 'Send Login Link'}
+          </Button>
+          <Button 
+            onClick={() => {
+              setRole(null)
+              setLevel(null)
+            }}
+            variant="outline"
+            style={{ marginTop: '2rem', fontSize: '1.2rem' }}
+          >
+            Back
+          </Button>
+        </div>
+      )}
+
+      {/* Logged in state */}
+      {user && (
+        <div style={{ marginTop: '6rem' }}>
+          <p style={{ fontSize: '1.5rem' }}>Logged in as {user.email}</p>
+          <Button onClick={signOut} style={{
+            width: '80%',
+            maxWidth: '300px',
+            height: '60px',
+            fontSize: '1.5rem',
+            backgroundColor: 'black',
+            color: 'white',
+            marginTop: '2rem',
+            fontFamily: "'Courier New', Courier, monospace",
+          }}>
+            Log Out
           </Button>
         </div>
       )}
