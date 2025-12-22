@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabaseClient'
 import { signOut } from '@/lib/auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { loadStripe } from '@stripe/stripe-js'
 
 const athleteGigTypes = [
   { title: 'ShoutOut', description: 'Visit a favorite business and make a quick shoutout 15-sec reel about what you like or your favorite order.' },
@@ -225,6 +226,16 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
     setPendingClips(pendingClips.filter(c => c.id !== clip.id))
     setBusiness({ ...business, wallet_balance: business.wallet_balance - clip.offers.amount })
   }
+const handleAddFunds = async (amount: number) => {
+  const response = await fetch('/api/checkout', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ amount, business_id: business.id }),
+  })
+  const { id } = await response.json()
+  const stripe = await loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
+  stripe?.redirectToCheckout({ sessionId: id })
+}
 
   if (!profile) return <p className="container text-center py-32">Loading...</p>
 
