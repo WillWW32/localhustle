@@ -246,7 +246,7 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
     alert(error.message)
   }
 }
-  }
+ 
 
   if (!profile) return <p className="container text-center py-32">Loading...</p>
 
