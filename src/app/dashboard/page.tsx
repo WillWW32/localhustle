@@ -28,6 +28,7 @@ export default function Dashboard() {
   const [profile, setProfile] = useState<any>(null)
   const [business, setBusiness] = useState<any>(null)
   const [offers, setOffers] = useState<any[]>([])
+const [pendingProposals, setPendingProposals] = useState<any[]>([])
   const [pendingClips, setPendingClips] = useState<any[]>([])
   const [selectedGigs, setSelectedGigs] = useState<string[]>([])
   const [squad, setSquad] = useState<any[]>([])
@@ -88,6 +89,10 @@ export default function Dashboard() {
           .eq('owner_id', user.id)
           .single()
         setBusiness(biz)
+
+  const { data: proposals } = await supabase
+    .rpc('get_pending_proposals', { biz_id: biz.id })
+  setPendingProposals(proposals || [])
 
         const { data: clips } = await supabase
           .from('clips')
@@ -695,7 +700,7 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
     {pendingProposals.map((proposal) => (
       <div key={proposal.id} className="border-4 border-black p-20 bg-white max-w-lg mx-auto">
         <p className="font-bold mb-6 text-left">From: {proposal.athlete_email}</p>
-        <p className="mb-6 text-left">Message: {proposal.message}</p>
+        <p className="mb-6 text-left">Message: {proposal.message || 'No message'}</p>
 
         {/* Athlete Profile Preview */}
         <div style={{ marginTop: '2rem', padding: '2rem', backgroundColor: '#f5f5f5', border: '2px solid black' }}>
@@ -747,18 +752,68 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
         </div>
 
         {/* Accept/Reject Buttons */}
-        <div style={{ marginTop: '2rem', display: 'flex', gap: '1rem' }}>
-          <Button style={{ flex: 1, backgroundColor: '#90ee90', color: 'black' }}>
-            Accept
-          </Button>
-          <Button variant="outline" style={{ flex: 1 }}>
-            Reject
-          </Button>
-        </div>
-      </div>
-    ))}
-  </div>
-)}
+<div style={{ marginTop: '2rem', display: 'flex', gap: '1rem' }}>
+  <Button 
+    onClick={async () => {
+      const { error } = await supabase
+        .from('proposals')
+        .update({ status: 'accepted' })
+        .eq('id', proposal.id)
+
+      if (error) {
+        alert('Error accepting proposal')
+      } else {
+        alert('Proposal accepted!')
+        // Refresh proposals
+        const { data: updated } = await supabase.rpc('get_pending_proposals', { biz_id: business.id })
+        setPendingProposals(updated || [])
+      }
+    }}
+    style={{
+      flex: 1,
+      height: '60px',
+      fontSize: '1.5rem',
+      backgroundColor: '#90ee90',
+      color: 'black',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      fontFamily: "'Courier New', Courier, monospace'",
+    }}
+  >
+    Accept
+  </Button>
+  <Button 
+    onClick={async () => {
+      const { error } = await supabase
+        .from('proposals')
+        .update({ status: 'rejected' })
+        .eq('id', proposal.id)
+
+      if (error) {
+        alert('Error rejecting proposal')
+      } else {
+        alert('Proposal rejected')
+        // Refresh proposals
+        const { data: updated } = await supabase.rpc('get_pending_proposals', { biz_id: business.id })
+        setPendingProposals(updated || [])
+      }
+    }}
+    variant="outline"
+    style={{
+      flex: 1,
+      height: '60px',
+      fontSize: '1.5rem',
+      border: '4px solid black',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      fontFamily: "'Courier New', Courier, monospace'",
+    }}
+  >
+    Reject
+  </Button>
+</div>
             {/* Tabs */}
             <h3 className="text-2xl mb-8 font-bold">Your Offers</h3>
             <div className="flex justify-center gap-8 mb-8">
