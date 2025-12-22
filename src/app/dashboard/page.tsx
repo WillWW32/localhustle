@@ -916,8 +916,8 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
               Create Booster Club Event
             </Button>
           </div>
-        </div> {/* Closes business view div */}
-      )} {/* Closes ternary */}
+        </div> 
+      )} 
 
       {/* Log Out — outside role switch */}
       <div className="text-center mt-32">
