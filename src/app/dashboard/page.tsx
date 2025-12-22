@@ -896,7 +896,7 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
               </div>
             )}
 
-                      {/* Booster Events CTA */}
+                                {/* Booster Events CTA */}
           <div className="mt-32">
             <Button 
               onClick={() => router.push('/booster-events')}
@@ -935,6 +935,6 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
           Log Out
         </Button>
       </div>
-    </div> {/* Closes main container div */}
+    </div>
   )
 }
