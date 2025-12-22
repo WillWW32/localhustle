@@ -851,6 +851,7 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
         </Button>
       </div>
     </div>
+}
 
 {business && !business.stripe_account_id && (
   <div style={{ margin: '4rem 0' }}>
