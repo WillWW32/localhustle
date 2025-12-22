@@ -915,7 +915,7 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
               >
                 Create Booster Club Event
               </Button>
-            </div>
+            
           </div>
         </div>
       )}
