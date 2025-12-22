@@ -896,7 +896,7 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
               </div>
             )}
 
-                                {/* Booster Events CTA */}
+                    {/* Booster Events CTA */}
           <div className="mt-32">
             <Button 
               onClick={() => router.push('/booster-events')}
@@ -916,9 +916,9 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
               Create Booster Club Event
             </Button>
           </div>
-        </div> 
-      )} 
-
+        </div>
+      </div>
+    )}
       {/* Log Out — outside role switch */}
       <div className="text-center mt-32">
         <Button onClick={signOut} variant="outline" style={{
