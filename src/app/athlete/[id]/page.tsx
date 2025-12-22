@@ -16,6 +16,7 @@ const gigTypes = [
 
 export default function AthleteProfile() {
   const { id } = useParams()
+const router = useRouter()
   const [profile, setProfile] = useState<any>(null)
   const [selectedGigs, setSelectedGigs] = useState<string[]>([])
 
