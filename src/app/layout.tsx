@@ -92,18 +92,19 @@ export default function RootLayout({
         </div>
 
         <footer className="py-8 border-t-4 border-black text-center">
-          <nav className="mb-4 flex justify-center gap-4 flex-wrap">
-            <Link href="/" className="text-gray-600 underline">Home</Link>
-            <Link href="/dashboard" className="text-gray-600 underline">Dashboard</Link>
-            <Link href="/profile" className="text-gray-600 underline">Profile</Link>
-            <Link href="/compliance" className="text-gray-600 underline">Compliance</Link>
-            <Link href="/privacy" className="text-gray-600 underline">Privacy</Link>
-            <Link href="/terms" className="text-gray-600 underline">Terms</Link>
-          </nav>
-          <p className="text-xs">
-            © 2025 LocalHustle — Community Driven Support for Student Athletes
-          </p>
-        </footer>
+  <nav className="mb-4 flex justify-center gap-4 flex-wrap text-sm">
+    <Link href="/" className="text-gray-600 underline">Home</Link>
+    <Link href="/dashboard" className="text-gray-600 underline">Dashboard</Link>
+    <Link href="/profile" className="text-gray-600 underline">Profile</Link>
+    <Link href="/compliance" className="text-gray-600 underline">Compliance</Link>
+    <Link href="/privacy" className="text-gray-600 underline">Privacy</Link>
+    <Link href="/terms" className="text-gray-600 underline">Terms</Link>
+    <Link href="/support" className="text-gray-600 underline">Support</Link>
+  </nav>
+  <p className="text-xs text-gray-600">
+    © 2025 LocalHustle — Community Driven Support for Student Athletes
+  </p>
+</footer>
       </body>
     </html>
   )
