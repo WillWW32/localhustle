@@ -828,7 +828,7 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
               </Button>
             </div>
 
-                      {/* Pending Clips */}
+            {/* Pending Clips */}
             <h3 className="text-2xl mb-8 font-bold">Pending Clips to Review</h3>
             {pendingClips.length === 0 ? (
               <p className="text-gray-600 mb-12">No pending clips — post offers to get started!</p>
@@ -841,7 +841,7 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
                     <video controls className="w-full mb-8">
                       <source src={clip.video_url} type="video/mp4" />
                     </video>
-                    <Button 
+                    <Button
                       onClick={() => approveClip(clip)}
                       style={{
                         width: '100%',
@@ -862,7 +862,7 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
               </div>
             )}
 
-            {/* Connect with Stripe — at bottom, inside business view */}
+            {/* Connect with Stripe — only if not connected */}
             {business && !business.stripe_account_id && (
               <div style={{ margin: '6rem 0' }}>
                 <p style={{ fontSize: '1.2rem', marginBottom: '2rem' }}>
@@ -896,29 +896,30 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
               </div>
             )}
 
-                    {/* Booster Events CTA */}
-          <div className="mt-32">
-            <Button 
-              onClick={() => router.push('/booster-events')}
-              style={{
-                width: '100%',
-                maxWidth: '500px',
-                height: '80px',
-                fontSize: '1.8rem',
-                backgroundColor: '#90ee90',
-                color: 'black',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontFamily: "'Courier New', Courier, monospace'",
-              }}
-            >
-              Create Booster Club Event
-            </Button>
+            {/* Booster Events CTA */}
+            <div className="mt-32">
+              <Button
+                onClick={() => router.push('/booster-events')}
+                style={{
+                  width: '100%',
+                  maxWidth: '500px',
+                  height: '80px',
+                  fontSize: '1.8rem',
+                  backgroundColor: '#90ee90',
+                  color: 'black',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontFamily: "'Courier New', Courier, monospace'",
+                }}
+              >
+                Create Booster Club Event
+              </Button>
+            </div>
           </div>
         </div>
-      </div>
-    )}
+      )}
+
       {/* Log Out — outside role switch */}
       <div className="text-center mt-32">
         <Button onClick={signOut} variant="outline" style={{
