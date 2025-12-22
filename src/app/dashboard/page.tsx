@@ -265,6 +265,7 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
     <div style={{ width: '150px', height: '150px', borderRadius: '50%', backgroundColor: '#ddd', margin: '0 auto', overflow: 'hidden', border: '4px solid black' }}>
       {profilePic ? (
         <img src={profilePic} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+</div>
       ) : (
   <div className="max-w-4xl mx-auto space-y-16 font-mono text-center text-lg">
     {/* Subtitle — black block */}
