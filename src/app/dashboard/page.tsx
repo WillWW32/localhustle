@@ -472,21 +472,24 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
 
           {/* CTA */}
           <div style={{ margin: '6rem 0' }}>
-            <Button style={{
-              width: '100%',
-              maxWidth: '500px',
-              height: '80px',
-              fontSize: '2rem',
-              backgroundColor: 'black',
-              color: 'white',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontFamily: "'Courier New', Courier, monospace'",
-            }}>
-              Build a Squad and Earn with Friends
-            </Button>
-          </div>
+  <Button 
+    onClick={() => router.push('/squad')}
+    style={{
+      width: '100%',
+      maxWidth: '500px',
+      height: '80px',
+      fontSize: '2rem',
+      backgroundColor: '#90ee90',
+      color: 'black',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      fontFamily: "'Courier New', Courier, monospace'",
+    }}
+  >
+    Build a Squad and Earn with Friends
+  </Button>
+</div>
 
           {/* Divider */}
           <div style={{ borderTop: '4px solid black', margin: '4rem 0' }}></div>
@@ -516,13 +519,13 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
 
             <div style={{ fontSize: '1.2rem', lineHeight: '2', textAlign: 'left' }}>
               <p style={{ marginBottom: '1.5rem' }}>
-                <strong>Task:</strong> Make 10–20 business connections — send the support letter to local spots.
+                <strong>Task:</strong> Make 10 business connections — send the support letter to local spots.
               </p>
               <p style={{ marginBottom: '1.5rem' }}>
                 <strong>Qualifications:</strong> Varsity player, manager, or photographer • 3.0 GPA or better
               </p>
               <p style={{ marginBottom: '1.5rem' }}>
-                <strong>Prize:</strong> $100 bonus (1 week deadline) • 5% lifetime cut of every gig from businesses you onboard
+                <strong>Prize:</strong> $200 bonus (1 week deadline) • Lifetime cut of every gig from businesses you onboard
               </p>
               <p style={{ marginBottom: '3rem' }}>
                 <strong>Deadline:</strong> Complete within 7 days of applying
@@ -763,5 +766,45 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
         </Button>
       </div>
     </div>
+{/* Connect with Stripe — only if not connected */}
+{!business?.stripe_account_id && (
+  <div style={{ margin: '4rem 0' }}>
+    <p style={{ fontSize: '1.2rem', marginBottom: '2rem' }}>
+      Connect your Stripe account to receive payouts directly (we take 15% platform fee).
+    </p>
+    <Button 
+      onClick={async () => {
+        const response = await fetch('/api/connect-onboarding', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ business_id: business.id }),
+        })
+        const { url } = await response.json()
+        window.location.href = url
+      }}
+      style={{
+        width: '100%',
+        maxWidth: '500px',
+        height: '80px',
+        fontSize: '1.8rem',
+        backgroundColor: '#635BFF',
+        color: 'white',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontFamily: "'Courier New', Courier, monospace'",
+      }}
+    >
+      Connect with Stripe
+    </Button>
+  </div>
+)}
+
+{/* If already connected */}
+{business?.stripe_account_id && (
+  <p style={{ fontSize: '1.2rem', color: 'green', margin: '2rem 0' }}>
+    ✓ Stripe connected — ready for direct payouts
+  </p>
+
   )
 }
