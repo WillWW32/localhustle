@@ -39,6 +39,10 @@ export default function Dashboard() {
   const [location, setLocation] = useState('')
   const [businessPhone, setBusinessPhone] = useState('')
   const [isRecurring, setIsRecurring] = useState(false)
+  const [profilePic, setProfilePic] = useState('')
+  const [highlightLink, setHighlightLink] = useState('')
+  const [socialFollowers, setSocialFollowers] = useState('')
+  const [bio, setBio] = useState('')
   const router = useRouter()
 
   useEffect(() => {
@@ -58,6 +62,10 @@ export default function Dashboard() {
 
       if (prof.role === 'athlete') {
         if (prof.selected_gigs) setSelectedGigs(prof.selected_gigs)
+        setProfilePic(prof.profile_pic || '')
+        setHighlightLink(prof.highlight_link || '')
+        setSocialFollowers(prof.social_followers || '')
+        setBio(prof.bio || '')
 
         const { data: squadMembers } = await supabase
           .from('profiles')
@@ -93,6 +101,21 @@ export default function Dashboard() {
     fetchData()
   }, [router])
 
+  const handleSaveProfile = async () => {
+    const { error } = await supabase
+      .from('profiles')
+      .update({
+        profile_pic: profilePic,
+        highlight_link: highlightLink,
+        social_followers: socialFollowers,
+        bio: bio,
+      })
+      .eq('id', profile.id)
+
+    if (error) alert('Error saving profile')
+    else alert('Profile saved!')
+  }
+
   const toggleGigSelection = async (title: string) => {
     const newSelected = selectedGigs.includes(title)
       ? selectedGigs.filter(g => g !== title)
@@ -109,7 +132,7 @@ export default function Dashboard() {
   const handleGigSelect = (gig: any) => {
     setSelectedGig(gig)
     setNumAthletes(1)
-    setAmount(gig.baseAmount.toString())
+    setAmount('')
     setCustomDetails('')
     setDate('')
     setLocation('')
@@ -207,11 +230,125 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
 
   return (
     <div className="container py-8">
+      {/* Welcome */}
       <p className="text-center mb-12 text-xl font-mono">Welcome, {profile.email}</p>
 
-      {/* Athlete View */}
+      {/* Subtitle — black block */}
+      <div style={{ backgroundColor: 'black', color: 'white', padding: '2rem', marginBottom: '4rem' }}>
+        <h1 style={{ fontSize: '1.8rem', margin: '0' }}>
+          {profile.role === 'athlete' ? 'Your Athlete Dashboard' : 'Your Business Admin Console'}
+        </h1>
+      </div>
+
+      {/* Detail — black block */}
+      <div style={{ backgroundColor: 'black', color: 'white', padding: '2rem', marginBottom: '4rem' }}>
+        <p style={{ fontSize: '1.2rem', lineHeight: '1.8' }}>
+          {profile.role === 'athlete' ? 'Pitch businesses, claim gigs, build your squad and earn together.' : 'Post gigs to get authentic content. Review clips — only approve what you love. Become the hometown hero.'}
+        </p>
+      </div>
+
       {profile.role === 'athlete' ? (
         <div className="max-w-4xl mx-auto space-y-16 font-mono text-center text-lg">
+          {/* Player Profile Section */}
+          <div style={{ maxWidth: '600px', margin: '0 auto 6rem auto', padding: '3rem', border: '2px solid black', backgroundColor: '#f5f5f5' }}>
+            <h2 style={{ fontSize: '1.8rem', marginBottom: '3rem' }}>
+              Your Player Profile
+            </h2>
+
+            {/* Circle Photo Upload */}
+            <div style={{ marginBottom: '3rem' }}>
+              <div style={{ width: '150px', height: '150px', borderRadius: '50%', backgroundColor: '#ddd', margin: '0 auto', overflow: 'hidden', border: '4px solid black' }}>
+                {profilePic ? (
+                  <img src={profilePic} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : (
+                  <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#ccc' }}>
+                    <p style={{ fontSize: '1rem', color: '#666' }}>Tap to Upload</p>
+                  </div>
+                )}
+              </div>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files?.[0]
+                  if (file) {
+                    const reader = new FileReader()
+                    reader.onloadend = () => {
+                      setProfilePic(reader.result as string)
+                    }
+                    reader.readAsDataURL(file)
+                  }
+                }}
+                style={{ display: 'none' }}
+                id="profile-pic-upload"
+              />
+              <label htmlFor="profile-pic-upload">
+                <Button style={{
+                  marginTop: '1rem',
+                  width: '100%',
+                  height: '60px',
+                  fontSize: '1.5rem',
+                  backgroundColor: 'black',
+                  color: 'white',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontFamily: "'Courier New', Courier, monospace'",
+                }}>
+                  Upload Photo
+                </Button>
+              </label>
+            </div>
+
+            {/* Name & School */}
+            <div style={{ marginBottom: '2rem' }}>
+              <label style={{ display: 'block', fontSize: '1.2rem', marginBottom: '0.5rem' }}>Name</label>
+              <Input placeholder="Your Name" value={profile?.full_name || ''} onChange={() => {}} disabled />
+            </div>
+
+            <div style={{ marginBottom: '2rem' }}>
+              <label style={{ display: 'block', fontSize: '1.2rem', marginBottom: '0.5rem' }}>School</label>
+              <Input placeholder="Your School" value={profile?.school || ''} onChange={() => {}} disabled />
+            </div>
+
+            {/* Highlight Link */}
+            <div style={{ marginBottom: '2rem' }}>
+              <label style={{ display: 'block', fontSize: '1.2rem', marginBottom: '0.5rem' }}>Highlight Reel Link</label>
+              <Input placeholder="YouTube / Hudl link" value={highlightLink} onChange={(e) => setHighlightLink(e.target.value)} />
+            </div>
+
+            {/* Social Followers */}
+            <div style={{ marginBottom: '2rem' }}>
+              <label style={{ display: 'block', fontSize: '1.2rem', marginBottom: '0.5rem' }}>Total Social Followers</label>
+              <Input placeholder="e.g., 5,000" value={socialFollowers} onChange={(e) => setSocialFollowers(e.target.value)} />
+            </div>
+
+            {/* Bio */}
+            <div style={{ marginBottom: '3rem' }}>
+              <label style={{ display: 'block', fontSize: '1.2rem', marginBottom: '0.5rem' }}>Bio</label>
+              <textarea
+                placeholder="Short bio about you and your sport"
+                value={bio}
+                onChange={(e) => setBio(e.target.value)}
+                style={{ width: '100%', height: '160px', padding: '1rem', fontSize: '1.2rem', border: '4px solid black', fontFamily: "'Courier New', Courier, monospace'" }}
+              />
+            </div>
+
+            <Button onClick={handleSaveProfile} style={{
+              width: '100%',
+              height: '60px',
+              fontSize: '1.5rem',
+              backgroundColor: 'black',
+              color: 'white',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontFamily: "'Courier New', Courier, monospace'",
+            }}>
+              Save Profile
+            </Button>
+          </div>
+
           {/* Gig Selection */}
           <div>
             <h2 className="text-2xl mb-8 font-bold">Gigs You Offer</h2>
@@ -340,8 +477,8 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
               maxWidth: '500px',
               height: '80px',
               fontSize: '2rem',
-              backgroundColor: '#90ee90',
-              color: 'black',
+              backgroundColor: 'black',
+              color: 'white',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
