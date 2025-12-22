@@ -674,24 +674,26 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
                 + $1000
               </Button>
               <Button 
-                onClick={() => {
-                  const custom = prompt('Enter custom amount:')
-                  if (custom && !isNaN(custom)) handleAddFunds(parseFloat(custom))
-                }}
-                style={{
-                  width: '200px',
-                  height: '60px',
-                  fontSize: '1.5rem',
-                  backgroundColor: '#90ee90',
-                  color: 'black',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontFamily: "'Courier New', Courier, monospace'",
-                }}
-              >
-                Custom Amount
-              </Button>
+  onClick={() => {
+    const custom = prompt('Enter custom amount:')
+    if (custom !== null && custom !== '' && !isNaN(Number(custom)) && Number(custom) > 0) {
+      handleAddFunds(Number(custom))
+    }
+  }}
+  style={{
+    width: '200px',
+    height: '60px',
+    fontSize: '1.5rem',
+    backgroundColor: '#90ee90',
+    color: 'black',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontFamily: "'Courier New', Courier, monospace'",
+  }}
+>
+  Custom Amount
+</Button>
             </div>
 
             <p style={{ fontSize: '0.9rem', color: '#666' }}>
