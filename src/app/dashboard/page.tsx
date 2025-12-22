@@ -235,18 +235,13 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
   })
   const { id } = await response.json()
   const stripe = await loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
-  if (!stripe) {
+  if (stripe) {
+    // Type assertion to fix TS error
+    (stripe as any).redirectToCheckout({ sessionId: id })
+  } else {
     alert('Stripe failed to load')
-    return
-  }
-
-  const result = await stripe.redirectToCheckout({ sessionId: id })
-
-  if (result.error) {
-    alert(result.error.message)
   }
 }
-
   if (!profile) return <p className="container text-center py-32">Loading...</p>
 
   return (
