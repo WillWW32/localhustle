@@ -530,7 +530,7 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
                     onMouseOut={(e) => e.currentTarget.style.backgroundColor = selectedGig?.title === gig.title ? '#333' : 'black'}
                   >
                     <span style={{ marginBottom: '1rem' }}>{gig.title}</span>
-                    <span style={{ marginBottom: '1rem' }}>${gig.baseAmount}+</span>
+                    
                     <span style={{ fontSize: '20px' }}>{gig.description}</span>
                   </button>
 
