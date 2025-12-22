@@ -777,7 +777,7 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
               </Button>
             </div>
 
-            {/* Pending Clips */}
+                      {/* Pending Clips */}
             <h3 className="text-2xl mb-8 font-bold">Pending Clips to Review</h3>
             {pendingClips.length === 0 ? (
               <p className="text-gray-600 mb-12">No pending clips — post offers to get started!</p>
@@ -810,31 +810,66 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
                 ))}
               </div>
             )}
-          </div>
 
-          {/* Booster Events CTA */}
-          <div className="mt-32">
-            <Button 
-              onClick={() => router.push('/booster-events')}
-              style={{
-                width: '100%',
-                maxWidth: '500px',
-                height: '80px',
-                fontSize: '1.8rem',
-                backgroundColor: '#90ee90',
-                color: 'black',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontFamily: "'Courier New', Courier, monospace'",
-              }}
-            >
-              Create Booster Club Event
-            </Button>
+            {/* Connect with Stripe — at bottom, inside business view */}
+            {business && !business.stripe_account_id && (
+              <div style={{ margin: '6rem 0' }}>
+                <p style={{ fontSize: '1.2rem', marginBottom: '2rem' }}>
+                  Connect your Stripe account to automatically fund all approved gigs.
+                </p>
+                <Button
+                  onClick={async () => {
+                    const response = await fetch('/api/connect-onboarding', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ business_id: business.id }),
+                    })
+                    const { url } = await response.json()
+                    window.location.href = url
+                  }}
+                  style={{
+                    width: '100%',
+                    maxWidth: '500px',
+                    height: '80px',
+                    fontSize: '1.8rem',
+                    backgroundColor: '#635BFF',
+                    color: 'white',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontFamily: "'Courier New', Courier, monospace'",
+                  }}
+                >
+                  Connect with Stripe
+                </Button>
+              </div>
+            )}
+
+            {/* Booster Events CTA */}
+            <div className="mt-32">
+              <Button 
+                onClick={() => router.push('/booster-events')}
+                style={{
+                  width: '100%',
+                  maxWidth: '500px',
+                  height: '80px',
+                  fontSize: '1.8rem',
+                  backgroundColor: '#90ee90',
+                  color: 'black',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontFamily: "'Courier New', Courier, monospace'",
+                }}
+              >
+                Create Booster Club Event
+              </Button>
+            </div>
           </div>
         </div>
       )}
 
+      {/* Log Out — outside role switch */}
       <div className="text-center mt-32">
         <Button onClick={signOut} variant="outline" style={{
           width: '50%',
@@ -851,46 +886,5 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
         </Button>
       </div>
     </div>
-}
-
-{business && !business.stripe_account_id && (
-  <div style={{ margin: '4rem 0' }}>
-    <p style={{ fontSize: '1.2rem', marginBottom: '2rem' }}>
-      Connect your Stripe account to automatically fund all approved gigs.
-    </p>
-    <Button
-      onClick={async () => {
-        const response = await fetch('/api/connect-onboarding', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ business_id: business.id }),
-        })
-        const { url } = await response.json()
-        window.location.href = url
-      }}
-      style={{
-        width: '100%',
-        maxWidth: '500px',
-        height: '80px',
-        fontSize: '1.8rem',
-        backgroundColor: '#635BFF',
-        color: 'white',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        fontFamily: "'Courier New', Courier, monospace'",
-      }}
-    >
-      Connect with Stripe
-    </Button>
-  </div>
-)}
-
-{/* If already connected */}
-{business?.stripe_account_id && (
-  <p style={{ fontSize: '1.2rem', color: 'green', margin: '2rem 0' }}>
-    ✓ Stripe connected — ready for direct payouts
-  </p>
-
   )
 }
