@@ -260,12 +260,89 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
     Your Player Profile
   </h2>
 
-  {/* Circle Photo Upload */}
-  <div style={{ marginBottom: '3rem' }}>
-    <div style={{ width: '150px', height: '150px', borderRadius: '50%', backgroundColor: '#ddd', margin: '0 auto', overflow: 'hidden', border: '4px solid black' }}>
-      {profilePic ? (
-        <img src={profilePic} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+{/* Circle Photo Upload */}
+<div style={{ marginBottom: '3rem' }}>
+  <div style={{
+    width: '150px',
+    height: '150px',
+    borderRadius: '50%',
+    margin: '0 auto',
+    overflow: 'hidden',
+    border: '4px solid black',
+    backgroundColor: '#ddd',
+  }}>
+    {profilePic ? (
+      <img 
+        src={profilePic} 
+        alt="Profile" 
+        style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+      />
+    ) : (
+      <div style={{
+        width: '100%',
+        height: '100%',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#ccc',
+      }}>
+        <p style={{ fontSize: '1rem', color: '#666' }}>Tap to Upload</p>
+      </div>
+    )}
+  </div>
+
+  {/* Upload input + label */}
+  <input
+    type="file"
+    accept="image/*"
+    capture="environment"
+    onChange={async (e) => {
+      const file = e.target.files?.[0]
+      if (!file || !profile) return
+
+      const fileExt = file.name.split('.').pop()
+      const fileName = `${profile.id}.${fileExt}`
+      const filePath = `${profile.id}/${fileName}`
+
+      const { error: uploadError } = await supabase.storage
+        .from('profile-pics')
+        .upload(filePath, file, { upsert: true })
+
+      if (uploadError) {
+        alert('Upload failed: ' + uploadError.message)
+        return
+      }
+
+      const { data: urlData } = supabase.storage
+        .from('profile-pics')
+        .getPublicUrl(filePath)
+
+      setProfilePic(urlData.publicUrl)
+
+      await supabase
+        .from('profiles')
+        .update({ profile_pic: urlData.publicUrl })
+        .eq('id', profile.id)
+    }}
+    style={{ display: 'none' }}
+    id="photo-upload"
+  />
+  <label htmlFor="photo-upload">
+    <div style={{
+      marginTop: '1rem',
+      padding: '1rem',
+      backgroundColor: 'black',
+      color: 'white',
+      textAlign: 'center',
+      cursor: 'pointer',
+      fontSize: '1.2rem',
+      fontFamily: "'Courier New', Courier, monospace'",
+    }}>
+      Upload Photo
+    </div>
+  </label>
 </div>
+
       ) : (
   <div className="max-w-4xl mx-auto space-y-16 font-mono text-center text-lg">
     {/* Subtitle — black block */}
