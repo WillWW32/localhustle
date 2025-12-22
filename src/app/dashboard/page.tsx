@@ -896,29 +896,28 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
               </div>
             )}
 
-            {/* Booster Events CTA */}
-            <div className="mt-32">
-              <Button 
-                onClick={() => router.push('/booster-events')}
-                style={{
-                  width: '100%',
-                  maxWidth: '500px',
-                  height: '80px',
-                  fontSize: '1.8rem',
-                  backgroundColor: '#90ee90',
-                  color: 'black',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontFamily: "'Courier New', Courier, monospace'",
-                }}
-              >
-                Create Booster Club Event
-              </Button>
-            </div>
+                      {/* Booster Events CTA */}
+          <div className="mt-32">
+            <Button 
+              onClick={() => router.push('/booster-events')}
+              style={{
+                width: '100%',
+                maxWidth: '500px',
+                height: '80px',
+                fontSize: '1.8rem',
+                backgroundColor: '#90ee90',
+                color: 'black',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontFamily: "'Courier New', Courier, monospace'",
+              }}
+            >
+              Create Booster Club Event
+            </Button>
           </div>
-        
-      
+        </div> {/* Closes business view div */}
+      )} {/* Closes ternary */}
 
       {/* Log Out — outside role switch */}
       <div className="text-center mt-32">
@@ -936,6 +935,6 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
           Log Out
         </Button>
       </div>
-    </div>
+    </div> {/* Closes main container div */}
   )
 }
