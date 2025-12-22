@@ -600,9 +600,87 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
             </p>
           </div>
 
-          {/* Wallet */}
+          {/* Wallet Balance */}
           <div>
-            <p className="mb-8">Wallet balance: ${business?.wallet_balance?.toFixed(2) || '0.00'}</p>
+            <p className="text-3xl mb-4 font-bold">Wallet balance: ${business?.wallet_balance?.toFixed(2) || '0.00'}</p>
+            <p style={{ fontSize: '1.2rem', marginBottom: '2rem' }}>
+              Top up your wallet — post gigs anytime. Most businesses start with $500–$1000.
+            </p>
+
+            {/* Pre-filled Add Funds Buttons */}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', justifyContent: 'center', marginBottom: '2rem' }}>
+              <Button 
+                onClick={() => handleAddFunds(100)}
+                style={{
+                  width: '200px',
+                  height: '60px',
+                  fontSize: '1.5rem',
+                  backgroundColor: 'black',
+                  color: 'white',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontFamily: "'Courier New', Courier, monospace'",
+                }}
+              >
+                + $100
+              </Button>
+              <Button 
+                onClick={() => handleAddFunds(500)}
+                style={{
+                  width: '200px',
+                  height: '60px',
+                  fontSize: '1.5rem',
+                  backgroundColor: 'black',
+                  color: 'white',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontFamily: "'Courier New', Courier, monospace'",
+                }}
+              >
+                + $500
+              </Button>
+              <Button 
+                onClick={() => handleAddFunds(1000)}
+                style={{
+                  width: '200px',
+                  height: '60px',
+                  fontSize: '1.5rem',
+                  backgroundColor: 'black',
+                  color: 'white',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontFamily: "'Courier New', Courier, monospace'",
+                }}
+              >
+                + $1000
+              </Button>
+              <Button 
+                onClick={() => {
+                  const custom = prompt('Enter custom amount:')
+                  if (custom && !isNaN(custom)) handleAddFunds(parseFloat(custom))
+                }}
+                style={{
+                  width: '200px',
+                  height: '60px',
+                  fontSize: '1.5rem',
+                  backgroundColor: '#90ee90',
+                  color: 'black',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontFamily: "'Courier New', Courier, monospace'",
+                }}
+              >
+                Custom Amount
+              </Button>
+            </div>
+
+            <p style={{ fontSize: '0.9rem', color: '#666' }}>
+              Transaction fee covers legal NIL compliance, bonus & challenge distributions, credit card fees, and platform expenses.
+            </p>
           </div>
 
           {/* Create a Gig */}

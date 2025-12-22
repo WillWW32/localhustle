@@ -34,13 +34,9 @@ export default function Squad() {
         .order('created_at', { ascending: true })
       setSquad(mySquad || [])
 
-      // Leaderboard — top 10 squads by size
-      const { data: allReferrers } = await supabase
-        .rpc('get_squad_sizes') // create RPC for efficiency
-        .order('squad_size', { ascending: false })
-        .limit(10)
-
-      setLeaderboard(allReferrers || [])
+      // Leaderboard — top 10 squads by size (using RPC from earlier)
+      const { data: board } = await supabase.rpc('get_squad_sizes')
+      setLeaderboard(board || [])
     }
 
     fetchData()
@@ -57,7 +53,7 @@ export default function Squad() {
     if (navigator.share) {
       navigator.share({
         title: 'Join my LocalHustle Squad!',
-        text: 'Earn NIL money with me — sign up with my link!',
+        text: 'Earn NIL money with me on LocalHustle — sign up with my link!',
         url: referralLink,
       })
     } else {

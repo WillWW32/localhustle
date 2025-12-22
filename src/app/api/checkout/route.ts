@@ -7,15 +7,9 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
 export async function POST(request: Request) {
   const { amount, business_id } = await request.json()
 
-  const { data: business } = await supabase
-    .from('businesses')
-    .select('stripe_account_id')
-    .eq('id', business_id)
-    .single()
-
-  if (!business?.stripe_account_id) {
-    return NextResponse.json({ error: 'Business not connected to Stripe' }, { status: 400 })
-  }
+  // amount = gig amount athlete sees (e.g., $100)
+  // Charge business amount + 15% platform fee
+  const chargeAmount = Math.round(amount * 1.15)  // e.g., $115
 
   const session = await stripe.checkout.sessions.create({
     payment_method_types: ['card'],
@@ -23,18 +17,16 @@ export async function POST(request: Request) {
       price_data: {
         currency: 'usd',
         product_data: { name: 'LocalHustle Gig Funding' },
-        unit_amount: amount * 100,
+        unit_amount: chargeAmount * 100,  // in cents
       },
       quantity: 1,
     }],
     mode: 'payment',
     success_url: `${process.env.NEXT_PUBLIC_URL}/dashboard?success=true`,
     cancel_url: `${process.env.NEXT_PUBLIC_URL}/dashboard?canceled=true`,
-    payment_intent_data: {
-      application_fee_amount: Math.round(amount * 100 * 0.15), // 15%
-      transfer_data: {
-        destination: business.stripe_account_id,
-      },
+    metadata: {
+      gig_amount: amount,  // original amount for payout
+      business_id,
     },
   })
 

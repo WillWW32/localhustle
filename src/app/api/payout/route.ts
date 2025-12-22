@@ -17,9 +17,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Clip not found' }, { status: 404 })
   }
 
-  // Calculate 85% payout to parent (platform keeps 15%)
-  const gigAmount = clip.offers.amount
-  const payoutAmount = Math.round(gigAmount * 0.85 * 100) // in cents
+  // Payout full gig amount to parent (business already paid 15% extra on funding)
+  const payoutAmount = clip.offers.amount * 100 // full amount in cents
 
   try {
     const paymentIntent = await stripe.paymentIntents.create({
@@ -28,7 +27,7 @@ export async function POST(request: Request) {
       payment_method: paymentMethodId,
       confirmation_method: 'manual',
       confirm: true,
-      description: `LocalHustle payout for gig — 85% of $${gigAmount}`,
+      description: `LocalHustle payout — full gig amount $${clip.offers.amount}`,
     })
 
     if (paymentIntent.status === 'succeeded') {
