@@ -918,7 +918,7 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
             </div>
           </div>
         
-      )}
+      
 
       {/* Log Out — outside role switch */}
       <div className="text-center mt-32">
