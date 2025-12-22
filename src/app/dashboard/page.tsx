@@ -234,7 +234,9 @@ const handleAddFunds = async (amount: number) => {
   })
   const { id } = await response.json()
   const stripe = await loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
-  stripe?.redirectToCheckout({ sessionId: id })
+  const result = await stripe?.redirectToCheckout({ sessionId: id })
+if (result?.error) {
+  alert(result.error.message)
 }
 
   if (!profile) return <p className="container text-center py-32">Loading...</p>
