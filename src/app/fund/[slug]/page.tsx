@@ -4,6 +4,7 @@ import { useParams } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { loadStripe } from '@stripe/stripe-js'
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
@@ -12,6 +13,7 @@ export default function FundEvent() {
   const { slug } = useParams()
   const [event, setEvent] = useState<any>(null)
   const [amount, setAmount] = useState('')
+  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     const fetchEvent = async () => {
@@ -34,6 +36,12 @@ export default function FundEvent() {
 
   const handleDonate = async () => {
     if (!amount || !event) return
+    if (parseFloat(amount) <= 0) {
+      alert('Enter a valid amount')
+      return
+    }
+
+    setLoading(true)
 
     const response = await fetch('/api/checkout', {
       method: 'POST',
@@ -43,12 +51,24 @@ export default function FundEvent() {
 
     const { id } = await response.json()
     const stripe = await stripePromise
-    stripe?.redirectToCheckout({ sessionId: id })
+    if (!stripe) {
+      alert('Stripe failed to load')
+      setLoading(false)
+      return
+    }
+
+    const { error } = await stripe.redirectToCheckout({ sessionId: id })
+
+    if (error) {
+      alert(error.message)
+    }
+
+    setLoading(false)
   }
 
   if (!event) return <p className="container text-center py-32">Loading event...</p>
 
-  const progress = event.raised / event.goal * 100
+  const progress = event.goal > 0 ? (event.raised / event.goal) * 100 : 0
 
   return (
     <div style={{
@@ -72,7 +92,7 @@ export default function FundEvent() {
 
       {/* Description */}
       <p style={{ fontSize: '1.5rem', maxWidth: '800px', margin: '0 auto 4rem auto', lineHeight: '1.8' }}>
-        {event.description}
+        {event.description || 'Support this team event!'}
       </p>
 
       {/* Progress Meter */}
@@ -85,7 +105,7 @@ export default function FundEvent() {
             width: `${progress}%`,
             height: '100%',
             backgroundColor: '#90ee90',
-            transition: 'width 0.5s',
+            transition: 'width 0.5s ease',
           }}></div>
           <p style={{
             position: 'absolute',
@@ -102,30 +122,35 @@ export default function FundEvent() {
 
       {/* Donation Form */}
       <div style={{ maxWidth: '500px', margin: '0 auto' }}>
-        <input
+        <Input
           type="number"
-          placeholder="Enter amount"
+          placeholder="Enter donation amount"
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
           style={{
-            width: '100%',
             height: '60px',
             fontSize: '1.5rem',
             border: '4px solid black',
             textAlign: 'center',
             marginBottom: '2rem',
-            fontFamily: "'Courier New', Courier, monospace'",
           }}
         />
-        <Button onClick={handleDonate} style={{
-          width: '100%',
-          height: '80px',
-          fontSize: '2rem',
-          backgroundColor: '#90ee90',
-          color: 'black',
-          fontFamily: "'Courier New', Courier, monospace'",
-        }}>
-          Donate Now
+        <Button 
+          onClick={handleDonate}
+          disabled={loading}
+          style={{
+            width: '100%',
+            height: '80px',
+            fontSize: '2rem',
+            backgroundColor: '#90ee90',
+            color: 'black',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontFamily: "'Courier New', Courier, monospace'",
+          }}
+        >
+          {loading ? 'Processing...' : 'Donate Now'}
         </Button>
       </div>
     </div>
