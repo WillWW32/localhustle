@@ -5,15 +5,14 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import { signOut } from '@/lib/auth'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 
 const gigTypes = [
-  { title: 'ShoutOut', baseAmount: 50, description: 'Visit a favorite business and make a quick shoutout 15-sec reel about what you like or your favorite order.' },
-  { title: 'Youth Clinic', baseAmount: 500, description: 'Run 30–60 min sessions for younger athletes (with teammates).' },
-  { title: 'Team Sponsor', baseAmount: 1000, description: 'Business sponsors team meals/gear — money split equally.' },
-  { title: 'Cameo', baseAmount: 50, description: 'Custom 15-Sec Video for Younger Athletes (birthdays, pre-game pep talks).' },
-  { title: 'Player Training', baseAmount: 100, description: 'Varsity athlete 40-minute training with young player.' },
-  { title: 'Custom Gig', baseAmount: 200, description: 'Create a gig and offer it.' },
+  { title: 'ShoutOut', description: 'Visit a favorite business and make a quick shoutout 15-sec reel about what you like or your favorite order.' },
+  { title: 'Youth Clinic', description: 'Run 30–60 min sessions for younger athletes (with teammates).' },
+  { title: 'Team Sponsor', description: 'Business sponsors team meals/gear — money split equally.' },
+  { title: 'Cameo', description: 'Custom 15-Sec Video for Younger Athletes (birthdays, pre-game pep talks).' },
+  { title: 'Player Training', description: 'Varsity athlete 40-minute training with young player.' },
+  { title: 'Custom Gig', description: 'Create a gig and offer it.' },
 ]
 
 export default function Dashboard() {
@@ -21,6 +20,8 @@ export default function Dashboard() {
   const [business, setBusiness] = useState<any>(null)
   const [offers, setOffers] = useState<any[]>([])
   const [pendingClips, setPendingClips] = useState<any[]>([])
+  const [selectedGigs, setSelectedGigs] = useState<string[]>([])
+  const [squad, setSquad] = useState<any[]>([])
   const [selectedGig, setSelectedGig] = useState<any>(null)
   const [numAthletes, setNumAthletes] = useState(1)
   const [customDetails, setCustomDetails] = useState('')
@@ -29,21 +30,7 @@ export default function Dashboard() {
   const [location, setLocation] = useState('')
   const [businessPhone, setBusinessPhone] = useState('')
   const [isRecurring, setIsRecurring] = useState(false)
-  const [selectedGigs, setSelectedGigs] = useState<string[]>([])
-  const [squad, setSquad] = useState<any[]>([])
   const router = useRouter()
-
-  const handleShare = () => {
-    if (navigator.share) {
-      navigator.share({
-        title: 'LocalHustle',
-        text: 'Join LocalHustle — earn from local business sponsorships as a high school athlete!',
-        url: 'https://app.localhustle.org',
-      }).catch(console.error)
-    } else {
-      alert('Copy this link to share: https://app.localhustle.org')
-    }
-  }
 
   useEffect(() => {
     const fetchData = async () => {
@@ -113,7 +100,7 @@ export default function Dashboard() {
   const handleGigSelect = (gig: any) => {
     setSelectedGig(gig)
     setNumAthletes(1)
-    setAmount(gig.baseAmount.toString())
+    setAmount('')
     setCustomDetails('')
     setDate('')
     setLocation('')
@@ -124,7 +111,7 @@ export default function Dashboard() {
   const handleAthletesChange = (value: number) => {
     setNumAthletes(value)
     if (selectedGig) {
-      const total = selectedGig.baseAmount + (value - 1) * 75
+      const total = 50 + (value - 1) * 75 // base $50
       setAmount(total.toString())
     }
   }
@@ -436,7 +423,6 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
                     onMouseOut={(e) => e.currentTarget.style.backgroundColor = selectedGig?.title === gig.title ? '#333' : 'black'}
                   >
                     <span style={{ marginBottom: '1rem' }}>{gig.title}</span>
-                    <span style={{ marginBottom: '1rem' }}>${gig.baseAmount}+</span>
                     <span style={{ fontSize: '20px' }}>{gig.description}</span>
                   </button>
 
