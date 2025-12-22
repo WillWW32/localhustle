@@ -19,7 +19,7 @@ export async function POST(request: Request) {
     const account = await stripe.accounts.create({
       type: 'standard',
       country: 'US',
-      email: profile?.email, // or business email
+      email: 'business@localhustle.org', // fallback — real email can be added later
       capabilities: {
         card_payments: { requested: true },
         transfers: { requested: true },
