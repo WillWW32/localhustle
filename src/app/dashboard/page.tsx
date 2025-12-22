@@ -226,18 +226,22 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
     setPendingClips(pendingClips.filter(c => c.id !== clip.id))
     setBusiness({ ...business, wallet_balance: business.wallet_balance - clip.offers.amount })
   }
-const handleAddFunds = async (amount: number) => {
-  const response = await fetch('/api/checkout', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ amount, business_id: business.id }),
-  })
-  const { id } = await response.json()
-  const stripe = await loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
-  const result = await stripe?.redirectToCheckout({ sessionId: id })
-if (result?.error) {
-  alert(result.error.message)
-}
+
+  const handleAddFunds = async (amount: number) => {
+    const response = await fetch('/api/checkout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ amount, business_id: business.id }),
+    })
+    const { id } = await response.json()
+    const stripe = await loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
+    if (stripe) {
+      const result = await stripe.redirectToCheckout({ sessionId: id })
+      if (result?.error) {
+        alert(result.error.message)
+      }
+    }
+  }
 
   if (!profile) return <p className="container text-center py-32">Loading...</p>
 
@@ -613,8 +617,8 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
             </p>
           </div>
 
-          {/* Wallet Balance */}
-          <div>
+          {/* Wallet Balance + Add Funds */}
+          <div style={{ marginBottom: '4rem' }}>
             <p className="text-3xl mb-4 font-bold">Wallet balance: ${business?.wallet_balance?.toFixed(2) || '0.00'}</p>
             <p style={{ fontSize: '1.2rem', marginBottom: '2rem' }}>
               Top up your wallet — post gigs anytime. Most businesses start with $500–$1000.
