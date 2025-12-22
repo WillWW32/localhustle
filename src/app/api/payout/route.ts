@@ -7,35 +7,41 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
 export async function POST(request: Request) {
   const { clip_id, paymentMethodId } = await request.json()
 
-  const { data: clip } = await supabase
+  const { data: clip, error: clipError } = await supabase
     .from('clips')
-    .select('*, offers(amount, business_id), profiles(parent_email)')
+    .select('*, offers(amount)')
     .eq('id', clip_id)
     .single()
 
-  if (!clip) return NextResponse.json({ error: 'Clip not found' }, { status: 404 })
+  if (clipError || !clip) {
+    return NextResponse.json({ error: 'Clip not found' }, { status: 404 })
+  }
 
-  // Fetch current wallet balance
-  const { data: business, error: fetchError } = await supabase
-    .from('businesses')
-    .select('wallet_balance')
-    .eq('id', clip.offers.business_id)
-    .single()
+  // Calculate 85% payout to parent (platform keeps 15%)
+  const gigAmount = clip.offers.amount
+  const payoutAmount = Math.round(gigAmount * 0.85 * 100) // in cents
 
-  if (fetchError || !business) return NextResponse.json({ error: 'Business not found' }, { status: 404 })
+  try {
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: payoutAmount,
+      currency: 'usd',
+      payment_method: paymentMethodId,
+      confirmation_method: 'manual',
+      confirm: true,
+      description: `LocalHustle payout for gig — 85% of $${gigAmount}`,
+    })
 
-  const newBalance = business.wallet_balance - clip.offers.amount
+    if (paymentIntent.status === 'succeeded') {
+      await supabase
+        .from('clips')
+        .update({ status: 'paid' })
+        .eq('id', clip_id)
 
-  // Update wallet
-  const { error: updateError } = await supabase
-    .from('businesses')
-    .update({ wallet_balance: newBalance })
-    .eq('id', clip.offers.business_id)
-
-  if (updateError) return NextResponse.json({ error: 'Wallet update failed' }, { status: 500 })
-
-  // Real payout (stub — replace with real transfer when ready)
-  // await stripe.transfers.create({ ... })
-
-  return NextResponse.json({ success: true })
+      return NextResponse.json({ success: true })
+    } else {
+      return NextResponse.json({ error: 'Payment failed' }, { status: 400 })
+    }
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 })
+  }
 }
