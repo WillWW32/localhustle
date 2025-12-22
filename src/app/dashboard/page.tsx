@@ -7,13 +7,21 @@ import { signOut } from '@/lib/auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 
-const gigTypes = [
+const athleteGigTypes = [
   { title: 'ShoutOut', description: 'Visit a favorite business and make a quick shoutout 15-sec reel about what you like or your favorite order.' },
   { title: 'Youth Clinic', description: 'Run 30–60 min sessions for younger athletes (with teammates).' },
-  { title: 'Team Sponsor', description: 'Business sponsors team meals/gear — money split equally.' },
   { title: 'Cameo', description: 'Custom 15-Sec Video for Younger Athletes (birthdays, pre-game pep talks).' },
   { title: 'Player Training', description: 'Varsity athlete 40-minute training with young player.' },
   { title: 'Custom Gig', description: 'Create a gig and offer it.' },
+]
+
+const businessGigTypes = [
+  { title: 'ShoutOut', baseAmount: 50, description: 'Visit a favorite business and make a quick shoutout 15-sec reel about what you like or your favorite order.' },
+  { title: 'Youth Clinic', baseAmount: 500, description: 'Run 30–60 min sessions for younger athletes (with teammates).' },
+  { title: 'Team Sponsor', baseAmount: 1000, description: 'Business sponsors team meals/gear — money split equally.' },
+  { title: 'Cameo', baseAmount: 50, description: 'Custom 15-Sec Video for Younger Athletes (birthdays, pre-game pep talks).' },
+  { title: 'Player Training', baseAmount: 100, description: 'Varsity athlete 40-minute training with young player.' },
+  { title: 'Custom Gig', baseAmount: 200, description: 'Create a gig and offer it.' },
 ]
 
 export default function Dashboard() {
@@ -21,6 +29,8 @@ export default function Dashboard() {
   const [business, setBusiness] = useState<any>(null)
   const [offers, setOffers] = useState<any[]>([])
   const [pendingClips, setPendingClips] = useState<any[]>([])
+  const [selectedGigs, setSelectedGigs] = useState<string[]>([])
+  const [squad, setSquad] = useState<any[]>([])
   const [selectedGig, setSelectedGig] = useState<any>(null)
   const [numAthletes, setNumAthletes] = useState(1)
   const [customDetails, setCustomDetails] = useState('')
@@ -29,12 +39,6 @@ export default function Dashboard() {
   const [location, setLocation] = useState('')
   const [businessPhone, setBusinessPhone] = useState('')
   const [isRecurring, setIsRecurring] = useState(false)
-  const [selectedGigs, setSelectedGigs] = useState<string[]>([])
-  const [squad, setSquad] = useState<any[]>([])
-  const [profilePic, setProfilePic] = useState('')
-  const [highlightLink, setHighlightLink] = useState('')
-  const [socialFollowers, setSocialFollowers] = useState('')
-  const [bio, setBio] = useState('')
   const router = useRouter()
 
   useEffect(() => {
@@ -54,10 +58,6 @@ export default function Dashboard() {
 
       if (prof.role === 'athlete') {
         if (prof.selected_gigs) setSelectedGigs(prof.selected_gigs)
-        setProfilePic(prof.profile_pic || '')
-        setHighlightLink(prof.highlight_link || '')
-        setSocialFollowers(prof.social_followers || '')
-        setBio(prof.bio || '')
 
         const { data: squadMembers } = await supabase
           .from('profiles')
@@ -93,21 +93,6 @@ export default function Dashboard() {
     fetchData()
   }, [router])
 
-  const handleSaveProfile = async () => {
-    const { error } = await supabase
-      .from('profiles')
-      .update({
-        profile_pic: profilePic,
-        highlight_link: highlightLink,
-        social_followers: socialFollowers,
-        bio: bio,
-      })
-      .eq('id', profile.id)
-
-    if (error) alert('Error saving profile')
-    else alert('Profile saved!')
-  }
-
   const toggleGigSelection = async (title: string) => {
     const newSelected = selectedGigs.includes(title)
       ? selectedGigs.filter(g => g !== title)
@@ -124,7 +109,7 @@ export default function Dashboard() {
   const handleGigSelect = (gig: any) => {
     setSelectedGig(gig)
     setNumAthletes(1)
-    setAmount('')
+    setAmount(gig.baseAmount.toString())
     setCustomDetails('')
     setDate('')
     setLocation('')
@@ -222,89 +207,17 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
 
   return (
     <div className="container py-8">
-      {/* Welcome */}
       <p className="text-center mb-12 text-xl font-mono">Welcome, {profile.email}</p>
 
-      {/* Subtitle — black block */}
-      <div style={{ backgroundColor: 'black', color: 'white', padding: '2rem', marginBottom: '4rem' }}>
-        <h1 style={{ fontSize: '1.8rem', margin: '0' }}>
-          {profile.role === 'athlete' ? 'Your Athlete Dashboard' : 'Your Business Admin Console'}
-        </h1>
-      </div>
-
-      {/* Detail — black block */}
-      <div style={{ backgroundColor: 'black', color: 'white', padding: '2rem', marginBottom: '4rem' }}>
-        <p style={{ fontSize: '1.2rem', lineHeight: '1.8' }}>
-          {profile.role === 'athlete' ? 'Pitch businesses, claim gigs, build your squad and earn together.' : 'Post gigs to get authentic content. Review clips — only approve what you love. Become the hometown hero.'}
-        </p>
-      </div>
-
+      {/* Athlete View */}
       {profile.role === 'athlete' ? (
         <div className="max-w-4xl mx-auto space-y-16 font-mono text-center text-lg">
-          {/* Player Profile Section */}
-          <div style={{ maxWidth: '600px', margin: '0 auto 6rem auto', padding: '3rem', border: '2px solid black', backgroundColor: '#f5f5f5' }}>
-            <h2 style={{ fontSize: '1.8rem', marginBottom: '3rem' }}>
-              Your Player Profile
-            </h2>
-
-            {/* Photo */}
-            <div style={{ marginBottom: '2rem' }}>
-              <div style={{ width: '150px', height: '150px', borderRadius: '50%', backgroundColor: '#ccc', margin: '0 auto', overflow: 'hidden' }}>
-                {profilePic ? (
-                  <img src={profilePic} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                ) : (
-                  <div style={{ width: '100%', height: '100%', backgroundColor: '#ddd', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <p style={{ fontSize: '1rem' }}>Upload Photo</p>
-                  </div>
-                )}
-              </div>
-              <Input type="text" placeholder="Profile Picture URL" value={profilePic} onChange={(e) => setProfilePic(e.target.value)} style={{ marginTop: '1rem' }} />
-            </div>
-
-            {/* Highlight Link */}
-            <div style={{ marginBottom: '2rem' }}>
-              <label style={{ display: 'block', fontSize: '1.2rem', marginBottom: '0.5rem' }}>Highlight Reel Link</label>
-              <Input placeholder="YouTube / Hudl link" value={highlightLink} onChange={(e) => setHighlightLink(e.target.value)} />
-            </div>
-
-            {/* Social Followers */}
-            <div style={{ marginBottom: '2rem' }}>
-              <label style={{ display: 'block', fontSize: '1.2rem', marginBottom: '0.5rem' }}>Total Social Followers</label>
-              <Input placeholder="e.g., 5,000" value={socialFollowers} onChange={(e) => setSocialFollowers(e.target.value)} />
-            </div>
-
-            {/* Bio */}
-            <div style={{ marginBottom: '3rem' }}>
-              <label style={{ display: 'block', fontSize: '1.2rem', marginBottom: '0.5rem' }}>Bio</label>
-              <textarea
-                placeholder="Short bio about you and your sport"
-                value={bio}
-                onChange={(e) => setBio(e.target.value)}
-                style={{ width: '100%', height: '160px', padding: '1rem', fontSize: '1.2rem', border: '4px solid black', fontFamily: "'Courier New', Courier, monospace'" }}
-              />
-            </div>
-
-            <Button onClick={handleSaveProfile} style={{
-              width: '100%',
-              height: '60px',
-              fontSize: '1.5rem',
-              backgroundColor: 'black',
-              color: 'white',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontFamily: "'Courier New', Courier, monospace'",
-            }}>
-              Save Profile
-            </Button>
-          </div>
-
           {/* Gig Selection */}
           <div>
             <h2 className="text-2xl mb-8 font-bold">Gigs You Offer</h2>
             <p className="mb-8">Select the gigs you're willing to do — businesses will see these.</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-              {gigTypes.map((gig) => (
+              {athleteGigTypes.map((gig) => (
                 <div key={gig.title} style={{
                   border: '2px solid black',
                   padding: '2rem',
@@ -506,7 +419,7 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
             {/* Gig buttons + customize */}
             <h3 className="text-2xl mb-8 font-bold">Create a Gig</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-20 mb-32">
-              {gigTypes.map((gig) => (
+              {businessGigTypes.map((gig) => (
                 <div key={gig.title}>
                   <button
                     onClick={() => handleGigSelect(gig)}
@@ -530,7 +443,7 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
                     onMouseOut={(e) => e.currentTarget.style.backgroundColor = selectedGig?.title === gig.title ? '#333' : 'black'}
                   >
                     <span style={{ marginBottom: '1rem' }}>{gig.title}</span>
-                    
+                    <span style={{ marginBottom: '1rem' }}>${gig.baseAmount}+</span>
                     <span style={{ fontSize: '20px' }}>{gig.description}</span>
                   </button>
 
