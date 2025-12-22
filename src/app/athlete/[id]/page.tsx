@@ -4,6 +4,14 @@ import { useParams } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 
+const gigTypes = [
+  { title: 'ShoutOut', description: 'Visit a favorite business and make a quick shoutout 15-sec reel about what you like or your favorite order.' },
+  { title: 'Youth Clinic', description: 'Run 30–60 min sessions for younger athletes (with teammates).' },
+  { title: 'Cameo', description: 'Custom 15-Sec Video for Younger Athletes (birthdays, pre-game pep talks).' },
+  { title: 'Player Training', description: 'Varsity athlete 40-minute training with young player.' },
+  { title: 'Custom Gig', description: 'Create a gig and offer it.' },
+]
+
 export default function AthleteProfile() {
   const { id } = useParams()
   const [profile, setProfile] = useState<any>(null)
