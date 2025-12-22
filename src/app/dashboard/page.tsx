@@ -852,7 +852,7 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
       </div>
     </div>
 
-{business && !business.stripe_account_id && (
+,business && !business.stripe_account_id && (
   <div style={{ margin: '4rem 0' }}>
     <p style={{ fontSize: '1.2rem', marginBottom: '2rem' }}>
       Connect your Stripe account to automatically fund all approved gigs.
