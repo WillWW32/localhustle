@@ -45,7 +45,8 @@ export default function RootLayout({
       <head>
         <link rel="icon" href="/favicon.ico" />
       </head>
-      <body>
+      <body style={{ fontFamily: "'Courier New', Courier, monospace", backgroundColor: 'white', color: 'black' }}>
+        {/* Header — minimal padding */}
         <header className="py-1 border-b-4 border-black">
           <div className="container text-center">
             <Link href="/">
@@ -72,28 +73,34 @@ export default function RootLayout({
 
         <main>{children}</main>
 
-        <div style={{ padding: '2rem 0', backgroundColor: 'white' }}>
-          <Button onClick={handleShare} className="w-full max-w-md h-20 text-2xl bg-black text-white hover:bg-gray-800 mx-auto block">
+        {/* Pinned Share Button — courier + vertical center */}
+        <div className="text-center py-8 bg-white">
+          <Button onClick={handleShare} style={{
+            width: '100%',
+            maxWidth: '500px',
+            height: '80px',
+            fontSize: '30px',
+            backgroundColor: 'black',
+            color: 'white',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontFamily: "'Courier New', Courier, monospace'",
+          }}>
             Share with Teammates
           </Button>
         </div>
 
-        <footer style={{ marginTop: '8rem', paddingTop: '4rem', borderTop: '4px solid black' }}>
-          <nav style={{
-            marginBottom: '2rem',
-            display: 'flex',
-            flexWrap: 'wrap',
-            justifyContent: 'center',
-            gap: '1rem',
-          }}>
-            <Link href="/" style={{ color: 'gray', textDecoration: 'underline' }}>Home</Link>
-            <Link href="/dashboard" style={{ color: 'gray', textDecoration: 'underline' }}>Dashboard</Link>
-            <Link href="/profile" style={{ color: 'gray', textDecoration: 'underline' }}>Profile</Link>
-            <Link href="/compliance" style={{ color: 'gray', textDecoration: 'underline' }}>Compliance</Link>
-            <Link href="/privacy" style={{ color: 'gray', textDecoration: 'underline' }}>Privacy</Link>
-            <Link href="/terms" style={{ color: 'gray', textDecoration: 'underline' }}>Terms</Link>
+        <footer className="py-8 border-t-4 border-black text-center">
+          <nav className="mb-4 flex justify-center gap-4 flex-wrap">
+            <Link href="/" className="text-gray-600 underline">Home</Link>
+            <Link href="/dashboard" className="text-gray-600 underline">Dashboard</Link>
+            <Link href="/profile" className="text-gray-600 underline">Profile</Link>
+            <Link href="/compliance" className="text-gray-600 underline">Compliance</Link>
+            <Link href="/privacy" className="text-gray-600 underline">Privacy</Link>
+            <Link href="/terms" className="text-gray-600 underline">Terms</Link>
           </nav>
-          <p style={{ fontSize: '.7rem' }}>
+          <p className="text-xs">
             © 2025 LocalHustle — Community Driven Support for Student Athletes
           </p>
         </footer>
