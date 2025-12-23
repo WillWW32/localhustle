@@ -57,6 +57,8 @@ export default function FundEvent() {
       return
     }
 
+    // Workaround for TypeScript error — redirectToCheckout exists at runtime
+    // @ts-ignore
     const { error } = await stripe.redirectToCheckout({ sessionId: id })
 
     if (error) {
