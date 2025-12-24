@@ -262,7 +262,7 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
     }
 
     // @ts-ignore — redirectToCheckout exists at runtime
-	const { error } = await stripe.redirectToCheckout({ sessionId: id })
+    const { error } = await stripe.redirectToCheckout({ sessionId: id })
 
     if (error) {
       alert(error.message)
@@ -593,7 +593,9 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
               <Button 
                 onClick={() => {
                   const custom = prompt('Enter custom amount:')
-                  if (custom && !isNaN(custom) && parseFloat(custom) > 0) handleAddFunds(parseFloat(custom))
+                  if (custom !== null && custom.trim() !== '' && !isNaN(Number(custom)) && Number(custom) > 0) {
+                    handleAddFunds(Number(custom))
+                  }
                 }}
                 className="w-48 h-14 text-lg bg-green-400 text-black"
               >
