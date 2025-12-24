@@ -46,7 +46,7 @@ export default function RootLayout({
         <link rel="icon" href="/favicon.ico" />
       </head>
       <body style={{ fontFamily: "'Courier New', Courier, monospace", backgroundColor: 'white', color: 'black' }}>
-        {/* Header — minimal padding */}
+        {/* Header */}
         <header className="py-1 border-b-4 border-black">
           <div className="container text-center">
             <Link href="/">
@@ -73,7 +73,7 @@ export default function RootLayout({
 
         <main>{children}</main>
 
-        {/* Pinned Share Button — courier + vertical center */}
+        {/* Pinned Share Button */}
         <div className="text-center py-8 bg-white">
           <Button onClick={handleShare} style={{
             width: '100%',
@@ -91,20 +91,25 @@ export default function RootLayout({
           </Button>
         </div>
 
+        {/* Footer — smaller text, 2 lines, gray */}
         <footer className="py-8 border-t-4 border-black text-center">
-  <nav className="mb-4 flex justify-center gap-4 flex-wrap text-xs">
-    <Link href="/" className="text-gray-600 hover:text-gray-800">Home</Link>
-    <Link href="/dashboard" className="text-gray-600 hover:text-gray-800">Dashboard</Link>
-    <Link href="/profile" className="text-gray-600 hover:text-gray-800">Profile</Link>
-    <Link href="/compliance" className="text-gray-600 hover:text-gray-800">Compliance</Link>
-    <Link href="/privacy" className="text-gray-600 hover:text-gray-800">Privacy</Link>
-    <Link href="/terms" className="text-gray-600 hover:text-gray-800">Terms</Link>
-    <Link href="/support" className="text-gray-600 hover:text-gray-800">Support</Link>
-  </nav>
-  <p className="text-xs text-gray-600">
-    © 2025 LocalHustle — Community Driven Support for Student Athletes
-  </p>
-</footer>
+          <nav className="mb-2 flex flex-col items-center gap-2 text-xs">
+            <div className="flex flex-wrap justify-center gap-4">
+              <Link href="/" className="text-gray-600 hover:text-black">Home</Link>
+              <Link href="/dashboard" className="text-gray-600 hover:text-black">Dashboard</Link>
+              <Link href="/profile" className="text-gray-600 hover:text-black">Profile</Link>
+              <Link href="/compliance" className="text-gray-600 hover:text-black">Compliance</Link>
+            </div>
+            <div className="flex flex-wrap justify-center gap-4">
+              <Link href="/privacy" className="text-gray-600 hover:text-black">Privacy</Link>
+              <Link href="/terms" className="text-gray-600 hover:text-black">Terms</Link>
+              <Link href="/support" className="text-gray-600 hover:text-black">Support</Link>
+            </div>
+          </nav>
+          <p className="text-xs text-gray-600 mt-4">
+            © 2025 LocalHustle — Community Driven Support for Student Athletes
+          </p>
+        </footer>
       </body>
     </html>
   )

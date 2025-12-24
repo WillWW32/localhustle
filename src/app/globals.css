@@ -148,3 +148,19 @@ button, [class*="btn"], .ui-button {
   align-items: center !important;
   justify-content: center !important;
 }
+
+/* Footer — extra small, gray, 2 lines on mobile */
+footer nav {
+  font-size: 0.55rem !important;
+}
+
+footer p {
+  font-size: 0.6rem !important;
+}
+
+@media (min-width: 640px) {
+  footer nav {
+    flex-direction: row;
+    gap: 1.5rem;
+  }
+}

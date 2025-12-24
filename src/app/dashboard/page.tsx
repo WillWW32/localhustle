@@ -13,6 +13,7 @@ const athleteGigTypes = [
   { title: 'Youth Clinic', description: 'Run 30–60 min sessions for younger athletes (with teammates).' },
   { title: 'Cameo', description: 'Custom 15-Sec Video for Younger Athletes (birthdays, pre-game pep talks).' },
   { title: 'Player Training', description: 'Varsity athlete 40-minute training with young player.' },
+  { title: 'Challenge', description: 'Compete in fun challenges (HORSE, PIG, free throws, accuracy toss) — base pay for clip, bonus if you win.' },
   { title: 'Custom Gig', description: 'Create a gig and offer it.' },
 ]
 
@@ -22,6 +23,7 @@ const businessGigTypes = [
   { title: 'Team Sponsor', baseAmount: 1000, description: 'Business sponsors team meals/gear — money split equally.' },
   { title: 'Cameo', baseAmount: 50, description: 'Custom 15-Sec Video for Younger Athletes (birthdays, pre-game pep talks).' },
   { title: 'Player Training', baseAmount: 100, description: 'Varsity athlete 40-minute training with young player.' },
+  { title: 'Challenge', baseAmount: 75, description: 'Challenge athletes to fun competitions — base pay for clip, bonus if they win.' },
   { title: 'Custom Gig', baseAmount: 200, description: 'Create a gig and offer it.' },
 ]
 
@@ -228,20 +230,25 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
   }
 
   const handleAddFunds = async (amount: number) => {
-  const response = await fetch('/api/checkout', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ amount, business_id: business.id }),
-  })
-  const { id } = await response.json()
-  const stripe = await loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
-  if (stripe) {
-    // Type assertion to fix TS error
-    (stripe as any).redirectToCheckout({ sessionId: id })
-  } else {
-    alert('Stripe failed to load')
+    const response = await fetch('/api/checkout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ amount, business_id: business.id }),
+    })
+    const { id } = await response.json()
+    const stripe = await loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
+    if (!stripe) {
+      alert('Stripe failed to load')
+      return
+    }
+
+    const { error } = await stripe.redirectToCheckout({ sessionId: id })
+
+    if (error) {
+      alert(error.message)
+    }
   }
-}
+
   if (!profile) return <p className="container text-center py-32">Loading...</p>
 
   return (
@@ -552,7 +559,7 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
 
             <div style={{ fontSize: '1.2rem', lineHeight: '2', textAlign: 'left' }}>
               <p style={{ marginBottom: '1.5rem' }}>
-                <strong>Task:</strong> Make 10–20 business connections — send the support letter to local spots.
+                <strong>Task:</strong> Make 10 business connections — send the support letter to local spots.
               </p>
               <p style={{ marginBottom: '1.5rem' }}>
                 <strong>Qualifications:</strong> Varsity player, manager, or photographer • 3.0 GPA or better
@@ -608,11 +615,7 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
               • Authentic content — better than paid ads.<br />
               • Be the hometown hero — visible support for local teams.<br />
               • Discover motivated teens & potential future employees.<br />
-              • Zero risk — only pay for clips you love.
-            </p>
-
-            <p style={{ fontSize: '1.2rem', marginTop: '3rem' }}>
-              LocalHustle is the only fully NIL-compliant platform for high school athletes.
+              • Approve = Clips You Love.
             </p>
           </div>
 
@@ -674,26 +677,24 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
                 + $1000
               </Button>
               <Button 
-  onClick={() => {
-    const custom = prompt('Enter custom amount:')
-    if (custom !== null && custom !== '' && !isNaN(Number(custom)) && Number(custom) > 0) {
-      handleAddFunds(Number(custom))
-    }
-  }}
-  style={{
-    width: '200px',
-    height: '60px',
-    fontSize: '1.5rem',
-    backgroundColor: '#90ee90',
-    color: 'black',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontFamily: "'Courier New', Courier, monospace'",
-  }}
->
-  Custom Amount
-</Button>
+                onClick={() => {
+                  const custom = prompt('Enter custom amount:')
+                  if (custom && !isNaN(custom)) handleAddFunds(parseFloat(custom))
+                }}
+                style={{
+                  width: '200px',
+                  height: '60px',
+                  fontSize: '1.5rem',
+                  backgroundColor: '#90ee90',
+                  color: 'black',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontFamily: "'Courier New', Courier, monospace'",
+                }}
+              >
+                Custom Amount
+              </Button>
             </div>
 
             <p style={{ fontSize: '0.9rem', color: '#666' }}>
@@ -920,7 +921,11 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
 
       {/* Log Out — outside role switch */}
       <div className="text-center mt-32">
-        <Button onClick={signOut} variant="outline" style={{
+        <Button onClick={async () => {
+          await signOut()
+          router.push('/')
+          alert('Logged out successfully')
+        }} variant="outline" style={{
           width: '50%',
           maxWidth: '250px',
           height: '50px',
