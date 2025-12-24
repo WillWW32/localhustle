@@ -72,7 +72,6 @@ export default function Dashboard() {
       if (existingProf) {
         prof = existingProf
       } else {
-        // New user — create profile from metadata
         const metadataRole = user.user_metadata?.role || 'athlete'
         const { data: newProf } = await supabase
           .from('profiles')
@@ -117,11 +116,10 @@ export default function Dashboard() {
           .single()
         setBusiness(biz)
 
-        // Referred athletes (kids who pitched this business)
         const { data: referred } = await supabase
           .from('profiles')
           .select('id, full_name, email, school')
-          .eq('referred_by', biz.id) // assuming referred_by column on profiles for business
+          .eq('referred_by', biz.id)
         setReferredAthletes(referred || [])
 
         const { data: clips } = await supabase
@@ -187,6 +185,59 @@ export default function Dashboard() {
     alert('Offer posted (live mode)!')
   }
 
+  const copyLetter = () => {
+    const athleteId = profile?.id || 'fallback-id'
+    const letterText = `Hey [Business Name],
+
+I've been coming to [Your Spot] for years before and after practice.
+
+Our team has joined a new app that helps us get community support for our athletic journey. I'm reaching out to my favorite spots to see if you would consider a sponsorship.
+
+Here's what you would get: a short thank-you clip from me about your place. You can use the clip for social media if you want.
+
+I'd probably get some new shoes or gear and be set for our roadtrips. It means a lot for me and the team and I'd love to rep a local business that's got our back.
+
+This link has all the details for how it works: https://app.localhustle.org/business-onboard?ref=${athleteId}
+
+Thanks either way!
+
+– ${profile?.email.split('@')[0] || 'me'}
+${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athlete'}`
+    navigator.clipboard.writeText(letterText)
+    alert('Letter copied to clipboard!')
+  }
+
+  const shareLetter = () => {
+    const athleteId = profile?.id || 'fallback-id'
+    const letterText = `Hey [Business Name],
+
+I've been coming to [Your Spot] for years before and after practice.
+
+Our team has joined a new app that helps us get community support for our athletic journey. I'm reaching out to my favorite spots to see if you would consider a sponsorship.
+
+Here's what you would get: a short thank-you clip from me about your place. You can use the clip for social media if you want.
+
+I'd probably get some new shoes or gear and be set for our roadtrips. It means a lot for me and the team and I'd love to rep a local business that's got our back.
+
+This link has all the details for how it works: https://app.localhustle.org/business-onboard?ref=${athleteId}
+
+Thanks either way!
+
+– ${profile?.email.split('@')[0] || 'me'}
+${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athlete'}`
+
+    if (navigator.share) {
+      navigator.share({
+        title: 'LocalHustle Sponsorship',
+        text: letterText,
+      }).catch(() => {
+        copyLetter()
+      })
+    } else {
+      copyLetter()
+    }
+  }
+
   const approveClip = async (clip: any) => {
     const { error: clipError } = await supabase
       .from('clips')
@@ -207,48 +258,47 @@ export default function Dashboard() {
     setPendingClips(pendingClips.filter(c => c.id !== clip.id))
     setBusiness({ ...business, wallet_balance: business.wallet_balance - clip.offers.amount })
 
-    // Trigger "Fund for Friend" prompt after first payout
     setShowFundFriend(true)
   }
 
   const handleFundFriend = async () => {
-  if (!friendEmail || !friendChallenge || !friendAmount) {
-    alert('Please fill all fields')
-    return
+    if (!friendEmail || !friendChallenge || !friendAmount) {
+      alert('Please fill all fields')
+      return
+    }
+
+    const amountNum = parseFloat(friendAmount)
+    if (isNaN(amountNum) || amountNum <= 0) {
+      alert('Invalid amount')
+      return
+    }
+
+    const response = await fetch('/api/invite-friend', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        friend_email: friendEmail,
+        friend_name: friendName,
+        challenge_description: friendChallenge,
+        amount: amountNum,
+        business_id: business.id,
+        kid_id: profile.id,
+      }),
+    })
+
+    const data = await response.json()
+
+    if (data.error) {
+      alert('Error: ' + data.error)
+    } else {
+      alert(`Challenge funded and invite sent to ${friendEmail}!`)
+      setShowFundFriend(false)
+      setFriendEmail('')
+      setFriendName('')
+      setFriendChallenge('')
+      setFriendAmount('50')
+    }
   }
-
-  const amountNum = parseFloat(friendAmount)
-  if (isNaN(amountNum) || amountNum <= 0) {
-    alert('Invalid amount')
-    return
-  }
-
-  const response = await fetch('/api/invite-friend', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      friend_email: friendEmail,
-      friend_name: friendName,
-      challenge_description: friendChallenge,
-      amount: amountNum,
-      business_id: business.id,
-      kid_id: profile.id, // your kid
-    }),
-  })
-
-  const data = await response.json()
-
-  if (data.error) {
-    alert('Error: ' + data.error)
-  } else {
-    alert(`Challenge funded and invite sent to ${friendEmail}!`)
-    setShowFundFriend(false)
-    setFriendEmail('')
-    setFriendName('')
-    setFriendChallenge('')
-    setFriendAmount('50')
-  }
-}
 
   const handleAddFunds = async (amount: number) => {
     const response = await fetch('/api/checkout', {
