@@ -261,6 +261,20 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
     setShowFundFriend(true)
   }
 
+  const createChallengeForKid = (kid: any) => {
+    const description = prompt(`Enter challenge for ${kid.full_name || kid.email} (e.g., 80/100 free throws)`)
+    const amountStr = prompt('Payout amount if completed (e.g., 50)')
+    if (!description || !amountStr) return
+
+    const amount = parseFloat(amountStr)
+    if (isNaN(amount)) {
+      alert('Invalid amount')
+      return
+    }
+
+    alert(`Challenge created for ${kid.full_name || kid.email}:\n"${description}" = $${amount}\n(Full funding + invite coming soon)`)
+  }
+
   const handleFundFriend = async () => {
     if (!friendEmail || !friendChallenge || !friendAmount) {
       alert('Please fill all fields')
@@ -651,12 +665,31 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
               <p className="text-xl mb-8">
                 Fund a challenge for their best friend — get them started too.
               </p>
-              <Button 
-                onClick={() => setShowFundFriend(false)}
-                className="w-full h-16 text-xl bg-green-400 text-black"
-              >
-                Fund for Friend
-              </Button>
+              <div className="space-y-6">
+                <Input 
+                  placeholder="Friend's name (optional)"
+                  value={friendName}
+                  onChange={(e) => setFriendName(e.target.value)}
+                />
+                <Input 
+                  placeholder="Friend's email (required)"
+                  value={friendEmail}
+                  onChange={(e) => setFriendEmail(e.target.value)}
+                />
+                <Input 
+                  placeholder="Challenge description (e.g., 80/100 free throws)"
+                  value={friendChallenge}
+                  onChange={(e) => setFriendChallenge(e.target.value)}
+                />
+                <Input 
+                  placeholder="Payout amount (e.g., 50)"
+                  value={friendAmount}
+                  onChange={(e) => setFriendAmount(e.target.value)}
+                />
+                <Button onClick={handleFundFriend} className="w-full h-16 text-xl bg-green-400 text-black">
+                  Fund Challenge & Invite Friend
+                </Button>
+              </div>
             </div>
           )}
 
