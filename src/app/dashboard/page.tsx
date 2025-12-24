@@ -34,6 +34,7 @@ export default function Dashboard() {
   const [pendingClips, setPendingClips] = useState<any[]>([])
   const [selectedGigs, setSelectedGigs] = useState<string[]>([])
   const [squad, setSquad] = useState<any[]>([])
+  const [referredAthletes, setReferredAthletes] = useState<any[]>([])
   const [selectedGig, setSelectedGig] = useState<any>(null)
   const [numAthletes, setNumAthletes] = useState(1)
   const [customDetails, setCustomDetails] = useState('')
@@ -46,6 +47,11 @@ export default function Dashboard() {
   const [highlightLink, setHighlightLink] = useState('')
   const [socialFollowers, setSocialFollowers] = useState('')
   const [bio, setBio] = useState('')
+  const [showFundFriend, setShowFundFriend] = useState(false)
+  const [friendEmail, setFriendEmail] = useState('')
+  const [friendName, setFriendName] = useState('')
+  const [friendChallenge, setFriendChallenge] = useState('')
+  const [friendAmount, setFriendAmount] = useState('50')
   const router = useRouter()
 
   useEffect(() => {
@@ -110,6 +116,13 @@ export default function Dashboard() {
           .eq('owner_id', user.id)
           .single()
         setBusiness(biz)
+
+        // Referred athletes (kids who pitched this business)
+        const { data: referred } = await supabase
+          .from('profiles')
+          .select('id, full_name, email, school')
+          .eq('referred_by', biz.id) // assuming referred_by column on profiles for business
+        setReferredAthletes(referred || [])
 
         const { data: clips } = await supabase
           .from('clips')
@@ -193,7 +206,49 @@ export default function Dashboard() {
     alert(`Clip sent to parent for final approval: ${clip.profiles.parent_email || 'parent email'}`)
     setPendingClips(pendingClips.filter(c => c.id !== clip.id))
     setBusiness({ ...business, wallet_balance: business.wallet_balance - clip.offers.amount })
+
+    // Trigger "Fund for Friend" prompt after first payout
+    setShowFundFriend(true)
   }
+
+  const handleFundFriend = async () => {
+  if (!friendEmail || !friendChallenge || !friendAmount) {
+    alert('Please fill all fields')
+    return
+  }
+
+  const amountNum = parseFloat(friendAmount)
+  if (isNaN(amountNum) || amountNum <= 0) {
+    alert('Invalid amount')
+    return
+  }
+
+  const response = await fetch('/api/invite-friend', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      friend_email: friendEmail,
+      friend_name: friendName,
+      challenge_description: friendChallenge,
+      amount: amountNum,
+      business_id: business.id,
+      kid_id: profile.id, // your kid
+    }),
+  })
+
+  const data = await response.json()
+
+  if (data.error) {
+    alert('Error: ' + data.error)
+  } else {
+    alert(`Challenge funded and invite sent to ${friendEmail}!`)
+    setShowFundFriend(false)
+    setFriendEmail('')
+    setFriendName('')
+    setFriendChallenge('')
+    setFriendAmount('50')
+  }
+}
 
   const handleAddFunds = async (amount: number) => {
     const response = await fetch('/api/checkout', {
@@ -208,7 +263,7 @@ export default function Dashboard() {
       return
     }
 
-    // @ts-ignore — redirectToCheckout exists at runtime
+    // @ts-ignore
     const { error } = await stripe.redirectToCheckout({ sessionId: id })
 
     if (error) {
@@ -223,15 +278,15 @@ export default function Dashboard() {
       <p className="text-center mb-12 text-xl font-mono">Welcome, {profile.email}</p>
 
       {/* Subtitle — black block */}
-      <div style={{ backgroundColor: 'black', color: 'white', padding: '2rem', marginBottom: '4rem' }}>
-        <h1 style={{ fontSize: '1.8rem', margin: '0' }}>
+      <div className="bg-black text-white p-8 mb-12">
+        <h1 className="text-3xl font-bold">
           {profile.role === 'athlete' ? 'Your Athlete Dashboard' : 'Your Business Admin Console'}
         </h1>
       </div>
 
       {/* Detail — black block */}
-      <div style={{ backgroundColor: 'black', color: 'white', padding: '2rem', marginBottom: '4rem' }}>
-        <p style={{ fontSize: '1.2rem', lineHeight: '1.8' }}>
+      <div className="bg-black text-white p-8 mb-12">
+        <p className="text-lg leading-relaxed">
           {profile.role === 'athlete' ? 'Pitch businesses, claim gigs, build your squad and earn together.' : 'Post gigs to get authentic content. Review clips — only approve what you love. Become the hometown hero.'}
         </p>
       </div>
@@ -511,6 +566,50 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
             </p>
           </div>
 
+          {/* My Kid's Challenges */}
+          {referredAthletes.length > 0 && (
+            <div className="mb-16">
+              <h3 className="text-3xl mb-8 font-bold">My Kid's Challenges</h3>
+              <p className="mb-8 text-lg">
+                Create a challenge for your kid — they complete, you approve, they get paid.
+              </p>
+              <div className="space-y-8 max-w-2xl mx-auto">
+                {referredAthletes.map((kid) => (
+                  <div key={kid.id} className="border-4 border-black p-8 bg-gray-100">
+                    <p className="font-bold text-2xl mb-4">{kid.full_name || kid.email}</p>
+                    <p className="mb-6 text-lg">
+                      Prove it with timelapse or witness video — easy!
+                    </p>
+                    <Button 
+                      onClick={() => createChallengeForKid(kid)}
+                      className="w-full h-16 text-xl bg-green-400 text-black"
+                    >
+                      Create Challenge for {kid.full_name?.split(' ')[0] || 'Kid'}
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Fund Best Friend Prompt */}
+          {showFundFriend && (
+            <div className="max-w-2xl mx-auto my-16 p-8 bg-green-100 border-4 border-green-600">
+              <p className="text-2xl font-bold mb-6">
+                Your kid earned $50! 🎉
+              </p>
+              <p className="text-xl mb-8">
+                Fund a challenge for their best friend — get them started too.
+              </p>
+              <Button 
+                onClick={() => setShowFundFriend(false)}
+                className="w-full h-16 text-xl bg-green-400 text-black"
+              >
+                Fund for Friend
+              </Button>
+            </div>
+          )}
+
           {/* Wallet Balance + Auto-Top-Up + Add Funds */}
           <div className="mb-16">
             <p className="text-3xl mb-4 font-bold">Wallet balance: ${business?.wallet_balance?.toFixed(2) || '0.00'}</p>
@@ -695,6 +794,9 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
                   <video controls className="w-full mb-8">
                     <source src={clip.video_url} type="video/mp4" />
                   </video>
+                  <p className="text-sm text-gray-600 mb-4">
+                    Prove it with timelapse or witness video — easy!
+                  </p>
                   <Button 
                     onClick={() => approveClip(clip)}
                     className="w-full h-16 text-xl bg-black text-white"
