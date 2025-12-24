@@ -174,59 +174,6 @@ export default function Dashboard() {
     alert('Offer posted (live mode)!')
   }
 
-  const copyLetter = () => {
-    const athleteId = profile?.id || 'fallback-id'
-    const letterText = `Hey [Business Name],
-
-I've been coming to [Your Spot] for years before and after practice.
-
-Our team has joined a new app that helps us get community support for our athletic journey. I'm reaching out to my favorite spots to see if you would consider a sponsorship.
-
-Here's what you would get: a short thank-you clip from me about your place. You can use the clip for social media if you want.
-
-I'd probably get some new shoes or gear and be set for our roadtrips. It means a lot for me and the team and I'd love to rep a local business that's got our back.
-
-This link has all the details for how it works: https://app.localhustle.org/business-onboard?ref=${athleteId}
-
-Thanks either way!
-
-– ${profile?.email.split('@')[0] || 'me'}
-${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athlete'}`
-    navigator.clipboard.writeText(letterText)
-    alert('Letter copied to clipboard!')
-  }
-
-  const shareLetter = () => {
-    const athleteId = profile?.id || 'fallback-id'
-    const letterText = `Hey [Business Name],
-
-I've been coming to [Your Spot] for years before and after practice.
-
-Our team has joined a new app that helps us get community support for our athletic journey. I'm reaching out to my favorite spots to see if you would consider a sponsorship.
-
-Here's what you would get: a short thank-you clip from me about your place. You can use the clip for social media if you want.
-
-I'd probably get some new shoes or gear and be set for our roadtrips. It means a lot for me and the team and I'd love to rep a local business that's got our back.
-
-This link has all the details for how it works: https://app.localhustle.org/business-onboard?ref=${athleteId}
-
-Thanks either way!
-
-– ${profile?.email.split('@')[0] || 'me'}
-${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athlete'}`
-
-    if (navigator.share) {
-      navigator.share({
-        title: 'LocalHustle Sponsorship',
-        text: letterText,
-      }).catch(() => {
-        copyLetter()
-      })
-    } else {
-      copyLetter()
-    }
-  }
-
   const approveClip = async (clip: any) => {
     const { error: clipError } = await supabase
       .from('clips')
@@ -538,24 +485,24 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
       ) : (
         <div className="max-w-4xl mx-auto space-y-16 font-mono text-center text-lg">
           {/* Subtitle — black block */}
-          <div style={{ backgroundColor: 'black', color: 'white', padding: '2rem', marginBottom: '4rem' }}>
-            <h1 style={{ fontSize: '1.8rem', margin: '0' }}>
+          <div className="bg-black text-white p-8 mb-12">
+            <h1 className="text-3xl font-bold">
               Your Business Admin Console
             </h1>
           </div>
 
           {/* Detail — black block */}
-          <div style={{ backgroundColor: 'black', color: 'white', padding: '2rem', marginBottom: '4rem' }}>
-            <p style={{ fontSize: '1.2rem', lineHeight: '1.8' }}>
+          <div className="bg-black text-white p-8 mb-12">
+            <p className="text-lg leading-relaxed">
               Post gigs to get authentic content from local athletes.<br />
               Review clips — only approve what you love.<br />
               Become the hometown hero while discovering motivated teens.
             </p>
 
-            <h2 style={{ fontSize: '1.8rem', margin: '3rem 0 2rem 0' }}>
+            <h2 className="text-2xl font-bold mt-12 mb-6">
               Why this is the best advertising
             </h2>
-            <p style={{ fontSize: '1.2rem', lineHeight: '1.8' }}>
+            <p className="text-lg leading-relaxed">
               • Real word-of-mouth from kids parents trust (88% trust recommendations from people they know).<br />
               • Authentic content — better than paid ads.<br />
               • Be the hometown hero — visible support for local teams.<br />
@@ -564,9 +511,35 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
             </p>
           </div>
 
-          {/* Wallet Balance + Add Funds */}
+          {/* Wallet Balance + Auto-Top-Up + Add Funds */}
           <div className="mb-16">
             <p className="text-3xl mb-4 font-bold">Wallet balance: ${business?.wallet_balance?.toFixed(2) || '0.00'}</p>
+
+            {/* Auto-Top-Up Toggle */}
+            <div className="max-w-md mx-auto mb-12 p-6 bg-gray-100 border-4 border-black">
+              <label className="flex items-center justify-between cursor-pointer">
+                <span className="text-xl font-bold">Auto-Top-Up</span>
+                <input
+                  type="checkbox"
+                  checked={business?.auto_top_up ?? true}
+                  onChange={async (e) => {
+                    const enabled = e.target.checked
+                    await supabase
+                      .from('businesses')
+                      .update({ auto_top_up: enabled })
+                      .eq('id', business.id)
+                    setBusiness({ ...business, auto_top_up: enabled })
+                    alert(enabled ? 'Auto-top-up enabled!' : 'Auto-top-up disabled')
+                  }}
+                  className="w-8 h-8"
+                />
+              </label>
+              <p className="text-lg mt-4">
+                Never run out — when balance falls below $100, automatically add $500.
+              </p>
+            </div>
+
+            {/* Add Funds Buttons */}
             <p className="text-lg mb-8">
               Top up your wallet — post gigs anytime. Most businesses start with $500–$1000.
             </p>

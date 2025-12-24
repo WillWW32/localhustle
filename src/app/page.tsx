@@ -72,95 +72,42 @@ See you inside! 🚀
     }
 
     checkSession()
-
-    const { data: listener } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      setUser(session?.user ?? null)
-      if (session?.user) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', session.user.id)
-          .single()
-
-        if (!profile?.role) {
-          router.push('/select-role')
-        } else {
-          router.push('/dashboard')
-        }
-      }
-    })
-
-    return () => listener.subscription.unsubscribe()
   }, [router])
 
   return (
-    <div style={{
-      fontFamily: "'Courier New', Courier, monospace",
-      textAlign: 'center',
-      padding: '2rem',
-      backgroundColor: 'white',
-      color: 'black',
-      minHeight: '100vh',
-    }}>
-      {/* Subtitle — black block */}
-      <div style={{ backgroundColor: 'black', color: 'white', padding: '2rem', marginBottom: '4rem' }}>
-        <p style={{ fontSize: '1.8rem', margin: '0' }}>
-          We connect student athletes with local businesses for NIL deals
-        </p>
-      </div>
+    <div className="min-h-screen bg-white text-black font-mono py-8 px-4 sm:px-8">
+      {/* Slogan + Triangle */}
+      <p className="text-2xl sm:text-3xl text-center mb-4">
+        Community Driven Support for Student Athletes
+      </p>
+      <div className="text-5xl sm:text-6xl text-center mb-12">▼</div>
 
-      {/* Detail — black block */}
-      <div style={{ backgroundColor: 'black', color: 'white', padding: '2rem', marginBottom: '6rem' }}>
-        <h2 style={{ fontSize: '1.8rem', marginBottom: '2rem' }}>
-          Student Athletes
-        </h2>
-        <p style={{ fontSize: '1.2rem', lineHeight: '1.8' }}>
-          • Earn real money for gas, gear, lunch, or savings.<br />
-          • Meet business owners in your town.<br />
-          • Build your resume and unlock scholarships with letters of recommendation.<br />
-          • Safe, instant parent-approved payouts.
-        </p>
+      {/* Main Title */}
+      <h1 className="text-4xl sm:text-6xl font-bold text-center mb-12">
+        LocalHustle
+      </h1>
 
-        <h2 style={{ fontSize: '1.8rem', margin: '4rem 0 2rem 0' }}>
-          Local Business
-        </h2>
-        <p style={{ fontSize: '1.2rem', lineHeight: '1.8' }}>
-          • Fresh, authentic content for social media.<br />
-          • Be a Hometown Hero — visible support for local teams.<br />
-          • Discover motivated teens & potential future employees.<br />
-          • Better than paid ads — real referrals from real athletes.
-        </p>
-      </div>
-
-      {/* CTA */}
-      <p style={{ fontSize: '1.8rem', fontWeight: 'bold', marginBottom: '2rem' }}>
-        Enter Below for How to Get an NIL Deal
+      {/* Subtitle */}
+      <p className="text-xl sm:text-2xl text-center mb-16 max-w-3xl mx-auto">
+        Earn from local business sponsorships — no agents, no pay-for-play, fully NIL compliant.
       </p>
 
-      {/* Role Selector */}
+      {/* Role Selection */}
       {!role && (
-        <div style={{ marginBottom: '4rem' }}>
-          <p style={{ fontSize: '1.5rem', marginBottom: '2rem' }}>Who are you?</p>
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '2rem', flexWrap: 'wrap' }}>
+        <div className="max-w-2xl mx-auto mb-16">
+          <p className="text-xl sm:text-2xl text-center mb-8">
+            Who are you?
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
             <Button 
               onClick={() => setRole('athlete')}
-              style={{
-                padding: '1.5rem 3rem',
-                fontSize: '1.5rem',
-                backgroundColor: 'black',
-                color: 'white',
-              }}
+              className="h-32 text-2xl sm:text-3xl bg-black text-white hover:bg-gray-800"
             >
               Student Athlete
             </Button>
             <Button 
               onClick={() => setRole('business')}
-              style={{
-                padding: '1.5rem 3rem',
-                fontSize: '1.5rem',
-                backgroundColor: 'black',
-                color: 'white',
-              }}
+              className="h-32 text-2xl sm:text-3xl bg-black text-white hover:bg-gray-800"
             >
               Local Business
             </Button>
@@ -168,30 +115,22 @@ See you inside! 🚀
         </div>
       )}
 
-      {/* Level Selector — only for athlete */}
+      {/* Athlete Level Selection */}
       {role === 'athlete' && !level && (
-        <div style={{ marginBottom: '4rem' }}>
-          <p style={{ fontSize: '1.5rem', marginBottom: '2rem' }}>High School or College?</p>
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '2rem', flexWrap: 'wrap' }}>
+        <div className="max-w-2xl mx-auto mb-16">
+          <p className="text-xl sm:text-2xl text-center mb-8">
+            High School or College?
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
             <Button 
               onClick={() => setLevel('high_school')}
-              style={{
-                padding: '1.5rem 3rem',
-                fontSize: '1.5rem',
-                backgroundColor: 'black',
-                color: 'white',
-              }}
+              className="h-32 text-2xl sm:text-3xl bg-black text-white hover:bg-gray-800"
             >
               High School
             </Button>
             <Button 
               onClick={() => setLevel('college')}
-              style={{
-                padding: '1.5rem 3rem',
-                fontSize: '1.5rem',
-                backgroundColor: 'black',
-                color: 'white',
-              }}
+              className="h-32 text-2xl sm:text-3xl bg-black text-white hover:bg-gray-800"
             >
               College
             </Button>
@@ -199,17 +138,17 @@ See you inside! 🚀
           <Button 
             onClick={() => setRole(null)}
             variant="outline"
-            style={{ marginTop: '2rem', fontSize: '1.2rem' }}
+            className="mt-8 h-14 text-lg border-4 border-black"
           >
             Back
           </Button>
         </div>
       )}
 
-      {/* Email Form — only after role/level selected */}
-      {(role === 'business' || level) && (
-        <div style={{ maxWidth: '300px', margin: '0 auto' }}>
-          <Label htmlFor="email" style={{ fontSize: '1.5rem', display: 'block', marginBottom: '1rem' }}>
+      {/* Email Entry */}
+      {role && (role === 'business' || level) && (
+        <div className="max-w-lg mx-auto">
+          <Label htmlFor="email" className="text-xl sm:text-2xl block mb-4 text-center">
             Your Email
           </Label>
           <Input
@@ -218,27 +157,12 @@ See you inside! 🚀
             placeholder="you@school.edu"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            style={{
-              width: '100%',
-              height: '60px',
-              fontSize: '1.5rem',
-              border: '4px solid black',
-              textAlign: 'center',
-              marginBottom: '2rem',
-              fontFamily: "'Courier New', Courier, monospace",
-            }}
+            className="h-16 text-2xl text-center border-4 border-black mb-8"
           />
           <Button
             onClick={handleLogin}
             disabled={loading}
-            style={{
-              width: '100%',
-              height: '60px',
-              fontSize: '1.5rem',
-              backgroundColor: 'black',
-              color: 'white',
-              fontFamily: "'Courier New', Courier, monospace",
-            }}
+            className="w-full h-20 text-2xl sm:text-3xl bg-black text-white"
           >
             {loading ? 'Sending...' : 'Send Login Link'}
           </Button>
@@ -248,7 +172,7 @@ See you inside! 🚀
               setLevel(null)
             }}
             variant="outline"
-            style={{ marginTop: '2rem', fontSize: '1.2rem' }}
+            className="mt-8 w-full h-14 text-lg border-4 border-black"
           >
             Back
           </Button>
@@ -257,18 +181,9 @@ See you inside! 🚀
 
       {/* Logged in state */}
       {user && (
-        <div style={{ marginTop: '6rem' }}>
-          <p style={{ fontSize: '1.5rem' }}>Logged in as {user.email}</p>
-          <Button onClick={signOut} style={{
-            width: '80%',
-            maxWidth: '300px',
-            height: '60px',
-            fontSize: '1.5rem',
-            backgroundColor: 'black',
-            color: 'white',
-            marginTop: '2rem',
-            fontFamily: "'Courier New', Courier, monospace",
-          }}>
+        <div className="max-w-lg mx-auto my-16">
+          <p className="text-xl sm:text-2xl text-center mb-8">Logged in as {user.email}</p>
+          <Button onClick={signOut} className="w-full h-16 text-2xl bg-black text-white">
             Log Out
           </Button>
         </div>

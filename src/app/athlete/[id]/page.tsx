@@ -1,6 +1,5 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
 import { useParams } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabaseClient'
@@ -16,7 +15,6 @@ const gigTypes = [
 
 export default function AthleteProfile() {
   const { id } = useParams()
-const router = useRouter()
   const [profile, setProfile] = useState<any>(null)
   const [selectedGigs, setSelectedGigs] = useState<string[]>([])
 
@@ -43,65 +41,57 @@ const router = useRouter()
   if (!profile) return <p className="container text-center py-32">Loading profile...</p>
 
   return (
-    <div style={{
-      fontFamily: "'Courier New', Courier, monospace",
-      textAlign: 'center',
-      padding: '2rem',
-      backgroundColor: 'white',
-      color: 'black',
-      minHeight: '100vh',
-    }}>
+    <div className="min-h-screen bg-white text-black font-mono py-8 px-4 sm:px-8">
       {/* Slogan + Triangle */}
-      <p style={{ fontSize: '2rem', marginBottom: '1rem' }}>
+      <p className="text-2xl sm:text-3xl text-center mb-4">
         Community Driven Support for Student Athletes
       </p>
-      <div style={{ fontSize: '3rem', marginBottom: '4rem' }}>▼</div>
+      <div className="text-5xl sm:text-6xl text-center mb-12">▼</div>
 
       {/* Circle Photo */}
-      <div style={{ marginBottom: '3rem' }}>
-        <div style={{ width: '200px', height: '200px', borderRadius: '50%', margin: '0 auto', overflow: 'hidden', border: '4px solid black' }}>
+      <div className="mb-12">
+        <div className="w-48 h-48 sm:w-64 sm:h-64 mx-auto rounded-full overflow-hidden border-8 border-black">
           {profile.profile_pic ? (
-            <img src={profile.profile_pic} alt={`${profile.full_name || profile.email}'s photo`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            <img src={profile.profile_pic} alt={`${profile.full_name || profile.email}'s photo`} className="w-full h-full object-cover" />
           ) : (
-            <div style={{ width: '100%', height: '100%', backgroundColor: '#ccc', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <p style={{ fontSize: '1.2rem' }}>No Photo</p>
+            <div className="w-full h-full bg-gray-300 flex items-center justify-center">
+              <p className="text-gray-600">No Photo</p>
             </div>
           )}
         </div>
       </div>
 
       {/* Name & School */}
-      <h1 style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>
+      <h1 className="text-3xl sm:text-5xl font-bold mb-4">
         {profile.full_name || profile.email.split('@')[0]}
       </h1>
-      <p style={{ fontSize: '1.8rem', marginBottom: '2rem' }}>
+      <p className="text-xl sm:text-3xl mb-8">
         {profile.school} • {profile.sport}
       </p>
 
       {/* Social Followers */}
       {profile.social_followers && (
-        <p style={{ fontSize: '1.5rem', marginBottom: '2rem' }}>
+        <p className="text-xl sm:text-2xl mb-8">
           Total Followers: {profile.social_followers}
         </p>
       )}
 
       {/* Bio */}
       {profile.bio && (
-        <p style={{ fontSize: '1.2rem', maxWidth: '600px', margin: '0 auto 4rem auto', lineHeight: '1.8' }}>
+        <p className="text-lg sm:text-xl max-w-3xl mx-auto mb-12 leading-relaxed px-4">
           {profile.bio}
         </p>
       )}
 
       {/* Highlight Reel */}
       {profile.highlight_link && (
-        <div style={{ marginBottom: '4rem' }}>
-          <h2 style={{ fontSize: '1.8rem', marginBottom: '2rem' }}>
+        <div className="mb-16">
+          <h2 className="text-2xl sm:text-3xl font-bold mb-8">
             Highlight Reel
           </h2>
-          <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+          <div className="max-w-4xl mx-auto aspect-video">
             <iframe
-              width="100%"
-              height="450"
+              className="w-full h-full border-4 border-black"
               src={profile.highlight_link.replace('watch?v=', 'embed/')}
               title="Highlight Reel"
               frameBorder="0"
@@ -113,17 +103,17 @@ const router = useRouter()
 
       {/* Selected Gigs */}
       {selectedGigs.length > 0 && (
-        <div style={{ marginBottom: '4rem' }}>
-          <h2 style={{ fontSize: '1.8rem', marginBottom: '2rem' }}>
+        <div className="mb-16">
+          <h2 className="text-2xl sm:text-3xl font-bold mb-8">
             Gigs I Offer
           </h2>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem', maxWidth: '1000px', margin: '0 auto' }}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl mx-auto px-4">
             {selectedGigs.map((title) => {
               const gig = gigTypes.find(g => g.title === title)
               return gig ? (
-                <div key={title} style={{ border: '2px solid black', padding: '2rem', backgroundColor: '#f5f5f5' }}>
-                  <h3 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '1rem' }}>{gig.title}</h3>
-                  <p style={{ fontSize: '1.2rem' }}>{gig.description}</p>
+                <div key={title} className="border-4 border-black p-8 bg-gray-100">
+                  <h3 className="text-2xl font-bold mb-4">{gig.title}</h3>
+                  <p className="text-lg">{gig.description}</p>
                 </div>
               ) : null
             })}
@@ -132,24 +122,13 @@ const router = useRouter()
       )}
 
       {/* CTA for Businesses */}
-      <div style={{ marginTop: '6rem' }}>
-        <p style={{ fontSize: '1.5rem', marginBottom: '2rem' }}>
+      <div className="my-16">
+        <p className="text-xl sm:text-2xl mb-8">
           Interested in sponsoring this athlete?
         </p>
         <Button 
           onClick={() => router.push('/dashboard')}
-          style={{
-            width: '100%',
-            maxWidth: '500px',
-            height: '80px',
-            fontSize: '2rem',
-            backgroundColor: '#90ee90',
-            color: 'black',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontFamily: "'Courier New', Courier, monospace'",
-          }}
+          className="w-full max-w-md h-20 text-2xl sm:text-3xl bg-green-400 text-black"
         >
           Go to Admin Console & Post a Gig
         </Button>

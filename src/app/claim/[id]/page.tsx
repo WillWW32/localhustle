@@ -36,23 +36,25 @@ export default function ClaimOffer() {
       return
     }
 
-    const filePath = `${offer.id}/${user.id}-${Date.now()}.mp4`
+    const fileExt = videoFile.name.split('.').pop()
+    const fileName = `${Date.now()}.${fileExt}`
+    const filePath = `${user.id}/${fileName}` // athlete folder
 
     const { error: uploadError } = await supabase.storage
-      .from('clips')
-      .upload(filePath, videoFile)
+      .from('video-clips') // ← new bucket
+      .upload(filePath, videoFile, { upsert: true })
 
     if (uploadError) {
-      alert(uploadError.message)
+      alert('Upload failed: ' + uploadError.message)
       setUploading(false)
       return
     }
 
     const { data: urlData } = supabase.storage
-      .from('clips')
+      .from('video-clips')
       .getPublicUrl(filePath)
 
-    const { error } = await supabase
+    const { error: dbError } = await supabase
       .from('clips')
       .insert({
         offer_id: offer.id,
@@ -62,14 +64,10 @@ export default function ClaimOffer() {
         delivery_option: deliveryOption,
       })
 
-    if (error) {
-      alert(error.message)
+    if (dbError) {
+      alert('Save failed: ' + dbError.message)
     } else {
-      if (deliveryOption === 'public') {
-        alert('Clip uploaded! Post on IG/TT and tag @localhustl + business for $10 bonus.')
-      } else {
-        alert('Clip uploaded! Business will review soon.')
-      }
+      alert('Clip uploaded — waiting for business approval!')
       router.push('/dashboard')
     }
 
@@ -79,101 +77,74 @@ export default function ClaimOffer() {
   if (!offer) return <p className="container text-center py-32">Loading offer...</p>
 
   return (
-    <div style={{
-      fontFamily: "'Courier New', Courier, monospace",
-      textAlign: 'center',
-      padding: '2rem',
-      backgroundColor: 'white',
-      color: 'black',
-      minHeight: '100vh',
-    }}>
+    <div className="min-h-screen bg-white text-black font-mono py-8 px-4 sm:px-8">
       {/* Slogan + Triangle */}
-      <p style={{ fontSize: '2rem', marginBottom: '1rem' }}>
+      <p className="text-2xl sm:text-3xl text-center mb-4">
         Community Driven Support for Student Athletes
       </p>
-      <div style={{ fontSize: '3rem', marginBottom: '4rem' }}>▼</div>
+      <div className="text-5xl sm:text-6xl text-center mb-12">▼</div>
 
-      {/* Subtitle — black block */}
-      <div style={{ backgroundColor: 'black', color: 'white', padding: '2rem', marginBottom: '4rem' }}>
-        <h1 style={{ fontSize: '1.8rem', margin: '0' }}>
-          Claim This Gig
-        </h1>
-      </div>
+      {/* Offer Title */}
+      <h1 className="text-3xl sm:text-5xl font-bold text-center mb-8">
+        Claim: {offer.type} — ${offer.amount}
+      </h1>
 
-      {/* Detail — black block */}
-      <div style={{ backgroundColor: 'black', color: 'white', padding: '2rem', marginBottom: '4rem' }}>
-        <p style={{ fontSize: '1.2rem', lineHeight: '1.8' }}>
-          {offer.type.toUpperCase()}<br />
-          {offer.description}<br />
-          {offer.date && `Date: ${offer.date}`}<br />
-          {offer.location && `Location: ${offer.location}`}
-        </p>
-      </div>
+      {/* Description */}
+      <p className="text-lg sm:text-2xl text-center mb-12 max-w-3xl mx-auto leading-relaxed">
+        {offer.description}
+      </p>
 
-      {/* Main Content */}
-      <div className="max-w-md mx-auto space-y-20">
-        <div className="space-y-8">
-          <label className="block text-3xl text-center mb-8">
-            Record or Upload Your Clip
-          </label>
-
-          {/* Delivery Options */}
-          <div className="space-y-4 mb-12">
-            <label className="flex items-center space-x-4">
-              <input type="radio" name="delivery" value="private" checked={deliveryOption === 'private'} onChange={(e) => setDeliveryOption(e.target.value as 'private')} />
-              <span className="text-xl">Private Video Send (upload here — business sees only)</span>
-            </label>
-            <label className="flex items-center space-x-4">
-              <input type="radio" name="delivery" value="public" checked={deliveryOption === 'public'} onChange={(e) => setDeliveryOption(e.target.value as 'public')} />
-              <span className="text-xl">Public Social Post (IG or TT — $10 bonus)</span>
-            </label>
+      {/* Delivery Option */}
+      <div className="max-w-2xl mx-auto mb-12">
+        <h2 className="text-2xl sm:text-3xl font-bold mb-8 text-center">
+          How will you deliver?
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+          <div 
+            className={`p-8 border-4 ${deliveryOption === 'private' ? 'border-black bg-gray-100' : 'border-gray-400'} cursor-pointer`}
+            onClick={() => setDeliveryOption('private')}
+          >
+            <h3 className="text-xl font-bold mb-4">Private Upload</h3>
+            <p>Record & upload video here — only business sees it.</p>
+          </div>
+          <div 
+            className={`p-8 border-4 ${deliveryOption === 'public' ? 'border-black bg-gray-100' : 'border-gray-400'} cursor-pointer`}
+            onClick={() => setDeliveryOption('public')}
+          >
+            <h3 className="text-xl font-bold mb-4">Public Social Post</h3>
+            <p>Post on your social — tag business + @localhustle.</p>
             {deliveryOption === 'public' && (
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-gray-600 mt-4">
                 Must tag @localhustl and the business. Caption example: "Shoutout to [Business] for supporting local athletes! #LocalHustle"
               </p>
             )}
           </div>
-
-          {deliveryOption === 'private' && (
-            <input
-              type="file"
-              accept="video/*"
-              capture="environment"
-              onChange={(e) => setVideoFile(e.target.files?.[0] || null)}
-              style={{
-                width: '100%',
-                padding: '2rem',
-                fontSize: '1.5rem',
-                border: '4px solid black',
-                textAlign: 'center',
-                backgroundColor: 'white',
-              }}
-            />
-          )}
         </div>
+      </div>
 
+      {/* Private Upload */}
+      {deliveryOption === 'private' && (
+        <div className="max-w-md mx-auto mb-12">
+          <input
+            type="file"
+            accept="video/*"
+            capture="environment"
+            onChange={(e) => setVideoFile(e.target.files?.[0] || null)}
+            className="w-full p-8 text-center border-4 border-black bg-white text-lg"
+          />
+        </div>
+      )}
+
+      {/* Submit Button */}
+      <div className="max-w-md mx-auto">
         {deliveryOption === 'private' && (
-          <Button onClick={handleUpload} disabled={uploading || !videoFile} style={{
-            width: '100%',
-            height: '80px',
-            fontSize: '2rem',
-            backgroundColor: '#90ee90',
-            color: 'black',
-            fontFamily: "'Courier New', Courier, monospace'",
-          }}>
+          <Button onClick={handleUpload} disabled={uploading || !videoFile} className="w-full h-20 text-2xl sm:text-3xl bg-green-400 text-black">
             {uploading ? 'Uploading...' : 'Upload Clip & Claim'}
           </Button>
         )}
 
         {deliveryOption === 'public' && (
-          <Button onClick={() => router.push('/dashboard')} style={{
-            width: '100%',
-            height: '80px',
-            fontSize: '2rem',
-            backgroundColor: '#90ee90',
-            color: 'black',
-            fontFamily: "'Courier New', Courier, monospace'",
-          }}>
+          <Button onClick={() => router.push('/dashboard')} className="w-full h-20 text-2xl sm:text-3xl bg-green-400 text-black">
             I'll Post on Social & Claim
           </Button>
         )}

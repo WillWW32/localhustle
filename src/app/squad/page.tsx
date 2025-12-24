@@ -34,7 +34,7 @@ export default function Squad() {
         .order('created_at', { ascending: true })
       setSquad(mySquad || [])
 
-      // Leaderboard — top 10 squads by size (using RPC from earlier)
+      // Leaderboard — top 10 squads by size
       const { data: board } = await supabase.rpc('get_squad_sizes')
       setLeaderboard(board || [])
     }
@@ -68,77 +68,62 @@ export default function Squad() {
   if (!profile) return <p className="container text-center py-32">Loading...</p>
 
   return (
-    <div style={{
-      fontFamily: "'Courier New', Courier, monospace",
-      textAlign: 'center',
-      padding: '2rem',
-      backgroundColor: 'white',
-      color: 'black',
-      minHeight: '100vh',
-    }}>
+    <div className="min-h-screen bg-white text-black font-mono py-8 px-4 sm:px-8">
       {/* Slogan + Triangle */}
-      <p style={{ fontSize: '2rem', marginBottom: '1rem' }}>
+      <p className="text-2xl sm:text-3xl text-center mb-4">
         Community Driven Support for Student Athletes
       </p>
-      <div style={{ fontSize: '3rem', marginBottom: '4rem' }}>▼</div>
+      <div className="text-5xl sm:text-6xl text-center mb-12">▼</div>
 
       {/* Title */}
-      <h1 style={{ fontSize: '2.5rem', fontWeight: 'bold', marginBottom: '2rem' }}>
+      <h1 className="text-3xl sm:text-4xl font-bold text-center mb-8">
         Your Squad ({squadSize} members)
       </h1>
 
       {/* Badges */}
       {badge && (
-        <p style={{ fontSize: '1.8rem', marginBottom: '2rem', color: '#90ee90' }}>
+        <p className="text-2xl sm:text-3xl text-center mb-8 text-green-500 font-bold">
           🎖️ {badge} Badge Earned!
         </p>
       )}
 
       {/* Challenge */}
       {challengeComplete && (
-        <p style={{ fontSize: '1.8rem', marginBottom: '2rem', color: '#90ee90' }}>
+        <p className="text-2xl sm:text-3xl text-center mb-8 text-green-500 font-bold">
           💰 $50 Challenge Bonus Earned!
         </p>
       )}
 
       {/* Referral Link */}
-      <div style={{ maxWidth: '600px', margin: '0 auto 4rem auto', padding: '2rem', backgroundColor: '#f5f5f5', border: '4px solid black' }}>
-        <p style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>
+      <div className="max-w-2xl mx-auto mb-12 p-8 bg-gray-100 border-4 border-black">
+        <p className="text-xl sm:text-2xl mb-6 text-center">
           Share your referral link:
         </p>
-        <p style={{ fontSize: '1.2rem', wordBreak: 'break-all', marginBottom: '2rem' }}>
+        <p className="text-base sm:text-lg break-all mb-8 px-4">
           {referralLink}
         </p>
-        <div style={{ display: 'flex', gap: '1rem' }}>
-          <Button onClick={copyReferral} style={{
-            flex: 1,
-            height: '60px',
-            fontSize: '1.5rem',
-            backgroundColor: 'black',
-            color: 'white',
-          }}>
+        <div className="flex flex-col sm:flex-row gap-4">
+          <Button onClick={copyReferral} className="h-16 text-xl bg-black text-white">
             Copy Link
           </Button>
-          <Button onClick={shareReferral} style={{
-            flex: 1,
-            height: '60px',
-            fontSize: '1.5rem',
-            backgroundColor: '#90ee90',
-            color: 'black',
-          }}>
+          <Button onClick={shareReferral} className="h-16 text-xl bg-green-400 text-black">
             Share Link
           </Button>
         </div>
 
         {/* Share Templates */}
-        <div style={{ marginTop: '2rem', textAlign: 'left' }}>
-          <p style={{ fontSize: '1.2rem', marginBottom: '1rem' }}>Quick share messages:</p>
-          <Button variant="outline" style={{ width: '100%', marginBottom: '1rem', justifyContent: 'flex-start' }}
+        <div className="mt-8 text-left">
+          <p className="text-lg mb-4 text-center">Quick share messages:</p>
+          <Button 
+            variant="outline" 
+            className="w-full mb-4 h-14 text-base border-4 border-black"
             onClick={() => navigator.clipboard.writeText("Join my LocalHustle squad and earn NIL money together! Sign up here: " + referralLink)}
           >
             "Join my squad and earn together!"
           </Button>
-          <Button variant="outline" style={{ width: '100%', justifyContent: 'flex-start' }}
+          <Button 
+            variant="outline" 
+            className="w-full h-14 text-base border-4 border-black"
             onClick={() => navigator.clipboard.writeText("Hey team — let's build a squad on LocalHustle and earn bonuses! My link: " + referralLink)}
           >
             "Hey team — let's build a squad!"
@@ -147,35 +132,29 @@ export default function Squad() {
       </div>
 
       {/* Squad Members */}
-      <div>
-        <h2 style={{ fontSize: '2rem', marginBottom: '3rem' }}>
+      <div className="max-w-4xl mx-auto mb-16">
+        <h2 className="text-2xl sm:text-3xl font-bold mb-8 text-center">
           Your Squad Members
         </h2>
         {squad.length === 0 ? (
-          <p style={{ fontSize: '1.2rem', color: '#666' }}>
+          <p className="text-lg text-gray-600 text-center">
             No members yet — share your link to grow your squad!
           </p>
         ) : (
-          <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+          <div className="space-y-8">
             {squad.map((member) => (
-              <div key={member.id} style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '2rem',
-                padding: '1.5rem',
-                borderBottom: '2px solid black',
-              }}>
-                <div style={{ width: '80px', height: '80px', borderRadius: '50%', overflow: 'hidden', border: '2px solid black' }}>
+              <div key={member.id} className="flex flex-col sm:flex-row items-center gap-6 p-6 border-4 border-black bg-gray-100">
+                <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-black flex-shrink-0">
                   {member.profile_pic ? (
-                    <img src={member.profile_pic} alt={member.email} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <img src={member.profile_pic} alt={member.email} className="w-full h-full object-cover" />
                   ) : (
-                    <div style={{ backgroundColor: '#ccc', width: '100%', height: '100%' }}></div>
+                    <div className="w-full h-full bg-gray-300"></div>
                   )}
                 </div>
-                <div style={{ textAlign: 'left', flex: 1 }}>
-                  <p style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{member.full_name || member.email}</p>
-                  <p>{member.school}</p>
-                  <p style={{ fontSize: '1rem', color: '#666' }}>Joined: {new Date(member.created_at).toLocaleDateString()}</p>
+                <div className="text-center sm:text-left flex-1">
+                  <p className="text-xl font-bold">{member.full_name || member.email}</p>
+                  <p className="text-lg">{member.school}</p>
+                  <p className="text-base text-gray-600">Joined: {new Date(member.created_at).toLocaleDateString()}</p>
                 </div>
               </div>
             ))}
@@ -184,23 +163,21 @@ export default function Squad() {
       </div>
 
       {/* Leaderboard */}
-      <div style={{ marginTop: '6rem' }}>
-        <h2 style={{ fontSize: '2rem', marginBottom: '3rem' }}>
+      <div className="max-w-2xl mx-auto py-16">
+        <h2 className="text-3xl sm:text-4xl font-bold mb-8 text-center">
           Squad Leaderboard (Top 10)
         </h2>
         {leaderboard.length === 0 ? (
-          <p>No squads yet — be the first!</p>
+          <p className="text-lg text-center">No squads yet — be the first!</p>
         ) : (
-          <div style={{ maxWidth: '600px', margin: '0 auto' }}>
+          <div className="space-y-4">
             {leaderboard.map((entry, index) => (
-              <div key={entry.id} style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                padding: '1rem',
-                borderBottom: '1px solid black',
-              }}>
-                <p style={{ fontSize: '1.2rem' }}>
-                  {index + 1}. {entry.email} ({entry.squad_size} members)
+              <div key={entry.id} className="flex flex-col sm:flex-row justify-between items-center p-4 border-b-2 border-black bg-gray-50">
+                <p className="text-lg sm:text-xl font-bold">
+                  {index + 1}. {entry.email}
+                </p>
+                <p className="text-lg mt-2 sm:mt-0">
+                  ({entry.squad_size} members)
                 </p>
               </div>
             ))}

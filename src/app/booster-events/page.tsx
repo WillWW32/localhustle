@@ -82,63 +82,49 @@ export default function BoosterEvents() {
   }
 
   return (
-    <div style={{
-      fontFamily: "'Courier New', Courier, monospace",
-      textAlign: 'center',
-      padding: '2rem',
-      backgroundColor: 'white',
-      color: 'black',
-      minHeight: '100vh',
-    }}>
+    <div className="min-h-screen bg-white text-black font-mono py-8 px-4 sm:px-8">
       {/* Slogan + Triangle */}
-      <p style={{ fontSize: '2rem', marginBottom: '1rem' }}>
+      <p className="text-2xl sm:text-3xl text-center mb-4">
         Community Driven Support for Student Athletes
       </p>
-      <div style={{ fontSize: '3rem', marginBottom: '4rem' }}>▼</div>
+      <div className="text-5xl sm:text-6xl text-center mb-12">▼</div>
 
       {/* Title */}
-      <h1 style={{ fontSize: '2.5rem', fontWeight: 'bold', marginBottom: '2rem' }}>
+      <h1 className="text-3xl sm:text-4xl font-bold text-center mb-8">
         Create Booster Club Event
       </h1>
 
       {/* Detail */}
-      <p style={{ fontSize: '1.5rem', maxWidth: '800px', margin: '0 auto 4rem auto', lineHeight: '1.8' }}>
+      <p className="text-lg sm:text-2xl text-center mb-12 max-w-4xl mx-auto leading-relaxed">
         Crowd-fund team expenses fast — businesses contribute, money goes to team.<br />
         Perfect for post-game meals, gear, youth clinics, elementary visits, or charity work.
       </p>
 
       {/* Form */}
-      <div style={{ maxWidth: '500px', margin: '0 auto' }}>
+      <div className="max-w-2xl mx-auto">
         <Input
           placeholder="Event Name (e.g., Post-Game Meals for Road Trips)"
           value={eventName}
           onChange={(e) => setEventName(e.target.value)}
-          style={{ height: '60px', fontSize: '1.5rem', border: '4px solid black', marginBottom: '2rem' }}
+          className="h-16 text-2xl text-center border-4 border-black mb-8"
         />
         <Input
           type="number"
           placeholder="Funding Goal (e.g., 1000)"
           value={goal}
           onChange={(e) => setGoal(e.target.value)}
-          style={{ height: '60px', fontSize: '1.5rem', border: '4px solid black', marginBottom: '2rem' }}
+          className="h-16 text-2xl text-center border-4 border-black mb-8"
         />
         <textarea
           placeholder="Description (e.g., Meals for away games — help keep our athletes fueled!)"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          style={{ width: '100%', height: '200px', padding: '1rem', fontSize: '1.5rem', border: '4px solid black', marginBottom: '2rem', fontFamily: "'Courier New', Courier, monospace'" }}
+          className="w-full h-48 p-4 text-xl border-4 border-black font-mono mb-12"
         />
         <Button 
           onClick={handleCreate}
           disabled={loading}
-          style={{
-            width: '100%',
-            height: '80px',
-            fontSize: '2rem',
-            backgroundColor: '#90ee90',
-            color: 'black',
-            fontFamily: "'Courier New', Courier, monospace'",
-          }}
+          className="w-full h-20 text-3xl bg-green-400 text-black"
         >
           {loading ? 'Creating...' : 'Create Event & Get Share Link'}
         </Button>
@@ -146,34 +132,28 @@ export default function BoosterEvents() {
 
       {/* Share Link + Progress Meter */}
       {shareLink && (
-        <div style={{ marginTop: '6rem', padding: '2rem', backgroundColor: '#f0f0f0', border: '4px solid black', maxWidth: '600px', marginLeft: 'auto', marginRight: 'auto' }}>
-          <p style={{ fontSize: '1.8rem', marginBottom: '2rem' }}>
+        <div className="max-w-2xl mx-auto mt-16 p-8 bg-gray-100 border-4 border-black">
+          <p className="text-2xl sm:text-3xl text-center mb-8">
             Event created! Share this link with local businesses:
           </p>
-          <p style={{ fontSize: '1.5rem', wordBreak: 'break-all', marginBottom: '2rem' }}>
+          <p className="text-lg sm:text-xl break-all mb-8 px-4">
             {shareLink}
           </p>
 
-          {/* Progress Meter (placeholder — real would fetch raised) */}
-          <div style={{ marginBottom: '2rem' }}>
-            <p style={{ fontSize: '1.5rem' }}>
+          {/* Progress Meter */}
+          <div className="mb-8">
+            <p className="text-2xl text-center mb-4">
               $0 raised of ${goal}
             </p>
-            <div style={{ height: '40px', backgroundColor: '#ddd', border: '4px solid black', position: 'relative' }}>
-              <div style={{ width: '0%', height: '100%', backgroundColor: '#90ee90', transition: 'width 0.5s' }}></div>
-              <p style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', fontSize: '1.5rem', fontWeight: 'bold' }}>
+            <div className="relative h-20 bg-gray-300 border-4 border-black">
+              <div className="absolute top-0 left-0 h-full bg-green-400" style={{ width: '0%' }}></div>
+              <p className="absolute inset-0 flex items-center justify-center text-3xl font-bold">
                 0%
               </p>
             </div>
           </div>
 
-          <Button onClick={() => navigator.clipboard.writeText(shareLink)} style={{
-            width: '100%',
-            height: '60px',
-            fontSize: '1.5rem',
-            backgroundColor: 'black',
-            color: 'white',
-          }}>
+          <Button onClick={() => navigator.clipboard.writeText(shareLink)} className="w-full h-16 text-2xl bg-black text-white">
             Copy Link
           </Button>
         </div>
