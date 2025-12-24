@@ -13,7 +13,7 @@ const athleteGigTypes = [
   { title: 'Youth Clinic', description: 'Run 30–60 min sessions for younger athletes (with teammates).' },
   { title: 'Cameo', description: 'Custom 15-Sec Video for Younger Athletes (birthdays, pre-game pep talks).' },
   { title: 'Player Training', description: 'Varsity athlete 40-minute training with young player.' },
-  { title: 'Challenge', description: 'Compete in fun challenges (HORSE, PIG, free throws, accuracy toss) — base pay for clip, bonus if you win.' },
+  { title: 'Challenge', description: 'Fun competitions — HORSE, PIG, free throws, accuracy toss. Base pay for clip, bonus if you win.' },
   { title: 'Custom Gig', description: 'Create a gig and offer it.' },
 ]
 
@@ -23,7 +23,7 @@ const businessGigTypes = [
   { title: 'Team Sponsor', baseAmount: 1000, description: 'Business sponsors team meals/gear — money split equally.' },
   { title: 'Cameo', baseAmount: 50, description: 'Custom 15-Sec Video for Younger Athletes (birthdays, pre-game pep talks).' },
   { title: 'Player Training', baseAmount: 100, description: 'Varsity athlete 40-minute training with young player.' },
-  { title: 'Challenge', baseAmount: 75, description: 'Challenge athletes to fun competitions — base pay for clip, bonus if they win.' },
+  { title: 'Challenge', baseAmount: 75, description: 'Fun competitions — HORSE, PIG, free throws, accuracy toss. Base pay for clip, bonus if you win.' },
   { title: 'Custom Gig', baseAmount: 200, description: 'Create a gig and offer it.' },
 ]
 
@@ -56,11 +56,30 @@ export default function Dashboard() {
         return
       }
 
-      const { data: prof } = await supabase
+      let prof = null
+      const { data: existingProf } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', user.id)
         .single()
+
+      if (existingProf) {
+        prof = existingProf
+      } else {
+        // New user — create profile from metadata
+        const metadataRole = user.user_metadata?.role || 'athlete'
+        const { data: newProf } = await supabase
+          .from('profiles')
+          .insert({
+            id: user.id,
+            email: user.email,
+            role: metadataRole,
+          })
+          .select()
+          .single()
+        prof = newProf
+      }
+
       setProfile(prof)
 
       if (prof.role === 'athlete') {
@@ -272,19 +291,17 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
       {profile.role === 'athlete' ? (
         <div className="max-w-4xl mx-auto space-y-16 font-mono text-center text-lg">
           {/* Player Profile Section */}
-          <div style={{ maxWidth: '600px', margin: '0 auto 6rem auto', padding: '3rem', border: '2px solid black', backgroundColor: '#f5f5f5' }}>
-            <h2 style={{ fontSize: '1.8rem', marginBottom: '3rem' }}>
-              Your Player Profile
-            </h2>
+          <div className="max-w-2xl mx-auto bg-gray-100 p-8 border-4 border-black rounded-lg">
+            <h2 className="text-2xl mb-8 font-bold">Your Player Profile</h2>
 
             {/* Circle Photo Upload */}
-            <div style={{ marginBottom: '3rem' }}>
-              <div style={{ width: '150px', height: '150px', borderRadius: '50%', margin: '0 auto', overflow: 'hidden', border: '4px solid black' }}>
+            <div className="mb-12">
+              <div className="relative w-40 h-40 mx-auto rounded-full overflow-hidden border-4 border-black">
                 {profilePic ? (
-                  <img src={profilePic} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <img src={profilePic} alt="Profile" className="w-full h-full object-cover" />
                 ) : (
-                  <div style={{ width: '100%', height: '100%', backgroundColor: '#ccc', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <p style={{ fontSize: '1rem', color: '#666' }}>Tap to Upload</p>
+                  <div className="w-full h-full bg-gray-300 flex items-center justify-center">
+                    <p className="text-gray-600">Tap to Upload</p>
                   </div>
                 )}
               </div>
@@ -320,71 +337,52 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
                     .update({ profile_pic: urlData.publicUrl })
                     .eq('id', profile.id)
                 }}
-                style={{ display: 'none' }}
+                className="hidden"
                 id="photo-upload"
               />
-              <label htmlFor="photo-upload">
-                <div style={{
-                  marginTop: '1rem',
-                  padding: '1rem',
-                  backgroundColor: 'black',
-                  color: 'white',
-                  textAlign: 'center',
-                  cursor: 'pointer',
-                  fontSize: '1.2rem',
-                  fontFamily: "'Courier New', Courier, monospace'",
-                }}>
+              <label htmlFor="photo-upload" className="block mt-4">
+                <div className="px-8 py-4 bg-black text-white text-center cursor-pointer font-bold text-lg">
                   Upload Photo
                 </div>
               </label>
             </div>
 
             {/* Name */}
-            <div style={{ marginBottom: '2rem' }}>
-              <label style={{ display: 'block', fontSize: '1.2rem', marginBottom: '0.5rem' }}>Name</label>
-              <Input placeholder="Your Name" value={profile?.full_name || ''} onChange={() => {}} disabled />
+            <div className="mb-8">
+              <label className="block text-lg mb-2">Name</label>
+              <Input placeholder="Your Name" value={profile?.full_name || ''} disabled className="text-center" />
             </div>
 
             {/* School */}
-            <div style={{ marginBottom: '2rem' }}>
-              <label style={{ display: 'block', fontSize: '1.2rem', marginBottom: '0.5rem' }}>School</label>
-              <Input placeholder="Your School" value={profile?.school || ''} onChange={() => {}} disabled />
+            <div className="mb-8">
+              <label className="block text-lg mb-2">School</label>
+              <Input placeholder="Your School" value={profile?.school || ''} disabled className="text-center" />
             </div>
 
             {/* Highlight Link */}
-            <div style={{ marginBottom: '2rem' }}>
-              <label style={{ display: 'block', fontSize: '1.2rem', marginBottom: '0.5rem' }}>Highlight Reel Link</label>
-              <Input placeholder="YouTube / Hudl link" value={highlightLink} onChange={(e) => setHighlightLink(e.target.value)} />
+            <div className="mb-8">
+              <label className="block text-lg mb-2">Highlight Reel Link</label>
+              <Input placeholder="YouTube / Hudl link" value={highlightLink} onChange={(e) => setHighlightLink(e.target.value)} className="text-center" />
             </div>
 
             {/* Social Followers */}
-            <div style={{ marginBottom: '2rem' }}>
-              <label style={{ display: 'block', fontSize: '1.2rem', marginBottom: '0.5rem' }}>Total Social Followers</label>
-              <Input placeholder="e.g., 5,000" value={socialFollowers} onChange={(e) => setSocialFollowers(e.target.value)} />
+            <div className="mb-8">
+              <label className="block text-lg mb-2">Total Social Followers</label>
+              <Input placeholder="e.g., 5,000" value={socialFollowers} onChange={(e) => setSocialFollowers(e.target.value)} className="text-center" />
             </div>
 
             {/* Bio */}
-            <div style={{ marginBottom: '3rem' }}>
-              <label style={{ display: 'block', fontSize: '1.2rem', marginBottom: '0.5rem' }}>Bio</label>
+            <div className="mb-12">
+              <label className="block text-lg mb-2">Bio</label>
               <textarea
                 placeholder="Short bio about you and your sport"
                 value={bio}
                 onChange={(e) => setBio(e.target.value)}
-                style={{ width: '100%', height: '160px', padding: '1rem', fontSize: '1.2rem', border: '4px solid black', fontFamily: "'Courier New', Courier, monospace'" }}
+                className="w-full p-4 text-lg border-4 border-black font-mono"
               />
             </div>
 
-            <Button onClick={handleSaveProfile} style={{
-              width: '100%',
-              height: '60px',
-              fontSize: '1.5rem',
-              backgroundColor: 'black',
-              color: 'white',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontFamily: "'Courier New', Courier, monospace'",
-            }}>
+            <Button onClick={handleSaveProfile} className="w-full h-16 text-xl bg-black text-white">
               Save Profile
             </Button>
           </div>
@@ -393,29 +391,14 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
           <div>
             <h2 className="text-2xl mb-8 font-bold">Gigs You Offer</h2>
             <p className="mb-8">Select the gigs you're willing to do — businesses will see these.</p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {athleteGigTypes.map((gig) => (
-                <div key={gig.title} style={{
-                  border: '2px solid black',
-                  padding: '2rem',
-                  backgroundColor: selectedGigs.includes(gig.title) ? '#333' : '#f5f5f5',
-                  color: selectedGigs.includes(gig.title) ? 'white' : 'black',
-                }}>
-                  <h3 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '1rem' }}>{gig.title}</h3>
-                  <p style={{ fontSize: '1.2rem', marginBottom: '2rem' }}>{gig.description}</p>
+                <div key={gig.title} className="border-4 border-black p-6 bg-gray-100">
+                  <h3 className="text-xl font-bold mb-4">{gig.title}</h3>
+                  <p className="mb-6">{gig.description}</p>
                   <Button 
                     onClick={() => toggleGigSelection(gig.title)}
-                    style={{
-                      width: '100%',
-                      height: '60px',
-                      fontSize: '1.2rem',
-                      backgroundColor: selectedGigs.includes(gig.title) ? 'white' : 'black',
-                      color: selectedGigs.includes(gig.title) ? 'black' : 'white',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontFamily: "'Courier New', Courier, monospace'",
-                    }}
+                    className="w-full h-14 text-lg bg-black text-white hover:bg-gray-800"
                   >
                     {selectedGigs.includes(gig.title) ? 'Selected' : 'Select This Gig'}
                   </Button>
@@ -432,22 +415,12 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
             ) : (
               <div className="space-y-16">
                 {offers.map((offer) => (
-                  <div key={offer.id} className="border-4 border-black p-16 bg-gray-100 max-w-lg mx-auto">
+                  <div key={offer.id} className="border-4 border-black p-8 bg-gray-100 max-w-lg mx-auto">
                     <p className="font-bold text-2xl mb-6">{offer.type.toUpperCase()} — ${offer.amount}</p>
-                    <p className="mb-12">{offer.description}</p>
+                    <p className="mb-8">{offer.description}</p>
                     <Button 
                       onClick={() => router.push(`/claim/${offer.id}`)}
-                      style={{
-                        width: '100%',
-                        height: '60px',
-                        fontSize: '1.5rem',
-                        backgroundColor: 'black',
-                        color: 'white',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontFamily: "'Courier New', Courier, monospace'",
-                      }}
+                      className="w-full h-16 text-xl bg-black text-white"
                     >
                       Claim Offer
                     </Button>
@@ -460,10 +433,10 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
           {/* Pitch Letter */}
           <div>
             <h2 className="text-2xl mb-8 font-bold">Pitch Local Businesses</h2>
-            <p className="mb-12">Copy or share this letter to your favorite spots.</p>
+            <p className="mb-8">Copy or share this letter to your favorite spots.</p>
 
-            <div style={{ backgroundColor: '#f5f5f5', padding: '2rem', border: '1px solid black', marginBottom: '2rem', overflowWrap: 'break-word' }}>
-              <pre style={{ fontSize: '1rem', whiteSpace: 'pre-wrap', wordWrap: 'break-word', textAlign: 'left' }}>
+            <div className="bg-gray-100 p-8 border-4 border-black mb-8 max-w-2xl mx-auto">
+              <pre className="text-left whitespace-pre-wrap text-sm">
                 {`Hey [Business Name],
 
 I've been coming to [Your Spot] for years before and after practice.
@@ -483,56 +456,38 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
               </pre>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxWidth: '400px', margin: '0 auto' }}>
-              <Button onClick={shareLetter} style={{
-                height: '60px',
-                fontSize: '1.5rem',
-                backgroundColor: 'black',
-                color: 'white',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontFamily: "'Courier New', Courier, monospace'",
-              }}>
+            <div className="flex flex-col gap-4 max-w-md mx-auto">
+              <Button onClick={shareLetter} className="h-14 text-lg bg-black text-white">
                 Share Letter
               </Button>
-              <Button onClick={copyLetter} variant="outline" style={{
-                height: '60px',
-                fontSize: '1.5rem',
-                border: '4px solid black',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontFamily: "'Courier New', Courier, monospace'",
-              }}>
+              <Button onClick={copyLetter} variant="outline" className="h-14 text-lg border-4 border-black">
                 Copy Letter
               </Button>
             </div>
           </div>
 
+          {/* Brand Deals CTA */}
+          <div className="my-16">
+            <Button 
+              onClick={() => router.push('/brand-deals')}
+              className="w-full max-w-2xl h-24 text-3xl bg-green-400 text-black font-bold"
+            >
+              Land National Brand Deals
+            </Button>
+          </div>
+
           {/* CTA */}
-          <div style={{ margin: '6rem 0' }}>
+          <div className="my-16">
             <Button 
               onClick={() => router.push('/squad')}
-              style={{
-                width: '100%',
-                maxWidth: '500px',
-                height: '80px',
-                fontSize: '2rem',
-                backgroundColor: 'black',
-                color: 'white',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontFamily: "'Courier New', Courier, monospace'",
-              }}
+              className="w-full max-w-md h-20 text-2xl bg-black text-white"
             >
               Build a Squad and Earn with Friends
             </Button>
           </div>
 
           {/* Divider */}
-          <div style={{ borderTop: '4px solid black', margin: '4rem 0' }}></div>
+          <div className="border-t-4 border-black my-16"></div>
 
           {/* Squad Members */}
           <div>
@@ -540,9 +495,9 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
             {squad.length === 0 ? (
               <p className="text-gray-600 mb-12">No squad members yet — share your link!</p>
             ) : (
-              <div className="space-y-8">
+              <div className="space-y-8 max-w-2xl mx-auto">
                 {squad.map((member) => (
-                  <div key={member.id} className="border-2 border-black p-8 bg-gray-100 max-w-md mx-auto">
+                  <div key={member.id} className="border-2 border-black p-8 bg-gray-100">
                     <p className="font-bold">{member.email}</p>
                     <p className="text-sm">Joined: {new Date(member.created_at).toLocaleDateString()}</p>
                   </div>
@@ -552,39 +507,28 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
           </div>
 
           {/* Ambassador */}
-          <div style={{ maxWidth: '600px', margin: '0 auto 8rem auto', padding: '3rem', border: '2px solid black', backgroundColor: '#f5f5f5' }}>
-            <h2 style={{ fontSize: '1.8rem', marginBottom: '3rem' }}>
+          <div className="max-w-2xl mx-auto my-16 p-8 border-4 border-black bg-gray-100">
+            <h2 className="text-2xl mb-8 font-bold">
               Become a Team Hustle Ambassador
             </h2>
 
-            <div style={{ fontSize: '1.2rem', lineHeight: '2', textAlign: 'left' }}>
-              <p style={{ marginBottom: '1.5rem' }}>
+            <div className="text-left text-lg leading-relaxed">
+              <p className="mb-4">
                 <strong>Task:</strong> Make 10 business connections — send the support letter to local spots.
               </p>
-              <p style={{ marginBottom: '1.5rem' }}>
+              <p className="mb-4">
                 <strong>Qualifications:</strong> Varsity player, manager, or photographer • 3.0 GPA or better
               </p>
-              <p style={{ marginBottom: '1.5rem' }}>
+              <p className="mb-4">
                 <strong>Prize:</strong> $100 bonus (1 week deadline) • 5% lifetime cut of every gig from businesses you onboard
               </p>
-              <p style={{ marginBottom: '3rem' }}>
+              <p className="mb-8">
                 <strong>Deadline:</strong> Complete within 7 days of applying
               </p>
             </div>
 
-            <div style={{ textAlign: 'center' }}>
-              <Button style={{
-                width: '100%',
-                maxWidth: '400px',
-                height: '70px',
-                fontSize: '1.6rem',
-                backgroundColor: 'black',
-                color: 'white',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontFamily: "'Courier New', Courier, monospace'",
-              }}>
+            <div className="text-center">
+              <Button className="w-full max-w-md h-16 text-xl bg-black text-white">
                 Apply Now
               </Button>
             </div>
@@ -620,187 +564,121 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
           </div>
 
           {/* Wallet Balance + Add Funds */}
-          <div style={{ marginBottom: '4rem' }}>
+          <div className="mb-16">
             <p className="text-3xl mb-4 font-bold">Wallet balance: ${business?.wallet_balance?.toFixed(2) || '0.00'}</p>
-            <p style={{ fontSize: '1.2rem', marginBottom: '2rem' }}>
+            <p className="text-lg mb-8">
               Top up your wallet — post gigs anytime. Most businesses start with $500–$1000.
             </p>
 
-            {/* Pre-filled Add Funds Buttons */}
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', justifyContent: 'center', marginBottom: '2rem' }}>
+            <div className="flex flex-wrap justify-center gap-4 mb-8">
               <Button 
                 onClick={() => handleAddFunds(100)}
-                style={{
-                  width: '200px',
-                  height: '60px',
-                  fontSize: '1.5rem',
-                  backgroundColor: 'black',
-                  color: 'white',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontFamily: "'Courier New', Courier, monospace'",
-                }}
+                className="w-48 h-14 text-lg bg-black text-white"
               >
                 + $100
               </Button>
               <Button 
                 onClick={() => handleAddFunds(500)}
-                style={{
-                  width: '200px',
-                  height: '60px',
-                  fontSize: '1.5rem',
-                  backgroundColor: 'black',
-                  color: 'white',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontFamily: "'Courier New', Courier, monospace'",
-                }}
+                className="w-48 h-14 text-lg bg-black text-white"
               >
                 + $500
               </Button>
               <Button 
                 onClick={() => handleAddFunds(1000)}
-                style={{
-                  width: '200px',
-                  height: '60px',
-                  fontSize: '1.5rem',
-                  backgroundColor: 'black',
-                  color: 'white',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontFamily: "'Courier New', Courier, monospace'",
-                }}
+                className="w-48 h-14 text-lg bg-black text-white"
               >
                 + $1000
               </Button>
               <Button 
                 onClick={() => {
                   const custom = prompt('Enter custom amount:')
-                  if (custom && !isNaN(custom)) handleAddFunds(parseFloat(custom))
+                  if (custom && !isNaN(custom) && parseFloat(custom) > 0) handleAddFunds(parseFloat(custom))
                 }}
-                style={{
-                  width: '200px',
-                  height: '60px',
-                  fontSize: '1.5rem',
-                  backgroundColor: '#90ee90',
-                  color: 'black',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontFamily: "'Courier New', Courier, monospace'",
-                }}
+                className="w-48 h-14 text-lg bg-green-400 text-black"
               >
                 Custom Amount
               </Button>
             </div>
 
-            <p style={{ fontSize: '0.9rem', color: '#666' }}>
+            <p className="text-sm text-gray-600">
               Transaction fee covers legal NIL compliance, bonus & challenge distributions, credit card fees, and platform expenses.
             </p>
           </div>
 
           {/* Create a Gig */}
           <h3 className="text-2xl mb-8 font-bold">Create a Gig</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-20 mb-32">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-16">
             {businessGigTypes.map((gig) => (
               <div key={gig.title}>
                 <button
                   onClick={() => handleGigSelect(gig)}
-                  style={{
-                    width: '100%',
-                    height: '300px',
-                    backgroundColor: selectedGig?.title === gig.title ? '#333' : 'black',
-                    color: 'white',
-                    fontFamily: "'Courier New', Courier, monospace",
-                    fontSize: '30px',
-                    padding: '2rem',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    cursor: 'pointer',
-                    border: 'none',
-                    transition: 'background-color 0.3s',
-                  }}
-                  onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#333'}
-                  onMouseOut={(e) => e.currentTarget.style.backgroundColor = selectedGig?.title === gig.title ? '#333' : 'black'}
+                  className="w-full h-80 bg-black text-white p-8 flex flex-col items-center justify-center hover:bg-gray-800 transition"
                 >
-                  <span style={{ marginBottom: '1rem' }}>{gig.title}</span>
-                  <span style={{ marginBottom: '1rem' }}>${gig.baseAmount}+</span>
-                  <span style={{ fontSize: '20px' }}>{gig.description}</span>
+                  <span className="text-3xl mb-4">{gig.title}</span>
+                  <span className="text-2xl mb-4">${gig.baseAmount}+</span>
+                  <span className="text-lg">{gig.description}</span>
                 </button>
 
                 {selectedGig?.title === gig.title && (
-                  <div style={{ marginTop: '2rem', backgroundColor: '#f5f5f5', padding: '2rem', border: '1px solid black', maxWidth: '500px', marginLeft: 'auto', marginRight: 'auto' }}>
-                    <h3 style={{ fontSize: '24px', marginBottom: '2rem', fontWeight: 'bold' }}>Customize Your {gig.title}</h3>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                  <div className="mt-8 bg-gray-100 p-8 border-4 border-black max-w-2xl mx-auto">
+                    <h3 className="text-2xl mb-6 font-bold">Customize Your {gig.title}</h3>
+                    <div className="space-y-6">
                       <div>
-                        <label style={{ display: 'block', fontSize: '20px', marginBottom: '0.5rem' }}>Number of Athletes</label>
+                        <label className="block text-lg mb-2">Number of Athletes</label>
                         <select
                           value={numAthletes}
                           onChange={(e) => handleAthletesChange(Number(e.target.value))}
-                          style={{ width: '100%', padding: '1rem', fontSize: '20px', border: '4px solid black' }}
+                          className="w-full p-4 text-lg border-4 border-black"
                         >
                           {[1,2,3,4,5,6,7,8,9,10].map(n => (
                             <option key={n} value={n}>{n} athlete{n > 1 ? 's' : ''}</option>
                           ))}
                         </select>
-                        <p style={{ fontSize: '14px', marginTop: '0.5rem' }}>+ $75 per additional athlete</p>
+                        <p className="text-sm mt-2">+ $75 per additional athlete</p>
                       </div>
 
                       <div>
-                        <label style={{ display: 'block', fontSize: '20px', marginBottom: '0.5rem' }}>Date</label>
+                        <label className="block text-lg mb-2">Date</label>
                         <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
                       </div>
 
                       <div>
-                        <label style={{ display: 'block', fontSize: '20px', marginBottom: '0.5rem' }}>Location</label>
+                        <label className="block text-lg mb-2">Location</label>
                         <Input placeholder="e.g., Bridge Pizza" value={location} onChange={(e) => setLocation(e.target.value)} />
                       </div>
 
                       <div>
-                        <label style={{ display: 'block', fontSize: '20px', marginBottom: '0.5rem' }}>Your Phone (for athlete contact)</label>
+                        <label className="block text-lg mb-2">Your Phone (for athlete contact)</label>
                         <Input placeholder="(555) 123-4567" value={businessPhone} onChange={(e) => setBusinessPhone(e.target.value)} />
                       </div>
 
                       <div>
-                        <label style={{ display: 'block', fontSize: '20px', marginBottom: '0.5rem' }}>
+                        <label className="block text-lg mb-2">
                           <input type="checkbox" checked={isRecurring} onChange={(e) => setIsRecurring(e.target.checked)} />
                           Make this recurring monthly
                         </label>
                       </div>
 
                       <div>
-                        <label style={{ display: 'block', fontSize: '20px', marginBottom: '0.5rem' }}>Offer Amount</label>
+                        <label className="block text-lg mb-2">Offer Amount</label>
                         <Input
                           placeholder="Enter Offer Amount - Min $50"
                           value={amount}
                           onChange={(e) => setAmount(e.target.value)}
-                          style={{ fontFamily: "'Courier New', Courier, monospace" }}
                         />
                       </div>
 
                       <div>
-                        <label style={{ display: 'block', fontSize: '20px', marginBottom: '0.5rem' }}>Custom Details</label>
+                        <label className="block text-lg mb-2">Custom Details</label>
                         <textarea
                           placeholder="Add your details (e.g., Come to Bridge Pizza this Friday)"
                           value={customDetails}
                           onChange={(e) => setCustomDetails(e.target.value)}
-                          style={{ width: '100%', height: '160px', padding: '1rem', fontSize: '20px', fontFamily: "'Courier New', Courier, monospace'", border: '4px solid black' }}
+                          className="w-full h-40 p-4 text-lg border-4 border-black font-mono"
                         />
                       </div>
 
-                      <Button onClick={handlePost} style={{
-                        width: '100%',
-                        height: '80px',
-                        fontSize: '30px',
-                        backgroundColor: '#90ee90',
-                        color: 'black',
-                        fontFamily: "'Courier New', Courier, monospace'",
-                      }}>
+                      <Button onClick={handlePost} className="w-full h-20 text-2xl bg-green-400 text-black">
                         Fund & Post Offer
                       </Button>
                     </div>
@@ -835,25 +713,15 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
           ) : (
             <div className="space-y-16">
               {pendingClips.map((clip) => (
-                <div key={clip.id} className="border-4 border-black p-20 bg-white max-w-lg mx-auto">
-                  <p className="font-bold mb-6 text-left">From: {clip.profiles.email}</p>
+                <div key={clip.id} className="border-4 border-black p-8 bg-white max-w-2xl mx-auto">
+                  <p className="font-bold mb-4 text-left">From: {clip.profiles.email}</p>
                   <p className="mb-6 text-left">Offer: {clip.offers.type} — ${clip.offers.amount}</p>
                   <video controls className="w-full mb-8">
                     <source src={clip.video_url} type="video/mp4" />
                   </video>
                   <Button 
                     onClick={() => approveClip(clip)}
-                    style={{
-                      width: '100%',
-                      height: '60px',
-                      fontSize: '1.5rem',
-                      backgroundColor: 'black',
-                      color: 'white',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontFamily: "'Courier New', Courier, monospace'",
-                    }}
+                    className="w-full h-16 text-xl bg-black text-white"
                   >
                     Approve & Send to Parent
                   </Button>
@@ -862,10 +730,10 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
             </div>
           )}
 
-          {/* Connect with Stripe — at bottom */}
+          {/* Connect with Stripe */}
           {business && !business.stripe_account_id && (
-            <div style={{ margin: '6rem 0' }}>
-              <p style={{ fontSize: '1.2rem', marginBottom: '2rem' }}>
+            <div className="my-16">
+              <p className="text-lg mb-6">
                 Connect your Stripe account to automatically fund all approved gigs.
               </p>
               <Button
@@ -878,18 +746,7 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
                   const { url } = await response.json()
                   window.location.href = url
                 }}
-                style={{
-                  width: '100%',
-                  maxWidth: '500px',
-                  height: '80px',
-                  fontSize: '1.8rem',
-                  backgroundColor: '#635BFF',
-                  color: 'white',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontFamily: "'Courier New', Courier, monospace'",
-                }}
+                className="w-full max-w-md h-20 text-2xl bg-purple-600 text-white"
               >
                 Connect with Stripe
               </Button>
@@ -897,21 +754,10 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
           )}
 
           {/* Booster Events CTA */}
-          <div className="mt-32">
+          <div className="my-16">
             <Button 
               onClick={() => router.push('/booster-events')}
-              style={{
-                width: '100%',
-                maxWidth: '500px',
-                height: '80px',
-                fontSize: '1.8rem',
-                backgroundColor: '#90ee90',
-                color: 'black',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontFamily: "'Courier New', Courier, monospace'",
-              }}
+              className="w-full max-w-md h-20 text-2xl bg-green-400 text-black"
             >
               Create Booster Club Event
             </Button>
@@ -919,23 +765,13 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
         </div>
       )}
 
-      {/* Log Out — outside role switch */}
+      {/* Log Out */}
       <div className="text-center mt-32">
         <Button onClick={async () => {
           await signOut()
           router.push('/')
           alert('Logged out successfully')
-        }} variant="outline" style={{
-          width: '50%',
-          maxWidth: '250px',
-          height: '50px',
-          fontSize: '1.2rem',
-          border: '4px solid black',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontFamily: "'Courier New', Courier, monospace'",
-        }}>
+        }} variant="outline" className="w-64 h-14 text-lg border-4 border-black">
           Log Out
         </Button>
       </div>
