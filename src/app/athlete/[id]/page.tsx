@@ -1,7 +1,6 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { Button } from '@/components/ui/button'
@@ -16,6 +15,7 @@ const gigTypes = [
 
 export default function AthleteProfile() {
   const { id } = useParams()
+  const router = useRouter()
   const [profile, setProfile] = useState<any>(null)
   const [selectedGigs, setSelectedGigs] = useState<string[]>([])
 
@@ -63,16 +63,16 @@ export default function AthleteProfile() {
       </div>
 
       {/* Name & School */}
-      <h1 className="text-3xl sm:text-5xl font-bold mb-4">
+      <h1 className="text-3xl sm:text-5xl font-bold text-center mb-4">
         {profile.full_name || profile.email.split('@')[0]}
       </h1>
-      <p className="text-xl sm:text-3xl mb-8">
+      <p className="text-xl sm:text-3xl text-center mb-8">
         {profile.school} • {profile.sport}
       </p>
 
       {/* Social Followers */}
       {profile.social_followers && (
-        <p className="text-xl sm:text-2xl mb-8">
+        <p className="text-xl sm:text-2xl text-center mb-8">
           Total Followers: {profile.social_followers}
         </p>
       )}
@@ -87,7 +87,7 @@ export default function AthleteProfile() {
       {/* Highlight Reel */}
       {profile.highlight_link && (
         <div className="mb-16">
-          <h2 className="text-2xl sm:text-3xl font-bold mb-8">
+          <h2 className="text-2xl sm:text-3xl font-bold text-center mb-8">
             Highlight Reel
           </h2>
           <div className="max-w-4xl mx-auto aspect-video">
@@ -105,7 +105,7 @@ export default function AthleteProfile() {
       {/* Selected Gigs */}
       {selectedGigs.length > 0 && (
         <div className="mb-16">
-          <h2 className="text-2xl sm:text-3xl font-bold mb-8">
+          <h2 className="text-2xl sm:text-3xl font-bold text-center mb-8">
             Gigs I Offer
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl mx-auto px-4">
@@ -124,7 +124,7 @@ export default function AthleteProfile() {
 
       {/* CTA for Businesses */}
       <div className="my-16">
-        <p className="text-xl sm:text-2xl mb-8">
+        <p className="text-xl sm:text-2xl text-center mb-8">
           Interested in sponsoring this athlete?
         </p>
         <Button 
