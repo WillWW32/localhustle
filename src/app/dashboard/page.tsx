@@ -261,7 +261,8 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
       return
     }
 
-    const { error } = await stripe.redirectToCheckout({ sessionId: id })
+    // @ts-ignore — redirectToCheckout exists at runtime
+	const { error } = await stripe.redirectToCheckout({ sessionId: id })
 
     if (error) {
       alert(error.message)
