@@ -24,6 +24,12 @@ export default function GetStarted() {
         .eq('id', user.id)
         .single()
 
+      if (!prof) {
+        alert('Profile not found — please try logging in again')
+        router.replace('/')
+        return
+      }
+
       setProfile(prof)
 
       // Generate personalized pitch
