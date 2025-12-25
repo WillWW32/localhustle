@@ -35,6 +35,7 @@ export default function Dashboard() {
   const [selectedGigs, setSelectedGigs] = useState<string[]>([])
   const [squad, setSquad] = useState<any[]>([])
   const [referredAthletes, setReferredAthletes] = useState<any[]>([])
+  const [favorites, setFavorites] = useState<any[]>([])
   const [selectedGig, setSelectedGig] = useState<any>(null)
   const [numAthletes, setNumAthletes] = useState(1)
   const [customDetails, setCustomDetails] = useState('')
@@ -52,6 +53,18 @@ export default function Dashboard() {
   const [friendName, setFriendName] = useState('')
   const [friendChallenge, setFriendChallenge] = useState('')
   const [friendAmount, setFriendAmount] = useState('50')
+  const [showPitchLetter, setShowPitchLetter] = useState(false)
+  const [openToChallenges, setOpenToChallenges] = useState(false)
+  const [payoutHistory, setPayoutHistory] = useState<any[]>([])
+  const [showBusinessProfileSetup, setShowBusinessProfileSetup] = useState(false)
+  const [businessName, setBusinessName] = useState('')
+  const [businessLogo, setBusinessLogo] = useState('')
+  const [businessContact, setBusinessContact] = useState('')
+  const [activeTab, setActiveTab] = useState<'wallet' | 'clips' | 'kids' | 'favorites' | 'booster'>('wallet')
+  const [teamFilter, setTeamFilter] = useState('all')
+  const [notifications, setNotifications] = useState<string[]>([])
+  const [tipAmount, setTipAmount] = useState('')
+  const [currentClipForTip, setCurrentClipForTip] = useState<any>(null)
   const router = useRouter()
 
   useEffect(() => {
@@ -93,6 +106,7 @@ export default function Dashboard() {
         setHighlightLink(prof.highlight_link || '')
         setSocialFollowers(prof.social_followers || '')
         setBio(prof.bio || '')
+        setOpenToChallenges(prof.open_to_challenges || false)
 
         const { data: squadMembers } = await supabase
           .from('profiles')
@@ -106,6 +120,17 @@ export default function Dashboard() {
           .eq('status', 'active')
           .order('created_at', { ascending: false })
         setOffers(openOffers || [])
+
+        // Payout History
+        const { data: history } = await supabase
+          .from('payouts')
+          .select('amount, created_at, offers(type)')
+          .eq('athlete_id', user.id)
+          .order('created_at', { ascending: false })
+        setPayoutHistory(history || [])
+
+        // Notifications (example)
+        setNotifications(['New gig available!', 'Clip approved — $50 paid!'])
       }
 
       if (prof.role === 'business') {
@@ -116,11 +141,22 @@ export default function Dashboard() {
           .single()
         setBusiness(biz)
 
+        if (!biz.name) {
+          setShowBusinessProfileSetup(true)
+        }
+
         const { data: referred } = await supabase
           .from('profiles')
           .select('id, full_name, email, school')
           .eq('referred_by', biz.id)
         setReferredAthletes(referred || [])
+
+        // Business favorites
+        const { data: favs } = await supabase
+          .from('business_favorites')
+          .select('athlete_id, profiles(*)')
+          .eq('business_id', biz.id)
+        setFavorites(favs?.map(f => f.profiles) || [])
 
         const { data: clips } = await supabase
           .from('clips')
@@ -142,6 +178,7 @@ export default function Dashboard() {
         highlight_link: highlightLink,
         social_followers: socialFollowers,
         bio: bio,
+        open_to_challenges: openToChallenges,
       })
       .eq('id', profile.id)
 
@@ -241,7 +278,7 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
   const approveClip = async (clip: any) => {
     const { error: clipError } = await supabase
       .from('clips')
-      .update({ status: 'waiting_parent' })
+      .update({ status: 'approved' })
       .eq('id', clip.id)
 
     if (clipError) {
@@ -249,30 +286,74 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
       return
     }
 
-    await supabase
-      .from('businesses')
-      .update({ wallet_balance: business.wallet_balance - clip.offers.amount })
-      .eq('id', business.id)
+    // Real payout
+    const response = await fetch('/api/payout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        clip_id: clip.id,
+        athlete_id: clip.athlete_id,
+        amount: clip.offers.amount,
+      }),
+    })
 
-    alert(`Clip sent to parent for final approval: ${clip.profiles.parent_email || 'parent email'}`)
+    const data = await response.json()
+
+    if (data.error) {
+      alert('Payout error: ' + data.error)
+    } else {
+      alert(`Approved and paid $${clip.offers.amount}!`)
+    }
+
     setPendingClips(pendingClips.filter(c => c.id !== clip.id))
-    setBusiness({ ...business, wallet_balance: business.wallet_balance - clip.offers.amount })
 
     setShowFundFriend(true)
   }
 
-  const createChallengeForKid = (kid: any) => {
-    const description = prompt(`Enter challenge for ${kid.full_name || kid.email} (e.g., 80/100 free throws)`)
-    const amountStr = prompt('Payout amount if completed (e.g., 50)')
-    if (!description || !amountStr) return
+  const addTip = async (clip: any) => {
+    const tipStr = prompt('Enter tip amount (e.g., 10)')
+    if (!tipStr) return
 
-    const amount = parseFloat(amountStr)
-    if (isNaN(amount)) {
-      alert('Invalid amount')
+    const tip = parseFloat(tipStr)
+    if (isNaN(tip) || tip <= 0) {
+      alert('Invalid tip amount')
       return
     }
 
-    alert(`Challenge created for ${kid.full_name || kid.email}:\n"${description}" = $${amount}\n(Full funding + invite coming soon)`)
+    // Real tip payout
+    const response = await fetch('/api/payout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        clip_id: clip.id,
+        athlete_id: clip.athlete_id,
+        amount: tip,
+        is_tip: true,
+      }),
+    })
+
+    const data = await response.json()
+
+    if (data.error) {
+      alert('Tip error: ' + data.error)
+    } else {
+      alert(`Tip of $${tip} sent — great job!`)
+    }
+  }
+
+  const addToFavorites = async (athlete: any) => {
+    const { error } = await supabase
+      .from('business_favorites')
+      .insert({
+        business_id: business.id,
+        athlete_id: athlete.id,
+      })
+
+    if (error) alert('Error adding favorite')
+    else {
+      setFavorites([...favorites, athlete])
+      alert(`${athlete.full_name || athlete.email} added to favorites!`)
+    }
   }
 
   const handleFundFriend = async () => {
@@ -296,7 +377,6 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
         challenge_description: friendChallenge,
         amount: amountNum,
         business_id: business.id,
-        kid_id: profile.id,
       }),
     })
 
@@ -340,6 +420,22 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
   return (
     <div className="container py-8">
       <p className="text-center mb-12 text-xl font-mono">Welcome, {profile.email}</p>
+
+      {/* FAQ Link */}
+      <div className="text-center mb-8">
+        <Button onClick={() => router.push('/faq')} className="text-lg">
+          FAQ — Common Questions
+        </Button>
+      </div>
+
+      {/* Notification Banner */}
+      {notifications.length > 0 && (
+        <div className="max-w-4xl mx-auto mb-8 p-4 bg-yellow-100 border-4 border-yellow-600">
+          {notifications.map((notif, i) => (
+            <p key={i} className="text-lg font-bold">{notif}</p>
+          ))}
+        </div>
+      )}
 
       {/* Subtitle — black block */}
       <div className="bg-black text-white p-8 mb-12">
@@ -449,9 +545,40 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
               />
             </div>
 
+            {/* Open to Challenges Toggle */}
+            <div className="mb-12">
+              <label className="flex items-center justify-center gap-4 cursor-pointer">
+                <span className="text-xl">Open to Challenges from Parents/Businesses</span>
+                <input
+                  type="checkbox"
+                  checked={openToChallenges}
+                  onChange={(e) => setOpenToChallenges(e.target.checked)}
+                  className="w-8 h-8"
+                />
+              </label>
+            </div>
+
             <Button onClick={handleSaveProfile} className="w-full h-16 text-xl bg-black text-white">
               Save Profile
             </Button>
+          </div>
+
+          {/* Payout History & Earnings */}
+          <div className="max-w-2xl mx-auto bg-gray-100 p-8 border-4 border-black rounded-lg">
+            <h2 className="text-2xl mb-8 font-bold">Your Earnings</h2>
+            <p className="text-xl mb-4">Total Earned: ${payoutHistory.reduce((sum, p) => sum + p.amount, 0)}</p>
+            <p className="text-xl mb-8">Gigs Completed: {payoutHistory.length}/4 (for brand deals)</p>
+            <div className="space-y-4">
+              {payoutHistory.length === 0 ? (
+                <p>No payouts yet — complete your first gig!</p>
+              ) : (
+                payoutHistory.map((payout, i) => (
+                  <div key={i} className="p-4 bg-white border-2 border-black">
+                    <p>{new Date(payout.created_at).toLocaleDateString()} — ${payout.amount} ({payout.offers?.type || 'Gig'})</p>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
 
           {/* Gig Selection */}
@@ -477,6 +604,18 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
           {/* Open Offers */}
           <div>
             <h2 className="text-2xl mb-8 font-bold">Open Offers</h2>
+            <div className="mb-8">
+              <label className="text-lg">Filter by School/Team</label>
+              <select 
+                value={teamFilter}
+                onChange={(e) => setTeamFilter(e.target.value)}
+                className="w-full max-w-xs p-4 border-4 border-black"
+              >
+                <option value="all">All</option>
+                <option value="my-school">My School</option>
+                {/* Real schools from DB in V3 */}
+              </select>
+            </div>
             {offers.length === 0 ? (
               <p className="text-gray-600 mb-12">No offers yet — pitch businesses to get started!</p>
             ) : (
@@ -497,14 +636,15 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
             )}
           </div>
 
-          {/* Pitch Letter */}
+          {/* Pitch Letter — Collapsible */}
           <div>
-            <h2 className="text-2xl mb-8 font-bold">Pitch Local Businesses</h2>
-            <p className="mb-8">Copy or share this letter to your favorite spots.</p>
-
-            <div className="bg-gray-100 p-8 border-4 border-black mb-8 max-w-2xl mx-auto">
-              <pre className="text-left whitespace-pre-wrap text-sm">
-                {`Hey [Business Name],
+            <h2 className="text-2xl mb-8 font-bold cursor-pointer" onClick={() => setShowPitchLetter(!showPitchLetter)}>
+              Pitch Local Businesses {showPitchLetter ? '▲' : '▼'}
+            </h2>
+            {showPitchLetter && (
+              <div className="bg-gray-100 p-8 border-4 border-black mb-8 max-w-2xl mx-auto">
+                <pre className="text-left whitespace-pre-wrap text-sm">
+                  {`Hey [Business Name],
 
 I've been coming to [Your Spot] for years before and after practice.
 
@@ -520,17 +660,17 @@ Thanks either way!
 
 – ${profile?.email.split('@')[0] || 'me'}
 ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athlete'}`}
-              </pre>
-            </div>
-
-            <div className="flex flex-col gap-4 max-w-md mx-auto">
-              <Button onClick={shareLetter} className="h-14 text-lg bg-black text-white">
-                Share Letter
-              </Button>
-              <Button onClick={copyLetter} variant="outline" className="h-14 text-lg border-4 border-black">
-                Copy Letter
-              </Button>
-            </div>
+                </pre>
+                <div className="flex flex-col gap-4 max-w-md mx-auto mt-8">
+                  <Button onClick={shareLetter} className="h-14 text-lg bg-black text-white">
+                    Share Letter
+                  </Button>
+                  <Button onClick={copyLetter} variant="outline" className="h-14 text-lg border-4 border-black">
+                    Copy Letter
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Brand Deals CTA */}
@@ -630,264 +770,310 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
             </p>
           </div>
 
-          {/* My Kid's Challenges */}
-          {referredAthletes.length > 0 && (
-            <div className="mb-16">
+          {/* Business Tabs */}
+          <div className="flex justify-center gap-4 mb-8 flex-wrap">
+            <Button 
+              onClick={() => setActiveTab('wallet')}
+              variant={activeTab === 'wallet' ? 'default' : 'outline'}
+              className="px-8 py-4 text-lg"
+            >
+              Wallet & Gigs
+            </Button>
+            <Button 
+              onClick={() => setActiveTab('clips')}
+              variant={activeTab === 'clips' ? 'default' : 'outline'}
+              className="px-8 py-4 text-lg"
+            >
+              Pending Clips
+            </Button>
+            <Button 
+              onClick={() => setActiveTab('kids')}
+              variant={activeTab === 'kids' ? 'default' : 'outline'}
+              className="px-8 py-4 text-lg"
+            >
+              My Kid's Challenges
+            </Button>
+            <Button 
+              onClick={() => setActiveTab('favorites')}
+              variant={activeTab === 'favorites' ? 'default' : 'outline'}
+              className="px-8 py-4 text-lg"
+            >
+              Favorite Athletes
+            </Button>
+            <Button 
+              onClick={() => setActiveTab('booster')}
+              variant={activeTab === 'booster' ? 'default' : 'outline'}
+              className="px-8 py-4 text-lg"
+            >
+              Booster Events
+            </Button>
+          </div>
+
+          {/* Wallet & Gigs Tab */}
+          {activeTab === 'wallet' && (
+            <>
+              {/* Wallet Balance + Auto-Top-Up + Add Funds */}
+              <div className="mb-16">
+                <p className="text-3xl mb-4 font-bold">Wallet balance: ${business?.wallet_balance?.toFixed(2) || '0.00'}</p>
+
+                {/* Auto-Top-Up Toggle */}
+                <div className="max-w-md mx-auto mb-12 p-6 bg-gray-100 border-4 border-black">
+                  <label className="flex items-center justify-between cursor-pointer">
+                    <span className="text-xl font-bold">Auto-Top-Up</span>
+                    <input
+                      type="checkbox"
+                      checked={business?.auto_top_up ?? true}
+                      onChange={async (e) => {
+                        const enabled = e.target.checked
+                        await supabase
+                          .from('businesses')
+                          .update({ auto_top_up: enabled })
+                          .eq('id', business.id)
+                        setBusiness({ ...business, auto_top_up: enabled })
+                        alert(enabled ? 'Auto-top-up enabled!' : 'Auto-top-up disabled')
+                      }}
+                      className="w-8 h-8"
+                    />
+                  </label>
+                  <p className="text-lg mt-4">
+                    Never run out — when balance falls below $100, automatically add $500.
+                  </p>
+                </div>
+
+                {/* Add Funds Buttons */}
+                <p className="text-lg mb-8">
+                  Top up your wallet — post gigs anytime. Most businesses start with $500–$1000.
+                </p>
+
+                <div className="flex flex-wrap justify-center gap-4 mb-8">
+                  <Button 
+                    onClick={() => handleAddFunds(100)}
+                    className="w-48 h-14 text-lg bg-black text-white"
+                  >
+                    + $100
+                  </Button>
+                  <Button 
+                    onClick={() => handleAddFunds(500)}
+                    className="w-48 h-14 text-lg bg-black text-white"
+                  >
+                    + $500
+                  </Button>
+                  <Button 
+                    onClick={() => handleAddFunds(1000)}
+                    className="w-48 h-14 text-lg bg-black text-white"
+                  >
+                    + $1000
+                  </Button>
+                  <Button 
+                    onClick={() => {
+                      const custom = prompt('Enter custom amount:')
+                      if (custom !== null && custom.trim() !== '' && !isNaN(Number(custom)) && Number(custom) > 0) {
+                        handleAddFunds(Number(custom))
+                      }
+                    }}
+                    className="w-48 h-14 text-lg bg-green-400 text-black"
+                  >
+                    Custom Amount
+                  </Button>
+                </div>
+
+                <p className="text-sm text-gray-600">
+                  Transaction fee covers legal NIL compliance, bonus & challenge distributions, credit card fees, and platform expenses.
+                </p>
+              </div>
+
+              {/* Create a Gig */}
+              <h3 className="text-2xl mb-8 font-bold">Create a Gig</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-16">
+                {businessGigTypes.map((gig) => (
+                  <div key={gig.title}>
+                    <button
+                      onClick={() => handleGigSelect(gig)}
+                      className="w-full h-80 bg-black text-white p-8 flex flex-col items-center justify-center hover:bg-gray-800 transition"
+                    >
+                      <span className="text-3xl mb-4">{gig.title}</span>
+                      <span className="text-2xl mb-4">${gig.baseAmount}+</span>
+                      <span className="text-lg">{gig.description}</span>
+                    </button>
+
+                    {selectedGig?.title === gig.title && (
+                      <div className="mt-8 bg-gray-100 p-8 border-4 border-black max-w-2xl mx-auto">
+                        <h3 className="text-2xl mb-6 font-bold">Customize Your {gig.title}</h3>
+                        <div className="space-y-6">
+                          <div>
+                            <label className="block text-lg mb-2">Number of Athletes</label>
+                            <select
+                              value={numAthletes}
+                              onChange={(e) => handleAthletesChange(Number(e.target.value))}
+                              className="w-full p-4 text-lg border-4 border-black"
+                            >
+                              {[1,2,3,4,5,6,7,8,9,10].map(n => (
+                                <option key={n} value={n}>{n} athlete{n > 1 ? 's' : ''}</option>
+                              ))}
+                            </select>
+                            <p className="text-sm mt-2">+ $75 per additional athlete</p>
+                          </div>
+
+                          <div>
+                            <label className="block text-lg mb-2">Date</label>
+                            <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+                          </div>
+
+                          <div>
+                            <label className="block text-lg mb-2">Location</label>
+                            <Input placeholder="e.g., Bridge Pizza" value={location} onChange={(e) => setLocation(e.target.value)} />
+                          </div>
+
+                          <div>
+                            <label className="block text-lg mb-2">Your Phone (for athlete contact)</label>
+                            <Input placeholder="(555) 123-4567" value={businessPhone} onChange={(e) => setBusinessPhone(e.target.value)} />
+                          </div>
+
+                          <div>
+                            <label className="block text-lg mb-2">
+                              <input type="checkbox" checked={isRecurring} onChange={(e) => setIsRecurring(e.target.checked)} />
+                              Make this recurring monthly
+                            </label>
+                          </div>
+
+                          <div>
+                            <label className="block text-lg mb-2">Offer Amount</label>
+                            <Input
+                              placeholder="Enter Offer Amount - Min $50"
+                              value={amount}
+                              onChange={(e) => setAmount(e.target.value)}
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-lg mb-2">Custom Details</label>
+                            <textarea
+                              placeholder="Add your details (e.g., Come to Bridge Pizza this Friday)"
+                              value={customDetails}
+                              onChange={(e) => setCustomDetails(e.target.value)}
+                              className="w-full h-40 p-4 text-lg border-4 border-black font-mono"
+                            />
+                          </div>
+
+                          <Button onClick={handlePost} className="w-full h-20 text-2xl bg-green-400 text-black">
+                            Fund & Post Offer
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+
+          {/* Pending Clips Tab */}
+          {activeTab === 'clips' && (
+            <div>
+              <h3 className="text-2xl mb-8 font-bold">Pending Clips to Review</h3>
+              {pendingClips.length === 0 ? (
+                <p className="text-gray-600 mb-12">No pending clips — post offers to get started!</p>
+              ) : (
+                <div className="space-y-16">
+                  {pendingClips.map((clip) => (
+                    <div key={clip.id} className="border-4 border-black p-8 bg-white max-w-2xl mx-auto">
+                      <p className="font-bold mb-4 text-left">From: {clip.profiles.email}</p>
+                      <p className="mb-6 text-left">Offer: {clip.offers.type} — ${clip.offers.amount}</p>
+                      <video controls className="w-full mb-8">
+                        <source src={clip.video_url} type="video/mp4" />
+                      </video>
+                      <p className="text-sm text-gray-600 mb-4">
+                        Prove it with timelapse or witness video — easy!
+                      </p>
+                      <Button 
+                        onClick={() => approveClip(clip)}
+                        className="w-full h-16 text-xl bg-black text-white mb-4"
+                      >
+                        Approve & Pay Athlete
+                      </Button>
+                      <Button 
+                        onClick={() => addTip(clip)}
+                        className="w-full h-16 text-xl bg-yellow-400 text-black"
+                      >
+                        Add Tip for Great Job!
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* My Kid's Challenges Tab */}
+          {activeTab === 'kids' && (
+            <div>
               <h3 className="text-3xl mb-8 font-bold">My Kid's Challenges</h3>
               <p className="mb-8 text-lg">
                 Create a challenge for your kid — they complete, you approve, they get paid.
               </p>
               <div className="space-y-8 max-w-2xl mx-auto">
-                {referredAthletes.map((kid) => (
-                  <div key={kid.id} className="border-4 border-black p-8 bg-gray-100">
-                    <p className="font-bold text-2xl mb-4">{kid.full_name || kid.email}</p>
-                    <p className="mb-6 text-lg">
-                      Prove it with timelapse or witness video — easy!
-                    </p>
-                    <Button 
-                      onClick={() => createChallengeForKid(kid)}
-                      className="w-full h-16 text-xl bg-green-400 text-black"
-                    >
-                      Create Challenge for {kid.full_name?.split(' ')[0] || 'Kid'}
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Fund Best Friend Prompt */}
-          {showFundFriend && (
-            <div className="max-w-2xl mx-auto my-16 p-8 bg-green-100 border-4 border-green-600">
-              <p className="text-2xl font-bold mb-6">
-                Your kid earned $50! 🎉
-              </p>
-              <p className="text-xl mb-8">
-                Fund a challenge for their best friend — get them started too.
-              </p>
-              <div className="space-y-6">
-                <Input 
-                  placeholder="Friend's name (optional)"
-                  value={friendName}
-                  onChange={(e) => setFriendName(e.target.value)}
-                />
-                <Input 
-                  placeholder="Friend's email (required)"
-                  value={friendEmail}
-                  onChange={(e) => setFriendEmail(e.target.value)}
-                />
-                <Input 
-                  placeholder="Challenge description (e.g., 80/100 free throws)"
-                  value={friendChallenge}
-                  onChange={(e) => setFriendChallenge(e.target.value)}
-                />
-                <Input 
-                  placeholder="Payout amount (e.g., 50)"
-                  value={friendAmount}
-                  onChange={(e) => setFriendAmount(e.target.value)}
-                />
-                <Button onClick={handleFundFriend} className="w-full h-16 text-xl bg-green-400 text-black">
-                  Fund Challenge & Invite Friend
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {/* Wallet Balance + Auto-Top-Up + Add Funds */}
-          <div className="mb-16">
-            <p className="text-3xl mb-4 font-bold">Wallet balance: ${business?.wallet_balance?.toFixed(2) || '0.00'}</p>
-
-            {/* Auto-Top-Up Toggle */}
-            <div className="max-w-md mx-auto mb-12 p-6 bg-gray-100 border-4 border-black">
-              <label className="flex items-center justify-between cursor-pointer">
-                <span className="text-xl font-bold">Auto-Top-Up</span>
-                <input
-                  type="checkbox"
-                  checked={business?.auto_top_up ?? true}
-                  onChange={async (e) => {
-                    const enabled = e.target.checked
-                    await supabase
-                      .from('businesses')
-                      .update({ auto_top_up: enabled })
-                      .eq('id', business.id)
-                    setBusiness({ ...business, auto_top_up: enabled })
-                    alert(enabled ? 'Auto-top-up enabled!' : 'Auto-top-up disabled')
-                  }}
-                  className="w-8 h-8"
-                />
-              </label>
-              <p className="text-lg mt-4">
-                Never run out — when balance falls below $100, automatically add $500.
-              </p>
-            </div>
-
-            {/* Add Funds Buttons */}
-            <p className="text-lg mb-8">
-              Top up your wallet — post gigs anytime. Most businesses start with $500–$1000.
-            </p>
-
-            <div className="flex flex-wrap justify-center gap-4 mb-8">
-              <Button 
-                onClick={() => handleAddFunds(100)}
-                className="w-48 h-14 text-lg bg-black text-white"
-              >
-                + $100
-              </Button>
-              <Button 
-                onClick={() => handleAddFunds(500)}
-                className="w-48 h-14 text-lg bg-black text-white"
-              >
-                + $500
-              </Button>
-              <Button 
-                onClick={() => handleAddFunds(1000)}
-                className="w-48 h-14 text-lg bg-black text-white"
-              >
-                + $1000
-              </Button>
-              <Button 
-                onClick={() => {
-                  const custom = prompt('Enter custom amount:')
-                  if (custom !== null && custom.trim() !== '' && !isNaN(Number(custom)) && Number(custom) > 0) {
-                    handleAddFunds(Number(custom))
-                  }
-                }}
-                className="w-48 h-14 text-lg bg-green-400 text-black"
-              >
-                Custom Amount
-              </Button>
-            </div>
-
-            <p className="text-sm text-gray-600">
-              Transaction fee covers legal NIL compliance, bonus & challenge distributions, credit card fees, and platform expenses.
-            </p>
-          </div>
-
-          {/* Create a Gig */}
-          <h3 className="text-2xl mb-8 font-bold">Create a Gig</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-16">
-            {businessGigTypes.map((gig) => (
-              <div key={gig.title}>
-                <button
-                  onClick={() => handleGigSelect(gig)}
-                  className="w-full h-80 bg-black text-white p-8 flex flex-col items-center justify-center hover:bg-gray-800 transition"
-                >
-                  <span className="text-3xl mb-4">{gig.title}</span>
-                  <span className="text-2xl mb-4">${gig.baseAmount}+</span>
-                  <span className="text-lg">{gig.description}</span>
-                </button>
-
-                {selectedGig?.title === gig.title && (
-                  <div className="mt-8 bg-gray-100 p-8 border-4 border-black max-w-2xl mx-auto">
-                    <h3 className="text-2xl mb-6 font-bold">Customize Your {gig.title}</h3>
-                    <div className="space-y-6">
-                      <div>
-                        <label className="block text-lg mb-2">Number of Athletes</label>
-                        <select
-                          value={numAthletes}
-                          onChange={(e) => handleAthletesChange(Number(e.target.value))}
-                          className="w-full p-4 text-lg border-4 border-black"
-                        >
-                          {[1,2,3,4,5,6,7,8,9,10].map(n => (
-                            <option key={n} value={n}>{n} athlete{n > 1 ? 's' : ''}</option>
-                          ))}
-                        </select>
-                        <p className="text-sm mt-2">+ $75 per additional athlete</p>
-                      </div>
-
-                      <div>
-                        <label className="block text-lg mb-2">Date</label>
-                        <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
-                      </div>
-
-                      <div>
-                        <label className="block text-lg mb-2">Location</label>
-                        <Input placeholder="e.g., Bridge Pizza" value={location} onChange={(e) => setLocation(e.target.value)} />
-                      </div>
-
-                      <div>
-                        <label className="block text-lg mb-2">Your Phone (for athlete contact)</label>
-                        <Input placeholder="(555) 123-4567" value={businessPhone} onChange={(e) => setBusinessPhone(e.target.value)} />
-                      </div>
-
-                      <div>
-                        <label className="block text-lg mb-2">
-                          <input type="checkbox" checked={isRecurring} onChange={(e) => setIsRecurring(e.target.checked)} />
-                          Make this recurring monthly
-                        </label>
-                      </div>
-
-                      <div>
-                        <label className="block text-lg mb-2">Offer Amount</label>
-                        <Input
-                          placeholder="Enter Offer Amount - Min $50"
-                          value={amount}
-                          onChange={(e) => setAmount(e.target.value)}
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-lg mb-2">Custom Details</label>
-                        <textarea
-                          placeholder="Add your details (e.g., Come to Bridge Pizza this Friday)"
-                          value={customDetails}
-                          onChange={(e) => setCustomDetails(e.target.value)}
-                          className="w-full h-40 p-4 text-lg border-4 border-black font-mono"
-                        />
-                      </div>
-
-                      <Button onClick={handlePost} className="w-full h-20 text-2xl bg-green-400 text-black">
-                        Fund & Post Offer
+                {referredAthletes.length === 0 ? (
+                  <p className="text-gray-600">No referred athletes yet — wait for kids to pitch you!</p>
+                ) : (
+                  referredAthletes.map((kid) => (
+                    <div key={kid.id} className="border-4 border-black p-8 bg-gray-100">
+                      <p className="font-bold text-2xl mb-4">{kid.full_name || kid.email}</p>
+                      <p className="mb-6 text-lg">
+                        Prove it with timelapse or witness video — easy!
+                      </p>
+                      <Button 
+                        onClick={() => createChallengeForKid(kid)}
+                        className="w-full h-16 text-xl bg-green-400 text-black"
+                      >
+                        Create Challenge for {kid.full_name?.split(' ')[0] || 'Kid'}
                       </Button>
                     </div>
-                  </div>
+                  ))
                 )}
               </div>
-            ))}
-          </div>
+            </div>
+          )}
 
-          {/* Proposals Received */}
-          <h3 className="text-2xl mb-8 font-bold">Proposals Received</h3>
-          <p className="mb-12">No proposals yet — kids will pitch you soon!</p>
-
-          {/* Tabs */}
-          <h3 className="text-2xl mb-8 font-bold">Your Offers</h3>
-          <div className="flex justify-center gap-8 mb-8">
-            <Button variant="outline">
-              Unclaimed
-            </Button>
-            <Button variant="outline">
-              Active
-            </Button>
-            <Button variant="outline">
-              Complete
-            </Button>
-          </div>
-
-          {/* Pending Clips */}
-          <h3 className="text-2xl mb-8 font-bold">Pending Clips to Review</h3>
-          {pendingClips.length === 0 ? (
-            <p className="text-gray-600 mb-12">No pending clips — post offers to get started!</p>
-          ) : (
-            <div className="space-y-16">
-              {pendingClips.map((clip) => (
-                <div key={clip.id} className="border-4 border-black p-8 bg-white max-w-2xl mx-auto">
-                  <p className="font-bold mb-4 text-left">From: {clip.profiles.email}</p>
-                  <p className="mb-6 text-left">Offer: {clip.offers.type} — ${clip.offers.amount}</p>
-                  <video controls className="w-full mb-8">
-                    <source src={clip.video_url} type="video/mp4" />
-                  </video>
-                  <p className="text-sm text-gray-600 mb-4">
-                    Prove it with timelapse or witness video — easy!
-                  </p>
-                  <Button 
-                    onClick={() => approveClip(clip)}
-                    className="w-full h-16 text-xl bg-black text-white"
-                  >
-                    Approve & Send to Parent
-                  </Button>
+          {/* Favorite Athletes Tab */}
+          {activeTab === 'favorites' && (
+            <div>
+              <h3 className="text-3xl mb-8 font-bold">Favorite Athletes</h3>
+              <p className="mb-8 text-lg">
+                Quick access to athletes you like — re-fund gigs easily.
+              </p>
+              {favorites.length === 0 ? (
+                <p className="text-gray-600 mb-12">No favorites yet — add from clips or kids.</p>
+              ) : (
+                <div className="space-y-8 max-w-2xl mx-auto">
+                  {favorites.map((athlete) => (
+                    <div key={athlete.id} className="border-4 border-black p-8 bg-gray-100">
+                      <p className="font-bold text-2xl mb-4">{athlete.full_name || athlete.email}</p>
+                      <Button 
+                        onClick={() => createChallengeForKid(athlete)}
+                        className="w-full h-16 text-xl bg-green-400 text-black"
+                      >
+                        Fund Gig for {athlete.full_name?.split(' ')[0] || 'Athlete'}
+                      </Button>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              )}
+            </div>
+          )}
+
+          {/* Booster Events Tab */}
+          {activeTab === 'booster' && (
+            <div>
+              <h3 className="text-3xl mb-8 font-bold">Booster Events</h3>
+              <p className="mb-8 text-lg">
+                Create a booster club event — crowd-fund team expenses.
+              </p>
+              <Button 
+                onClick={() => router.push('/booster-events')}
+                className="w-full max-w-md h-20 text-2xl bg-green-400 text-black"
+              >
+                Create Booster Club Event
+              </Button>
             </div>
           )}
 
@@ -913,16 +1099,6 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
               </Button>
             </div>
           )}
-
-          {/* Booster Events CTA */}
-          <div className="my-16">
-            <Button 
-              onClick={() => router.push('/booster-events')}
-              className="w-full max-w-md h-20 text-2xl bg-green-400 text-black"
-            >
-              Create Booster Club Event
-            </Button>
-          </div>
         </div>
       )}
 

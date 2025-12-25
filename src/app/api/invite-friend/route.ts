@@ -3,13 +3,13 @@ import { NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabaseClient'
 
 export async function POST(request: Request) {
-  const { friend_email, friend_name, challenge_description, amount, business_id, kid_id } = await request.json()
+  const { friend_email, friend_name, challenge_description, amount, business_id } = await request.json()
 
   if (!friend_email || !challenge_description || !amount || !business_id) {
     return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
   }
 
-  // Create the gig (challenge) targeted to friend
+  // Create the gig
   const { data: gig, error: gigError } = await supabase
     .from('offers')
     .insert({
@@ -19,7 +19,6 @@ export async function POST(request: Request) {
       description: challenge_description,
       target_athlete_email: friend_email,
       status: 'active',
-      kid_id: kid_id || null, // optional link to original kid
     })
     .select()
     .single()
@@ -28,12 +27,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: gigError.message }, { status: 500 })
   }
 
-  // Send magic link to friend
+  // Send magic link
   const { error: authError } = await supabase.auth.signInWithOtp({
     email: friend_email,
     options: {
       emailRedirectTo: `${process.env.NEXT_PUBLIC_URL}/dashboard`,
-      data: { invited_by_parent: true, pre_funded_gig: gig.id },
     },
   })
 

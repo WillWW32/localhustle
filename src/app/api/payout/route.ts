@@ -1,46 +1,41 @@
 import { NextResponse } from 'next/server'
-import Stripe from 'stripe'
 import { supabase } from '@/lib/supabaseClient'
+import Stripe from 'stripe'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
 
 export async function POST(request: Request) {
-  const { clip_id, paymentMethodId } = await request.json()
+  const { clip_id, athlete_id, amount } = await request.json()
 
-  const { data: clip, error: clipError } = await supabase
-    .from('clips')
-    .select('*, offers(amount)')
-    .eq('id', clip_id)
+  // Get athlete debit card token
+  const { data: athlete } = await supabase
+    .from('profiles')
+    .select('debit_card_token')
+    .eq('id', athlete_id)
     .single()
 
-  if (clipError || !clip) {
-    return NextResponse.json({ error: 'Clip not found' }, { status: 404 })
+  if (!athlete.debit_card_token) {
+    return NextResponse.json({ error: 'No debit card on file' }, { status: 400 })
   }
 
-  // Payout full gig amount to parent (business already paid 15% extra on funding)
-  const payoutAmount = clip.offers.amount * 100 // full amount in cents
+  // Create payout
+  const payout = await stripe.payouts.create({
+    amount: amount * 100,
+    currency: 'usd',
+    method: 'instant',
+    destination: athlete.debit_card_token,
+  })
 
-  try {
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: payoutAmount,
-      currency: 'usd',
-      payment_method: paymentMethodId,
-      confirmation_method: 'manual',
-      confirm: true,
-      description: `LocalHustle payout — full gig amount $${clip.offers.amount}`,
+  // Record payout
+  await supabase
+    .from('payouts')
+    .insert({
+      athlete_id,
+      gig_id: clip_id,
+      amount,
+      stripe_transfer_id: payout.id,
+      status: 'completed',
     })
 
-    if (paymentIntent.status === 'succeeded') {
-      await supabase
-        .from('clips')
-        .update({ status: 'paid' })
-        .eq('id', clip_id)
-
-      return NextResponse.json({ success: true })
-    } else {
-      return NextResponse.json({ error: 'Payment failed' }, { status: 400 })
-    }
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
-  }
+  return NextResponse.json({ success: true, payout })
 }
