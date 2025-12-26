@@ -18,19 +18,19 @@ html, body {
 
 /* Headings */
 h1 {
-  font-size: 4rem;
+  font-size: 3rem;
   font-weight: bold;
   margin-bottom: 3rem;
 }
 
 h2 {
-  font-size: 3rem;
+  font-size: 2rem;
   font-weight: bold;
   margin-bottom: 2rem;
 }
 
 h3 {
-  font-size: 2.5rem;
+  font-size: 1.5rem;
   font-weight: bold;
   margin-bottom: 1.5rem;
 }
@@ -163,4 +163,10 @@ footer p {
     flex-direction: row;
     gap: 1.5rem;
   }
+}
+/* Mobile Heading Size Fix */
+@media (max-width: 640px) {
+  h1 { font-size: 2.5rem !important; }
+  h2 { font-size: 2rem !important; }
+  h3 { font-size: 1.75rem !important; }
 }
