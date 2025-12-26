@@ -4,11 +4,19 @@ import { supabase } from '@/lib/supabaseClient'
 export async function POST(request: Request) {
   const { gig_id, extra_amount, business_id } = await request.json()
 
-  const { data: business } = await supabase
+  if (!gig_id || !extra_amount || !business_id) {
+    return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
+  }
+
+  const { data: business, error: businessError } = await supabase
     .from('businesses')
     .select('wallet_balance')
     .eq('id', business_id)
     .single()
+
+  if (businessError || !business) {
+    return NextResponse.json({ error: 'Business not found or error fetching balance' }, { status: 404 })
+  }
 
   if (business.wallet_balance < extra_amount) {
     return NextResponse.json({ error: 'Insufficient funds' }, { status: 400 })
@@ -23,6 +31,7 @@ export async function POST(request: Request) {
 
   if (error) return NextResponse.json({ error }, { status: 500 })
 
+  // Deduct from wallet
   await supabase
     .from('businesses')
     .update({ wallet_balance: business.wallet_balance - extra_amount })
