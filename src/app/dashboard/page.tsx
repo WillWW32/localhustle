@@ -54,15 +54,10 @@ export default function Dashboard() {
   const [friendChallenge, setFriendChallenge] = useState('')
   const [friendAmount, setFriendAmount] = useState('50')
   const [showPitchLetter, setShowPitchLetter] = useState(false)
-  const [openToChallenges, setOpenToChallenges] = useState(false)
-  const [payoutHistory, setPayoutHistory] = useState<any[]>([])
   const [gigSearch, setGigSearch] = useState('')
   const [searchedOffers, setSearchedOffers] = useState<any[]>([])
+  const [payoutHistory, setPayoutHistory] = useState<any[]>([])
   const [activeTab, setActiveTab] = useState<'wallet' | 'clips' | 'kids' | 'favorites' | 'booster'>('wallet')
-  const [teamFilter, setTeamFilter] = useState('all')
-  const [notifications, setNotifications] = useState<string[]>([])
-  const [currentClipForTip, setCurrentClipForTip] = useState<any>(null)
-  const [tipAmount, setTipAmount] = useState('')
   const router = useRouter()
 
   useEffect(() => {
@@ -104,7 +99,6 @@ export default function Dashboard() {
         setHighlightLink(prof.highlight_link || '')
         setSocialFollowers(prof.social_followers || '')
         setBio(prof.bio || '')
-        setOpenToChallenges(prof.open_to_challenges || false)
 
         const { data: squadMembers } = await supabase
           .from('profiles')
@@ -120,16 +114,12 @@ export default function Dashboard() {
         setOffers(openOffers || [])
         setSearchedOffers(openOffers || [])
 
-        // Real payout history
         const { data: history } = await supabase
           .from('payouts')
-          .select('*')
+          .select('amount, created_at, offers(type)')
           .eq('athlete_id', user.id)
           .order('created_at', { ascending: false })
         setPayoutHistory(history || [])
-
-        // Example notifications
-        setNotifications(['New gig available!', 'Clip approved — $50 paid!'])
       }
 
       if (prof.role === 'business') {
@@ -146,7 +136,6 @@ export default function Dashboard() {
           .eq('referred_by', biz.id)
         setReferredAthletes(referred || [])
 
-        // Favorites
         const { data: favs } = await supabase
           .from('business_favorites')
           .select('athlete_id, profiles(*)')
@@ -173,7 +162,6 @@ export default function Dashboard() {
         highlight_link: highlightLink,
         social_followers: socialFollowers,
         bio: bio,
-        open_to_challenges: openToChallenges,
       })
       .eq('id', profile.id)
 
@@ -281,7 +269,6 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
       return
     }
 
-    // Real payout
     const response = await fetch('/api/payout', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -303,53 +290,35 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
     setPendingClips(pendingClips.filter(c => c.id !== clip.id))
   }
 
-  const addTip = async (clip: any) => {
-    const tipStr = prompt('Enter tip amount (e.g., 10)')
-    if (!tipStr) return
+  const createChallengeForKid = async (kid: any) => {
+    const description = prompt(`Enter challenge for ${kid.full_name || kid.email} (e.g., 80/100 free throws)`)
+    const amountStr = prompt('Payout amount if completed (e.g., 50)')
+    if (!description || !amountStr) return
 
-    const tip = parseFloat(tipStr)
-    if (isNaN(tip) || tip <= 0) {
-      alert('Invalid tip amount')
+    const amount = parseFloat(amountStr)
+    if (isNaN(amount) || amount <= 0) {
+      alert('Invalid amount')
       return
     }
 
-    // Real tip payout
-    const response = await fetch('/api/tip', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        clip_id: clip.id,
-        athlete_id: clip.athlete_id,
-        tip_amount: tip,
-      }),
-    })
-
-    const data = await response.json()
-
-    if (data.error) {
-      alert('Tip error: ' + data.error)
-    } else {
-      alert(`Tip of $${tip} sent — great job!`)
-    }
-  }
-
-  const addToFavorites = async (athlete: any) => {
-    const response = await fetch('/api/add-favorite', {
+    const response = await fetch('/api/create-gig', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         business_id: business.id,
-        athlete_id: athlete.id,
+        type: 'Challenge',
+        amount,
+        description,
+        target_athlete_email: kid.email,
       }),
     })
 
     const data = await response.json()
 
     if (data.error) {
-      alert('Error adding favorite: ' + data.error)
+      alert('Error creating challenge: ' + data.error)
     } else {
-      setFavorites([...favorites, athlete])
-      alert(`${athlete.full_name || athlete.email} added to favorites!`)
+      alert(`Challenge created for ${kid.full_name || kid.email}!`)
     }
   }
 
@@ -390,37 +359,6 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
       setFriendAmount('50')
     }
   }
-  const createChallengeForKid = async (kid: any) => {
-  const description = prompt(`Enter challenge for ${kid.full_name || kid.email} (e.g., 80/100 free throws)`)
-  const amountStr = prompt('Payout amount if completed (e.g., 50)')
-  if (!description || !amountStr) return
-
-  const amount = parseFloat(amountStr)
-  if (isNaN(amount) || amount <= 0) {
-    alert('Invalid amount')
-    return
-  }
-
-  const response = await fetch('/api/create-gig', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      business_id: business.id,
-      type: 'Challenge',
-      amount,
-      description,
-      target_athlete_email: kid.email,
-    }),
-  })
-
-  const data = await response.json()
-
-  if (data.error) {
-    alert('Error creating challenge: ' + data.error)
-  } else {
-    alert(`Challenge created for ${kid.full_name || kid.email}!`)
-  }
-}
 
   const handleAddFunds = async (amount: number) => {
     const response = await fetch('/api/checkout', {
@@ -443,42 +381,11 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
     }
   }
 
-  const searchGigs = () => {
-    if (!gigSearch.trim()) {
-      setSearchedOffers(offers)
-      return
-    }
-
-    const lower = gigSearch.toLowerCase()
-    const filtered = offers.filter((o: any) => 
-      o.type.toLowerCase().includes(lower) ||
-      o.description.toLowerCase().includes(lower) ||
-      o.location?.toLowerCase().includes(lower)
-    )
-    setSearchedOffers(filtered)
-  }
-
   if (!profile) return <p className="container text-center py-32">Loading...</p>
 
   return (
     <div className="container py-8">
       <p className="text-center mb-12 text-xl font-mono">Welcome, {profile.email}</p>
-
-      {/* FAQ Link */}
-      <div className="text-center mb-8">
-        <Button onClick={() => router.push('/faq')} className="text-lg">
-          FAQ — Common Questions
-        </Button>
-      </div>
-
-      {/* Notification Banner */}
-      {notifications.length > 0 && (
-        <div className="max-w-4xl mx-auto mb-8 p-4 bg-yellow-100 border-4 border-yellow-600">
-          {notifications.map((notif, i) => (
-            <p key={i} className="text-lg font-bold">{notif}</p>
-          ))}
-        </div>
-      )}
 
       {/* Subtitle — black block */}
       <div className="bg-black text-white p-8 mb-12">
@@ -533,6 +440,24 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
                 ))}
               </div>
             )}
+          </div>
+
+          {/* Payout History & Earnings */}
+          <div className="max-w-2xl mx-auto bg-gray-100 p-8 border-4 border-black rounded-lg">
+            <h2 className="text-2xl mb-8 font-bold">Your Earnings</h2>
+            <p className="text-xl mb-4">Total Earned: ${payoutHistory.reduce((sum, p) => sum + p.amount, 0)}</p>
+            <p className="text-xl mb-8">Gigs Completed: {payoutHistory.length}/4 (for brand deals)</p>
+            <div className="space-y-4">
+              {payoutHistory.length === 0 ? (
+                <p>No payouts yet — complete your first gig!</p>
+              ) : (
+                payoutHistory.map((payout, i) => (
+                  <div key={i} className="p-4 bg-white border-2 border-black">
+                    <p>{new Date(payout.created_at).toLocaleDateString()} — ${payout.amount} ({payout.offers?.type || 'Gig'})</p>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
 
           {/* Player Profile Section */}
@@ -627,47 +552,9 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
               />
             </div>
 
-            {/* Open to Challenges Toggle */}
-            <div className="mb-12">
-              <label className="flex items-center justify-center gap-4 cursor-pointer">
-                <span className="text-xl">Open to Challenges from Parents/Businesses</span>
-                <input
-                  type="checkbox"
-                  checked={openToChallenges}
-                  onChange={async (e) => {
-                    const enabled = e.target.checked
-                    setOpenToChallenges(enabled)
-                    await supabase
-                      .from('profiles')
-                      .update({ open_to_challenges: enabled })
-                      .eq('id', profile.id)
-                  }}
-                  className="w-8 h-8"
-                />
-              </label>
-            </div>
-
             <Button onClick={handleSaveProfile} className="w-full h-16 text-xl bg-black text-white">
               Save Profile
             </Button>
-          </div>
-
-          {/* Payout History & Earnings */}
-          <div className="max-w-2xl mx-auto bg-gray-100 p-8 border-4 border-black rounded-lg">
-            <h2 className="text-2xl mb-8 font-bold">Your Earnings</h2>
-            <p className="text-xl mb-4">Total Earned: ${payoutHistory.reduce((sum, p) => sum + p.amount, 0)}</p>
-            <p className="text-xl mb-8">Gigs Completed: {payoutHistory.length}/4 (for brand deals)</p>
-            <div className="space-y-4">
-              {payoutHistory.length === 0 ? (
-                <p>No payouts yet — complete your first gig!</p>
-              ) : (
-                payoutHistory.map((payout, i) => (
-                  <div key={i} className="p-4 bg-white border-2 border-black">
-                    <p>{new Date(payout.created_at).toLocaleDateString()} — ${payout.amount} ({payout.offers?.type || 'Gig'})</p>
-                  </div>
-                ))
-              )}
-            </div>
           </div>
 
           {/* Gig Selection */}
@@ -688,41 +575,6 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
                 </div>
               ))}
             </div>
-          </div>
-
-          {/* Open Offers */}
-          <div>
-            <h2 className="text-2xl mb-8 font-bold">Open Offers</h2>
-            <div className="mb-8">
-              <label className="text-lg">Filter by School/Team</label>
-              <select 
-                value={teamFilter}
-                onChange={(e) => setTeamFilter(e.target.value)}
-                className="w-full max-w-xs p-4 border-4 border-black"
-              >
-                <option value="all">All</option>
-                <option value="my-school">My School</option>
-                {/* Real schools from DB in V3 */}
-              </select>
-            </div>
-            {offers.length === 0 ? (
-              <p className="text-gray-600 mb-12">No offers yet — pitch businesses to get started!</p>
-            ) : (
-              <div className="space-y-16">
-                {offers.map((offer) => (
-                  <div key={offer.id} className="border-4 border-black p-8 bg-gray-100 max-w-lg mx-auto">
-                    <p className="font-bold text-2xl mb-6">{offer.type.toUpperCase()} — ${offer.amount}</p>
-                    <p className="mb-8">{offer.description}</p>
-                    <Button 
-                      onClick={() => router.push(`/claim/${offer.id}`)}
-                      className="w-full h-16 text-xl bg-black text-white"
-                    >
-                      Claim Offer
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
 
           {/* Pitch Letter — Collapsible */}
@@ -832,6 +684,33 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
         </div>
       ) : (
         <div className="max-w-4xl mx-auto space-y-16 font-mono text-center text-lg">
+          {/* Subtitle — black block */}
+          <div className="bg-black text-white p-8 mb-12">
+            <h1 className="text-3xl font-bold">
+              Your Business Admin Console
+            </h1>
+          </div>
+
+          {/* Detail — black block */}
+          <div className="bg-black text-white p-8 mb-12">
+            <p className="text-lg leading-relaxed">
+              Post gigs to get authentic content from local athletes.<br />
+              Review clips — only approve what you love.<br />
+              Become the hometown hero while discovering motivated teens.
+            </p>
+
+            <h2 className="text-2xl font-bold mt-12 mb-6">
+              Why this is the best advertising
+            </h2>
+            <p className="text-lg leading-relaxed">
+              • Real word-of-mouth from kids parents trust (88% trust recommendations from people they know).<br />
+              • Authentic content — better than paid ads.<br />
+              • Be the hometown hero — visible support for local teams.<br />
+              • Discover motivated teens & potential future employees.<br />
+              • Approve = Clips You Love.
+            </p>
+          </div>
+
           {/* Business Tabs */}
           <div className="flex justify-center gap-4 mb-8 flex-wrap">
             <Button 

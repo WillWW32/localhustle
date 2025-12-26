@@ -9,47 +9,48 @@ export async function POST(request: Request) {
   const sig = request.headers.get('stripe-signature')!
   const body = await request.text()
 
-  let event
+  let event: Stripe.Event
 
   try {
     event = stripe.webhooks.constructEvent(body, sig, webhookSecret!)
-  } catch (err) {
-    return NextResponse.json({ error: 'Webhook signature verification failed' }, { status: 400 })
+  } catch (err: any) {
+    console.error('Webhook signature verification failed:', err.message)
+    return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
   }
 
+  // Handle Checkout Session Completed (Wallet Funding)
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object as Stripe.Checkout.Session
 
     const businessId = session.metadata?.business_id
-    const amountTotal = session.amount_total // in cents
+    const amountTotal = session.amount_total
 
     if (businessId && amountTotal) {
-      const amount = amountTotal / 100 // dollars
+      const amount = amountTotal / 100
 
-      // Fetch current balance
-      const { data: business, error: fetchError } = await supabase
+      const { data: business } = await supabase
         .from('businesses')
         .select('wallet_balance')
         .eq('id', businessId)
         .single()
 
-      if (fetchError || !business) {
-        console.error('Business fetch error:', fetchError)
-        return NextResponse.json({ error: 'Business not found' }, { status: 404 })
-      }
-
-      const newBalance = business.wallet_balance + amount
-
-      // Update wallet
-      const { error: updateError } = await supabase
-        .from('businesses')
-        .update({ wallet_balance: newBalance })
-        .eq('id', businessId)
-
-      if (updateError) {
-        console.error('Wallet update error:', updateError)
+      if (business) {
+        await supabase
+          .from('businesses')
+          .update({ wallet_balance: business.wallet_balance + amount })
+          .eq('id', businessId)
       }
     }
+  }
+
+  // Handle Payout Events (for reliability)
+  if (event.type === 'payout.paid' || event.type === 'payout.failed') {
+    const payout = event.data.object as Stripe.Payout
+
+    await supabase
+      .from('payouts')
+      .update({ status: payout.status })
+      .eq('stripe_payout_id', payout.id)
   }
 
   return NextResponse.json({ received: true })
