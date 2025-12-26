@@ -7,7 +7,6 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
 export async function POST(request: Request) {
   const { clip_id, athlete_id, tip_amount } = await request.json()
 
-  // Get athlete debit card
   const { data: athlete } = await supabase
     .from('profiles')
     .select('debit_card_token')
@@ -25,5 +24,5 @@ export async function POST(request: Request) {
     destination: athlete.debit_card_token,
   })
 
-  return NextResponse.json({ success: true, payout })
+  return NextResponse.json({ success: true })
 }

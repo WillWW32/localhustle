@@ -6,7 +6,7 @@ export async function POST(request: Request) {
 
   const { error } = await supabase
     .from('business_favorites')
-    .insert({ business_id, athlete_id })
+    .upsert({ business_id, athlete_id }, { onConflict: 'business_id,athlete_id' })
 
   if (error) return NextResponse.json({ error }, { status: 500 })
   return NextResponse.json({ success: true })

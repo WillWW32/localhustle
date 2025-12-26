@@ -23,7 +23,6 @@ export async function POST(request: Request) {
 
   if (error) return NextResponse.json({ error }, { status: 500 })
 
-  // Deduct from wallet
   await supabase
     .from('businesses')
     .update({ wallet_balance: business.wallet_balance - extra_amount })
