@@ -1,3 +1,4 @@
+// src/app/api/boost-gig/route.ts
 import { NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabaseClient'
 
@@ -15,21 +16,37 @@ export async function POST(request: Request) {
     .single()
 
   if (businessError || !business) {
-    return NextResponse.json({ error: 'Business not found or error fetching balance' }, { status: 404 })
+    return NextResponse.json({ error: 'Business not found' }, { status: 404 })
   }
 
   if (business.wallet_balance < extra_amount) {
     return NextResponse.json({ error: 'Insufficient funds' }, { status: 400 })
   }
 
-  const { data, error } = await supabase
+  // Fetch current gig amount
+  const { data: gig, error: gigError } = await supabase
     .from('offers')
-    .update({ amount: supabase.raw('amount + ?', extra_amount) })
+    .select('amount')
+    .eq('id', gig_id)
+    .single()
+
+  if (gigError || !gig) {
+    return NextResponse.json({ error: 'Gig not found' }, { status: 404 })
+  }
+
+  const newAmount = gig.amount + extra_amount
+
+  // Update gig amount
+  const { data: updatedGig, error: updateError } = await supabase
+    .from('offers')
+    .update({ amount: newAmount })
     .eq('id', gig_id)
     .select()
     .single()
 
-  if (error) return NextResponse.json({ error }, { status: 500 })
+  if (updateError) {
+    return NextResponse.json({ error: updateError.message }, { status: 500 })
+  }
 
   // Deduct from wallet
   await supabase
@@ -37,5 +54,5 @@ export async function POST(request: Request) {
     .update({ wallet_balance: business.wallet_balance - extra_amount })
     .eq('id', business_id)
 
-  return NextResponse.json({ gig: data })
+  return NextResponse.json({ gig: updatedGig })
 }
