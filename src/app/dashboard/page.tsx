@@ -305,6 +305,35 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
     setPendingClips(pendingClips.filter(c => c.id !== clip.id))
   }
 
+  const addTip = async (clip: any) => {
+  const tipStr = prompt('Enter tip amount (e.g., 10)')
+  if (!tipStr) return
+
+  const tip = parseFloat(tipStr)
+  if (isNaN(tip) || tip <= 0) {
+    alert('Invalid tip amount')
+    return
+  }
+
+  const response = await fetch('/api/tip', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      clip_id: clip.id,
+      athlete_id: clip.athlete_id,
+      tip_amount: tip,
+    }),
+  })
+
+  const data = await response.json()
+
+  if (data.error) {
+    alert('Tip error: ' + data.error)
+  } else {
+    alert(`Tip of $${tip} sent — great job!`)
+  }
+  }
+
   const createChallengeForKid = async (kid: any) => {
     const description = prompt(`Enter challenge for ${kid.full_name || kid.email} (e.g., 80/100 free throws)`)
     const amountStr = prompt('Payout amount if completed (e.g., 50)')
