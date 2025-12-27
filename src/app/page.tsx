@@ -12,41 +12,45 @@ export default function Home() {
   const router = useRouter()
 
   const sendMagicLink = async (path: string) => {
-  if (!email.trim()) {
-    alert('Please enter your email')
-    return
+    if (!email.trim()) {
+      alert('Please enter your email')
+      return
+    }
+
+    setLoading(true)
+
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        emailRedirectTo: `https://app.localhustle.org${path}`,
+      },
+    })
+
+    if (error) {
+      alert('Error: ' + error.message)
+    } else {
+      alert('🎉 Magic link sent! Check your email.')
+    }
+
+    setLoading(false)
   }
 
-  setLoading(true)
-
-  const { error } = await supabase.auth.signInWithOtp({
-    email,
-    options: {
-      emailRedirectTo: `${process.env.NEXT_PUBLIC_URL}${path}`,
-    },
-  })
-
-  if (error) {
-    alert('Error: ' + error.message)
-  } else {
-    alert('🎉 Magic link sent! Check your email.')
-  }
-
-  setLoading(false)
-}
   return (
     <div className="min-h-screen bg-white text-black font-mono">
       {/* Hero Section */}
       <section className="py-20 px-6 sm:px-12 lg:px-32 text-center">
-        
+        {/* Slogan */}
+        <p className="text-2xl sm:text-3xl mb-8">
+          Community Driven Support for Student Athletes
+        </p>
 
-        {/* Main Heading — White on Black Block, Protected */}
-<div className="bg-black p-12 mb-16">
-  <h1 className="text-4xl sm:text-5xl font-bold text-white text-center leading-tight">
-    We Connect Local Businesses with Student Athletes<br />
-    for Scholarships & NIL Deals
-  </h1>
-</div>
+        {/* "We Connect..." — Black Block, H3 Size */}
+        <div className="bg-black text-white p-12 mb-16">
+          <h3 className="text-3xl sm:text-4xl font-bold leading-tight">
+            We Connect Local Businesses with Student Athletes<br />
+            for Scholarships & NIL Deals
+          </h3>
+        </div>
 
         {/* Subheadline */}
         <p className="text-xl sm:text-2xl mb-24 max-w-4xl mx-auto leading-relaxed">
@@ -56,7 +60,8 @@ export default function Home() {
         </p>
       </section>
 
-      
+      {/* Dashed Divider */}
+      <hr className="border-t-4 border-dashed border-black my-24 max-w-5xl mx-auto" />
 
       {/* Benefits Grid */}
       <section className="px-6 sm:px-12 lg:px-32 pb-24">
@@ -111,11 +116,12 @@ export default function Home() {
         </div>
       </section>
 
-     
+      {/* Final Dashed Divider */}
+      <hr className="border-t-4 border-dashed border-black my-24 max-w-5xl mx-auto" />
 
-      {/* Bottom CTA — Email + Role Buttons */}
+      {/* Bottom CTA */}
       <section className="pb-20 text-center">
-        <p className="text-2xl mb-12">Get Started with email and choose role</p>
+        <p className="text-2xl mb-12">Enter Email and Choose Role to Get Started</p>
 
         <div className="w-full max-w-md mx-auto space-y-12">
           <Input
@@ -128,18 +134,20 @@ export default function Home() {
 
           <div className="space-y-6">
             <Button
-  onClick={() => sendMagicLink('/get-started')}
-  className="..."
->
-  I'm a Student Athlete
-</Button>
+              onClick={() => sendMagicLink('/get-started')}
+              disabled={loading}
+              className="w-full h-20 text-2xl bg-black text-white font-bold"
+            >
+              I'm a Student Athlete
+            </Button>
 
-<Button
-  onClick={() => sendMagicLink('/business-onboard')}
-  className="..."
->
-  I'm a Business or Parent Sponsor
-</Button>
+            <Button
+              onClick={() => sendMagicLink('/business-onboard')}
+              disabled={loading}
+              className="w-full h-20 text-2xl bg-purple-600 text-white font-bold"
+            >
+              I'm a Business or Parent Sponsor
+            </Button>
           </div>
 
           {loading && (
