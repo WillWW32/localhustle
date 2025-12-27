@@ -11,7 +11,7 @@ export default function Home() {
   const [loading, setLoading] = useState(false)
   const router = useRouter()
 
-  const sendMagicLink = async (path: string) => {
+  const sendMagicLink = async (redirectPath: string) => {
     if (!email.trim()) {
       alert('Please enter your email')
       return
@@ -22,7 +22,7 @@ export default function Home() {
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: `${process.env.NEXT_PUBLIC_URL}${path}`,
+        emailRedirectTo: `${process.env.NEXT_PUBLIC_URL}${redirectPath}`,
       },
     })
 
@@ -39,14 +39,17 @@ export default function Home() {
     <div className="min-h-screen bg-white text-black font-mono">
       {/* Hero Section */}
       <section className="py-20 px-6 sm:px-12 lg:px-32 text-center">
-       
+        {/* Slogan */}
+        <p className="text-2xl sm:text-3xl mb-8">
+          Community Driven Support for Student Athletes
+        </p>
 
-        {/* "We Connect..." — White on Black Block + Smaller Text */}
+        {/* Main Heading — Black Block Style */}
         <div className="bg-black text-white p-12 mb-16">
-          <h2 className="text-3xl sm:text-5xl font-bold leading-tight">
+          <h1 className="text-3xl sm:text-5xl font-bold leading-tight">
             We Connect Local Businesses with Student Athletes<br />
             for Scholarships & NIL Deals
-          </h2>
+          </h1>
         </div>
 
         {/* Subheadline */}
@@ -77,10 +80,9 @@ export default function Home() {
             </p>
           </div>
 
-          {/* Half-Width Dashed Divider */}
-<div className="flex justify-center my-24">
-  <div className="w-full max-w-2xl border-t-4 border-dashed border-black"></div>
-</div>
+          {/* Vertical Divider (Desktop) */}
+          <div className="hidden md:block border-l-4 border-dashed border-black"></div>
+
           {/* Parents */}
           <div className="text-center">
             <h2 className="text-3xl font-bold mb-6">Parents</h2>
@@ -95,11 +97,9 @@ export default function Home() {
             </p>
           </div>
 
-          
-    {/* Half-Width Dashed Divider */}
-    <div className="flex justify-center my-24">
-    <div className="w-full max-w-2xl border-t-4 border-dashed border-black"></div>
-    </div>
+          {/* Vertical Divider (Desktop) */}
+          <div className="hidden md:block border-l-4 border-dashed border-black"></div>
+
           {/* Businesses */}
           <div className="text-center">
             <h2 className="text-3xl font-bold mb-6">Businesses</h2>
@@ -121,7 +121,7 @@ export default function Home() {
 
       {/* Bottom CTA — Email + Role Buttons */}
       <section className="pb-20 text-center">
-        
+        <p className="text-2xl mb-12">Ready to get started?</p>
 
         <div className="w-full max-w-md mx-auto space-y-12">
           <Input
@@ -154,7 +154,6 @@ export default function Home() {
             <p className="text-center text-xl mt-4">Sending magic link...</p>
           )}
         </div>
-        <p className="text-2xl mb-12">Enter Email Above to Get Started</p>
       </section>
     </div>
   )
