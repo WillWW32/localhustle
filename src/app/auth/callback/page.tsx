@@ -1,32 +1,19 @@
-'use client'
+import { redirect } from 'next/navigation'
+import { createServerClient } from '@/lib/supabaseServer'
 
-import { useEffect } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
-import { supabase } from '@/lib/supabaseClient'
+export const dynamic = 'force-dynamic'
 
-export default function AuthCallback() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
+export default async function AuthCallback({ searchParams }: { searchParams: { next?: string } }) {
+  const supabase = createServerClient()
 
-  useEffect(() => {
-    const handleRedirect = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
+  const { data: { session } } = await supabase.auth.getSession()
 
-      if (session) {
-        const next = searchParams.get('next') || '/dashboard'
-        router.replace(next)
-      } else {
-        // Not logged in yet — wait a moment
-        setTimeout(handleRedirect, 500)
-      }
-    }
+  const next = searchParams.next || '/dashboard'
 
-    handleRedirect()
-  }, [router, searchParams])
+  if (session) {
+    redirect(next)
+  }
 
-  return (
-    <div className="min-h-screen bg-white flex items-center justify-center">
-      <p className="text-xl">Logging you in...</p>
-    </div>
-  )
+  // Fallback
+  redirect('/')
 }
