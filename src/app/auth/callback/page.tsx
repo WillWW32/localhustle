@@ -1,10 +1,10 @@
 import { redirect } from 'next/navigation'
-import { createServerClient } from '@/lib/supabaseServer'
+import { getSupabaseServerClient } from '@/lib/supabaseServer'
 
 export const dynamic = 'force-dynamic'
 
 export default async function AuthCallback({ searchParams }: { searchParams: { next?: string } }) {
-  const supabase = createServerClient()
+  const supabase = getSupabaseServerClient()
 
   const { data: { session } } = await supabase.auth.getSession()
 
@@ -14,6 +14,5 @@ export default async function AuthCallback({ searchParams }: { searchParams: { n
     redirect(next)
   }
 
-  // Fallback
   redirect('/')
 }
