@@ -73,35 +73,51 @@ export default function RootLayout({
 
         <main>{children}</main>
 
-        {/* Pinned Share Button — Smaller, One Line */}
-<div className="text-center py-4 bg-white border-t-4 border-b-4 border-black">
-  <Button 
-    onClick={handleShare}
-    className="w-full max-w-md h-12 text-lg bg-black text-white font-mono flex items-center justify-center hover:bg-gray-800"
-  >
-    Share with Teammates — Earn Together
-  </Button>
+{/* Share with Teammates Banner — Ultra Small, Minimal */}
+<div className="bg-gray-50 py-3 border-t border-b border-gray-300">
+  <p className="text-sm text-center text-gray-700">
+    Share with teammates — earn together!{' '}
+    <a 
+      href={`https://app.localhustle.org?ref=${profile?.id}`}
+      className="underline hover:text-black"
+    >
+      localhustle.org?ref={profile?.id}
+    </a>
+  </p>
 </div>
 
         {/* Footer — smaller text, 2 lines, gray */}
-        <footer className="py-8 border-t-4 border-black text-center">
-          <nav className="mb-2 flex flex-col items-center gap-2 text-xs">
-            <div className="flex flex-wrap justify-center gap-4">
-              <Link href="/" className="text-gray-600 hover:text-black">Home</Link>
-              <Link href="/dashboard" className="text-gray-600 hover:text-black">Dashboard</Link>
-              <Link href="/profile" className="text-gray-600 hover:text-black">Profile</Link>
-              <Link href="/compliance" className="text-gray-600 hover:text-black">Compliance</Link>
-            </div>
-            <div className="flex flex-wrap justify-center gap-4">
-              <Link href="/privacy" className="text-gray-600 hover:text-black">Privacy</Link>
-              <Link href="/terms" className="text-gray-600 hover:text-black">Terms</Link>
-              <Link href="/support" className="text-gray-600 hover:text-black">Support</Link>
-            </div>
-          </nav>
-          <p className="text-xs text-gray-600 mt-4">
-            © 2025 LocalHustle — Community Driven Support for Student Athletes
-          </p>
-        </footer>
+        <footer className="bg-white border-t-4 border-black py-8">
+  <div className="max-w-4xl mx-auto px-6">
+    <nav className="flex flex-wrap justify-center gap-x-8 gap-y-2 mb-6">
+      <a href="/" className="text-xs text-gray-500 hover:text-black">
+        Home
+      </a>
+      <a href="/get-started" className="text-xs text-gray-500 hover:text-black">
+        Get Started
+      </a>
+      <a href="/business-onboard" className="text-xs text-gray-500 hover:text-black">
+        For Businesses
+      </a>
+      <a href="/faq" className="text-xs text-gray-500 hover:text-black">
+        FAQ
+      </a>
+      <a href="/ambassador" className="text-xs text-gray-500 hover:text-black">
+        Ambassador Program
+      </a>
+      <a href="/privacy" className="text-xs text-gray-500 hover:text-black">
+        Privacy
+      </a>
+      <a href="/terms" className="text-xs text-gray-500 hover:text-black">
+        Terms
+      </a>
+    </nav>
+
+    <p className="text-xs text-gray-400 text-center">
+      © 2025 LocalHustle — Community Driven Support for Student Athletes
+    </p>
+  </div>
+</footer>
       </body>
     </html>
   )
