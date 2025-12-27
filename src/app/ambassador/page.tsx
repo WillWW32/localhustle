@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-
+// Remove Textarea import — not needed
 
 export default function Ambassador() {
   const [name, setName] = useState('')
@@ -26,7 +26,6 @@ export default function Ambassador() {
 
     setLoading(true)
 
-    // Sign up as athlete role (ambassadors are athletes)
     const { error: authError } = await supabase.auth.signInWithOtp({
       email,
       options: {
@@ -41,7 +40,6 @@ export default function Ambassador() {
       return
     }
 
-    // Save application
     const { error: dbError } = await supabase
       .from('ambassador_applications')
       .insert({
@@ -135,11 +133,12 @@ export default function Ambassador() {
           <Input placeholder="Phone" value={phone} onChange={(e) => setPhone(e.target.value)} />
           <Input placeholder="School" value={school} onChange={(e) => setSchool(e.target.value)} />
           <Input placeholder="Sport" value={sport} onChange={(e) => setSport(e.target.value)} />
-          <Textarea 
+          <textarea 
             placeholder="Why do you want to be an ambassador? (Show us your hustle!)"
             value={why}
             onChange={(e) => setWhy(e.target.value)}
             rows={6}
+            className="w-full p-4 text-lg border-4 border-black font-mono rounded-lg"
           />
 
           <Button 
