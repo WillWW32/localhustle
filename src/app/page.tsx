@@ -39,14 +39,14 @@ export default function Home() {
     <div className="min-h-screen bg-white text-black font-mono">
       {/* Hero Section */}
       <section className="py-20 px-6 sm:px-12 lg:px-32 text-center">
-       
+        
 
-        {/* "We Connect..." — Black Block Style */}
+        {/* Main Heading — Black Block Style */}
         <div className="bg-black text-white p-12 mb-16">
-          <h2 className="text-3xl sm:text-5xl font-bold !text-white leading-tight">
+          <h1 className="text-3xl sm:text-5xl font-bold !text-white leading-tight">
             We Connect Local Businesses with Student Athletes<br />
             for Scholarships & NIL Deals
-          </h2>
+          </h1>
         </div>
 
         {/* Subheadline */}
@@ -57,16 +57,12 @@ export default function Home() {
         </p>
       </section>
 
-      {/* Dashed Divider */}
-      <hr className="border-t-4 border-dashed border-black my-24 max-w-5xl mx-auto" />
+      {/* Space instead of divider */}
+      <div className="my-32"></div>
 
       {/* Benefits Grid */}
       <section className="px-6 sm:px-12 lg:px-32 pb-24">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-16 max-w-6xl mx-auto">
-          
-          <div className="h-32"></div>
-    </div>
-    
           {/* Student Athletes */}
           <div className="text-center">
             <h2 className="text-3xl font-bold mb-6">Student Athletes</h2>
@@ -81,8 +77,8 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="h-32"></div>
-    </div>
+          {/* No vertical divider — just space */}
+          <div className="hidden md:block"></div>
 
           {/* Parents */}
           <div className="text-center">
@@ -98,8 +94,8 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="h-32"></div>
-    </div>
+          {/* No vertical divider — just space */}
+          <div className="hidden md:block"></div>
 
           {/* Businesses */}
           <div className="text-center">
@@ -117,11 +113,11 @@ export default function Home() {
         </div>
       </section>
 
-      <div className="h-32"></div>
-    </div>
+      {/* Space instead of divider */}
+      <div className="my-32"></div>
 
-      {/* Bottom CTA — Email + Role Buttons */}
-      <section className="pb-20 text-center px-6 sm:px-12 lg:px-32">
+      {/* Bottom CTA */}
+      <section className="pb-32 text-center px-6 sm:px-12 lg:px-32">
         <p className="text-2xl mb-12">Ready to get started?</p>
 
         <div className="w-full max-w-md mx-auto space-y-12">
