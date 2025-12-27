@@ -39,17 +39,14 @@ export default function Home() {
     <div className="min-h-screen bg-white text-black font-mono">
       {/* Hero Section */}
       <section className="py-20 px-6 sm:px-12 lg:px-32 text-center">
-        {/* Slogan */}
-        <p className="text-2xl sm:text-3xl mb-8">
-          Community Driven Support for Student Athletes
-        </p>
+       
 
-        {/* "We Connect..." — Black Block, H3 Size */}
+        {/* "We Connect..." — Black Block Style */}
         <div className="bg-black text-white p-12 mb-16">
-          <h3 className="text-3xl sm:text-4xl font-bold leading-tight">
+          <h2 className="text-3xl sm:text-5xl font-bold !text-white leading-tight">
             We Connect Local Businesses with Student Athletes<br />
             for Scholarships & NIL Deals
-          </h3>
+          </h2>
         </div>
 
         {/* Subheadline */}
@@ -66,6 +63,10 @@ export default function Home() {
       {/* Benefits Grid */}
       <section className="px-6 sm:px-12 lg:px-32 pb-24">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-16 max-w-6xl mx-auto">
+          
+          <div className="h-32"></div>
+    </div>
+    
           {/* Student Athletes */}
           <div className="text-center">
             <h2 className="text-3xl font-bold mb-6">Student Athletes</h2>
@@ -80,8 +81,8 @@ export default function Home() {
             </p>
           </div>
 
-          {/* Vertical Divider (Desktop) */}
-          <div className="hidden md:block border-l-4 border-dashed border-black"></div>
+          <div className="h-32"></div>
+    </div>
 
           {/* Parents */}
           <div className="text-center">
@@ -97,8 +98,8 @@ export default function Home() {
             </p>
           </div>
 
-          {/* Vertical Divider (Desktop) */}
-          <div className="hidden md:block border-l-4 border-dashed border-black"></div>
+          <div className="h-32"></div>
+    </div>
 
           {/* Businesses */}
           <div className="text-center">
@@ -116,12 +117,12 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Final Dashed Divider */}
-      <hr className="border-t-4 border-dashed border-black my-24 max-w-5xl mx-auto" />
+      <div className="h-32"></div>
+    </div>
 
-      {/* Bottom CTA */}
-      <section className="pb-20 text-center">
-        <p className="text-2xl mb-12">Enter Email and Choose Role to Get Started</p>
+      {/* Bottom CTA — Email + Role Buttons */}
+      <section className="pb-20 text-center px-6 sm:px-12 lg:px-32">
+        <p className="text-2xl mb-12">Ready to get started?</p>
 
         <div className="w-full max-w-md mx-auto space-y-12">
           <Input
@@ -155,6 +156,9 @@ export default function Home() {
           )}
         </div>
       </section>
+
+      {/* Extra Space Below CTA */}
+      <div className="h-32"></div>
     </div>
   )
 }
