@@ -981,12 +981,13 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
                     value={standaloneScholarshipAmount}
                     onChange={(e) => setStandaloneScholarshipAmount(e.target.value)}
                   />
-                  <Textarea 
+                  <textarea
                     placeholder="Optional message (e.g., Great season — use for books!)"
                     value={scholarshipMessage}
                     onChange={(e) => setScholarshipMessage(e.target.value)}
-                    className="mt-4"
-                  />
+                    rows={4}
+                    className="w-full p-4 text-lg border-4 border-black font-mono rounded-lg mt-4"
+                  />                  
                   <Button 
                     onClick={awardStandaloneScholarship}
                     className="mt-8 w-full h-16 text-xl bg-green-600 text-white"
