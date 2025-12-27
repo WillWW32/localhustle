@@ -6,10 +6,9 @@ import { Button } from '@/components/ui/button'
 const gigTypes = [
   { title: 'ShoutOut', description: 'Visit a favorite business and make a quick shoutout 15-sec reel about what you like or your favorite order.' },
   { title: 'Youth Clinic', description: 'Run 30–60 min sessions for younger athletes (with teammates).' },
-  { title: 'Team Sponsor', description: 'Business sponsors team meals/gear — money split equally.' },
   { title: 'Cameo', description: 'Custom 15-Sec Video for Younger Athletes (birthdays, pre-game pep talks).' },
   { title: 'Player Training', description: 'Varsity athlete 40-minute training with young player.' },
-  { title: 'Challenge', description: 'Fun competitions — HORSE, PIG, free throws, accuracy toss. Base pay for clip, bonus if athlete wins.' },
+  { title: 'Challenge', description: 'Fun competitions — HORSE, PIG, free throws, accuracy toss. Base pay for clip, bonus if you win.' },
   { title: 'Custom Gig', description: 'Create a gig and offer it.' },
 ]
 
@@ -17,124 +16,90 @@ export default function BusinessOnboard() {
   const router = useRouter()
 
   return (
-    <div style={{
-      fontFamily: "'Courier New', Courier, monospace",
-      backgroundColor: '#fff',
-      color: '#000',
-      minHeight: '100vh',
-      padding: '2rem',
-      textAlign: 'center',
-    }}>
-      {/* Hero */}
-      <h1 style={{
-        fontSize: '48px',
-        fontWeight: 'bold',
-        marginBottom: '2rem',
-      }}>
-        Become the Hometown Hero
-      </h1>
+    <div className="min-h-screen bg-white text-black font-mono py-16 px-4">
+      <div className="max-w-5xl mx-auto">
+        {/* Hero */}
+        <h1 className="text-4xl sm:text-6xl font-bold text-center mb-12">
+          Become the Hometown Hero
+        </h1>
 
-      <p style={{
-        fontSize: '28px',
-        maxWidth: '900px',
-        margin: '0 auto 3rem auto',
-        lineHeight: '1.6',
-      }}>
-        Fund local athletes with gigs & Freedom Scholarships — unrestricted cash paid instantly.
-      </p>
+        <p className="text-xl sm:text-3xl text-center mb-16 max-w-4xl mx-auto">
+          Fund local athletes with gigs & Freedom Scholarships — unrestricted cash paid instantly.<br />
+          Get authentic content. Build goodwill. Discover motivated kids.
+        </p>
 
-      {/* Freedom Scholarships Callout */}
-      <div style={{
-        backgroundColor: '#90ee90',
-        padding: '3rem',
-        margin: '3rem auto',
-        maxWidth: '1000px',
-        border: '4px solid black',
-      }}>
-        <h2 style={{ fontSize: '36px', fontWeight: 'bold', marginBottom: '1.5rem' }}>
-          Freedom Scholarships — Real Impact
+        {/* NIL Stat Callout */}
+        <div className="bg-black text-white p-12 mb-16 text-center">
+          <p className="text-3xl font-bold">
+            NIL deal advertising performs 4x better than traditional ads
+          </p>
+          <p className="text-xl mt-4">
+            Authentic word-of-mouth from kids parents trust — real results.
+          </p>
+        </div>
+
+        {/* How It Works */}
+        <div className="bg-black text-white p-12 mb-16 text-center">
+          <h2 className="text-3xl font-bold mb-8">
+            How It Works — 3 Simple Steps
+          </h2>
+          <ol className="text-xl space-y-6 max-w-3xl mx-auto text-left">
+            <li>1. Add funds to your wallet (instant).</li>
+            <li>2. Post a gig or award a Freedom Scholarship.</li>
+            <li>3. Athletes complete → you approve → they get paid instantly.</li>
+          </ol>
+        </div>
+
+        {/* Popular Gig Types */}
+        <h2 className="text-3xl font-bold text-center mb-12">
+          Popular Gig Types
         </h2>
-        <p style={{ fontSize: '24px', lineHeight: '1.6' }}>
-          Add a Freedom Scholarship to any gig — paid instantly to the athlete.<br />
-          No restrictions — they use it for books, food, rent — whatever they need.<br />
-          You become the hero who made college more possible.
+        <p className="text-xl text-center mb-12 max-w-4xl mx-auto">
+          These are the gigs and challenges you can offer student athletes.<br />
+          Add a Freedom Scholarship to any gig for extra impact.
         </p>
-      </div>
 
-      {/* Gig Types */}
-      <h2 style={{ fontSize: '36px', fontWeight: 'bold', margin: '3rem 0 2rem' }}>
-        Popular Gig Types
-      </h2>
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-        gap: '2rem',
-        maxWidth: '1200px',
-        margin: '0 auto 4rem auto',
-      }}>
-        {gigTypes.map((gig) => (
-          <div key={gig.title} style={{
-            border: '4px solid black',
-            padding: '2rem',
-            backgroundColor: '#f0f0f0',
-          }}>
-            <h3 style={{ fontSize: '28px', fontWeight: 'bold', marginBottom: '1rem' }}>
-              {gig.title}
-            </h3>
-            <p style={{ fontSize: '20px' }}>
-              {gig.description}
-            </p>
-          </div>
-        ))}
-      </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-24">
+          {gigTypes.map((gig) => (
+            <div key={gig.title} className="border-4 border-black p-8 bg-gray-100">
+              <h3 className="text-2xl font-bold mb-4">{gig.title}</h3>
+              <p className="text-lg">{gig.description}</p>
+            </div>
+          ))}
+        </div>
 
-      {/* Booster Events */}
-      <div style={{ margin: '4rem 0' }}>
-        <h2 style={{ fontSize: '36px', fontWeight: 'bold', marginBottom: '2rem' }}>
-          Booster Club Events
-        </h2>
-        <p style={{ fontSize: '24px', maxWidth: '800px', margin: '0 auto 2rem auto', lineHeight: '1.8' }}>
-          Create a booster club event — crowd-fund team meals, gear, travel, or youth clinics.<br />
-          Share the link — local businesses donate — money goes directly to team expenses.
-        </p>
-        <Button 
-          onClick={() => router.push('/dashboard')}
-          style={{
-            width: '100%',
-            maxWidth: '500px',
-            height: '80px',
-            fontSize: '30px',
-            backgroundColor: '#90ee90',
-            color: 'black',
-            fontFamily: "'Courier New', Courier, monospace'",
-          }}
-        >
-          Create Booster Event in Admin Console
-        </Button>
-      </div>
+        {/* Freedom Scholarships Callout */}
+        <div className="bg-green-100 p-12 border-4 border-green-600 mb-24">
+          <h2 className="text-3xl font-bold text-center mb-8">
+            Freedom Scholarships
+          </h2>
+          <p className="text-xl text-center max-w-3xl mx-auto">
+            Add a scholarship to any gig or award standalone — paid instantly to the athlete.<br />
+            No restrictions — they use it for books, food, rent — whatever they need.<br />
+            You become the hero who made college more possible.
+          </p>
+        </div>
 
-      {/* Final CTA */}
-      <div style={{ margin: '4rem 0' }}>
-        <Button
-          onClick={() => router.push('/dashboard')}
-          style={{
-            width: '100%',
-            maxWidth: '600px',
-            height: '100px',
-            fontSize: '36px',
-            backgroundColor: '#000',
-            color: '#fff',
-          }}
-        >
-          Start Sponsoring Athletes Now
-        </Button>
-      </div>
+        {/* Booster Events Mention */}
+        <div className="bg-gray-100 p-12 border-4 border-black mb-24 text-center">
+          <h2 className="text-3xl font-bold mb-8">
+            Better Fundraising with Booster Events
+          </h2>
+          <p className="text-xl max-w-3xl mx-auto">
+            In your dashboard, you can support or create booster events — crowd-fund team meals, gear, travel, or clinics.<br />
+            Share the link — local businesses donate — money goes directly to team needs.
+          </p>
+        </div>
 
-      {/* Bottom Banner */}
-      <div style={{ backgroundColor: '#f0f0f0', padding: '2rem', marginTop: '4rem', borderTop: '4px solid black' }}>
-        <p style={{ fontSize: '24px', fontWeight: 'bold' }}>
-          Fund Freedom Scholarships — paid instantly, no restrictions.
-        </p>
+        {/* Main CTA */}
+        <div className="text-center">
+          <Button
+            onClick={() => router.push('/dashboard')}
+            className="w-full max-w-2xl h-24 text-3xl bg-black text-white font-bold"
+          >
+            Go to Admin Console — Start Funding Gigs & Scholarships
+          </Button>
+        </div>
       </div>
     </div>
   )
