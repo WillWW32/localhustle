@@ -39,21 +39,18 @@ export default function Home() {
     <div className="min-h-screen bg-white text-black font-mono">
       {/* Hero Section */}
       <section className="py-20 px-6 sm:px-12 lg:px-32 text-center">
-        {/* Slogan */}
-        <p className="text-2xl sm:text-3xl mb-8">
-          Community Driven Support for Student Athletes
-        </p>
+       
 
-        {/* Main Heading — Black Block Style */}
+        {/* "We Connect..." — White on Black Block + Smaller Text */}
         <div className="bg-black text-white p-12 mb-16">
-          <h1 className="text-4xl sm:text-6xl font-bold">
+          <h2 className="text-3xl sm:text-5xl font-bold leading-tight">
             We Connect Local Businesses with Student Athletes<br />
             for Scholarships & NIL Deals
-          </h1>
+          </h2>
         </div>
 
         {/* Subheadline */}
-        <p className="text-xl sm:text-3xl mb-24 max-w-4xl mx-auto leading-relaxed">
+        <p className="text-xl sm:text-2xl mb-24 max-w-4xl mx-auto leading-relaxed">
           Student athletes earn <strong>Freedom Scholarships</strong> — unrestricted cash paid instantly — 
           plus NIL gigs from local supporters.<br />
           Parents fund improvement. Businesses become hometown heroes.
@@ -80,9 +77,10 @@ export default function Home() {
             </p>
           </div>
 
-          {/* Vertical Divider (Desktop) */}
-          <div className="hidden md:block border-l-4 border-dashed border-black"></div>
-
+          {/* Half-Width Dashed Divider */}
+<div className="flex justify-center my-24">
+  <div className="w-full max-w-2xl border-t-4 border-dashed border-black"></div>
+</div>
           {/* Parents */}
           <div className="text-center">
             <h2 className="text-3xl font-bold mb-6">Parents</h2>
@@ -97,9 +95,11 @@ export default function Home() {
             </p>
           </div>
 
-          {/* Vertical Divider (Desktop) */}
-          <div className="hidden md:block border-l-4 border-dashed border-black"></div>
-
+          
+    {/* Half-Width Dashed Divider */}
+    <div className="flex justify-center my-24">
+    <div className="w-full max-w-2xl border-t-4 border-dashed border-black"></div>
+    </div>
           {/* Businesses */}
           <div className="text-center">
             <h2 className="text-3xl font-bold mb-6">Businesses</h2>
@@ -110,7 +110,7 @@ export default function Home() {
             <p className="text-lg leading-relaxed px-4">
               Authentic clips from trusted kids.<br />
               Award Freedom Scholarships — paid instantly.<br />
-              Real Community Impact that Lasts.
+              Real community impact that lasts.
             </p>
           </div>
         </div>
@@ -119,9 +119,9 @@ export default function Home() {
       {/* Final Dashed Divider */}
       <hr className="border-t-4 border-dashed border-black my-24 max-w-5xl mx-auto" />
 
-      {/* Bottom CTA — Email + Role Buttons (Only Here) */}
+      {/* Bottom CTA — Email + Role Buttons */}
       <section className="pb-20 text-center">
-        <p className="text-2xl mb-12">Ready to get started?</p>
+        
 
         <div className="w-full max-w-md mx-auto space-y-12">
           <Input
@@ -154,6 +154,7 @@ export default function Home() {
             <p className="text-center text-xl mt-4">Sending magic link...</p>
           )}
         </div>
+        <p className="text-2xl mb-12">Enter Email Above to Get Started</p>
       </section>
     </div>
   )
