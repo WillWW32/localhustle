@@ -11,33 +11,31 @@ export default function Home() {
   const [loading, setLoading] = useState(false)
   const router = useRouter()
 
-  const sendMagicLink = async (redirectPath: string) => {
-    if (!email.trim()) {
-      alert('Please enter your email')
-      return
-    }
-
-    setLoading(true)
-
-    // Force redirect after login using full URL with query param to preserve intent
-    const redirectUrl = `${process.env.NEXT_PUBLIC_URL}/auth/callback?next=${encodeURIComponent(redirectPath)}`
-
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        emailRedirectTo: redirectUrl,
-      },
-    })
-
-    if (error) {
-      alert('Error: ' + error.message)
-    } else {
-      alert('🎉 Magic link sent! Check your email.')
-    }
-
-    setLoading(false)
+  const sendMagicLink = async (intendedPath: string) => {
+  if (!email.trim()) {
+    alert('Please enter your email')
+    return
   }
 
+  setLoading(true)
+
+  const redirectUrl = `${process.env.NEXT_PUBLIC_URL}/auth/callback?next=${encodeURIComponent(intendedPath)}`
+
+  const { error } = await supabase.auth.signInWithOtp({
+    email,
+    options: {
+      emailRedirectTo: redirectUrl,
+    },
+  })
+
+  if (error) {
+    alert('Error: ' + error.message)
+  } else {
+    alert('🎉 Magic link sent! Check your email.')
+  }
+
+  setLoading(true)
+}
   return (
     <div className="min-h-screen bg-white text-black font-mono">
       {/* Hero Section */}
@@ -132,20 +130,18 @@ export default function Home() {
 
           <div className="space-y-6">
             <Button
-              onClick={() => sendMagicLink('/get-started')}
-              disabled={loading}
-              className="w-full h-20 text-2xl bg-black text-white font-bold"
-            >
-              I'm a Student Athlete
-            </Button>
+  onClick={() => sendMagicLink('/get-started')}
+  className="..."
+>
+  I'm a Student Athlete
+</Button>
 
-            <Button
-              onClick={() => sendMagicLink('/business-onboard')}
-              disabled={loading}
-              className="w-full h-20 text-2xl bg-purple-600 text-white font-bold"
-            >
-              I'm a Business or Parent Sponsor
-            </Button>
+<Button
+  onClick={() => sendMagicLink('/business-onboard')}
+  className="..."
+>
+  I'm a Business or Parent Sponsor
+</Button>
           </div>
 
           {loading && (
