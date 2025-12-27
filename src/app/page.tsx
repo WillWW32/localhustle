@@ -39,17 +39,14 @@ export default function Home() {
     <div className="min-h-screen bg-white text-black font-mono">
       {/* Hero Section */}
       <section className="py-20 px-6 sm:px-12 lg:px-32 text-center">
-        {/* Slogan */}
-        <p className="text-2xl sm:text-3xl mb-8">
-          Community Driven Support for Student Athletes
-        </p>
+        
 
         {/* Main Heading — Black Block Style */}
         <div className="bg-black text-white p-12 mb-16">
-          <h1 className="text-3xl sm:text-5xl font-bold leading-tight">
+          <h2 className="text-3xl sm:text-5xl font-bold leading-tight">
             We Connect Local Businesses with Student Athletes<br />
             for Scholarships & NIL Deals
-          </h1>
+          </h2>
         </div>
 
         {/* Subheadline */}
@@ -60,9 +57,7 @@ export default function Home() {
         </p>
       </section>
 
-      {/* Dashed Divider */}
-      <hr className="border-t-4 border-dashed border-black my-24 max-w-5xl mx-auto" />
-
+     
       {/* Benefits Grid */}
       <section className="px-6 sm:px-12 lg:px-32 pb-24">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-16 max-w-6xl mx-auto">
