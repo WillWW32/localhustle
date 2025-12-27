@@ -41,23 +41,29 @@ export default function Home() {
       <section className="py-20 px-6 sm:px-12 lg:px-32 text-center">
         {/* Slogan */}
         <p className="text-2xl sm:text-3xl mb-8">
-          We Connect Local Businesses with Student Athletes<br />
-          for Scholarships & NIL Deals
+          Community Driven Support for Student Athletes
         </p>
 
-        {/* Subheadline with Freedom Scholarships Explained */}
-        <p className="text-lg sm:text-2xl mb-16 max-w-4xl mx-auto leading-relaxed">
+        {/* Main Heading — Black Block Style */}
+        <div className="bg-black text-white p-12 mb-16">
+          <h1 className="text-4xl sm:text-6xl font-bold">
+            We Connect Local Businesses with Student Athletes<br />
+            for Scholarships & NIL Deals
+          </h1>
+        </div>
+
+        {/* Subheadline */}
+        <p className="text-xl sm:text-3xl mb-24 max-w-4xl mx-auto leading-relaxed">
           Student athletes earn <strong>Freedom Scholarships</strong> — unrestricted cash paid instantly — 
           plus NIL gigs from local supporters.<br />
           Parents fund improvement. Businesses become hometown heroes.
         </p>
-
-        
+      </section>
 
       {/* Dashed Divider */}
-      <div className="border-t-4 border-dashed border-black my-24 max-w-5xl mx-auto"></div>
+      <hr className="border-t-4 border-dashed border-black my-24 max-w-5xl mx-auto" />
 
-      {/* Benefits Grid with Dividers */}
+      {/* Benefits Grid */}
       <section className="px-6 sm:px-12 lg:px-32 pb-24">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-16 max-w-6xl mx-auto">
           {/* Student Athletes */}
@@ -74,7 +80,7 @@ export default function Home() {
             </p>
           </div>
 
-          {/* Divider (hidden on mobile) */}
+          {/* Vertical Divider (Desktop) */}
           <div className="hidden md:block border-l-4 border-dashed border-black"></div>
 
           {/* Parents */}
@@ -91,7 +97,7 @@ export default function Home() {
             </p>
           </div>
 
-          {/* Divider (hidden on mobile) */}
+          {/* Vertical Divider (Desktop) */}
           <div className="hidden md:block border-l-4 border-dashed border-black"></div>
 
           {/* Businesses */}
@@ -111,9 +117,12 @@ export default function Home() {
       </section>
 
       {/* Final Dashed Divider */}
-      <div className="border-t-4 border-dashed border-black my-24 max-w-5xl mx-auto"></div>
+      <hr className="border-t-4 border-dashed border-black my-24 max-w-5xl mx-auto" />
 
-{/* Email Capture + Role Buttons */}
+      {/* Bottom CTA — Email + Role Buttons (Only Here) */}
+      <section className="pb-20 text-center">
+        <p className="text-2xl mb-12">Ready to get started?</p>
+
         <div className="w-full max-w-md mx-auto space-y-12">
           <Input
             type="email"
@@ -145,14 +154,6 @@ export default function Home() {
             <p className="text-center text-xl mt-4">Sending magic link...</p>
           )}
         </div>
-      </section>
-      
-      {/* Final CTA (No duplicate email/buttons) */}
-      <section className="pb-20 text-center">
-        <p className="text-2xl mb-8">Ready to get started?</p>
-        <p className="text-lg mb-12 max-w-3xl mx-auto">
-          Enter your email above and choose your role to begin.
-        </p>
       </section>
     </div>
   )
