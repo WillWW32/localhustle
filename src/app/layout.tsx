@@ -73,23 +73,15 @@ export default function RootLayout({
 
         <main>{children}</main>
 
-        {/* Pinned Share Button */}
-        <div className="text-center py-8 bg-white">
-          <Button onClick={handleShare} style={{
-            width: '100%',
-            maxWidth: '500px',
-            height: '80px',
-            fontSize: '30px',
-            backgroundColor: 'black',
-            color: 'white',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontFamily: "'Courier New', Courier, monospace'",
-          }}>
-            Share with Teammates
-          </Button>
-        </div>
+        {/* Pinned Share Button — Smaller, One Line */}
+<div className="text-center py-4 bg-white border-t-4 border-b-4 border-black">
+  <Button 
+    onClick={handleShare}
+    className="w-full max-w-md h-12 text-lg bg-black text-white font-mono flex items-center justify-center hover:bg-gray-800"
+  >
+    Share with Teammates — Earn Together
+  </Button>
+</div>
 
         {/* Footer — smaller text, 2 lines, gray */}
         <footer className="py-8 border-t-4 border-black text-center">
