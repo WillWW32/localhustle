@@ -73,6 +73,7 @@ export default function RootLayout({
 
         <main>{children}</main>
 
+
 {/* Share with Teammates Banner — Small, Active Share Sheet */}
 <div className="bg-gray-50 py-2 border-t border-b border-gray-300">
   <p className="text-xs text-center text-gray-600">
@@ -102,33 +103,33 @@ export default function RootLayout({
   </p>
 </div>
         {/* Footer — smaller text, 2 lines, gray */}
-        <footer className="bg-white border-t-4 border-black py-8">
+        <footer className="bg-white border-t-4 border-black py-12">
   <div className="max-w-4xl mx-auto px-6">
-    <nav className="flex flex-wrap justify-center gap-x-8 gap-y-2 mb-6">
-      <a href="/" className="text-xs text-gray-500 hover:text-black">
+    <nav className="flex flex-wrap justify-center gap-x-12 gap-y-6 mb-8">
+      <a href="/" className="text-gray-600 hover:text-black text-base no-underline">
         Home
       </a>
-      <a href="/get-started" className="text-xs text-gray-500 hover:text-black">
+      <a href="/get-started" className="text-gray-600 hover:text-black text-base no-underline">
         Get Started
       </a>
-      <a href="/business-onboard" className="text-xs text-gray-500 hover:text-black">
+      <a href="/business-onboard" className="text-gray-600 hover:text-black text-base no-underline">
         For Businesses
       </a>
-      <a href="/faq" className="text-xs text-gray-500 hover:text-black">
+      <a href="/faq" className="text-gray-600 hover:text-black text-base no-underline">
         FAQ
       </a>
-      <a href="/ambassador" className="text-xs text-gray-500 hover:text-black">
+      <a href="/ambassador" className="text-gray-600 hover:text-black text-base no-underline">
         Ambassador Program
       </a>
-      <a href="/privacy" className="text-xs text-gray-500 hover:text-black">
+      <a href="/privacy" className="text-gray-600 hover:text-black text-base no-underline">
         Privacy
       </a>
-      <a href="/terms" className="text-xs text-gray-500 hover:text-black">
+      <a href="/terms" className="text-gray-600 hover:text-black text-base no-underline">
         Terms
       </a>
     </nav>
 
-    <p className="text-xs text-gray-400 text-center">
+    <p className="text-gray-500 text-sm text-center">
       © 2025 LocalHustle — Community Driven Support for Student Athletes
     </p>
   </div>
