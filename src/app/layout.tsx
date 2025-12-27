@@ -73,19 +73,34 @@ export default function RootLayout({
 
         <main>{children}</main>
 
-{/* Share with Teammates Banner — Ultra Small, Minimal */}
-<div className="bg-gray-50 py-3 border-t border-b border-gray-300">
-  <p className="text-sm text-center text-gray-700">
+{/* Share with Teammates Banner — Small, Active Share Sheet */}
+<div className="bg-gray-50 py-2 border-t border-b border-gray-300">
+  <p className="text-xs text-center text-gray-600">
     Share with teammates — earn together!{' '}
-    <a 
-      href={`https://app.localhustle.org?ref=${profile?.id}`}
-      className="underline hover:text-black"
+    <button 
+      onClick={() => {
+        if (navigator.share) {
+          navigator.share({
+            title: 'Join me on LocalHustle',
+            text: 'Earn money & scholarships for your hustle — local businesses pay instantly!',
+            url: 'https://app.localhustle.org',
+          }).catch(() => {
+            // Fallback: copy link
+            navigator.clipboard.writeText('https://app.localhustle.org')
+            alert('Link copied!')
+          })
+        } else {
+          // Fallback for desktop
+          navigator.clipboard.writeText('https://app.localhustle.org')
+          alert('Link copied — send to your teammates!')
+        }
+      }}
+      className="underline hover:text-black cursor-pointer"
     >
-      localhustle.org?ref={profile?.id}
-    </a>
+      Tap to share
+    </button>
   </p>
 </div>
-
         {/* Footer — smaller text, 2 lines, gray */}
         <footer className="bg-white border-t-4 border-black py-8">
   <div className="max-w-4xl mx-auto px-6">
