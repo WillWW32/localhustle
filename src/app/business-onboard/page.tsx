@@ -18,10 +18,12 @@ export default function BusinessOnboard() {
   return (
     <div className="min-h-screen bg-white text-black font-mono py-16 px-4">
       <div className="max-w-5xl mx-auto">
-        {/* Hero */}
-        <h1 className="text-4xl sm:text-6xl font-bold text-center mb-12">
-          Become the Hometown Hero
-        </h1>
+        {/* Hero — White on Black Block Style */}
+        <div className="bg-black text-white p-16 mb-16 text-center">
+          <h1 className="text-4xl sm:text-6xl font-bold">
+            Become the Hometown Hero
+          </h1>
+        </div>
 
         <p className="text-xl sm:text-3xl text-center mb-16 max-w-4xl mx-auto">
           Fund local athletes with gigs & Freedom Scholarships — unrestricted cash paid instantly.<br />
@@ -50,7 +52,7 @@ export default function BusinessOnboard() {
           </ol>
         </div>
 
-        {/* Popular Gig Types */}
+        {/* Popular Gig Types — In Containers */}
         <h2 className="text-3xl font-bold text-center mb-12">
           Popular Gig Types
         </h2>
@@ -61,9 +63,9 @@ export default function BusinessOnboard() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-24">
           {gigTypes.map((gig) => (
-            <div key={gig.title} className="border-4 border-black p-8 bg-gray-100">
-              <h3 className="text-2xl font-bold mb-4">{gig.title}</h3>
-              <p className="text-lg">{gig.description}</p>
+            <div key={gig.title} className="border-4 border-black p-12 bg-gray-100">
+              <h3 className="text-2xl font-bold mb-6">{gig.title}</h3>
+              <p className="text-lg leading-relaxed">{gig.description}</p>
             </div>
           ))}
         </div>

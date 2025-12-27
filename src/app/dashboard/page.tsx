@@ -68,38 +68,52 @@ export default function Dashboard() {
   const router = useRouter()
 
   useEffect(() => {
-    const fetchData = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-        router.replace('/')
-        return
+  const fetchData = async () => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      router.replace('/')
+      return
+    }
+
+    const currentPath = window.location.pathname
+
+    let prof = null
+    const { data: existingProf } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', user.id)
+      .single()
+
+    if (existingProf) {
+      prof = existingProf
+    } else {
+      // New user — set role based on current path
+      let role = 'athlete' // default
+      if (currentPath.includes('/business-onboard')) {
+        role = 'business'
+      } else if (currentPath.includes('/get-started')) {
+        role = 'athlete'
       }
 
-      let prof = null
-      const { data: existingProf } = await supabase
+      const { data: newProf } = await supabase
         .from('profiles')
-        .select('*')
-        .eq('id', user.id)
+        .insert({
+          id: user.id,
+          email: user.email,
+          role,
+        })
+        .select()
         .single()
+      prof = newProf
+    }
 
-      if (existingProf) {
-        prof = existingProf
-      } else {
-        const metadataRole = user.user_metadata?.role || 'athlete'
-        const { data: newProf } = await supabase
-          .from('profiles')
-          .insert({
-            id: user.id,
-            email: user.email,
-            role: metadataRole,
-          })
-          .select()
-          .single()
-        prof = newProf
-      }
+    setProfile(prof)
 
-      setProfile(prof)
-
+    // Optional: redirect to dashboard after first login (cleaner flow)
+    if (currentPath.includes('/get-started') || currentPath.includes('/business-onboard')) {
+      router.replace('/dashboard')
+    }
+    
       if (prof.role === 'athlete') {
         if (prof.selected_gigs) setSelectedGigs(prof.selected_gigs)
         setProfilePic(prof.profile_pic || '')
