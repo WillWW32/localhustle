@@ -19,10 +19,13 @@ export default function Home() {
 
     setLoading(true)
 
+    // Force redirect after login using full URL with query param to preserve intent
+    const redirectUrl = `${process.env.NEXT_PUBLIC_URL}/auth/callback?next=${encodeURIComponent(redirectPath)}`
+
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: `${process.env.NEXT_PUBLIC_URL}${redirectPath}`,
+        emailRedirectTo: redirectUrl,
       },
     })
 
@@ -41,12 +44,12 @@ export default function Home() {
       <section className="py-20 px-6 sm:px-12 lg:px-32 text-center">
         
 
-        {/* Main Heading — Black Block Style */}
-        <div className="bg-black text-white p-12 mb-16">
-          <h2 className="text-3xl sm:text-5xl font-bold leading-tight">
+        {/* Main Heading — Black Block Style (Protected from Override) */}
+        <div className="bg-black text-white p-12 mb-16 !important">
+          <h1 className="text-3xl sm:text-5xl font-bold leading-tight !text-white">
             We Connect Local Businesses with Student Athletes<br />
             for Scholarships & NIL Deals
-          </h2>
+          </h1>
         </div>
 
         {/* Subheadline */}
@@ -57,7 +60,8 @@ export default function Home() {
         </p>
       </section>
 
-     
+      
+
       {/* Benefits Grid */}
       <section className="px-6 sm:px-12 lg:px-32 pb-24">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-16 max-w-6xl mx-auto">
@@ -111,12 +115,11 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Final Dashed Divider */}
-      <hr className="border-t-4 border-dashed border-black my-24 max-w-5xl mx-auto" />
+     
 
       {/* Bottom CTA — Email + Role Buttons */}
       <section className="pb-20 text-center">
-        <p className="text-2xl mb-12">Ready to get started?</p>
+        <p className="text-2xl mb-12">Get Started with email and choose role</p>
 
         <div className="w-full max-w-md mx-auto space-y-12">
           <Input
@@ -150,6 +153,7 @@ export default function Home() {
           )}
         </div>
       </section>
+      <br>
     </div>
   )
 }
