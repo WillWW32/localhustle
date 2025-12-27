@@ -11,7 +11,7 @@ export default function Home() {
   const [loading, setLoading] = useState(false)
   const router = useRouter()
 
-  const sendMagicLink = async (intendedPath: string) => {
+  const sendMagicLink = async (path: string) => {
   if (!email.trim()) {
     alert('Please enter your email')
     return
@@ -19,12 +19,10 @@ export default function Home() {
 
   setLoading(true)
 
-  const redirectUrl = `${process.env.NEXT_PUBLIC_URL}/auth/callback?next=${encodeURIComponent(intendedPath)}`
-
   const { error } = await supabase.auth.signInWithOtp({
     email,
     options: {
-      emailRedirectTo: redirectUrl,
+      emailRedirectTo: `${process.env.NEXT_PUBLIC_URL}${path}`,
     },
   })
 
@@ -34,7 +32,7 @@ export default function Home() {
     alert('🎉 Magic link sent! Check your email.')
   }
 
-  setLoading(true)
+  setLoading(false)
 }
   return (
     <div className="min-h-screen bg-white text-black font-mono">
@@ -42,13 +40,13 @@ export default function Home() {
       <section className="py-20 px-6 sm:px-12 lg:px-32 text-center">
         
 
-        {/* Main Heading — Black Block Style (Protected from Override) */}
-        <div className="bg-black text-white p-12 mb-16 !important">
-          <h1 className="text-3xl sm:text-5xl font-bold leading-tight !text-white">
-            We Connect Local Businesses with Student Athletes<br />
-            for Scholarships & NIL Deals
-          </h1>
-        </div>
+        {/* Main Heading — White on Black Block, Protected */}
+<div className="bg-black p-12 mb-16">
+  <h1 className="text-4xl sm:text-5xl font-bold text-white text-center leading-tight">
+    We Connect Local Businesses with Student Athletes<br />
+    for Scholarships & NIL Deals
+  </h1>
+</div>
 
         {/* Subheadline */}
         <p className="text-xl sm:text-2xl mb-24 max-w-4xl mx-auto leading-relaxed">
