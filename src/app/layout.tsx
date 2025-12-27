@@ -5,6 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { useEffect, useState } from 'react'
+import { usePathname } from 'next/navigation'
 
 export default function RootLayout({
   children,
@@ -13,6 +14,7 @@ export default function RootLayout({
 }) {
   const [displayedSlogan, setDisplayedSlogan] = useState('')
   const slogan = "Community Driven Support for Student Athletes"
+  const pathname = usePathname()
 
   const handleShare = () => {
     if (navigator.share) {
@@ -22,7 +24,8 @@ export default function RootLayout({
         url: 'https://app.localhustle.org',
       }).catch(console.error)
     } else {
-      alert('Copy this link to share: https://app.localhustle.org')
+      navigator.clipboard.writeText('https://app.localhustle.org')
+      alert('Link copied — send to your teammates!')
     }
   }
 
@@ -40,100 +43,80 @@ export default function RootLayout({
     return () => clearInterval(interval)
   }, [])
 
+  // Hide share banner on business pages
+  const isBusinessPage = pathname === '/business-onboard' || pathname.startsWith('/dashboard')
+
   return (
     <html lang="en">
-      <head>
-        <link rel="icon" href="/favicon.ico" />
-      </head>
-      <body style={{ fontFamily: "'Courier New', Courier, monospace", backgroundColor: 'white', color: 'black' }}>
+      <head />
+      <body>
         {/* Header */}
-        <header className="py-1 border-b-4 border-black">
-          <div className="container text-center">
+        <header className="bg-white border-b-4 border-black py-8">
+          <div className="max-w-6xl mx-auto px-6 flex justify-between items-center">
             <Link href="/">
               <Image
-                src="/logo.jpg"
+                src="/logo.png"
                 alt="LocalHustle Logo"
-                width={225}
-                height={225}
-                className="mx-auto"
+                width={200}
+                height={60}
                 priority
               />
             </Link>
+            <p className="text-2xl font-mono hidden sm:block">
+              {displayedSlogan}
+            </p>
           </div>
         </header>
 
-        {/* Slogan + Typewriter + Triangle */}
-        <div className="text-center py-2">
-          <p style={{ fontSize: '2rem', margin: '0' }}>
-            {displayedSlogan}
-            <span style={{ animation: 'blink 1s step-end infinite' }}>|</span>
-          </p>
-          <div style={{ fontSize: '3rem', margin: '1rem 0' }}>▼</div>
-        </div>
+        {children}
 
-        <main>{children}</main>
+        {/* Share with Teammates Banner — Only on non-business pages */}
+        {!isBusinessPage && (
+          <div className="bg-gray-50 py-2 border-t border-b border-gray-300">
+            <p className="text-xs text-center text-gray-600">
+              Share with teammates — earn together!{' '}
+              <button 
+                onClick={handleShare}
+                className="underline hover:text-black cursor-pointer"
+              >
+                Tap to share
+              </button>
+            </p>
+          </div>
+        )}
 
-
-{/* Share with Teammates Banner — Only for Athletes */}
-{profile?.role === 'athlete' && (
-  <div className="bg-gray-50 py-2 border-t border-b border-gray-300">
-    <p className="text-xs text-center text-gray-600">
-      Share with teammates — earn together!{' '}
-      <button 
-        onClick={() => {
-          if (navigator.share) {
-            navigator.share({
-              title: 'Join me on LocalHustle',
-              text: 'Earn money & scholarships for your hustle — local businesses pay instantly!',
-              url: 'https://app.localhustle.org',
-            }).catch(() => {
-              navigator.clipboard.writeText('https://app.localhustle.org')
-              alert('Link copied!')
-            })
-          } else {
-            navigator.clipboard.writeText('https://app.localhustle.org')
-            alert('Link copied — send to your teammates!')
-          }
-        }}
-        className="underline hover:text-black cursor-pointer"
-      >
-        Tap to share
-      </button>
-    </p>
-  </div>
-)}
-        {/* Footer — smaller text, 2 lines, gray */}
+        {/* Footer */}
         <footer className="bg-white border-t-4 border-black py-12">
-  <div className="max-w-4xl mx-auto px-6">
-    <nav className="flex flex-wrap justify-center gap-x-12 gap-y-6 mb-8">
-      <a href="/" className="text-gray-600 hover:text-black text-base no-underline">
-        Home
-      </a>
-      <a href="/get-started" className="text-gray-600 hover:text-black text-base no-underline">
-        Get Started
-      </a>
-      <a href="/business-onboard" className="text-gray-600 hover:text-black text-base no-underline">
-        For Businesses
-      </a>
-      <a href="/faq" className="text-gray-600 hover:text-black text-base no-underline">
-        FAQ
-      </a>
-      <a href="/ambassador" className="text-gray-600 hover:text-black text-base no-underline">
-        Ambassador Program
-      </a>
-      <a href="/privacy" className="text-gray-600 hover:text-black text-base no-underline">
-        Privacy
-      </a>
-      <a href="/terms" className="text-gray-600 hover:text-black text-base no-underline">
-        Terms
-      </a>
-    </nav>
+          <div className="max-w-4xl mx-auto px-6">
+            <nav className="flex flex-wrap justify-center gap-x-12 gap-y-6 mb-8">
+              <a href="/" className="text-gray-600 hover:text-black text-base no-underline">
+                Home
+              </a>
+              <a href="/get-started" className="text-gray-600 hover:text-black text-base no-underline">
+                Get Started
+              </a>
+              <a href="/business-onboard" className="text-gray-600 hover:text-black text-base no-underline">
+                For Businesses
+              </a>
+              <a href="/faq" className="text-gray-600 hover:text-black text-base no-underline">
+                FAQ
+              </a>
+              <a href="/ambassador" className="text-gray-600 hover:text-black text-base no-underline">
+                Ambassador Program
+              </a>
+              <a href="/privacy" className="text-gray-600 hover:text-black text-base no-underline">
+                Privacy
+              </a>
+              <a href="/terms" className="text-gray-600 hover:text-black text-base no-underline">
+                Terms
+              </a>
+            </nav>
 
-    <p className="text-gray-500 text-sm text-center">
-      © 2025 LocalHustle — Community Driven Support for Student Athletes
-    </p>
-  </div>
-</footer>
+            <p className="text-gray-500 text-sm text-center">
+              © 2025 LocalHustle — Community Driven Support for Student Athletes
+            </p>
+          </div>
+        </footer>
       </body>
     </html>
   )
