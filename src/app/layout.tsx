@@ -62,7 +62,8 @@ export default function RootLayout({
                 priority
               />
             </Link>
-            <p className="text-2xl sm:text-3xl font-mono hidden sm:block">
+            {/* Slogan — Bigger */}
+            <p className="text-3xl sm:text-4xl font-mono hidden sm:block">
               {displayedSlogan}
             </p>
           </div>
@@ -70,7 +71,7 @@ export default function RootLayout({
 
         {children}
 
-        {/* Share Banner — Only on non-business pages */}
+        {/* Share with Teammates Banner — Only on non-business pages */}
         {!isBusinessPage && (
           <div className="bg-gray-50 py-2 border-t border-b border-gray-300">
             <p className="text-xs text-center text-gray-600">
