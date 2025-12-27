@@ -9,185 +9,147 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 
 export default function Home() {
-  const [role, setRole] = useState<'athlete' | 'business' | null>(null)
-  const [level, setLevel] = useState<'high_school' | 'college' | null>(null)
   const [email, setEmail] = useState('')
-  const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(false)
   const router = useRouter()
 
-  const handleLogin = async () => {
-    if (!role || (role === 'athlete' && !level)) {
-      alert('Please select your role and level')
+  const sendMagicLink = async (path: string) => {
+    if (!email.trim()) {
+      alert('Please enter your email')
       return
     }
 
     setLoading(true)
 
-    const { error } = await supabase.auth.signInWithOtp({ 
+    const { error } = await supabase.auth.signInWithOtp({
       email,
-      options: { 
-        data: { 
-          role,
-          level: role === 'athlete' ? level : null 
-        } 
-      }
+      options: {
+        emailRedirectTo: `${process.env.NEXT_PUBLIC_URL}${path}`,
+      },
     })
 
-    if (error) alert(error.message)
-    else {
-      alert(`
-🎉 Magic link sent!
-
-Check your email — click the link to log in.
-
-You'll go straight to your dashboard.
-
-No passwords, just hustle.
-
-See you inside! 🚀
-      `.trim())
+    if (error) {
+      alert('Error: ' + error.message)
+    } else {
+      alert('🎉 Magic link sent! Check your email.')
     }
+
     setLoading(false)
   }
 
-  useEffect(() => {
-    const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      setUser(session?.user ?? null)
-
-      if (session?.user) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', session.user.id)
-          .single()
-
-        if (!profile?.role) {
-          router.push('/select-role')
-        } else {
-          router.push('/dashboard')
-        }
-      }
-    }
-
-    checkSession()
-  }, [router])
-
   return (
-    <div className="min-h-screen bg-white text-black font-mono py-8 px-4 sm:px-8">
-      {/* Slogan + Triangle */}
-      <p className="text-2xl sm:text-3xl text-center mb-4">
+    <div className="min-h-screen bg-white text-black font-mono flex flex-col items-center justify-center px-4">
+      {/* Slogan */}
+      <p className="text-2xl sm:text-3xl text-center mb-8">
         Community Driven Support for Student Athletes
       </p>
-      <div className="text-5xl sm:text-6xl text-center mb-12">▼</div>
 
-      {/* Main Title */}
-      <h1 className="text-4xl sm:text-6xl font-bold text-center mb-12">
-        LocalHustle
-      </h1>
+      {/* Main H2 */}
+      <h2 className="text-4xl sm:text-6xl font-bold text-center mb-12 max-w-5xl">
+        We Connect Local Businesses with Student Athletes<br />
+        for Scholarships & NIL Deals
+      </h2>
 
-      {/* Subtitle */}
-      <p className="text-xl sm:text-2xl text-center mb-16 max-w-3xl mx-auto">
-        Earn from local business sponsorships — no agents, no pay-for-play, fully NIL compliant.
+      {/* Subheadline with Freedom Scholarships Explained */}
+      <p className="text-xl sm:text-3xl text-center mb-12 max-w-4xl">
+        Student athletes earn <strong>Freedom Scholarships</strong> — unrestricted cash paid instantly — 
+        plus NIL gigs from local supporters.<br />
+        Parents fund improvement. Businesses become hometown heroes.
       </p>
 
-      {/* Role Selection */}
-      {!role && (
-        <div className="max-w-2xl mx-auto mb-16">
-          <p className="text-xl sm:text-2xl text-center mb-8">
-            Who are you?
-          </p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
-            <Button 
-              onClick={() => setRole('athlete')}
-              className="h-32 text-2xl sm:text-3xl bg-black text-white hover:bg-gray-800"
-            >
-              Student Athlete
-            </Button>
-            <Button 
-              onClick={() => setRole('business')}
-              className="h-32 text-2xl sm:text-3xl bg-black text-white hover:bg-gray-800"
-            >
-              Local Business
-            </Button>
-          </div>
-        </div>
-      )}
+      {/* Email Capture + Role Buttons */}
+      <div className="w-full max-w-md space-y-8 mb-24">
+        <Input
+          type="email"
+          placeholder="your@email.com"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="h-20 text-2xl text-center border-4 border-black"
+        />
 
-      {/* Athlete Level Selection */}
-      {role === 'athlete' && !level && (
-        <div className="max-w-2xl mx-auto mb-16">
-          <p className="text-xl sm:text-2xl text-center mb-8">
-            High School or College?
-          </p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
-            <Button 
-              onClick={() => setLevel('high_school')}
-              className="h-32 text-2xl sm:text-3xl bg-black text-white hover:bg-gray-800"
-            >
-              High School
-            </Button>
-            <Button 
-              onClick={() => setLevel('college')}
-              className="h-32 text-2xl sm:text-3xl bg-black text-white hover:bg-gray-800"
-            >
-              College
-            </Button>
-          </div>
-          <Button 
-            onClick={() => setRole(null)}
-            variant="outline"
-            className="mt-8 h-14 text-lg border-4 border-black"
-          >
-            Back
-          </Button>
-        </div>
-      )}
-
-      {/* Email Entry */}
-      {role && (role === 'business' || level) && (
-        <div className="max-w-lg mx-auto">
-          <Label htmlFor="email" className="text-xl sm:text-2xl block mb-4 text-center">
-            Your Email
-          </Label>
-          <Input
-            id="email"
-            type="email"
-            placeholder="you@school.edu"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="h-16 text-2xl text-center border-4 border-black mb-8"
-          />
+        <div className="space-y-6">
           <Button
-            onClick={handleLogin}
+            onClick={() => sendMagicLink('/get-started')}
             disabled={loading}
-            className="w-full h-20 text-2xl sm:text-3xl bg-black text-white"
+            className="w-full h-20 text-2xl sm:text-3xl bg-black text-white font-bold"
           >
-            {loading ? 'Sending...' : 'Send Login Link'}
+            I'm a Student Athlete
           </Button>
-          <Button 
-            onClick={() => {
-              setRole(null)
-              setLevel(null)
-            }}
-            variant="outline"
-            className="mt-8 w-full h-14 text-lg border-4 border-black"
-          >
-            Back
-          </Button>
-        </div>
-      )}
 
-      {/* Logged in state */}
-      {user && (
-        <div className="max-w-lg mx-auto my-16">
-          <p className="text-xl sm:text-2xl text-center mb-8">Logged in as {user.email}</p>
-          <Button onClick={signOut} className="w-full h-16 text-2xl bg-black text-white">
-            Log Out
+          <Button
+            onClick={() => sendMagicLink('/business-onboard')}
+            disabled={loading}
+            className="w-full h-20 text-2xl sm:text-3xl bg-purple-600 text-white font-bold"
+          >
+            I'm a Business or Parent Sponsor
           </Button>
         </div>
-      )}
+
+        {loading && (
+          <p className="text-center text-xl">Sending magic link...</p>
+        )}
+      </div>
+
+      {/* Benefits Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-12 max-w-5xl mx-auto my-24 px-8">
+        {/* For Athletes */}
+        <div className="text-center">
+          <h3 className="text-3xl font-bold mb-6">
+            Earn Money & Freedom Scholarships<br />
+            for Your Hustle
+          </h3>
+          <p className="text-lg">
+            Get paid instantly for gigs + unrestricted scholarships from local businesses.<br />
+            Use for books, food, rent — whatever you need.<br />
+            Build recruiting profile coaches see.
+          </p>
+        </div>
+
+        {/* For Parents */}
+        <div className="text-center">
+          <h3 className="text-3xl font-bold mb-6">
+            Less Financial Stress,<br />
+            Help Them Earn Real Scholarships
+          </h3>
+          <p className="text-lg">
+            Fund improvement, not handouts.<br />
+            Your kid earns money and Freedom Scholarships.<br />
+            Teach hustle pays.
+          </p>
+        </div>
+
+        {/* For Businesses */}
+        <div className="text-center">
+          <h3 className="text-3xl font-bold mb-6">
+            Best Local Advertising +<br />
+            Become the Hometown Hero
+          </h3>
+          <p className="text-lg">
+            Authentic clips from trusted kids.<br />
+            Award Freedom Scholarships — paid instantly.<br />
+            Real goodwill that lasts.
+          </p>
+        </div>
+      </div>
+
+      {/* Final CTA */}
+      <div className="text-center mb-16">
+        <p className="text-2xl mb-8">Ready to get started?</p>
+        <div className="space-y-6 max-w-md mx-auto">
+          <Button
+            onClick={() => sendMagicLink('/get-started')}
+            className="w-full h-20 text-2xl bg-black text-white"
+          >
+            Student Athlete → Start Here
+          </Button>
+          <Button
+            onClick={() => sendMagicLink('/business-onboard')}
+            className="w-full h-20 text-2xl bg-purple-600 text-white"
+          >
+            Business / Parent → Sponsor Now
+          </Button>
+        </div>
+      </div>
     </div>
   )
 }
