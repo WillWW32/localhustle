@@ -1001,28 +1001,28 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
 
           {/* Payment Methods Tab */}
           {activeTab === 'payment-methods' && (
-  <Elements stripe={stripePromise}>
-    <div>
-      <h3 className="text-3xl mb-8 font-bold">Payment Methods</h3>
-      <p className="text-xl mb-12">
-        Saved cards for wallet top-ups and auto-top-up.<br />
-        Add or manage cards below.
-      </p>
+            <Elements stripe={stripePromise}>
+             <div>
+                 <h3 className="text-3xl mb-8 font-bold">Payment Methods</h3>
+                 <p className="text-xl mb-12">
+                    Saved cards for wallet top-ups and auto-top-up.<br />
+                    Add or manage cards below.
+                 </p>
 
-      {/* Saved Cards List */}
-      {savedMethods.length === 0 ? (
-        <p className="text-gray-600 mb-12 text-xl">
-          No saved cards yet.
-        </p>
+                {/* Saved Cards List */}
+                {savedMethods.length === 0 ? (
+                  <p className="text-gray-600 mb-12 text-xl">
+                        No saved cards yet.
+                    </p>
       ) : (
-        <div className="space-y-8 mb-16 max-w-2xl mx-auto">
-          {savedMethods.map((method) => (
-            <div key={method.id} className="border-4 border-black p-8 bg-gray-100">
-              <p className="text-xl">
-                {method.brand.toUpperCase()} •••• {method.last4}<br />
-                Expires {method.exp_month}/{method.exp_year}
-              </p>
-            </div>
+                    <div className="space-y-8 mb-16 max-w-2xl mx-auto">
+                    {savedMethods.map((method) => (
+                     <div key={method.id} className="border-4 border-black p-8 bg-gray-100">
+                      <p className="text-xl">
+                        {method.brand.toUpperCase()} •••• {method.last4}<br />
+                         Expires {method.exp_month}/{method.exp_year}
+                        </p>
+                    </div>
           ))}
         </div>
       )}
