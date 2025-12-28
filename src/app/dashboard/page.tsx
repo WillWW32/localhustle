@@ -487,20 +487,24 @@ const awardScholarship = async () => {
     setScholarshipLoading(false)
   }
   
+  const fetchLatestScholarship = async () => {
   const { data: latestScholarship } = await supabase
-  .from('scholarships')
-  .select('*, businesses(name)')
-  .eq('athlete_id', user.id)
-  .order('created_at', { ascending: false })
-  .limit(1)
-  .single()
+    .from('scholarships')
+    .select('*, businesses(name)')
+    .eq('athlete_id', user.id)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .single()
 
-if (latestScholarship) {
-  setRecentScholarship({
-    ...latestScholarship,
-    business_name: latestScholarship.businesses?.name || 'a supporter',
-  })
+  if (latestScholarship) {
+    setRecentScholarship({
+      ...latestScholarship,
+      business_name: latestScholarship.businesses?.name || 'a supporter',
+    })
+  }
 }
+
+fetchLatestScholarship()}
 
   if (!profile) return <p className="container text-center py-32">Loading...</p>
 
