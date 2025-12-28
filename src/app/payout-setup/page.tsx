@@ -4,9 +4,12 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import { Button } from '@/components/ui/button'
-import { CardElement, useStripe, useElements } from '@stripe/react-stripe-js'
+import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js'
+import { loadStripe } from '@stripe/stripe-js'
 
-export default function PayoutSetup() {
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
+
+function PayoutSetupContent() {
   const [profile, setProfile] = useState<any>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -68,7 +71,7 @@ export default function PayoutSetup() {
       return
     }
 
-    // Attach payment method (your backend API)
+    // Attach to backend
     const response = await fetch('/api/attach-payment-method', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -104,8 +107,7 @@ export default function PayoutSetup() {
         </h1>
         <p className="text-2xl text-center mb-12 max-w-2xl">
           Your debit card is connected.<br />
-          Earnings will be paid instantly.<br />
-          {profile.age >= 18 ? 'No parent approval needed.' : 'Parent approval still required for payouts.'}
+          Earnings will be paid instantly.
         </p>
         <Button 
           onClick={() => router.push('/dashboard')}
@@ -126,10 +128,9 @@ export default function PayoutSetup() {
 
         <p className="text-xl text-center mb-12">
           Connect your debit card to receive instant payouts.<br />
-          Any athlete can add a card — 18+ athletes get paid directly.
+          Any athlete can add a card.
         </p>
 
-        {/* Stripe Card Element */}
         <div className="bg-gray-100 p-8 border-4 border-black mb-12">
           <CardElement 
             options={{
@@ -166,5 +167,13 @@ export default function PayoutSetup() {
         </p>
       </div>
     </div>
+  )
+}
+
+export default function PayoutSetup() {
+  return (
+    <Elements stripe={stripePromise}>
+      <PayoutSetupContent />
+    </Elements>
   )
 }
