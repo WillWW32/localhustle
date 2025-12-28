@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import Image from 'next/image'
 
 export default function Home() {
   const [email, setEmail] = useState('')
@@ -38,36 +37,47 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-white text-black font-mono">
-      {/* Hero Section — More Padding & Space */}
-      <section className="py-24 px-8 sm:px-16 lg:px-32 text-center">
+      {/* Hero Section */}
+      <section className="py-20 px-6 sm:px-12 lg:px-32 text-center">
         
 
-        {/* "We Connect..." — White on Black Block */}
-        <div className="bg-black text-white p-16 mb-20">
-  <h1 className="text-4xl sm:text-6xl font-bold !text-white leading-tight">
-    We Connect Local Businesses with Student Athletes<br />
-    for Scholarships & NIL Deals
-  </h1>
-</div>
+        {/* Main Heading — Hard-Coded H4 Size, White on Black (No CSS Override) */}
+        <div className="bg-black text-white p-12 mb-16">
+          <div 
+            style={{
+              fontSize: '2.5rem', /* H4 size */
+              lineHeight: '1.2',
+              fontWeight: 'bold',
+              color: 'white',
+            }}
+          >
+            We Connect Local Businesses with Student Athletes<br />
+            for Scholarships & NIL Deals
+          </div>
+        </div>
 
         {/* Subheadline */}
-        <p className="text-xl sm:text-3xl mb-24 max-w-5xl mx-auto leading-relaxed">
+        <p className="text-xl sm:text-2xl mb-24 max-w-4xl mx-auto leading-relaxed">
           Student athletes earn <strong>Freedom Scholarships</strong> — unrestricted cash paid instantly — 
           plus NIL gigs from local supporters.<br />
           Parents fund improvement. Businesses become hometown heroes.
         </p>
       </section>
 
-      {/* Space instead of divider */}
+      {/* Space */}
       <div className="my-32"></div>
 
       {/* Benefits Grid */}
-      <section className="px-8 sm:px-16 lg:px-32 pb-24">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-20 max-w-6xl mx-auto">
+      <section className="px-6 sm:px-12 lg:px-32 pb-24">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-16 max-w-6xl mx-auto">
           {/* Student Athletes */}
           <div className="text-center">
-            <h2 className="text-3xl font-bold mb-6">Student Athletes</h2>
-            <h3 className="text-2xl font-bold mb-6">
+            <div className="bg-black text-white p-8 mb-6">
+              <h2 className="text-2xl font-bold">
+                Student Athletes
+              </h2>
+            </div>
+            <h3 className="text-xl font-bold mb-6">
               Earn Money & Freedom Scholarships<br />
               for Your Hustle
             </h3>
@@ -80,8 +90,12 @@ export default function Home() {
 
           {/* Parents */}
           <div className="text-center">
-            <h2 className="text-3xl font-bold mb-6">Parents</h2>
-            <h3 className="text-2xl font-bold mb-6">
+            <div className="bg-black text-white p-8 mb-6">
+              <h2 className="text-2xl font-bold">
+                Parents
+              </h2>
+            </div>
+            <h3 className="text-xl font-bold mb-6">
               Less Financial Stress,<br />
               Help Them Earn Real Scholarships
             </h3>
@@ -94,8 +108,12 @@ export default function Home() {
 
           {/* Businesses */}
           <div className="text-center">
-            <h2 className="text-3xl font-bold mb-6">Businesses</h2>
-            <h3 className="text-2xl font-bold mb-6">
+            <div className="bg-black text-white p-8 mb-6">
+              <h2 className="text-2xl font-bold">
+                Businesses
+              </h2>
+            </div>
+            <h3 className="text-xl font-bold mb-6">
               Best Local Advertising +<br />
               Become the Hometown Hero
             </h3>
@@ -108,11 +126,11 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Space instead of divider */}
+      {/* Space */}
       <div className="my-32"></div>
 
       {/* Bottom CTA */}
-      <section className="pb-32 text-center px-8 sm:px-16 lg:px-32">
+      <section className="pb-32 text-center px-6 sm:px-12 lg:px-32">
         <p className="text-2xl mb-12">Ready to get started?</p>
 
         <div className="w-full max-w-md mx-auto space-y-12">
@@ -148,7 +166,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Extra Space Below CTA */}
+      {/* Extra Space */}
       <div className="h-32"></div>
     </div>
   )

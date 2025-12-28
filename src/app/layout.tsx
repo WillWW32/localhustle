@@ -62,7 +62,7 @@ export default function RootLayout({
                 priority
               />
             </Link>
-            /* Slogan — Bigger, Always Visible */}
+            {/* Slogan — Bigger, Always Visible */}
     <p className="text-2xl sm:text-4xl lg:text-5xl font-mono text-center">
       {displayedSlogan}
     </p>
