@@ -65,6 +65,8 @@ export default function Dashboard() {
   const [success, setSuccess] = useState(false)
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+  const stripe = useStripe()
+  const elements = useElements()
 
   useEffect(() => {
     const fetchData = async () => {
