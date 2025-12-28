@@ -1,7 +1,16 @@
-import { redirect } from 'next/navigation'
-import { createServerClient } from '@/lib/supabaseServer'
+'use client'
 
-export const dynamic = 'force-dynamic'
+import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { supabase } from '@/lib/supabaseClient'
+import { Button } from '@/components/ui/button'
+
+export default function ParentOnboard() {
+  const [kidName, setKidName] = useState('your kid')
+  const [loading, setLoading] = useState(true)
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const kidId = searchParams.get('kid_id')
 
 export default async function ParentOnboard({ searchParams }: { searchParams: { kid_id?: string } }) {
   const supabase = createServerClient()
