@@ -61,9 +61,9 @@ export default function Dashboard() {
   const [searchedOffers, setSearchedOffers] = useState<any[]>([])
   const [activeTab, setActiveTab] = useState<'wallet' | 'clips' | 'kids' | 'favorites' | 'payment-methods' | 'booster'>('wallet')
   const [savedMethods, setSavedMethods] = useState<any[]>([])
-  const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState(false)
-  const [loading, setLoading] = useState(false)
+  const [paymentLoading, setPaymentLoading] = useState(false)
+  const [paymentError, setPaymentError] = useState<string | null>(null)
+  const [paymentSuccess, setPaymentSuccess] = useState(false)
   const router = useRouter()
   const stripe = useStripe()
   const elements = useElements()
@@ -143,6 +143,16 @@ export default function Dashboard() {
           .eq('status', 'pending')
           .in('offer_id', (await supabase.from('offers').select('id').eq('business_id', biz.id)).data?.map(o => o.id) || [])
         setPendingClips(clips || [])
+
+        // Fetch saved payment methods when business loads
+        if (biz.id) {
+          const response = await fetch('/api/list-payment-methods', {
+            method: 'POST',
+            body: JSON.stringify({ business_id: biz.id }),
+          })
+          const data = await response.json()
+          setSavedMethods(data.methods || [])
+        }
       }
     }
 
@@ -188,21 +198,6 @@ export default function Dashboard() {
     setIsRecurring(false)
     setScholarshipAmount('')
   }
-  
-  const searchGigs = () => {
-  if (!gigSearch.trim()) {
-    setSearchedOffers(offers)
-    return
-  }
-
-  const lower = gigSearch.toLowerCase()
-  const filtered = offers.filter((o: any) => 
-    o.type.toLowerCase().includes(lower) ||
-    o.description.toLowerCase().includes(lower) ||
-    o.location?.toLowerCase().includes(lower)
-  )
-  setSearchedOffers(filtered)
-}
 
   const handleAthletesChange = (value: number) => {
     setNumAthletes(value)
@@ -361,53 +356,6 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
       setFriendAmount('50')
     }
   }
-  
-  const handleAddCard = async () => {
-  if (!stripe || !elements) return
-
-  setError(null)
-  setSuccess(false)
-  setLoading(true)
-
-  const cardElement = elements.getElement(CardElement)
-  if (!cardElement) {
-    setError('Card element not found')
-    setLoading(false)
-    return
-  }
-
-  const { error: stripeError, paymentMethod } = await stripe.createPaymentMethod({
-    type: 'card',
-    card: cardElement,
-  })
-
-  if (stripeError) {
-    setError(stripeError.message || 'Payment error')
-    setLoading(false)
-    return
-  }
-
-  const response = await fetch('/api/attach-payment-method', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      payment_method_id: paymentMethod.id,
-      business_id: business.id,
-    }),
-  })
-
-  const data = await response.json()
-
-  if (data.error) {
-    setError(data.error)
-  } else {
-    setSuccess(true)
-    // Refresh saved methods or update state
-    setSavedMethods([...savedMethods, data.method])
-  }
-
-  setLoading(false)
-}
 
   const handleAddFunds = async (amount: number) => {
     const response = await fetch('/api/checkout', {
@@ -430,6 +378,77 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
     }
   }
 
+  const handleAddCard = async () => {
+    if (!stripe || !elements) {
+      setPaymentError('Stripe not loaded')
+      return
+    }
+
+    setPaymentError(null)
+    setPaymentSuccess(false)
+    setPaymentLoading(true)
+
+    const cardElement = elements.getElement(CardElement)
+    if (!cardElement) {
+      setPaymentError('Card element not found')
+      setPaymentLoading(false)
+      return
+    }
+
+    const { error: stripeError, paymentMethod } = await stripe.createPaymentMethod({
+      type: 'card',
+      card: cardElement,
+    })
+
+    if (stripeError) {
+      setPaymentError(stripeError.message || 'Payment error')
+      setPaymentLoading(false)
+      return
+    }
+
+    const response = await fetch('/api/attach-payment-method', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        payment_method_id: paymentMethod.id,
+        business_id: business.id,
+      }),
+    })
+
+    const data = await response.json()
+
+    if (data.error) {
+      setPaymentError(data.error)
+    } else {
+      setPaymentSuccess(true)
+      setSavedMethods([...savedMethods, data.method])
+    }
+
+    setPaymentLoading(false)
+  }
+
+  const fetchSavedMethods = async () => {
+    if (!business) return
+
+    const response = await fetch('/api/list-payment-methods', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ business_id: business.id }),
+    })
+
+    const data = await response.json()
+
+    if (data.methods) {
+      setSavedMethods(data.methods)
+    }
+  }
+
+  useEffect(() => {
+    if (business && activeTab === 'payment-methods') {
+      fetchSavedMethods()
+    }
+  }, [business, activeTab])
+
   if (!profile) return <p className="container text-center py-32">Loading...</p>
 
   return (
@@ -450,6 +469,7 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
 
       {profile.role === 'athlete' ? (
         <div className="max-w-4xl mx-auto space-y-32 font-mono text-center text-lg">
+          {/* Athlete content — your full original athlete sections */}
           {/* Step 1: Complete Profile */}
           <div className="bg-green-100 p-8 border-4 border-green-600 rounded-lg">
             <h2 className="text-3xl font-bold mb-8">
@@ -999,68 +1019,69 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
             </div>
           )}
 
-          {/* Payment Methods Tab */}
+          {/* Payment Methods Tab — Full & Active */}
           {activeTab === 'payment-methods' && (
             <Elements stripe={stripePromise}>
-             <div>
-                 <h3 className="text-3xl mb-8 font-bold">Payment Methods</h3>
-                 <p className="text-xl mb-12">
-                    Saved cards for wallet top-ups and auto-top-up.<br />
-                    Add or manage cards below.
-                 </p>
+              <div>
+                <h3 className="text-3xl mb-8 font-bold">Payment Methods</h3>
+                <p className="text-xl mb-12">
+                  Saved cards for wallet top-ups and auto-top-up.<br />
+                  Add or manage cards below.
+                </p>
 
                 {/* Saved Cards List */}
                 {savedMethods.length === 0 ? (
                   <p className="text-gray-600 mb-12 text-xl">
-                        No saved cards yet.
-                    </p>
-      ) : (
-                    <div className="space-y-8 mb-16 max-w-2xl mx-auto">
+                    No saved cards yet.
+                  </p>
+                ) : (
+                  <div className="space-y-8 mb-16 max-w-2xl mx-auto">
                     {savedMethods.map((method) => (
-                     <div key={method.id} className="border-4 border-black p-8 bg-gray-100">
-                      <p className="text-xl">
-                        {method.brand.toUpperCase()} •••• {method.last4}<br />
-                         Expires {method.exp_month}/{method.exp_year}
+                      <div key={method.id} className="border-4 border-black p-8 bg-gray-100">
+                        <p className="text-xl">
+                          {method.brand.toUpperCase()} •••• {method.last4}<br />
+                          Expires {method.exp_month}/{method.exp_year}
                         </p>
-                    </div>
-          ))}
-        </div>
-      )}
+                      </div>
+                    ))}
+                  </div>
+                )}
 
-      {/* Add New Card */}
-      <div className="max-w-2xl mx-auto">
-        <div className="bg-gray-100 p-12 border-4 border-black mb-12">
-          <h4 className="text-2xl font-bold mb-6 text-center">
-            Add New Card
-          </h4>
-          <CardElement 
-            options={{
-              style: {
-                base: {
-                  fontSize: '20px',
-                  color: '#000',
-                  fontFamily: 'Courier New, monospace',
-                  '::placeholder': { color: '#666' },
-                },
-              },
-            }}
-          />
-        </div>
+                {/* Add New Card */}
+                <div className="max-w-2xl mx-auto">
+                  <div className="bg-gray-100 p-12 border-4 border-black mb-12">
+                    <h4 className="text-2xl font-bold mb-6 text-center">
+                      Add New Card
+                    </h4>
+                    <CardElement 
+                      options={{
+                        style: {
+                          base: {
+                            fontSize: '20px',
+                            color: '#000',
+                            fontFamily: 'Courier New, monospace',
+                            '::placeholder': { color: '#666' },
+                          },
+                        },
+                      }}
+                    />
+                  </div>
 
-        {error && <p className="text-red-600 text-center mb-8 text-xl">{error}</p>}
-        {success && <p className="text-green-600 text-center mb-8 text-xl">Card added successfully!</p>}
+                  {paymentError && <p className="text-red-600 text-center mb-8 text-xl">{paymentError}</p>}
+                  {paymentSuccess && <p className="text-green-600 text-center mb-8 text-xl">Card added successfully!</p>}
 
-        <Button 
-          onClick={handleAddCard}
-          disabled={loading}
-          className="w-full h-20 text-2xl bg-black text-white font-bold"
-        >
-          {loading ? 'Adding...' : 'Save Card'}
-        </Button>
-      </div>
-    </div>
-  </Elements>
-)}
+                  <Button 
+                    onClick={handleAddCard}
+                    disabled={paymentLoading}
+                    className="w-full h-20 text-2xl bg-black text-white font-bold"
+                  >
+                    {paymentLoading ? 'Adding...' : 'Save Card'}
+                  </Button>
+                </div>
+              </div>
+            </Elements>
+          )}
+
           {/* Booster Events Tab */}
           {activeTab === 'booster' && (
             <div>
