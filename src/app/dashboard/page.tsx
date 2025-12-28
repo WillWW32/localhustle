@@ -173,6 +173,21 @@ export default function Dashboard() {
     if (error) alert('Error saving profile')
     else alert('Profile saved!')
   }
+  
+  const handleGigSearch = () => {
+  if (!gigSearch.trim()) {
+    setSearchedOffers(offers)
+    return
+  }
+
+  const lower = gigSearch.toLowerCase()
+  const filtered = offers.filter((o: any) => 
+    o.type.toLowerCase().includes(lower) ||
+    o.description.toLowerCase().includes(lower) ||
+    o.location?.toLowerCase().includes(lower)
+  )
+  setSearchedOffers(filtered)
+ }
 
   const toggleGigSelection = async (title: string) => {
     const newSelected = selectedGigs.includes(title)
@@ -647,7 +662,7 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
                   onChange={(e) => setGigSearch(e.target.value)}
                   className="text-center"
                 />
-                <Button onClick={gigSearch} className="h-14 text-lg bg-black text-white">
+                <Button onClick={handleGigSearch} className="h-14 text-lg bg-black text-white">
                   Search
                 </Button>
               </div>
