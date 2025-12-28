@@ -1,40 +1,47 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import { Button } from '@/components/ui/button'
 
-export default function ParentOnboard() {
+function ParentOnboardContent() {
   const [kidName, setKidName] = useState('your kid')
   const [loading, setLoading] = useState(true)
   const router = useRouter()
   const searchParams = useSearchParams()
   const kidId = searchParams.get('kid_id')
 
-export default async function ParentOnboard({ searchParams }: { searchParams: { kid_id?: string } }) {
-  const supabase = createServerClient()
+  useEffect(() => {
+    const fetchKid = async () => {
+      if (!kidId) {
+        setLoading(false)
+        return
+      }
 
-  const { data: { session } } = await supabase.auth.getSession()
+      const { data } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('id', kidId)
+        .single()
 
-  let kidName = 'your kid'
-
-  if (searchParams.kid_id) {
-    const { data } = await supabase
-      .from('profiles')
-      .select('full_name')
-      .eq('id', searchParams.kid_id)
-      .single()
-
-    if (data?.full_name) {
-      kidName = data.full_name.split(' ')[0]
+      if (data?.full_name) {
+        setKidName(data.full_name.split(' ')[0] || 'your kid')
+      }
+      setLoading(false)
     }
+
+    fetchKid()
+  }, [kidId])
+
+  const sendMagicLink = async () => {
+    if (!kidId) return
+
+    // Your magic link logic here (or form POST)
+    alert('Magic link would be sent — implement as needed')
   }
 
-  // If already logged in, send to dashboard with kid context
-  if (session) {
-    redirect(`/dashboard?fund_kid=${searchParams.kid_id || ''}`)
-  }
+  if (loading) return <p className="text-center py-32">Loading...</p>
 
   return (
     <div className="min-h-screen bg-white text-black font-mono py-20 px-6 text-center">
@@ -57,19 +64,24 @@ export default async function ParentOnboard({ searchParams }: { searchParams: { 
         </p>
       </div>
 
-      <form action="/auth/signin" method="POST">
-        <input type="hidden" name="kid_id" value={searchParams.kid_id || ''} />
-        <button
-          type="submit"
-          className="w-full max-w-md h-20 text-2xl bg-black text-white font-bold cursor-pointer border-none"
-        >
-          Yes — Sponsor {kidName} Now
-        </button>
-      </form>
+      <Button
+        onClick={sendMagicLink}
+        className="w-full max-w-md h-20 text-2xl bg-black text-white font-bold"
+      >
+        Yes — Sponsor {kidName} Now
+      </Button>
 
       <p className="text-lg mt-12 text-gray-600">
         You'll get a magic link — click it to fund their first challenge.
       </p>
     </div>
+  )
+}
+
+export default function ParentOnboard() {
+  return (
+    <Suspense fallback={<p className="text-center py-32">Loading...</p>}>
+      <ParentOnboardContent />
+    </Suspense>
   )
 }
