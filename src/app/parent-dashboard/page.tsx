@@ -1,5 +1,6 @@
 'use client'
 
+import { Suspense } from 'react'
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
@@ -20,7 +21,7 @@ const businessGigTypes = [
   { title: 'Custom Gig', baseAmount: 200, description: 'Create a gig and offer it.' },
 ]
 
-export default function ParentDashboard() {
+function ParentDashboardContent() {
   const [parent, setParent] = useState<any>(null)
   const [business, setBusiness] = useState<any>(null)
   const [kid, setKid] = useState<any>(null)
@@ -240,5 +241,13 @@ Thanks!
         </div>
       </div>
     </div>
+  )
+}
+
+export default function ParentDashboard() {
+  return (
+    <Suspense fallback={<p className="text-center py-32 text-2xl">Loading...</p>}>
+      <ParentDashboardContent />
+    </Suspense>
   )
 }
