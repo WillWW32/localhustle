@@ -1,11 +1,12 @@
 'use client'
 
+import { Suspense } from 'react'
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import { Button } from '@/components/ui/button'
 
-export default function ParentOnboard() {
+function ParentOnboardContent() {
   const [kidName, setKidName] = useState('your kid')
   const [loading, setLoading] = useState(true)
   const router = useRouter()
@@ -40,7 +41,7 @@ export default function ParentOnboard() {
     const { error } = await supabase.auth.signInWithOtp({
       email: '',
       options: {
-        emailRedirectTo: `https://app.localhustle.org/parent-dashboard?kid_id=${kidId}`,
+        emailRedirectTo: `https://app.localhustle.org/dashboard?fund_kid=${kidId}`,
         data: { role: 'parent' },
       },
     })
@@ -52,7 +53,7 @@ export default function ParentOnboard() {
     }
   }
 
-  if (loading) return <p className="text-center py-32">Loading...</p>
+  if (loading) return <p className="text-center py-32 text-2xl">Loading...</p>
 
   return (
     <div className="min-h-screen bg-white text-black font-mono py-20 px-6 text-center">
@@ -86,5 +87,13 @@ export default function ParentOnboard() {
         You'll get a magic link — click it to set up your parent dashboard.
       </p>
     </div>
+  )
+}
+
+export default function ParentOnboard() {
+  return (
+    <Suspense fallback={<p className="text-center py-32 text-2xl">Loading...</p>}>
+      <ParentOnboardContent />
+    </Suspense>
   )
 }
