@@ -170,3 +170,33 @@ footer p {
   h2 { font-size: 2rem !important; }
   h3 { font-size: 1.75rem !important; }
 }
+
+/* Black Block White Text Headings */
+.black-block-heading {
+  background-color: black !important;
+  color: white !important;
+  padding: 4rem 2rem;
+  margin-bottom: 5rem;
+  text-align: center;
+}
+
+.black-block-heading h1,
+.black-block-heading h2,
+.black-block-heading h3 {
+  color: white !important;
+  margin: 0;
+}
+
+.slogan-large {
+  font-size: 3rem !important;
+}
+@media (min-width: 640px) {
+  .slogan-large {
+    font-size: 4rem !important;
+  }
+}
+@media (min-width: 1024px) {
+  .slogan-large {
+    font-size: 5rem !important;
+  }
+}
