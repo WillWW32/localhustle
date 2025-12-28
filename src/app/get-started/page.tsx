@@ -48,7 +48,7 @@ It teaches hustle pays, and helps with college costs.
 
 Can you be my first sponsor? Here's the link:
 
-https://app.localhustle.org/business-onboard?ref=${user.id}
+https://app.localhustle.org/parent-onboard?kid_id=${profile.id}
 
 Love,
 ${name}

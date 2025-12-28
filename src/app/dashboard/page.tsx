@@ -35,17 +35,11 @@ export default function Dashboard() {
   const [selectedGigs, setSelectedGigs] = useState<string[]>([])
   const [squad, setSquad] = useState<any[]>([])
   const [referredAthletes, setReferredAthletes] = useState<any[]>([])
-  const [favorites, setFavorites] = useState<any[]>([])
   const [selectedGig, setSelectedGig] = useState<any>(null)
   const [numAthletes, setNumAthletes] = useState(1)
   const [customDetails, setCustomDetails] = useState('')
   const [amount, setAmount] = useState('')
   const [scholarshipAmount, setScholarshipAmount] = useState('')
-  const [standaloneScholarshipAmount, setStandaloneScholarshipAmount] = useState('')
-  const [scholarshipMessage, setScholarshipMessage] = useState('')
-  const [selectedAthleteForScholarship, setSelectedAthleteForScholarship] = useState<any>(null)
-  const [athleteSearch, setAthleteSearch] = useState('')
-  const [searchedAthletes, setSearchedAthletes] = useState<any[]>([])
   const [date, setDate] = useState('')
   const [location, setLocation] = useState('')
   const [businessPhone, setBusinessPhone] = useState('')
@@ -62,58 +56,50 @@ export default function Dashboard() {
   const [showPitchLetter, setShowPitchLetter] = useState(false)
   const [gigSearch, setGigSearch] = useState('')
   const [searchedOffers, setSearchedOffers] = useState<any[]>([])
-  const [payoutHistory, setPayoutHistory] = useState<any[]>([])
-  const [scholarshipsEarned, setScholarshipsEarned] = useState<any[]>([])
-  const [activeTab, setActiveTab] = useState<'wallet' | 'clips' | 'kids' | 'favorites' | 'scholarships' | 'booster'>('wallet')
+  const [activeTab, setActiveTab] = useState<'wallet' | 'clips' | 'kids' | 'favorites' | 'payment-methods' | 'booster'>('wallet')
+  const [athleteSearch, setAthleteSearch] = useState('')
+  const [searchResults, setSearchResults] = useState<any[]>([])
+  const [selectedAthlete, setSelectedAthlete] = useState<any>(null)
+  const [scholarshipAmount, setScholarshipAmount] = useState('')
+  const [standaloneScholarshipAmount, setStandaloneScholarshipAmount] = useState('')
+  const [standaloneScholarshipMessage, setStandaloneScholarshipMessage] = useState('')
+  const [scholarshipMessage, setScholarshipMessage] = useState('')
+  const [scholarshipLoading, setScholarshipLoading] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
-  const fetchData = async () => {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      router.replace('/')
-      return
-    }
-
-    const currentPath = window.location.pathname
-
-    let prof = null
-    const { data: existingProf } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', user.id)
-      .single()
-
-    if (existingProf) {
-      prof = existingProf
-    } else {
-      // New user — set role based on current path
-      let role = 'athlete' // default
-      if (currentPath.includes('/business-onboard')) {
-        role = 'business'
-      } else if (currentPath.includes('/get-started')) {
-        role = 'athlete'
+    const fetchData = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        router.replace('/')
+        return
       }
 
-      const { data: newProf } = await supabase
+      let prof = null
+      const { data: existingProf } = await supabase
         .from('profiles')
-        .insert({
-          id: user.id,
-          email: user.email,
-          role,
-        })
-        .select()
+        .select('*')
+        .eq('id', user.id)
         .single()
-      prof = newProf
-    }
 
-    setProfile(prof)
+      if (existingProf) {
+        prof = existingProf
+      } else {
+        const metadataRole = user.user_metadata?.role || 'athlete'
+        const { data: newProf } = await supabase
+          .from('profiles')
+          .insert({
+            id: user.id,
+            email: user.email,
+            role: metadataRole,
+          })
+          .select()
+          .single()
+        prof = newProf
+      }
 
-    // Optional: redirect to dashboard after first login (cleaner flow)
-    if (currentPath.includes('/get-started') || currentPath.includes('/business-onboard')) {
-      router.replace('/dashboard')
-    }
-    
+      setProfile(prof)
+
       if (prof.role === 'athlete') {
         if (prof.selected_gigs) setSelectedGigs(prof.selected_gigs)
         setProfilePic(prof.profile_pic || '')
@@ -134,21 +120,6 @@ export default function Dashboard() {
           .order('created_at', { ascending: false })
         setOffers(openOffers || [])
         setSearchedOffers(openOffers || [])
-
-        const { data: history } = await supabase
-          .from('payouts')
-          .select('amount, created_at, offers(type)')
-          .eq('athlete_id', user.id)
-          .order('created_at', { ascending: false })
-        setPayoutHistory(history || [])
-
-        // Freedom Scholarships earned (including standalone)
-        const { data: scholarships } = await supabase
-          .from('scholarships')
-          .select('amount, message, created_at, businesses(name)')
-          .eq('athlete_id', user.id)
-          .order('created_at', { ascending: false })
-        setScholarshipsEarned(scholarships || [])
       }
 
       if (prof.role === 'business') {
@@ -164,12 +135,6 @@ export default function Dashboard() {
           .select('id, full_name, email, school')
           .eq('referred_by', biz.id)
         setReferredAthletes(referred || [])
-
-        const { data: favs } = await supabase
-          .from('business_favorites')
-          .select('athlete_id, profiles(*)')
-          .eq('business_id', biz.id)
-        setFavorites(favs?.map(f => f.profiles) || [])
 
         const { data: clips } = await supabase
           .from('clips')
@@ -291,34 +256,24 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
   const approveClip = async (clip: any) => {
     const { error: clipError } = await supabase
       .from('clips')
-      .update({ status: 'approved' })
+      .update({ status: 'waiting_parent' })
       .eq('id', clip.id)
 
     if (clipError) {
-      alert('Error approving clip: ' + clipError.message)
+      alert(clipError.message)
       return
     }
 
-    // Real payout
-    const response = await fetch('/api/payout', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        clip_id: clip.id,
-        athlete_id: clip.athlete_id,
-        amount: clip.offers.amount,
-      }),
-    })
+    await supabase
+      .from('businesses')
+      .update({ wallet_balance: business.wallet_balance - clip.offers.amount })
+      .eq('id', business.id)
 
-    const data = await response.json()
-
-    if (data.error) {
-      alert('Payout failed: ' + data.error)
-    } else {
-      alert(`Approved and paid $${clip.offers.amount} instantly!`)
-    }
-
+    alert(`Clip sent to parent for final approval: ${clip.profiles.parent_email || 'parent email'}`)
     setPendingClips(pendingClips.filter(c => c.id !== clip.id))
+    setBusiness({ ...business, wallet_balance: business.wallet_balance - clip.offers.amount })
+
+    setShowFundFriend(true)
   }
 
   const createChallengeForKid = async (kid: any) => {
@@ -391,6 +346,65 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
     }
   }
 
+  const searchAthletes = async () => {
+  if (!athleteSearch.trim()) {
+    setSearchResults([])
+    return
+  }
+
+  const { data } = await supabase
+    .from('profiles')
+    .select('id, full_name, email, school')
+    .or(`full_name.ilike.%${athleteSearch}%,email.ilike.%${athleteSearch}%,school.ilike.%${athleteSearch}%`)
+    .limit(10)
+
+  setSearchResults(data || [])
+}
+
+const awardScholarship = async () => {
+  if (!selectedAthlete || !scholarshipAmount || parseFloat(scholarshipAmount) <= 0) {
+    alert('Select an athlete and enter a valid amount')
+    return
+  }
+
+  const amount = parseFloat(scholarshipAmount)
+  setScholarshipLoading(true)
+
+  const response = await fetch('/api/payout', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      athlete_id: selectedAthlete.id,
+      amount,
+      type: 'freedom_scholarship',
+      message: scholarshipMessage,
+    }),
+  })
+
+  const data = await response.json()
+
+  if (data.error) {
+    alert('Error: ' + data.error)
+  } else {
+    await supabase
+      .from('scholarships')
+      .insert({
+        business_id: business.id,
+        athlete_id: selectedAthlete.id,
+        amount,
+        message: scholarshipMessage || 'Great hustle!',
+      })
+
+    alert(`$${amount} Freedom Scholarship awarded to ${selectedAthlete.full_name || selectedAthlete.email}!`)
+    setScholarshipAmount('')
+    setScholarshipMessage('')
+    setSelectedAthlete(null)
+    setSearchResults([])
+    setAthleteSearch('')
+  }
+
+  setScholarshipLoading(false)
+}
   const handleAddFunds = async (amount: number) => {
     const response = await fetch('/api/checkout', {
       method: 'POST',
@@ -411,270 +425,319 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
       alert(error.message)
     }
   }
-
-  const searchGigs = () => {
-    if (!gigSearch.trim()) {
-      setSearchedOffers(offers)
-      return
-    }
-
-    const lower = gigSearch.toLowerCase()
-    const filtered = offers.filter((o: any) => 
-      o.type.toLowerCase().includes(lower) ||
-      o.description.toLowerCase().includes(lower) ||
-      o.location?.toLowerCase().includes(lower)
-    )
-    setSearchedOffers(filtered)
-  }
-
+  
+  // Stand-alone Freedom Scholarship
   const searchAthletes = async () => {
     if (!athleteSearch.trim()) {
-      setSearchedAthletes([])
+      setSearchResults([])
       return
     }
 
     const { data } = await supabase
       .from('profiles')
       .select('id, full_name, email, school')
-      .ilike('full_name', `%${athleteSearch}%`)
+      .or(`full_name.ilike.%${athleteSearch}%,email.ilike.%${athleteSearch}%,school.ilike.%${athleteSearch}%`)
       .limit(10)
 
-    setSearchedAthletes(data || [])
+    setSearchResults(data || [])
   }
 
-  const awardStandaloneScholarship = async () => {
-    if (!selectedAthleteForScholarship || !standaloneScholarshipAmount || parseFloat(standaloneScholarshipAmount) <= 0) {
-      alert('Please select an athlete and enter a valid amount')
+  const awardScholarship = async () => {
+    if (!selectedAthlete || !standaloneScholarshipAmount || parseFloat(standaloneScholarshipAmount) <= 0) {
+      alert('Select an athlete and enter a valid amount')
       return
     }
 
     const amount = parseFloat(standaloneScholarshipAmount)
+    setScholarshipLoading(true)
 
-    // Real payout
     const response = await fetch('/api/payout', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        athlete_id: selectedAthleteForScholarship.id,
+        athlete_id: selectedAthlete.id,
         amount,
+        type: 'freedom_scholarship',
+        message: standaloneScholarshipMessage || 'Great hustle!',
       }),
     })
 
     const data = await response.json()
 
     if (data.error) {
-      alert('Scholarship payout failed: ' + data.error)
-      return
+      alert('Error: ' + data.error)
+    } else {
+      await supabase
+        .from('scholarships')
+        .insert({
+          business_id: business.id,
+          athlete_id: selectedAthlete.id,
+          amount,
+          message: standaloneScholarshipMessage || 'Great hustle!',
+        })
+
+      alert(`$${amount} Freedom Scholarship awarded to ${selectedAthlete.full_name || selectedAthlete.email}!`)
+      setStandaloneScholarshipAmount('')
+      setStandaloneScholarshipMessage('')
+      setSelectedAthlete(null)
+      setSearchResults([])
+      setAthleteSearch('')
     }
 
-    // Record scholarship
-    await supabase
-      .from('scholarships')
-      .insert({
-        business_id: business.id,
-        athlete_id: selectedAthleteForScholarship.id,
-        amount,
-        message: scholarshipMessage || 'Great hustle!',
-      })
-
-    alert(`Freedom Scholarship of $${amount} awarded to ${selectedAthleteForScholarship.full_name || selectedAthleteForScholarship.email}!`)
-    setStandaloneScholarshipAmount('')
-    setScholarshipMessage('')
-    setSelectedAthleteForScholarship(null)
-    setAthleteSearch('')
-    setSearchedAthletes([])
+    setScholarshipLoading(false)
   }
+  
+  const { data: latestScholarship } = await supabase
+  .from('scholarships')
+  .select('*, businesses(name)')
+  .eq('athlete_id', user.id)
+  .order('created_at', { ascending: false })
+  .limit(1)
+  .single()
+
+if (latestScholarship) {
+  setRecentScholarship({
+    ...latestScholarship,
+    business_name: latestScholarship.businesses?.name || 'a supporter',
+  })
+}
 
   if (!profile) return <p className="container text-center py-32">Loading...</p>
 
   return (
+    
+    {/* First-Time Setup Banner */}
+{profile?.role === 'athlete' && (
+  <div className="bg-blue-100 p-12 border-4 border-blue-600 mb-16">
+    <h3 className="text-3xl font-bold mb-8">
+      Complete 3 Steps to Start Earning
+    </h3>
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+      <div className={`text-center p-6 border-4 ${profilePic ? 'bg-green-100 border-green-600' : 'bg-gray-100 border-black'}`}>
+        <p className="text-xl font-bold mb-2">
+          {profilePic ? 'Complete!' : 'Step 1'}
+        </p>
+        <p>Profile Photo</p>
+      </div>
+      <div className={`text-center p-6 border-4 ${selectedGigs.length > 0 ? 'bg-green-100 border-green-600' : 'bg-gray-100 border-black'}`}>
+        <p className="text-xl font-bold mb-2">
+          {selectedGigs.length > 0 ? 'Complete!' : 'Step 2'}
+        </p>
+        <p>Select Gigs</p>
+      </div>
+      <div className={`text-center p-6 border-4 ${profile.payout_method_setup ? 'bg-green-100 border-green-600' : 'bg-gray-100 border-black'}`}>
+        <p className="text-xl font-bold mb-2">
+          {profile.payout_method_setup ? 'Complete!' : 'Step 3'}
+        </p>
+        <p>Add Debit Card</p>
+        {!profile.payout_method_setup && (
+          <Button 
+            onClick={() => router.push('/payout-setup')}
+            className="mt-4 w-full h-14 text-lg bg-black text-white"
+          >
+            Add Card
+          </Button>
+        )}
+      </div>
+    </div>
+  </div>
+)}
+    
     <div className="container py-8">
       <p className="text-center mb-12 text-xl font-mono">Welcome, {profile.email}</p>
 
-      {/* Subtitle — black block */}
       <div className="bg-black text-white p-8 mb-12">
         <h1 className="text-3xl font-bold">
-          {profile.role === 'athlete' ? 'Your Hustle Dashboard' : 'Your Business Admin Console'}
+          {profile.role === 'athlete' ? 'Your Athlete Dashboard' : 'Your Business Admin Console'}
         </h1>
       </div>
 
-      {/* Detail — black block */}
       <div className="bg-black text-white p-8 mb-12">
         <p className="text-lg leading-relaxed">
           {profile.role === 'athlete' ? 'Pitch businesses, claim gigs, build your squad and earn together.' : 'Post gigs to get authentic content. Review clips — only approve what you love. Become the hometown hero.'}
         </p>
       </div>
+        
+       {/* Qualification Progress Meter */}
+<div className="bg-gray-100 p-12 border-4 border-black mb-16">
+  <h2 className="text-3xl font-bold mb-8 text-center">
+    Your Path to Bigger Opportunities
+  </h2>
 
+  <div className="max-w-2xl mx-auto">
+    {/* Progress Bar */}
+    <div className="relative h-16 bg-gray-300 border-4 border-black mb-8 overflow-hidden">
+      <div 
+        className="absolute h-full bg-green-600 transition-all duration-500"
+        style={{ width: `${Math.min((completedGigs / 8) * 100, 100)}%` }}
+      />
+      <p className="absolute inset-0 flex items-center justify-center text-2xl font-bold">
+        {completedGigs} / 8 Gigs Completed
+      </p>
+    </div>
+
+    {/* Milestones */}
+    <div className="grid grid-cols-2 gap-8">
+      <div className={`text-center p-6 border-4 ${completedGigs >= 4 ? 'bg-green-100 border-green-600' : 'bg-gray-100 border-black'}`}>
+        <p className="text-xl font-bold mb-2">
+          {completedGigs >= 4 ? 'Qualified!' : `${4 - completedGigs} gigs to go`}
+        </p>
+        <p className="text-lg">
+          Freedom Scholarship Eligible<br />
+          <span className="text-sm">Unrestricted cash bonus</span>
+        </p>
+      </div>
+
+      <div className={`text-center p-6 border-4 ${completedGigs >= 8 ? 'bg-purple-100 border-purple-600' : 'bg-gray-100 border-black'}`}>
+        <p className="text-xl font-bold mb-2">
+          {completedGigs >= 8 ? 'Qualified!' : `${8 - completedGigs} gigs to go`}
+        </p>
+        <p className="text-lg">
+          Brand Deal Eligible<br />
+          <span className="text-sm">National brand submissions</span>
+        </p>
+      </div>
+    </div>
+  </div>
+</div> 
       {profile.role === 'athlete' ? (
         <div className="max-w-4xl mx-auto space-y-32 font-mono text-center text-lg">
-          
-
-          {/* Player Profile Section */}
-          <div className="max-w-2xl mx-auto bg-gray-100 p-8 border-4 border-black rounded-lg">
-            <h2 className="text-2xl mb-8 font-bold">Your Player Profile</h2>
-
-            {/* Circle Photo Upload */}
-            <div className="mb-12">
-              <div className="relative w-40 h-40 mx-auto rounded-full overflow-hidden border-4 border-black">
-                {profilePic ? (
-                  <img src={profilePic} alt="Profile" className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full bg-gray-300 flex items-center justify-center">
-                    <p className="text-gray-600">Tap to Upload</p>
-                  </div>
-                )}
-              </div>
-              <input
-                type="file"
-                accept="image/*"
-                capture="environment"
-                onChange={async (e) => {
-                  const file = e.target.files?.[0]
-                  if (!file || !profile) return
-
-                  const fileExt = file.name.split('.').pop()
-                  const fileName = `${profile.id}.${fileExt}`
-                  const filePath = `${profile.id}/${fileName}`
-
-                  const { error: uploadError } = await supabase.storage
-                    .from('profile-pics')
-                    .upload(filePath, file, { upsert: true })
-
-                  if (uploadError) {
-                    alert('Upload failed: ' + uploadError.message)
-                    return
-                  }
-
-                  const { data: urlData } = supabase.storage
-                    .from('profile-pics')
-                    .getPublicUrl(filePath)
-
-                  setProfilePic(urlData.publicUrl)
-
-                  await supabase
-                    .from('profiles')
-                    .update({ profile_pic: urlData.publicUrl })
-                    .eq('id', profile.id)
-                }}
-                className="hidden"
-                id="photo-upload"
-              />
-              <label htmlFor="photo-upload" className="block mt-4">
-                <div className="px-8 py-4 bg-black text-white text-center cursor-pointer font-bold text-lg">
-                  Upload Photo
+          {/* Step 1: Complete Profile */}
+          <div className="bg-green-100 p-8 border-4 border-green-600 rounded-lg">
+            <h2 className="text-3xl font-bold mb-8">
+              Step 1 — Complete Your Profile
+            </h2>
+            <div className="max-w-2xl mx-auto bg-gray-100 p-8 border-4 border-black rounded-lg">
+              <div className="mb-12">
+                <div className="relative w-40 h-40 mx-auto rounded-full overflow-hidden border-4 border-black">
+                  {profilePic ? (
+                    <img src={profilePic} alt="Profile" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full bg-gray-300 flex items-center justify-center">
+                      <p className="text-gray-600">Tap to Upload</p>
+                    </div>
+                  )}
                 </div>
-              </label>
-            </div>
+                <input
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0]
+                    if (!file || !profile) return
 
-            {/* Name */}
-            <div className="mb-8">
-              <label className="block text-lg mb-2">Name</label>
-              <Input placeholder="Your Name" value={profile?.full_name || ''} disabled className="text-center" />
-            </div>
+                    const fileExt = file.name.split('.').pop()
+                    const fileName = `${profile.id}.${fileExt}`
+                    const filePath = `${profile.id}/${fileName}`
 
-            {/* School */}
-            <div className="mb-8">
-              <label className="block text-lg mb-2">School</label>
-              <Input placeholder="Your School" value={profile?.school || ''} disabled className="text-center" />
-            </div>
+                    const { error: uploadError } = await supabase.storage
+                      .from('profile-pics')
+                      .upload(filePath, file, { upsert: true })
 
-            {/* Highlight Link */}
-            <div className="mb-8">
-              <label className="block text-lg mb-2">Highlight Reel Link</label>
-              <Input placeholder="YouTube / Hudl link" value={highlightLink} onChange={(e) => setHighlightLink(e.target.value)} className="text-center" />
-            </div>
+                    if (uploadError) {
+                      alert('Upload failed: ' + uploadError.message)
+                      return
+                    }
 
-            {/* Social Followers */}
-            <div className="mb-8">
-              <label className="block text-lg mb-2">Total Social Followers</label>
-              <Input placeholder="e.g., 5,000" value={socialFollowers} onChange={(e) => setSocialFollowers(e.target.value)} className="text-center" />
-            </div>
+                    const { data: urlData } = supabase.storage
+                      .from('profile-pics')
+                      .getPublicUrl(filePath)
 
-            {/* Bio */}
-            <div className="mb-12">
-              <label className="block text-lg mb-2">Bio</label>
-              <textarea
-                placeholder="Short bio about you and your sport"
-                value={bio}
-                onChange={(e) => setBio(e.target.value)}
-                className="w-full p-4 text-lg border-4 border-black font-mono"
-              />
-            </div>
+                    setProfilePic(urlData.publicUrl)
 
-            <Button onClick={handleSaveProfile} className="w-full h-16 text-xl bg-black text-white">
-              Save Profile
-            </Button>
+                    await supabase
+                      .from('profiles')
+                      .update({ profile_pic: urlData.publicUrl })
+                      .eq('id', profile.id)
+                  }}
+                  className="hidden"
+                  id="photo-upload"
+                />
+                <label htmlFor="photo-upload" className="block mt-4">
+                  <div className="px-8 py-4 bg-black text-white text-center cursor-pointer font-bold text-lg">
+                    Upload Photo
+                  </div>
+                </label>
+              </div>
+
+              <div className="mb-8">
+                <label className="block text-lg mb-2">Name</label>
+                <Input placeholder="Your Name" value={profile?.full_name || ''} disabled className="text-center" />
+              </div>
+
+              <div className="mb-8">
+                <label className="block text-lg mb-2">School</label>
+                <Input placeholder="Your School" value={profile?.school || ''} disabled className="text-center" />
+              </div>
+
+              <div className="mb-8">
+                <label className="block text-lg mb-2">Highlight Reel Link</label>
+                <Input placeholder="YouTube / Hudl link" value={highlightLink} onChange={(e) => setHighlightLink(e.target.value)} className="text-center" />
+              </div>
+
+              <div className="mb-8">
+                <label className="block text-lg mb-2">Total Social Followers</label>
+                <Input placeholder="e.g., 5,000" value={socialFollowers} onChange={(e) => setSocialFollowers(e.target.value)} className="text-center" />
+              </div>
+
+              <div className="mb-12">
+                <label className="block text-lg mb-2">Bio</label>
+                <textarea
+                  placeholder="Short bio about you and your sport"
+                  value={bio}
+                  onChange={(e) => setBio(e.target.value)}
+                  className="w-full p-4 text-lg border-4 border-black font-mono"
+                />
+              </div>
+
+              <Button onClick={handleSaveProfile} className="w-full h-16 text-xl bg-black text-white">
+                Save Profile
+              </Button>
+            </div>
           </div>
-            
-            {/* Payout Setup Banner — Only if not setup */}
-{profile?.role === 'athlete' && !profile?.payout_method_setup && (
-  <div className="bg-green-100 p-12 border-4 border-green-600 mb-16 text-center">
-    <h2 className="text-3xl font-bold mb-6">
-      Get Paid Instantly — Add Your Debit Card
-    </h2>
-    <p className="text-xl mb-8 max-w-3xl mx-auto">
-      Connect your debit card to receive earnings and Freedom Scholarships directly.<br />
-      Any athlete can add a card — 18+ get paid without parent approval.
-    </p>
-    <Button 
-      onClick={() => router.push('/payout-setup')}
-      className="w-full max-w-md h-20 text-2xl bg-black text-white font-bold"
-    >
-      Add Debit Card Now
-    </Button>
-  </div>
-)}
-          {/* Gig Selection */}
-          <div>
-            <h2 className="text-2xl mb-8 font-bold">Gigs You Offer</h2>
-            <p className="mb-8">Select the gigs you're willing to do — businesses will see these.</p>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+
+          {/* Step 2: Choose Gigs You Offer */}
+          <div className="bg-green-100 p-8 border-4 border-green-600 rounded-lg">
+            <h2 className="text-3xl font-bold mb-8">
+              Step 2 — Choose Gigs You Offer
+            </h2>
+            <p className="mb-12 text-xl">
+              Select the gigs you're willing to do — businesses will see these.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">
               {athleteGigTypes.map((gig) => (
-                <div key={gig.title} className="border-4 border-black p-6 bg-gray-100">
-                  <h3 className="text-xl font-bold mb-4">{gig.title}</h3>
-                  <p className="mb-6">{gig.description}</p>
+                <div key={gig.title} className="border-4 border-black p-8 bg-gray-100">
+                  <h3 className="text-2xl font-bold mb-4">{gig.title}</h3>
+                  <p className="mb-8">{gig.description}</p>
                   <Button 
                     onClick={() => toggleGigSelection(gig.title)}
-                    className="w-full h-14 text-lg bg-black text-white hover:bg-gray-800"
+                    className="w-full h-16 text-xl bg-black text-white hover:bg-gray-800"
                   >
-                    {selectedGigs.includes(gig.title) ? 'Selected' : 'Select This Gig'}
+                    {selectedGigs.includes(gig.title) ? 'Selected ✓' : 'Select This Gig'}
                   </Button>
+                  <div className="border-t-4 border-black mt-8"></div>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Open Offers */}
-          <div>
-            <h2 className="text-2xl mb-8 font-bold">Open Offers</h2>
-            {offers.length === 0 ? (
-              <p className="text-gray-600 mb-12">No offers yet — pitch businesses to get started!</p>
-            ) : (
-              <div className="space-y-16">
-                {offers.map((offer) => (
-                  <div key={offer.id} className="border-4 border-black p-8 bg-gray-100 max-w-lg mx-auto">
-                    <p className="font-bold text-2xl mb-6">{offer.type.toUpperCase()} — ${offer.amount}</p>
-                    <p className="mb-8">{offer.description}</p>
-                    <Button 
-                      onClick={() => router.push(`/claim/${offer.id}`)}
-                      className="w-full h-16 text-xl bg-black text-white"
-                    >
-                      Claim Offer
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Pitch Letter — Collapsible */}
-          <div>
-            <h2 className="text-2xl mb-8 font-bold cursor-pointer" onClick={() => setShowPitchLetter(!showPitchLetter)}>
-              Pitch Local Businesses {showPitchLetter ? '▲' : '▼'}
+          {/* Step 3: Pitch Local Businesses */}
+          <div className="bg-green-100 p-8 border-4 border-green-600 rounded-lg">
+            <h2 className="text-3xl font-bold mb-8">
+              Step 3 — Pitch Local Businesses - click on pitch below
             </h2>
+            <p className="mb-8 text-xl">
+              Click the button below to reveal your personalized pitch letter — copy or share it with your favorite local spots!
+            </p>
+            <Button 
+              onClick={() => setShowPitchLetter(!showPitchLetter)}
+              className="w-full max-w-md h-16 text-xl bg-black text-white mb-8"
+            >
+              {showPitchLetter ? 'Hide Pitch Letter' : 'Show Pitch Letter'}
+            </Button>
             {showPitchLetter && (
-              <div className="bg-gray-100 p-8 border-4 border-black mb-8 max-w-2xl mx-auto">
-                <pre className="text-left whitespace-pre-wrap text-sm">
+              <div className="bg-gray-100 p-8 border-4 border-black mb-8 max-w-3xl mx-auto">
+                <pre className="text-left whitespace-pre-wrap text-base">
                   {`Hey [Business Name],
 
 I've been coming to [Your Spot] for years before and after practice.
@@ -693,10 +756,10 @@ Thanks either way!
 ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athlete'}`}
                 </pre>
                 <div className="flex flex-col gap-4 max-w-md mx-auto mt-8">
-                  <Button onClick={shareLetter} className="h-14 text-lg bg-black text-white">
+                  <Button onClick={shareLetter} className="h-16 text-xl bg-black text-white">
                     Share Letter
                   </Button>
-                  <Button onClick={copyLetter} variant="outline" className="h-14 text-lg border-4 border-black">
+                  <Button onClick={copyLetter} variant="outline" className="h-16 text-xl border-4 border-black">
                     Copy Letter
                   </Button>
                 </div>
@@ -704,66 +767,25 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
             )}
           </div>
 
-          {/* Brand Deals CTA */}
-          <div className="my-16">
-            <Button 
-              onClick={() => router.push('/brand-deals')}
-              className="w-full max-w-2xl h-24 text-3xl bg-green-400 text-black font-bold"
-            >
-              Land National Brand Deals
-            </Button>
-          </div>
-
-          {/* CTA */}
-          <div className="my-16">
-            <Button 
-              onClick={() => router.push('/squad')}
-              className="w-full max-w-md h-20 text-2xl bg-black text-white"
-            >
-              Build a Squad and Earn with Friends
-            </Button>
-          </div>
-
-          {/* Divider */}
-          <div className="border-t-4 border-black my-16"></div>
-
-          {/* Squad Members */}
+          {/* Available Gigs */}
           <div>
-            <h2 className="text-2xl mb-8 font-bold">Your Squad</h2>
-            {squad.length === 0 ? (
-              <p className="text-gray-600 mb-12">No squad members yet — share your link!</p>
-            ) : (
-              <div className="space-y-8 max-w-2xl mx-auto">
-                {squad.map((member) => (
-                  <div key={member.id} className="border-2 border-black p-8 bg-gray-100">
-                    <p className="font-bold">{member.email}</p>
-                    <p className="text-sm">Joined: {new Date(member.created_at).toLocaleDateString()}</p>
-                  </div>
-                ))}
+            <h2 className="text-3xl font-bold mb-12">Available Gigs</h2>
+            <div className="mb-12">
+              <h3 className="text-2xl mb-8 font-bold">Find Gigs</h3>
+              <div className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
+                <Input 
+                  placeholder="Search gigs (type, location, school)"
+                  value={gigSearch}
+                  onChange={(e) => setGigSearch(e.target.value)}
+                  className="text-center"
+                />
+                <Button onClick={searchGigs} className="h-14 text-lg bg-black text-white">
+                  Search
+                </Button>
               </div>
-            )}
-          </div>
-           {/* Gig Search */}
-          <div className="mb-12">
-            <h2 className="text-2xl mb-8 font-bold">Find Gigs</h2>
-            <div className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
-              <Input 
-                placeholder="Search gigs (type, location, school)"
-                value={gigSearch}
-                onChange={(e) => setGigSearch(e.target.value)}
-                className="text-center"
-              />
-              <Button onClick={searchGigs} className="h-14 text-lg bg-black text-white">
-                Search
-              </Button>
             </div>
-          </div>
-
-          {/* Searched/Filtered Offers */}
-          <div>
-            <h2 className="text-2xl mb-8 font-bold">Available Gigs</h2>
             {searchedOffers.length === 0 ? (
-              <p className="text-gray-600 mb-12">No gigs matching search — try different terms!</p>
+              <p className="text-gray-600 mb-12 text-xl">No gigs matching search — try different terms!</p>
             ) : (
               <div className="space-y-16">
                 {searchedOffers.map((offer) => (
@@ -780,395 +802,525 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
                 ))}
               </div>
             )}
-          </div> 
-            
-          {/* Ambassador */}
-          <div className="max-w-2xl mx-auto my-16 p-8 border-4 border-black bg-gray-100">
-            <h2 className="text-2xl mb-8 font-bold">
-              Become a Team Hustle Ambassador
-            </h2>
+          </div>
 
-            <div className="text-left text-lg leading-relaxed">
-              <p className="mb-4">
-                <strong>Task:</strong> Make 10 business connections — send the support letter to local spots.
-              </p>
-              <p className="mb-4">
-                <strong>Qualifications:</strong> Varsity player, manager, or photographer • 3.0 GPA or better
-              </p>
-              <p className="mb-4">
-                <strong>Prize:</strong> $100 bonus (1 week deadline) • 5% lifetime cut of every gig from businesses you onboard
-              </p>
-              <p className="mb-8">
-                <strong>Deadline:</strong> Complete within 7 days of applying
-              </p>
-            </div>
+          {/* Your Earnings + Freedom Scholarships */}
+          <div className="max-w-2xl mx-auto bg-gray-100 p-8 border-4 border-black rounded-lg">
+            <h2 className="text-3xl font-bold mb-8">Your Earnings</h2>
+            <p className="text-xl mb-4">Total Earned: $125</p>
+            <p className="text-xl mb-8 text-green-600 font-bold">Freedom Scholarships Earned: $500</p>
+            <p className="text-lg mb-8">
+              Freedom Scholarships are unrestricted cash paid instantly — use for books, food, rent — whatever you need.
+            </p>
+          </div>
+          {/* Social Share After Scholarship */}
+{profile?.role === 'athlete' && recentScholarship && !recentScholarship.shared && (
+  <div className="bg-purple-100 p-12 border-4 border-purple-600 mb-16">
+    <h3 className="text-3xl font-bold mb-8 text-center">
+      You Just Earned a Freedom Scholarship! 🎉
+    </h3>
+    <p className="text-xl mb-8 text-center">
+      ${recentScholarship.amount} from {recentScholarship.business_name}<br />
+      "{recentScholarship.message}"
+    </p>
+    <Button
+      onClick={async () => {
+        const text = `Just earned a $${recentScholarship.amount} Freedom Scholarship from ${recentScholarship.business_name} on @LocalHustle! 💰\n\n"${recentScholarship.message}"\n\nReal money for college — no restrictions.\n\nJoin here: https://app.localhustle.org?ref=${profile.id}`
 
-            <div className="text-center">
-              <Button className="w-full max-w-md h-16 text-xl bg-black text-white">
-                Apply Now
+        if (navigator.share) {
+          await navigator.share({ text })
+        } else {
+          navigator.clipboard.writeText(text)
+          alert('Share text copied!')
+        }
+
+        // Mark as shared (optional — backend flag)
+        await supabase
+          .from('scholarships')
+          .update({ shared: true })
+          .eq('id', recentScholarship.id)
+      }}
+      className="w-full max-w-md h-20 text-2xl bg-purple-600 text-white font-bold"
+    >
+      Share Your Win
+    </Button>
+  </div>
+)}
+          {/* Your Squad */}
+          <div>
+            <h2 className="text-3xl font-bold mb-8">Your Squad</h2>
+            <div className="mb-8">
+              <Button 
+                onClick={() => router.push('/squad')}
+                className="w-full max-w-md h-16 text-xl bg-black text-white"
+              >
+                Build a Squad and Earn with Friends
               </Button>
             </div>
-          </div>
-        </div>
-      ) : (
-        <div className="max-w-4xl mx-auto space-y-16 font-mono text-center text-lg">
-          {/* Subtitle — black block */}
-          <div className="bg-black text-white p-8 mb-12">
-            <h1 className="text-3xl font-bold">
-              Your Business Admin Console
-            </h1>
-          </div>
-
-          {/* Detail — black block */}
-          <div className="bg-black text-white p-8 mb-12">
-            <p className="text-lg leading-relaxed">
-              Post gigs to get authentic content from local athletes.<br />
-              Review clips — only approve what you love.<br />
-              Become the hometown hero while discovering motivated teens.
-            </p>
-
-            <h2 className="text-2xl font-bold mt-12 mb-6">
-              Why this is the best advertising
-            </h2>
-            <p className="text-lg leading-relaxed">
-              • Real word-of-mouth from kids parents trust (88% trust recommendations from people they know).<br />
-              • Authentic content — better than paid ads.<br />
-              • Be the hometown hero — visible support for local teams.<br />
-              • Discover motivated teens & potential future employees.<br />
-              • Approve = Clips You Love.
-            </p>
-          </div>
-
-          {/* My Kid's Challenges */}
-          {referredAthletes.length > 0 && (
-            <div className="mb-16">
-              <h3 className="text-3xl mb-8 font-bold">My Kid's Challenges</h3>
-              <p className="mb-8 text-lg">
-                Create a challenge for your kid — they complete, you approve, they get paid.
-              </p>
+            {squad.length === 0 ? (
+              <p className="text-gray-600 mb-12">No squad members yet — share your link!</p>
+            ) : (
               <div className="space-y-8 max-w-2xl mx-auto">
-                {referredAthletes.map((kid) => (
-                  <div key={kid.id} className="border-4 border-black p-8 bg-gray-100">
-                    <p className="font-bold text-2xl mb-4">{kid.full_name || kid.email}</p>
-                    <p className="mb-6 text-lg">
-                      Prove it with timelapse or witness video — easy!
-                    </p>
-                    <Button 
-                      onClick={() => createChallengeForKid(kid)}
-                      className="w-full h-16 text-xl bg-green-400 text-black"
-                    >
-                      Create Challenge for {kid.full_name?.split(' ')[0] || 'Kid'}
-                    </Button>
+                {squad.map((member) => (
+                  <div key={member.id} className="border-2 border-black p-8 bg-gray-100">
+                    <p className="font-bold">{member.email}</p>
+                    <p className="text-sm">Joined: {new Date(member.created_at).toLocaleDateString()}</p>
                   </div>
                 ))}
               </div>
-            </div>
-          )}
-
-          {/* Fund Best Friend Prompt */}
-          {showFundFriend && (
-            <div className="max-w-2xl mx-auto my-16 p-8 bg-green-100 border-4 border-green-600">
-              <p className="text-2xl font-bold mb-6">
-                Your kid earned $50! 🎉
-              </p>
-              <p className="text-xl mb-8">
-                Fund a challenge for their best friend — get them started too.
-              </p>
-              <div className="space-y-6">
-                <Input 
-                  placeholder="Friend's name (optional)"
-                  value={friendName}
-                  onChange={(e) => setFriendName(e.target.value)}
-                />
-                <Input 
-                  placeholder="Friend's email (required)"
-                  value={friendEmail}
-                  onChange={(e) => setFriendEmail(e.target.value)}
-                />
-                <Input 
-                  placeholder="Challenge description (e.g., 80/100 free throws)"
-                  value={friendChallenge}
-                  onChange={(e) => setFriendChallenge(e.target.value)}
-                />
-                <Input 
-                  placeholder="Payout amount (e.g., 50)"
-                  value={friendAmount}
-                  onChange={(e) => setFriendAmount(e.target.value)}
-                />
-                <Button onClick={handleFundFriend} className="w-full h-16 text-xl bg-green-400 text-black">
-                  Fund Challenge & Invite Friend
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {/* Wallet Balance + Auto-Top-Up + Add Funds */}
-          <div className="mb-16">
-            <p className="text-3xl mb-4 font-bold">Wallet balance: ${business?.wallet_balance?.toFixed(2) || '0.00'}</p>
-
-            {/* Auto-Top-Up Toggle */}
-            <div className="max-w-md mx-auto mb-12 p-6 bg-gray-100 border-4 border-black">
-              <label className="flex items-center justify-between cursor-pointer">
-                <span className="text-xl font-bold">Auto-Top-Up</span>
-                <input
-                  type="checkbox"
-                  checked={business?.auto_top_up ?? true}
-                  onChange={async (e) => {
-                    const enabled = e.target.checked
-                    await supabase
-                      .from('businesses')
-                      .update({ auto_top_up: enabled })
-                      .eq('id', business.id)
-                    setBusiness({ ...business, auto_top_up: enabled })
-                    alert(enabled ? 'Auto-top-up enabled!' : 'Auto-top-up disabled')
-                  }}
-                  className="w-8 h-8"
-                />
-              </label>
-              <p className="text-lg mt-4">
-                Never run out — when balance falls below $100, automatically add $500.
-              </p>
-            </div>
-
-            {/* Add Funds Buttons */}
-            <p className="text-lg mb-8">
-              Top up your wallet — post gigs anytime. Most businesses start with $500–$1000.
-            </p>
-
-            <div className="flex flex-wrap justify-center gap-4 mb-8">
-              <Button 
-                onClick={() => handleAddFunds(100)}
-                className="w-48 h-14 text-lg bg-black text-white"
-              >
-                + $100
-              </Button>
-              <Button 
-                onClick={() => handleAddFunds(500)}
-                className="w-48 h-14 text-lg bg-black text-white"
-              >
-                + $500
-              </Button>
-              <Button 
-                onClick={() => handleAddFunds(1000)}
-                className="w-48 h-14 text-lg bg-black text-white"
-              >
-                + $1000
-              </Button>
-              <Button 
-                onClick={() => {
-                  const custom = prompt('Enter custom amount:')
-                  if (custom !== null && custom.trim() !== '' && !isNaN(Number(custom)) && Number(custom) > 0) {
-                    handleAddFunds(Number(custom))
-                  }
-                }}
-                className="w-48 h-14 text-lg bg-green-400 text-black"
-              >
-                Custom Amount
-              </Button>
-            </div>
-
-            <p className="text-sm text-gray-600">
-              Transaction fee covers legal NIL compliance, bonus & challenge distributions, credit card fees, and platform expenses.
-            </p>
+            )}
           </div>
 
-          {/* Award Standalone Freedom Scholarship */}
-          <div className="mb-16">
-            <h3 className="text-3xl mb-8 font-bold">Award a Freedom Scholarship</h3>
+          {/* Ambassador */}
+          <div>
+            <h2 className="text-3xl font-bold mb-8">Become an Ambassador</h2>
             <p className="mb-8 text-xl">
-              Give instant, unrestricted cash to any athlete — no gig required.
+              Earn $100 + 5% commissions by bringing local businesses to LocalHustle.
             </p>
-            <div className="max-w-2xl mx-auto space-y-6">
-              <Input 
-                placeholder="Search athlete by name"
-                value={athleteSearch}
-                onChange={(e) => setAthleteSearch(e.target.value)}
-              />
-              <Button onClick={searchAthletes} className="w-full h-16 text-xl bg-black text-white">
-                Search Athletes
-              </Button>
+            <Button 
+              onClick={() => router.push('/ambassador')}
+              className="w-full max-w-md h-16 text-xl bg-black text-white"
+            >
+              View Ambassador Opportunity
+            </Button>
+          </div>
 
-              {searchedAthletes.length > 0 && (
-                <div className="space-y-4">
-                  {searchedAthletes.map((athlete) => (
-                    <div key={athlete.id} className="border-4 border-black p-4 bg-gray-100">
-                      <p>{athlete.full_name || athlete.email} — {athlete.school}</p>
+          {/* Land National Brand Deals CTA */}
+          <div className="my-16">
+            <Button 
+              onClick={() => router.push('/brand-deals')}
+              className="w-full max-w-2xl h-24 text-3xl bg-green-400 text-black font-bold"
+            >
+              Land National Brand Deals
+            </Button>
+          </div>
+        </div>
+        
+      ) : (
+      
+        <div className="max-w-4xl mx-auto space-y-16 font-mono text-center text-lg">
+          {/* Business Tabs */}
+<div className="flex justify-center gap-4 flex-wrap mb-12">
+  <Button
+    onClick={() => setActiveTab('wallet')}
+    variant={activeTab === 'wallet' ? 'default' : 'outline'}
+    className="px-8 py-4 text-xl"
+  >
+    Wallet & Gigs
+  </Button>
+  <Button
+    onClick={() => setActiveTab('clips')}
+    variant={activeTab === 'clips' ? 'default' : 'outline'}
+    className="px-8 py-4 text-xl"
+  >
+    Pending Clips
+  </Button>
+  <Button
+    onClick={() => setActiveTab('kids')}
+    variant={activeTab === 'kids' ? 'default' : 'outline'}
+    className="px-8 py-4 text-xl"
+  >
+    My Kid's Challenges
+  </Button>
+  <Button
+    onClick={() => setActiveTab('favorites')}
+    variant={activeTab === 'favorites' ? 'default' : 'outline'}
+    className="px-8 py-4 text-xl"
+  >
+    Favorite Athletes
+  </Button>
+  <Button
+    onClick={() => setActiveTab('payment-methods')}
+    variant={activeTab === 'payment-methods' ? 'default' : 'outline'}
+    className="px-8 py-4 text-xl"
+  >
+    Payment Methods
+  </Button>
+  <Button
+    onClick={() => setActiveTab('booster')}
+    variant={activeTab === 'booster' ? 'default' : 'outline'}
+    className="px-8 py-4 text-xl"
+  >
+    Booster Events
+  </Button>
+</div>
+
+          {/* Tab Content */}
+          {activeTab === 'wallet' && (
+            <>
+              {/* Wallet Balance + Auto-Top-Up + Add Funds */}
+              <div className="mb-16">
+                <p className="text-3xl mb-4 font-bold">Wallet balance: ${business?.wallet_balance?.toFixed(2) || '0.00'}</p>
+
+                <div className="max-w-md mx-auto mb-12 p-6 bg-gray-100 border-4 border-black">
+                  <label className="flex items-center justify-between cursor-pointer">
+                    <span className="text-xl font-bold">Auto-Top-Up</span>
+                    <input
+                      type="checkbox"
+                      checked={business?.auto_top_up ?? true}
+                      onChange={async (e) => {
+                        const enabled = e.target.checked
+                        await supabase
+                          .from('businesses')
+                          .update({ auto_top_up: enabled })
+                          .eq('id', business.id)
+                        setBusiness({ ...business, auto_top_up: enabled })
+                        alert(enabled ? 'Auto-top-up enabled!' : 'Auto-top-up disabled')
+                      }}
+                      className="w-8 h-8"
+                    />
+                  </label>
+                  <p className="text-lg mt-4">
+                    Never run out — when balance falls below $100, automatically add $500.
+                  </p>
+                </div>
+
+                <p className="text-lg mb-8">
+                  Top up your wallet — post gigs anytime. Most businesses start with $500–$1000.
+                </p>
+
+                <div className="flex flex-wrap justify-center gap-4 mb-8">
+                  <Button 
+                    onClick={() => handleAddFunds(100)}
+                    className="w-48 h-14 text-lg bg-black text-white"
+                  >
+                    + $100
+                  </Button>
+                  <Button 
+                    onClick={() => handleAddFunds(500)}
+                    className="w-48 h-14 text-lg bg-black text-white"
+                  >
+                    + $500
+                  </Button>
+                  <Button 
+                    onClick={() => handleAddFunds(1000)}
+                    className="w-48 h-14 text-lg bg-black text-white"
+                  >
+                    + $1000
+                  </Button>
+                  <Button 
+                    onClick={() => {
+                      const custom = prompt('Enter custom amount:')
+                      if (custom !== null && custom.trim() !== '' && !isNaN(Number(custom)) && Number(custom) > 0) {
+                        handleAddFunds(Number(custom))
+                      }
+                    }}
+                    className="w-48 h-14 text-lg bg-green-400 text-black"
+                  >
+                    Custom Amount
+                  </Button>
+                </div>
+
+                <p className="text-sm text-gray-600">
+                  Transaction fee covers legal NIL compliance, bonus & challenge distributions, credit card fees, and platform expenses.
+                </p>
+              </div>
+
+              <h3 className="text-2xl mb-8 font-bold">Create a Gig</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-16">
+                {businessGigTypes.map((gig) => (
+                  <div key={gig.title}>
+                    <button
+                      onClick={() => handleGigSelect(gig)}
+                      className="w-full h-80 bg-black text-white p-8 flex flex-col items-center justify-center hover:bg-gray-800 transition"
+                    >
+                      <span className="text-3xl mb-4">{gig.title}</span>
+                      <span className="text-2xl mb-4">${gig.baseAmount}+</span>
+                      <span className="text-lg">{gig.description}</span>
+                    </button>
+
+                    {selectedGig?.title === gig.title && (
+                      <div className="mt-8 bg-gray-100 p-8 border-4 border-black max-w-2xl mx-auto">
+                        <h3 className="text-2xl mb-6 font-bold">Customize Your {gig.title}</h3>
+                        <div className="space-y-6">
+                          <div>
+                            <label className="block text-lg mb-2">Number of Athletes</label>
+                            <select
+                              value={numAthletes}
+                              onChange={(e) => handleAthletesChange(Number(e.target.value))}
+                              className="w-full p-4 text-lg border-4 border-black"
+                            >
+                              {[1,2,3,4,5,6,7,8,9,10].map(n => (
+                                <option key={n} value={n}>{n} athlete{n > 1 ? 's' : ''}</option>
+                              ))}
+                            </select>
+                            <p className="text-sm mt-2">+ $75 per additional athlete</p>
+                          </div>
+
+                          <div>
+                            <label className="block text-lg mb-2">Date</label>
+                            <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+                          </div>
+
+                          <div>
+                            <label className="block text-lg mb-2">Location</label>
+                            <Input placeholder="e.g., Bridge Pizza" value={location} onChange={(e) => setLocation(e.target.value)} />
+                          </div>
+
+                          <div>
+                            <label className="block text-lg mb-2">Your Phone (for athlete contact)</label>
+                            <Input placeholder="(555) 123-4567" value={businessPhone} onChange={(e) => setBusinessPhone(e.target.value)} />
+                          </div>
+
+                          <div>
+                            <label className="block text-lg mb-2">
+                              <input type="checkbox" checked={isRecurring} onChange={(e) => setIsRecurring(e.target.checked)} />
+                              Make this recurring monthly
+                            </label>
+                          </div>
+
+                          <div>
+                            <label className="block text-lg mb-2">Offer Amount</label>
+                            <Input
+                              placeholder="Enter Offer Amount - Min $50"
+                              value={amount}
+                              onChange={(e) => setAmount(e.target.value)}
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-lg mb-2">Add Freedom Scholarship (Optional)</label>
+                            <Input
+                              placeholder="Scholarship amount (e.g., 500)"
+                              value={scholarshipAmount}
+                              onChange={(e) => setScholarshipAmount(e.target.value)}
+                            />
+                            <p className="text-sm mt-2 text-green-600 font-bold">
+                              Paid instantly to athlete — unrestricted cash for college.
+                            </p>
+                          </div>
+
+                          <div>
+                            <label className="block text-lg mb-2">Custom Details</label>
+                            <textarea
+                              placeholder="Add your details (e.g., Come to Bridge Pizza this Friday)"
+                              value={customDetails}
+                              onChange={(e) => setCustomDetails(e.target.value)}
+                              className="w-full h-40 p-4 text-lg border-4 border-black font-mono"
+                            />
+                          </div>
+
+                          <Button onClick={handlePost} className="w-full h-20 text-2xl bg-green-400 text-black">
+                            Fund & Post Offer
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </>
+            {/* Stand-Alone Freedom Scholarship */}
+              <div className="my-24">
+                <h3 className="text-3xl font-bold mb-8 text-center">Award a Freedom Scholarship</h3>
+                <p className="text-xl mb-12 max-w-4xl mx-auto text-center">
+                  Give unrestricted cash directly to an athlete — paid instantly.<br />
+                  Real impact. Real hero status.
+                </p>
+
+                <div className="max-w-2xl mx-auto space-y-8">
+                  <Input 
+                    placeholder="Search athlete by name, email, or school"
+                    value={athleteSearch}
+                    onChange={(e) => setAthleteSearch(e.target.value)}
+                    className="text-center"
+                  />
+                  <Button onClick={searchAthletes} className="w-full h-16 text-xl bg-black text-white">
+                    Search Athletes
+                  </Button>
+
+                  {searchResults.length > 0 && (
+                    <div className="space-y-4">
+                      {searchResults.map((athlete) => (
+                        <div key={athlete.id} className="border-4 border-black p-6 bg-gray-100">
+                          <p className="text-lg">
+                            {athlete.full_name || athlete.email} — {athlete.school}
+                          </p>
+                          <Button 
+                            onClick={() => setSelectedAthlete(athlete)}
+                            className="mt-4 w-full h-14 text-lg bg-green-600 text-white"
+                          >
+                            Select This Athlete
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {selectedAthlete && (
+                    <div className="border-4 border-green-600 p-8 bg-green-100">
+                      <p className="text-xl mb-4 text-center">
+                        Selected: {selectedAthlete.full_name || selectedAthlete.email} ({selectedAthlete.school})
+                      </p>
+                      <Input 
+                        placeholder="Scholarship amount (e.g., 500)"
+                        value={standaloneScholarshipAmount}
+                        onChange={(e) => setStandaloneScholarshipAmount(e.target.value)}
+                        className="mb-6"
+                      />
+                      <textarea 
+                        placeholder="Optional message (e.g., Great season — use for books!)"
+                        value={standaloneScholarshipMessage}
+                        onChange={(e) => setStandaloneScholarshipMessage(e.target.value)}
+                        className="w-full p-4 text-lg border-4 border-black font-mono mb-6"
+                      />
                       <Button 
-                        onClick={() => setSelectedAthleteForScholarship(athlete)}
-                        className="mt-4 w-full h-14 text-lg bg-green-400 text-black"
+                        onClick={awardScholarship}
+                        disabled={scholarshipLoading}
+                        className="w-full h-16 text-xl bg-green-600 text-white font-bold"
                       >
-                        Select This Athlete
+                        {scholarshipLoading ? 'Awarding...' : 'Award Freedom Scholarship Instantly'}
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
+          
+
+          {activeTab === 'clips' && (
+            <div>
+              <h3 className="text-2xl mb-8 font-bold">Pending Clips to Review</h3>
+              {pendingClips.length === 0 ? (
+                <p className="text-gray-600 mb-12">No pending clips — post offers to get started!</p>
+              ) : (
+                <div className="space-y-16">
+                  {pendingClips.map((clip) => (
+                    <div key={clip.id} className="border-4 border-black p-8 bg-white max-w-2xl mx-auto">
+                      <p className="font-bold mb-4 text-left">From: {clip.profiles.email}</p>
+                      <p className="mb-6 text-left">Offer: {clip.offers.type} — ${clip.offers.amount}</p>
+                      <video controls className="w-full mb-8">
+                        <source src={clip.video_url} type="video/mp4" />
+                      </video>
+                      <p className="text-sm text-gray-600 mb-4">
+                        Prove it with timelapse or witness video — easy!
+                      </p>
+                      <Button 
+                        onClick={() => approveClip(clip)}
+                        className="w-full h-16 text-xl bg-black text-white"
+                      >
+                        Approve & Send to Parent
                       </Button>
                     </div>
                   ))}
                 </div>
               )}
-
-              {selectedAthleteForScholarship && (
-                <div className="border-4 border-green-600 p-8 bg-green-100">
-                  <p className="text-xl mb-4">
-                    Selected: {selectedAthleteForScholarship.full_name || selectedAthleteForScholarship.email}
-                  </p>
-                  <Input 
-                    placeholder="Scholarship amount (e.g., 500)"
-                    value={standaloneScholarshipAmount}
-                    onChange={(e) => setStandaloneScholarshipAmount(e.target.value)}
-                  />
-                  <textarea
-                    placeholder="Optional message (e.g., Great season — use for books!)"
-                    value={scholarshipMessage}
-                    onChange={(e) => setScholarshipMessage(e.target.value)}
-                    rows={4}
-                    className="w-full p-4 text-lg border-4 border-black font-mono rounded-lg mt-4"
-                  />                  
-                  <Button 
-                    onClick={awardStandaloneScholarship}
-                    className="mt-8 w-full h-16 text-xl bg-green-600 text-white"
-                  >
-                    Award Freedom Scholarship Instantly
-                  </Button>
-                </div>
-              )}
             </div>
-          </div>
+          )}
 
-          {/* Create a Gig */}
-          <h3 className="text-2xl mb-8 font-bold">Create a Gig</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-16">
-            {businessGigTypes.map((gig) => (
-              <div key={gig.title}>
-                <button
-                  onClick={() => handleGigSelect(gig)}
-                  className="w-full h-80 bg-black text-white p-8 flex flex-col items-center justify-center hover:bg-gray-800 transition"
-                >
-                  <span className="text-3xl mb-4">{gig.title}</span>
-                  <span className="text-2xl mb-4">${gig.baseAmount}+</span>
-                  <span className="text-lg">{gig.description}</span>
-                </button>
-
-                {selectedGig?.title === gig.title && (
-                  <div className="mt-8 bg-gray-100 p-8 border-4 border-black max-w-2xl mx-auto">
-                    <h3 className="text-2xl mb-6 font-bold">Customize Your {gig.title}</h3>
-                    <div className="space-y-6">
-                      <div>
-                        <label className="block text-lg mb-2">Number of Athletes</label>
-                        <select
-                          value={numAthletes}
-                          onChange={(e) => handleAthletesChange(Number(e.target.value))}
-                          className="w-full p-4 text-lg border-4 border-black"
-                        >
-                          {[1,2,3,4,5,6,7,8,9,10].map(n => (
-                            <option key={n} value={n}>{n} athlete{n > 1 ? 's' : ''}</option>
-                          ))}
-                        </select>
-                        <p className="text-sm mt-2">+ $75 per additional athlete</p>
-                      </div>
-
-                      <div>
-                        <label className="block text-lg mb-2">Date</label>
-                        <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
-                      </div>
-
-                      <div>
-                        <label className="block text-lg mb-2">Location</label>
-                        <Input placeholder="e.g., Bridge Pizza" value={location} onChange={(e) => setLocation(e.target.value)} />
-                      </div>
-
-                      <div>
-                        <label className="block text-lg mb-2">Your Phone (for athlete contact)</label>
-                        <Input placeholder="(555) 123-4567" value={businessPhone} onChange={(e) => setBusinessPhone(e.target.value)} />
-                      </div>
-
-                      <div>
-                        <label className="block text-lg mb-2">
-                          <input type="checkbox" checked={isRecurring} onChange={(e) => setIsRecurring(e.target.checked)} />
-                          Make this recurring monthly
-                        </label>
-                      </div>
-
-                      <div>
-                        <label className="block text-lg mb-2">Offer Amount</label>
-                        <Input
-                          placeholder="Enter Offer Amount - Min $50"
-                          value={amount}
-                          onChange={(e) => setAmount(e.target.value)}
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-lg mb-2">Add Freedom Scholarship (Optional)</label>
-                        <Input
-                          placeholder="Scholarship amount (e.g., 500)"
-                          value={scholarshipAmount}
-                          onChange={(e) => setScholarshipAmount(e.target.value)}
-                        />
-                        <p className="text-sm mt-2 text-green-600 font-bold">
-                          Paid instantly to athlete — unrestricted cash for college.
-                        </p>
-                      </div>
-
-                      <div>
-                        <label className="block text-lg mb-2">Custom Details</label>
-                        <textarea
-                          placeholder="Add your details (e.g., Come to Bridge Pizza this Friday)"
-                          value={customDetails}
-                          onChange={(e) => setCustomDetails(e.target.value)}
-                          className="w-full h-40 p-4 text-lg border-4 border-black font-mono"
-                        />
-                      </div>
-
-                      <Button onClick={handlePost} className="w-full h-20 text-2xl bg-green-400 text-black">
-                        Fund & Post Offer
+          {activeTab === 'kids' && (
+            <div>
+              <h3 className="text-3xl mb-8 font-bold">My Kid's Challenges</h3>
+              <p className="mb-8 text-lg">
+                Create a challenge for your kid — they complete, you approve, they get paid.
+              </p>
+              <div className="space-y-8 max-w-2xl mx-auto">
+                {referredAthletes.length === 0 ? (
+                  <p className="text-gray-600">No referred athletes yet — wait for kids to pitch you!</p>
+                ) : (
+                  referredAthletes.map((kid) => (
+                    <div key={kid.id} className="border-4 border-black p-8 bg-gray-100">
+                      <p className="font-bold text-2xl mb-4">{kid.full_name || kid.email}</p>
+                      <p className="mb-6 text-lg">
+                        Prove it with timelapse or witness video — easy!
+                      </p>
+                      <Button 
+                        onClick={() => createChallengeForKid(kid)}
+                        className="w-full h-16 text-xl bg-green-400 text-black"
+                      >
+                        Create Challenge for {kid.full_name?.split(' ')[0] || 'Kid'}
                       </Button>
                     </div>
-                  </div>
+                  ))
                 )}
               </div>
-            ))}
+            </div>
+          )}
+
+          {activeTab === 'favorites' && (
+            <div>
+              <h3 className="text-3xl mb-8 font-bold">Favorite Athletes</h3>
+              <p className="mb-8 text-lg">
+                Quick access to athletes you like — re-fund gigs easily.
+              </p>
+              <p className="text-gray-600 mb-12">
+                No favorites yet — add from clips or kids.
+              </p>
+            </div>
+          )}
+
+          {/* Payment Methods Tab — Full Function (API Connected) */}
+{activeTab === 'payment-methods' && (
+  <div>
+    <h3 className="text-3xl mb-8 font-bold">Payment Methods</h3>
+    <p className="text-xl mb-12">
+      Saved cards for wallet top-ups and auto-top-up.
+    </p>
+
+    {/* List Saved Cards */}
+    {savedMethods.length === 0 ? (
+      <p className="text-gray-600 mb-12 text-xl">
+        No saved cards yet.
+      </p>
+    ) : (
+      <div className="space-y-8 mb-16 max-w-2xl mx-auto">
+        {savedMethods.map((method) => (
+          <div key={method.id} className="border-4 border-black p-8 bg-gray-100">
+            <p className="text-xl">
+              {method.brand.toUpperCase()} •••• {method.last4}<br />
+              Expires {method.exp_month}/{method.exp_year}
+            </p>
           </div>
+        ))}
+      </div>
+    )}
 
-          {/* Proposals Received */}
-          <h3 className="text-2xl mb-8 font-bold">Proposals Received</h3>
-          <p className="mb-12">No proposals yet — kids will pitch you soon!</p>
+    {/* Add New Card */}
+    <div className="max-w-2xl mx-auto">
+      <div className="bg-gray-100 p-12 border-4 border-black mb-12">
+        <h4 className="text-2xl font-bold mb-6 text-center">
+          Add New Card
+        </h4>
+        <CardElement 
+          options={{
+            style: {
+              base: {
+                fontSize: '20px',
+                color: '#000',
+                fontFamily: 'Courier New, monospace',
+                '::placeholder': { color: '#666' },
+              },
+            },
+          }}
+        />
+      </div>
 
-          {/* Tabs */}
-          <h3 className="text-2xl mb-8 font-bold">Your Offers</h3>
-          <div className="flex justify-center gap-8 mb-8">
-            <Button variant="outline">
-              Unclaimed
-            </Button>
-            <Button variant="outline">
-              Active
-            </Button>
-            <Button variant="outline">
-              Complete
-            </Button>
-          </div>
+      {error && <p className="text-red-600 text-center mb-8 text-xl">{error}</p>}
+      {success && <p className="text-green-600 text-center mb-8 text-xl">Card added successfully!</p>}
 
-          {/* Pending Clips */}
-          <h3 className="text-2xl mb-8 font-bold">Pending Clips to Review</h3>
-          {pendingClips.length === 0 ? (
-            <p className="text-gray-600 mb-12">No pending clips — post offers to get started!</p>
-          ) : (
-            <div className="space-y-16">
-              {pendingClips.map((clip) => (
-                <div key={clip.id} className="border-4 border-black p-8 bg-white max-w-2xl mx-auto">
-                  <p className="font-bold mb-4 text-left">From: {clip.profiles.email}</p>
-                  <p className="mb-6 text-left">Offer: {clip.offers.type} — ${clip.offers.amount}</p>
-                  <video controls className="w-full mb-8">
-                    <source src={clip.video_url} type="video/mp4" />
-                  </video>
-                  <p className="text-sm text-gray-600 mb-4">
-                    Prove it with timelapse or witness video — easy!
-                  </p>
-                  <Button 
-                    onClick={() => approveClip(clip)}
-                    className="w-full h-16 text-xl bg-black text-white"
-                  >
-                    Approve & Send to Parent
-                  </Button>
-                </div>
-              ))}
+      <Button 
+        onClick={handleAddCard}
+        disabled={loading}
+        className="w-full h-20 text-2xl bg-black text-white font-bold"
+      >
+        {loading ? 'Adding...' : 'Save Card'}
+      </Button>
+    </div>
+  </div>
+)}
+          {activeTab === 'booster' && (
+            <div>
+              <h3 className="text-3xl mb-8 font-bold">Booster Events</h3>
+              <p className="mb-8 text-lg">
+                Create a booster club event — crowd-fund team expenses.
+              </p>
+              <Button 
+                onClick={() => router.push('/booster-events')}
+                className="w-full max-w-md h-20 text-2xl bg-green-400 text-black"
+              >
+                Create Booster Club Event
+              </Button>
             </div>
           )}
 

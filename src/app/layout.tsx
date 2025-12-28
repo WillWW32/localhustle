@@ -60,23 +60,23 @@ export default function RootLayout({
                 width={0}
                 height={0}
                 sizes="100vw"
-                style={{ width: 'auto', height: '60px' }}
+                style={{ width: 'auto', height: '110px' }}
                 priority
               />
             </Link>
 
             {/* Slogan + Downward Triangle */}
             <div className="text-center">
-              <p className="text-3xl sm:text-4xl lg:text-5xl font-mono mb-4">
-                {displayedSlogan}
-              </p>
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-mono mb-4">
+            {displayedSlogan}
+            </h2>
 
-              {/* Downward Triangle */}
-              <div className="w-0 h-0 mx-auto 
-                border-l-[30px] border-l-transparent
-                border-r-[30px] border-r-transparent
-                border-t-[40px] border-t-black" 
-              />
+            {/* Downward Triangle */}
+            <div className="w-0 h-0 mx-auto 
+            border-l-[30px] border-l-transparent
+            border-r-[30px] border-r-transparent
+            border-t-[40px] border-t-black" 
+            />
             </div>
           </div>
         </header>

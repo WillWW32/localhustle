@@ -1,6 +1,8 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { supabase } from '@/lib/supabaseClient'
 import { Button } from '@/components/ui/button'
 
 const gigTypes = [
@@ -15,10 +17,36 @@ const gigTypes = [
 export default function BusinessOnboard() {
   const router = useRouter()
 
+  // Force role = 'business' for any user on this page
+  useEffect(() => {
+    const setBusinessRole = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      const { data: existingProf } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single()
+
+      if (!existingProf || existingProf.role !== 'business') {
+        await supabase
+          .from('profiles')
+          .upsert({ 
+            id: user.id, 
+            role: 'business',
+            email: user.email // ensure email is there
+          })
+      }
+    }
+
+    setBusinessRole()
+  }, [])
+
   return (
     <div className="min-h-screen bg-white text-black font-mono py-16 px-4">
       <div className="max-w-5xl mx-auto">
-        {/* Hero — White on Black Block Style */}
+        {/* Hero — White on Black Block */}
         <div className="bg-black text-white p-16 mb-16 text-center">
           <h1 className="text-4xl sm:text-6xl font-bold">
             Become the Hometown Hero

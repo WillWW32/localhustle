@@ -1,11 +1,11 @@
 'use client'
 
-import { useState, useEffect, Suspense } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import { Button } from '@/components/ui/button'
 
-function ParentOnboardContent() {
+export default function ParentOnboard() {
   const [kidName, setKidName] = useState('your kid')
   const [loading, setLoading] = useState(true)
   const router = useRouter()
@@ -26,7 +26,7 @@ function ParentOnboardContent() {
         .single()
 
       if (data?.full_name) {
-        setKidName(data.full_name.split(' ')[0] || 'your kid')
+        setKidName(data.full_name.split(' ')[0])
       }
       setLoading(false)
     }
@@ -37,8 +37,19 @@ function ParentOnboardContent() {
   const sendMagicLink = async () => {
     if (!kidId) return
 
-    // Your magic link logic here (or form POST)
-    alert('Magic link would be sent — implement as needed')
+    const { error } = await supabase.auth.signInWithOtp({
+      email: '',
+      options: {
+        emailRedirectTo: `https://app.localhustle.org/parent-dashboard?kid_id=${kidId}`,
+        data: { role: 'parent' },
+      },
+    })
+
+    if (error) {
+      alert('Error: ' + error.message)
+    } else {
+      alert(`Magic link sent! Check your email to sponsor ${kidName}.`)
+    }
   }
 
   if (loading) return <p className="text-center py-32">Loading...</p>
@@ -57,7 +68,7 @@ function ParentOnboardContent() {
       <div className="bg-green-100 p-12 border-4 border-green-600 mb-16 max-w-3xl mx-auto">
         <p className="text-2xl mb-8">
           You'll fund a simple challenge (like "80/100 free throws").<br />
-          When {kidName} completes it → you approve → money goes straight to them.
+          When {kidName} completes it → you approve → they get paid instantly.
         </p>
         <p className="text-xl">
           No obligation after — just help them get started.
@@ -66,22 +77,14 @@ function ParentOnboardContent() {
 
       <Button
         onClick={sendMagicLink}
-        className="w-full max-w-md h-20 text-2xl bg-black text-white font-bold"
+        className="w-full max-w-md h-20 text-2xl bg-green-600 text-white font-bold"
       >
         Yes — Sponsor {kidName} Now
       </Button>
 
       <p className="text-lg mt-12 text-gray-600">
-        You'll get a magic link — click it to fund their first challenge.
+        You'll get a magic link — click it to set up your parent dashboard.
       </p>
     </div>
-  )
-}
-
-export default function ParentOnboard() {
-  return (
-    <Suspense fallback={<p className="text-center py-32">Loading...</p>}>
-      <ParentOnboardContent />
-    </Suspense>
   )
 }

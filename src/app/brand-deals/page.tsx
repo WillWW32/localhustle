@@ -14,6 +14,7 @@ export default function BrandDeals() {
   const [highlightLink, setHighlightLink] = useState('')
   const [socialHandles, setSocialHandles] = useState('')
   const [pitchMessage, setPitchMessage] = useState('')
+  const [loading, setLoading] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -26,16 +27,29 @@ export default function BrandDeals() {
 
       const { data: prof } = await supabase
         .from('profiles')
-        .select('*')
+        .select('highlight_link, social_handles')
         .eq('id', user.id)
         .single()
-      setProfile(prof)
 
-      // Placeholder — replace with real completed gigs count in V2
-      setCompletedGigs(4)
-      setQualified(true)
+      if (prof) {
+        setProfile(prof)
+        setHighlightLink(prof.highlight_link || '')
+        setSocialHandles(prof.social_handles || '')
+      }
 
-      setHighlightLink(prof.highlight_link || '')
+      // Count approved gigs
+      const { count } = await supabase
+        .from('clips')
+        .select('id', { count: 'exact' })
+        .eq('athlete_id', user.id)
+        .eq('status', 'approved')
+
+      const gigs = count || 0
+      setCompletedGigs(gigs)
+      setQualified(gigs >= 8)
+
+      // Build stats string
+      setStats(`Completed Gigs: ${gigs} | Freedom Scholarships: $${gigs * 100}`)
     }
 
     fetchData()
@@ -43,132 +57,142 @@ export default function BrandDeals() {
 
   const handleApply = async () => {
     if (!qualified) {
-      alert('Complete 4 local gigs to qualify!')
+      alert('Complete 8 gigs to qualify for brand deals')
       return
     }
 
-    const subject = encodeURIComponent('Brand Deal Application — LocalHustle Athlete')
-    const body = encodeURIComponent(
-      `Hi Brand Team,\n\nI'd love to partner with you on a brand deal through LocalHustle.\n\nName: ${profile?.full_name || profile?.email}\nSchool: ${profile?.school}\nSport: ${profile?.sport}\nHighlight Reel: ${highlightLink}\nStats: ${stats}\nSocial Handles: ${socialHandles}\n\nPitch:\n${pitchMessage}\n\nThanks!\n${profile?.email}`
-    )
+    setLoading(true)
 
-    window.location.href = `mailto:brands@localhustle.org?subject=${subject}&body=${body}`
-    alert('Application opened — send the email to apply!')
+    // In real app — send to backend for review
+    alert('Application submitted! We\'ll review and reach out soon.')
+    setLoading(false)
   }
 
-  if (!profile) return <p className="container text-center py-32">Loading...</p>
-
-  const progress = Math.min(completedGigs / 4 * 100, 100)
-
   return (
-    <div className="min-h-screen bg-white text-black font-mono py-8 px-4">
-      {/* Slogan + Triangle */}
-      <p className="text-2xl sm:text-3xl text-center mb-4">
-        Community Driven Support for Student Athletes
-      </p>
-      <div className="text-5xl sm:text-6xl text-center mb-12">▼</div>
+    <div className="min-h-screen bg-white text-black font-mono py-20 px-6">
+      <div className="max-w-5xl mx-auto">
+        <h1 className="text-4xl sm:text-6xl font-bold text-center mb-16">
+          Land National Brand Deals
+        </h1>
 
-      {/* Hero */}
-      <h1 className="text-3xl sm:text-5xl font-bold text-center mb-8">
-        Land National Brand Deals
-      </h1>
-      <p className="text-lg sm:text-2xl text-center mb-16 max-w-4xl mx-auto leading-relaxed px-4">
-        Complete 4 local gigs → qualify for paid partnerships with top brands like Nike, Gatorade, Under Armour, and more.
-      </p>
+        {/* Qualification Progress Meter */}
+        <div className="bg-gray-100 p-12 border-4 border-black mb-20">
+          <h2 className="text-3xl font-bold text-center mb-8">
+            Your Progress to Brand Deal Eligibility
+          </h2>
 
-      {/* Qualification Status */}
-      <div className="max-w-2xl mx-auto mb-16 p-8 border-4 border-black bg-gray-50">
-        <h2 className="text-2xl sm:text-3xl font-bold mb-8 text-center">
-          Your Qualification Status
-        </h2>
-        <p className="text-xl sm:text-2xl text-center mb-8">
-          Completed local gigs: {completedGigs} / 4
-        </p>
+          <div className="max-w-2xl mx-auto">
+            {/* Progress Bar */}
+            <div className="relative h-20 bg-gray-300 border-4 border-black mb-12 overflow-hidden">
+              <div 
+                className="absolute h-full bg-purple-600 transition-all duration-700"
+                style={{ width: `${Math.min((completedGigs / 8) * 100, 100)}%` }}
+              />
+              <p className="absolute inset-0 flex items-center justify-center text-3xl font-bold">
+                {completedGigs} / 8 Gigs
+              </p>
+            </div>
 
-        {/* Progress Bar */}
-        <div className="relative h-16 bg-gray-300 border-4 border-black mb-8">
-          <div 
-            className="absolute top-0 left-0 h-full bg-green-400 transition-all duration-500"
-            style={{ width: `${progress}%` }}
-          ></div>
-          <p className="absolute inset-0 flex items-center justify-center text-2xl font-bold">
-            {qualified ? 'Qualified!' : `${4 - completedGigs} gigs to go`}
+            {/* Status Message */}
+            {qualified ? (
+              <div className="bg-purple-100 p-12 border-4 border-purple-600 text-center">
+                <p className="text-3xl font-bold mb-4 text-purple-800">
+                  You're Qualified! 🎉
+                </p>
+                <p className="text-xl">
+                  Submit your application below — brands are waiting.
+                </p>
+              </div>
+            ) : (
+              <div className="bg-gray-100 p-12 border-4 border-black text-center">
+                <p className="text-2xl mb-4">
+                  {8 - completedGigs} more gigs to qualify
+                </p>
+                <p className="text-lg">
+                  Complete 8 approved gigs to become eligible for national brand deals.
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Application Form — Only if Qualified */}
+        {qualified && (
+          <div className="bg-gray-100 p-16 border-4 border-black mb-20">
+            <h2 className="text-3xl font-bold text-center mb-12">
+              Apply for Brand Deals
+            </h2>
+
+            <div className="max-w-3xl mx-auto space-y-12">
+              <div>
+                <label className="block text-xl mb-4">Your Stats</label>
+                <p className="text-lg p-4 bg-white border-4 border-black text-center">
+                  {stats}
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-xl mb-4">Highlight Reel Link</label>
+                <Input 
+                  placeholder="YouTube / Hudl link"
+                  value={highlightLink}
+                  onChange={(e) => setHighlightLink(e.target.value)}
+                  className="text-center"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xl mb-4">Social Handles</label>
+                <Input 
+                  placeholder="@instagram @tiktok etc."
+                  value={socialHandles}
+                  onChange={(e) => setSocialHandles(e.target.value)}
+                  className="text-center"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xl mb-4">
+                  Why would you be a great brand partner?
+                </label>
+                <textarea
+                  placeholder="Tell brands about your story, audience, and why you'd represent them well..."
+                  value={pitchMessage}
+                  onChange={(e) => setPitchMessage(e.target.value)}
+                  className="w-full p-6 text-lg border-4 border-black font-mono"
+                  rows={8}
+                />
+              </div>
+
+              <Button 
+                onClick={handleApply}
+                disabled={loading}
+                className="w-full h-20 text-3xl bg-purple-600 text-white font-bold"
+              >
+                {loading ? 'Submitting...' : 'Submit Brand Deal Application'}
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Current Deals */}
+        <div className="max-w-4xl mx-auto py-16 text-center">
+          <h2 className="text-3xl sm:text-4xl font-bold mb-8">
+            Current Brand Deals
+          </h2>
+          <p className="text-xl text-gray-600">
+            Exclusive partnerships coming soon — stay tuned!
           </p>
         </div>
 
-        {!qualified && (
+        <div className="text-center">
           <Button 
             onClick={() => router.push('/dashboard')}
-            className="w-full h-20 text-2xl bg-black text-white"
+            className="w-full max-w-md h-20 text-2xl bg-black text-white font-bold"
           >
-            Back to Dashboard — Complete More Gigs
+            Back to Dashboard
           </Button>
-        )}
-      </div>
-
-      {/* Application Form — only if qualified */}
-      {qualified && (
-        <div className="max-w-2xl mx-auto mb-16 p-8 border-4 border-black bg-gray-50">
-          <h2 className="text-3xl sm:text-4xl font-bold mb-12 text-center">
-            You're Qualified — Apply Now!
-          </h2>
-
-          <div className="space-y-8">
-            <div>
-              <label className="block text-lg mb-2">Your Stats (PPG, 40 time, vertical, etc.)</label>
-              <textarea
-                placeholder="e.g., 18 PPG, 4.6 40-yard, 36 inch vertical"
-                value={stats}
-                onChange={(e) => setStats(e.target.value)}
-                className="w-full p-4 text-lg border-4 border-black font-mono"
-                rows={4}
-              />
-            </div>
-
-            <div>
-              <label className="block text-lg mb-2">Highlight Reel Link (required)</label>
-              <Input 
-                placeholder="YouTube / Hudl link" 
-                value={highlightLink} 
-                onChange={(e) => setHighlightLink(e.target.value)} 
-              />
-            </div>
-
-            <div>
-              <label className="block text-lg mb-2">Social Media Handles</label>
-              <Input 
-                placeholder="@instagram, @tiktok, etc." 
-                value={socialHandles} 
-                onChange={(e) => setSocialHandles(e.target.value)} 
-              />
-            </div>
-
-            <div>
-              <label className="block text-lg mb-2">Your Pitch to Brands</label>
-              <textarea
-                placeholder="Why would you be a great brand partner?"
-                value={pitchMessage}
-                onChange={(e) => setPitchMessage(e.target.value)}
-                className="w-full p-4 text-lg border-4 border-black font-mono"
-                rows={6}
-              />
-            </div>
-
-            <Button onClick={handleApply} className="w-full h-20 text-2xl bg-green-400 text-black">
-              Submit Application
-            </Button>
-          </div>
         </div>
-      )}
-
-      {/* Current Deals */}
-      <div className="max-w-4xl mx-auto py-16">
-        <h2 className="text-3xl sm:text-4xl font-bold mb-8 text-center">
-          Current Brand Deals
-        </h2>
-        <p className="text-xl text-center text-gray-600">
-          Coming soon — exclusive partnerships with top brands.
-        </p>
       </div>
     </div>
   )

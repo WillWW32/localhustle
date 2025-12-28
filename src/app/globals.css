@@ -200,3 +200,16 @@ footer p {
     font-size: 5rem !important;
   }
 }
+
+.heading-large-light {
+  font-size: 2rem; /* H2 size */
+  font-weight: normal;
+  line-height: 1.2;
+  margin-bottom: 1.5rem;
+}
+
+@media (min-width: 640px) {
+  .heading-large-light {
+    font-size: 3rem;
+  }
+}
