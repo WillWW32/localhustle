@@ -109,20 +109,48 @@ export default function ParentDashboard() {
   }
 
   const handleFundChallenge = async () => {
-    if (!kid || !amount || parseFloat(amount) <= 0) return
+  if (!kid || !amount || parseFloat(amount) <= 0) {
+    alert('Please enter a valid amount')
+    return
+  }
 
-    const response = await fetch('/api/create-gig', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        business_id: business.id,
-        type: 'Challenge',
-        amount: parseFloat(amount),
-        description: customDetails || 'Complete challenge for payout',
-        target_athlete_id: kid.id,
-      }),
-    })
+  setLoading(true)
 
+  const response = await fetch('/api/parent-fund-challenge', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      kid_id: kid.id,
+      amount: parseFloat(amount),
+      description: customDetails || 'Complete challenge for payout',
+      parent_email: parent.email,
+    }),
+  })
+
+  const data = await response.json()
+
+  if (data.error) {
+    alert('Error: ' + data.error)
+    setLoading(false)
+    return
+  }
+
+  if (data.sessionId) {
+    const stripe = await loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
+    if (!stripe) {
+      alert('Stripe failed to load')
+      setLoading(false)
+      return
+    }
+
+    const { error } = await stripe.redirectToCheckout({ sessionId: data.sessionId })
+    if (error) {
+      alert(error.message)
+    }
+  }
+
+  setLoading(false)
+}
     const data = await response.json()
     if (data.error) alert(data.error)
     else alert(`${kid.full_name}'s challenge funded!`)
