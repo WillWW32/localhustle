@@ -507,44 +507,7 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
 
       {profile.role === 'athlete' ? (
         <div className="max-w-4xl mx-auto space-y-32 font-mono text-center text-lg">
-          {/* Gig Search */}
-          <div className="mb-12">
-            <h2 className="text-2xl mb-8 font-bold">Find Gigs</h2>
-            <div className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
-              <Input 
-                placeholder="Search gigs (type, location, school)"
-                value={gigSearch}
-                onChange={(e) => setGigSearch(e.target.value)}
-                className="text-center"
-              />
-              <Button onClick={searchGigs} className="h-14 text-lg bg-black text-white">
-                Search
-              </Button>
-            </div>
-          </div>
-
-          {/* Searched/Filtered Offers */}
-          <div>
-            <h2 className="text-2xl mb-8 font-bold">Available Gigs</h2>
-            {searchedOffers.length === 0 ? (
-              <p className="text-gray-600 mb-12">No gigs matching search — try different terms!</p>
-            ) : (
-              <div className="space-y-16">
-                {searchedOffers.map((offer) => (
-                  <div key={offer.id} className="border-4 border-black p-8 bg-gray-100 max-w-lg mx-auto">
-                    <p className="font-bold text-2xl mb-6">{offer.type.toUpperCase()} — ${offer.amount}</p>
-                    <p className="mb-8">{offer.description}</p>
-                    <Button 
-                      onClick={() => router.push(`/claim/${offer.id}`)}
-                      className="w-full h-16 text-xl bg-black text-white"
-                    >
-                      Claim Gig
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+          
 
           {/* Player Profile Section */}
           <div className="max-w-2xl mx-auto bg-gray-100 p-8 border-4 border-black rounded-lg">
@@ -642,7 +605,25 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
               Save Profile
             </Button>
           </div>
-
+            
+            {/* Payout Setup Banner — Only if not setup */}
+{profile?.role === 'athlete' && !profile?.payout_method_setup && (
+  <div className="bg-green-100 p-12 border-4 border-green-600 mb-16 text-center">
+    <h2 className="text-3xl font-bold mb-6">
+      Get Paid Instantly — Add Your Debit Card
+    </h2>
+    <p className="text-xl mb-8 max-w-3xl mx-auto">
+      Connect your debit card to receive earnings and Freedom Scholarships directly.<br />
+      Any athlete can add a card — 18+ get paid without parent approval.
+    </p>
+    <Button 
+      onClick={() => router.push('/payout-setup')}
+      className="w-full max-w-md h-20 text-2xl bg-black text-white font-bold"
+    >
+      Add Debit Card Now
+    </Button>
+  </div>
+)}
           {/* Gig Selection */}
           <div>
             <h2 className="text-2xl mb-8 font-bold">Gigs You Offer</h2>
@@ -762,7 +743,45 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
               </div>
             )}
           </div>
+           {/* Gig Search */}
+          <div className="mb-12">
+            <h2 className="text-2xl mb-8 font-bold">Find Gigs</h2>
+            <div className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
+              <Input 
+                placeholder="Search gigs (type, location, school)"
+                value={gigSearch}
+                onChange={(e) => setGigSearch(e.target.value)}
+                className="text-center"
+              />
+              <Button onClick={searchGigs} className="h-14 text-lg bg-black text-white">
+                Search
+              </Button>
+            </div>
+          </div>
 
+          {/* Searched/Filtered Offers */}
+          <div>
+            <h2 className="text-2xl mb-8 font-bold">Available Gigs</h2>
+            {searchedOffers.length === 0 ? (
+              <p className="text-gray-600 mb-12">No gigs matching search — try different terms!</p>
+            ) : (
+              <div className="space-y-16">
+                {searchedOffers.map((offer) => (
+                  <div key={offer.id} className="border-4 border-black p-8 bg-gray-100 max-w-lg mx-auto">
+                    <p className="font-bold text-2xl mb-6">{offer.type.toUpperCase()} — ${offer.amount}</p>
+                    <p className="mb-8">{offer.description}</p>
+                    <Button 
+                      onClick={() => router.push(`/claim/${offer.id}`)}
+                      className="w-full h-16 text-xl bg-black text-white"
+                    >
+                      Claim Gig
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div> 
+            
           {/* Ambassador */}
           <div className="max-w-2xl mx-auto my-16 p-8 border-4 border-black bg-gray-100">
             <h2 className="text-2xl mb-8 font-bold">
