@@ -55,8 +55,6 @@ export default function Home() {
         <meta name="description" content="LocalHustle helps high school and college athletes earn instant cash, Freedom Scholarships, and NIL deals from local businesses. Basketball NIL, football NIL, soccer, baseball, volleyball — all sports welcome. Parents fund improvement. Businesses become hometown heroes." />
         <meta name="keywords" content="high school athlete NIL, college athlete NIL, basketball NIL, football NIL, soccer NIL, baseball NIL, volleyball NIL, student athlete earnings, local business sponsorship, Freedom Scholarships, youth sports funding, athlete scholarships, NIL deals high school, NIL deals college" />
         <meta name="robots" content="index, follow" />
-        
-        {/* Open Graph */}
         <meta property="og:title" content="LocalHustle — NIL Money & Scholarships for High School & College Athletes" />
         <meta property="og:description" content="Earn instant cash and Freedom Scholarships from local businesses. Basketball, football, soccer, baseball, volleyball — all sports. Parents and businesses join the movement." />
         <meta property="og:image" content="https://app.localhustle.org/og-image.jpg" />
@@ -172,13 +170,13 @@ export default function Home() {
             >
               {loading ? 'Sending...' : 'Go'}
             </Button>
-                  </div>
 
-          {loading && (
-            <p className="text-center text-xl mt-4">Sending magic link...</p>
-          )}
-        </div>
-      </section>
-    </div>
+            {loading && (
+              <p className="text-center text-xl mt-4">Sending magic link...</p>
+            )}
+          </div>
+        </section>
+      </div>
+    </>
   )
 }
