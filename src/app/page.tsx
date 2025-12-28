@@ -39,21 +39,12 @@ export default function Home() {
     <div className="min-h-screen bg-white text-black font-mono">
       {/* Hero Section */}
       <section className="py-20 px-6 sm:px-12 lg:px-32 text-center">
-        
-
-        {/* Main Heading — Hard-Coded H4 Size, White on Black (No CSS Override) */}
-        <div className="bg-black text-white p-12 mb-16">
-          <div 
-            style={{
-              fontSize: '2.5rem', /* H4 size */
-              lineHeight: '1.2',
-              fontWeight: 'bold',
-              color: 'white',
-            }}
-          >
+        {/* Main Heading — Black Block, White Text */}
+        <div className="bg-black text-white p-16 mb-20 inline-block">
+          <h1 className="text-3xl sm:text-5xl font-bold leading-tight">
             We Connect Local Businesses with Student Athletes<br />
             for Scholarships & NIL Deals
-          </div>
+          </h1>
         </div>
 
         {/* Subheadline */}
@@ -67,7 +58,7 @@ export default function Home() {
       {/* Space */}
       <div className="my-32"></div>
 
-      {/* Benefits Grid */}
+      {/* Benefits Grid — Subtitles White on Black */}
       <section className="px-6 sm:px-12 lg:px-32 pb-24">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-16 max-w-6xl mx-auto">
           {/* Student Athletes */}

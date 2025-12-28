@@ -52,20 +52,23 @@ export default function RootLayout({
       <body>
         {/* Header */}
         <header className="bg-white border-b-4 border-black py-8">
-          <div className="max-w-6xl mx-auto px-6 flex justify-between items-center">
+          <div className="max-w-6xl mx-auto px-6 flex flex-col items-center gap-8">
             <Link href="/">
               <Image
                 src="/logo.png"
                 alt="LocalHustle Logo"
-                width={200}
-                height={60}
+                width={0}
+                height={0}
+                sizes="100vw"
+                style={{ width: 'auto', height: '70px' }}
                 priority
               />
             </Link>
-            {/* Slogan — Bigger, Always Visible */}
-    <p className="text-2xl sm:text-4xl lg:text-5xl font-mono text-center">
-      {displayedSlogan}
-    </p>
+
+            {/* Slogan — Visible on Mobile & Desktop, Bigger */}
+            <p className="text-2xl sm:text-3xl lg:text-4xl font-mono text-center">
+              {displayedSlogan}
+            </p>
           </div>
         </header>
 
