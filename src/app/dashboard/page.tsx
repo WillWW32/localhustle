@@ -930,24 +930,66 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
 
           {/* Payment Methods Tab */}
           {activeTab === 'payment-methods' && (
-            <div>
-              <h3 className="text-3xl mb-8 font-bold">Payment Methods</h3>
-              <p className="text-xl mb-12">
-                Saved cards for wallet top-ups and auto-top-up.<br />
-                Add or manage cards below.
-              </p>
-              <p className="text-gray-600 mb-12">
-                Card entry coming soon — auto-top-up works with manual funding for now.
-              </p>
-              <Button 
-                onClick={() => alert('Payment method setup coming soon!')}
-                className="w-full max-w-md h-20 text-2xl bg-black text-white"
-              >
-                Add Card
-              </Button>
-            </div>
-          )}
+  <Elements stripe={stripePromise}>
+    <div>
+      <h3 className="text-3xl mb-8 font-bold">Payment Methods</h3>
+      <p className="text-xl mb-12">
+        Saved cards for wallet top-ups and auto-top-up.<br />
+        Add or manage cards below.
+      </p>
 
+      {/* Saved Cards List */}
+      {savedMethods.length === 0 ? (
+        <p className="text-gray-600 mb-12 text-xl">
+          No saved cards yet.
+        </p>
+      ) : (
+        <div className="space-y-8 mb-16 max-w-2xl mx-auto">
+          {savedMethods.map((method) => (
+            <div key={method.id} className="border-4 border-black p-8 bg-gray-100">
+              <p className="text-xl">
+                {method.brand.toUpperCase()} •••• {method.last4}<br />
+                Expires {method.exp_month}/{method.exp_year}
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Add New Card */}
+      <div className="max-w-2xl mx-auto">
+        <div className="bg-gray-100 p-12 border-4 border-black mb-12">
+          <h4 className="text-2xl font-bold mb-6 text-center">
+            Add New Card
+          </h4>
+          <CardElement 
+            options={{
+              style: {
+                base: {
+                  fontSize: '20px',
+                  color: '#000',
+                  fontFamily: 'Courier New, monospace',
+                  '::placeholder': { color: '#666' },
+                },
+              },
+            }}
+          />
+        </div>
+
+        {error && <p className="text-red-600 text-center mb-8 text-xl">{error}</p>}
+        {success && <p className="text-green-600 text-center mb-8 text-xl">Card added successfully!</p>}
+
+        <Button 
+          onClick={handleAddCard}
+          disabled={loading}
+          className="w-full h-20 text-2xl bg-black text-white font-bold"
+        >
+          {loading ? 'Adding...' : 'Save Card'}
+        </Button>
+      </div>
+    </div>
+  </Elements>
+)}
           {/* Booster Events Tab */}
           {activeTab === 'booster' && (
             <div>
