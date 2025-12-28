@@ -62,10 +62,10 @@ export default function RootLayout({
                 priority
               />
             </Link>
-            {/* Slogan — Bigger */}
-            <p className="text-3xl sm:text-4xl font-mono hidden sm:block">
-              {displayedSlogan}
-            </p>
+            /* Slogan — Bigger, Always Visible */}
+    <p className="text-2xl sm:text-4xl lg:text-5xl font-mono text-center">
+      {displayedSlogan}
+    </p>
           </div>
         </header>
 
