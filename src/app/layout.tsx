@@ -60,15 +60,15 @@ export default function RootLayout({
                 width={0}
                 height={0}
                 sizes="100vw"
-                style={{ width: 'auto', height: '70px' }}
+                style={{ width: 'auto', height: '100px' }}
                 priority
               />
             </Link>
 
             {/* Slogan — Visible on Mobile & Desktop, Bigger */}
-            <p className="text-2xl sm:text-3xl lg:text-4xl font-mono text-center">
-              {displayedSlogan}
-            </p>
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-mono text-center">
+        {displayedSlogan}
+            </h2>
           </div>
         </header>
 

@@ -40,18 +40,18 @@ export default function Home() {
       {/* Hero Section */}
       <section className="py-20 px-6 sm:px-12 lg:px-32 text-center">
         {/* Main Heading — Black Block, White Text */}
-        <div className="bg-black text-white p-16 mb-20 inline-block">
-          <h1 className="text-3xl sm:text-5xl font-bold leading-tight">
-            We Connect Local Businesses with Student Athletes<br />
-            for Scholarships & NIL Deals
-          </h1>
-        </div>
+        <div className="bg-black p-16 mb-20">
+  <h1 className="text-3xl sm:text-5xl font-bold !text-white leading-tight">
+    We Connect Local Businesses with Student Athletes<br />
+    for Scholarships & NIL Deals
+  </h1>
+</div>
 
         {/* Subheadline */}
         <p className="text-xl sm:text-2xl mb-24 max-w-4xl mx-auto leading-relaxed">
-          Student athletes earn <strong>Freedom Scholarships</strong> — unrestricted cash paid instantly — 
+          Student athletes earn <strong>Freedom Scholarships</strong>
           plus NIL gigs from local supporters.<br />
-          Parents fund improvement. Businesses become hometown heroes.
+
         </p>
       </section>
 
@@ -74,7 +74,7 @@ export default function Home() {
             </h3>
             <p className="text-lg leading-relaxed px-4">
               Get paid instantly for gigs + unrestricted scholarships from local businesses.<br />
-              Use for books, food, rent — whatever you need.<br />
+              Use for books, food, rent - whatever you need.<br />
               Build recruiting profile coaches see.
             </p>
           </div>
@@ -91,9 +91,9 @@ export default function Home() {
               Help Them Earn Real Scholarships
             </h3>
             <p className="text-lg leading-relaxed px-4">
-              Fund improvement, not handouts.<br />
+              Fund improvement instead of handouts.<br />
               Your kid earns money and Freedom Scholarships.<br />
-              Teach hustle pays.
+              Teach them hustle pays.
             </p>
           </div>
 
@@ -105,12 +105,13 @@ export default function Home() {
               </h2>
             </div>
             <h3 className="text-xl font-bold mb-6">
-              Best Local Advertising +<br />
-              Become the Hometown Hero
+              Become the Hometown Hero with the
+              Best Local Advertising<br />
+              
             </h3>
             <p className="text-lg leading-relaxed px-4">
-              Authentic clips from trusted kids.<br />
-              Award Freedom Scholarships — paid instantly.<br />
+              Authentic clips and recommendations from trusted kids.<br />
+              Award Freedom Scholarships<br />
               Real community impact that lasts.
             </p>
           </div>
