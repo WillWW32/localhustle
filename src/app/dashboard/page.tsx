@@ -60,6 +60,7 @@ export default function Dashboard() {
   const [gigSearch, setGigSearch] = useState('')
   const [searchedOffers, setSearchedOffers] = useState<any[]>([])
   const [activeTab, setActiveTab] = useState<'wallet' | 'clips' | 'kids' | 'favorites' | 'payment-methods' | 'booster'>('wallet')
+  const [savedMethods, setSavedMethods] = useState<any[]>([])
   const router = useRouter()
 
   useEffect(() => {
