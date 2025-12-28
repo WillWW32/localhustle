@@ -5,8 +5,12 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import { Button } from '@/components/ui/button'
 import { CardElement, useStripe, useElements } from '@stripe/react-stripe-js'
+import { loadStripe } from '@stripe/stripe-js'
+import { Elements } from '@stripe/react-stripe-js'
 
-export default function PaymentMethods() {
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
+
+function PaymentMethodsContent() {
   const [business, setBusiness] = useState<any>(null)
   const [savedMethods, setSavedMethods] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
@@ -32,11 +36,14 @@ export default function PaymentMethods() {
 
       if (biz) {
         setBusiness(biz)
-        // Fetch saved payment methods from backend
+
+        // Fetch saved payment methods
         const response = await fetch('/api/list-payment-methods', {
           method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ business_id: biz.id }),
         })
+
         const data = await response.json()
         setSavedMethods(data.methods || [])
       }
@@ -46,13 +53,16 @@ export default function PaymentMethods() {
   }, [router])
 
   const handleAddCard = async () => {
-    if (!stripe || !elements || !business) return
+    if (!stripe || !elements) {
+      setError('Stripe not loaded')
+      return
+    }
 
-    setLoading(true)
     setError(null)
+    setSuccess(false)
+    setLoading(true)
 
     const cardElement = elements.getElement(CardElement)
-
     if (!cardElement) {
       setError('Card element not found')
       setLoading(false)
@@ -65,12 +75,12 @@ export default function PaymentMethods() {
     })
 
     if (stripeError) {
-      setError(stripeError.message || 'Error')
+      setError(stripeError.message || 'Payment error')
       setLoading(false)
       return
     }
 
-    const response = await fetch('/api/save-payment-method', {
+    const response = await fetch('/api/attach-payment-method', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -91,7 +101,7 @@ export default function PaymentMethods() {
     setLoading(false)
   }
 
-  if (!business) return <p className="text-center py-32">Loading...</p>
+  if (!business) return <p className="text-center py-32 text-2xl">Loading...</p>
 
   return (
     <div className="min-h-screen bg-white text-black font-mono py-16 px-6">
@@ -102,7 +112,7 @@ export default function PaymentMethods() {
 
         <p className="text-xl text-center mb-12">
           Saved cards for wallet top-ups and auto-top-up.<br />
-          Auto-top-up enabled: {business.auto_top_up ? 'Yes' : 'No'}
+          Add or manage cards below.
         </p>
 
         {/* Saved Cards */}
@@ -113,8 +123,8 @@ export default function PaymentMethods() {
             {savedMethods.map((method) => (
               <div key={method.id} className="border-4 border-black p-8 bg-gray-100">
                 <p className="text-xl">
-                  •••• •••• •••• {method.card.last4}<br />
-                  Expires {method.card.exp_month}/{method.card.exp_year}
+                  •••• •••• •••• {method.last4}<br />
+                  Expires {method.exp_month}/{method.exp_year}
                 </p>
               </div>
             ))}
@@ -133,15 +143,25 @@ export default function PaymentMethods() {
                   fontSize: '20px',
                   color: '#000',
                   fontFamily: 'Courier New, monospace',
-                  '::placeholder': { color: '#666' },
+                  '::placeholder': {
+                    color: '#666',
+                  },
                 },
               },
             }}
           />
         </div>
 
-        {error && <p className="text-red-600 text-center mb-8 text-xl">{error}</p>}
-        {success && <p className="text-green-600 text-center mb-8 text-xl">Card added!</p>}
+        {error && (
+          <p className="text-red-600 text-center mb-8 text-xl">
+            {error}
+          </p>
+        )}
+        {success && (
+          <p className="text-green-600 text-center mb-8 text-xl">
+            Card added!
+          </p>
+        )}
 
         <Button 
           onClick={handleAddCard}
@@ -162,5 +182,13 @@ export default function PaymentMethods() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function PaymentMethods() {
+  return (
+    <Elements stripe={stripePromise}>
+      <PaymentMethodsContent />
+    </Elements>
   )
 }
