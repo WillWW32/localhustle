@@ -393,32 +393,35 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
   }
 
   const handleAddCard = async () => {
-    if (!stripe || !elements) {
-      setPaymentError('Stripe not loaded')
-      return
-    }
+  const stripe = useStripe()
+  const elements = useElements()
 
-    setPaymentError(null)
-    setPaymentSuccess(false)
-    setPaymentLoading(true)
+  if (!stripe || !elements) {
+    setPaymentError('Stripe not loaded')
+    return
+  }
 
-    const cardElement = elements.getElement(CardElement)
-    if (!cardElement) {
-      setPaymentError('Card element not found')
-      setPaymentLoading(false)
-      return
-    }
+  setPaymentError(null)
+  setPaymentSuccess(false)
+  setPaymentLoading(true)
 
-    const { error: stripeError, paymentMethod } = await stripe.createPaymentMethod({
-      type: 'card',
-      card: cardElement,
-    })
+  const cardElement = elements.getElement(CardElement)
+  if (!cardElement) {
+    setPaymentError('Card element not found')
+    setPaymentLoading(false)
+    return
+  }
 
-    if (stripeError) {
-      setPaymentError(stripeError.message || 'Payment error')
-      setPaymentLoading(false)
-      return
-    }
+  const { error: stripeError, paymentMethod } = await stripe.createPaymentMethod({
+    type: 'card',
+    card: cardElement,
+  })
+
+  if (stripeError) {
+    setPaymentError(stripeError.message || 'Payment error')
+    setPaymentLoading(false)
+    return
+  }
 
     const response = await fetch('/api/attach-payment-method', {
       method: 'POST',
