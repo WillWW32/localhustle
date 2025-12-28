@@ -177,7 +177,6 @@ export default function Home() {
           {loading && (
             <p className="text-center text-xl mt-4">Sending magic link...</p>
           )}
-        </div>
       </section>
     </div>
   )
