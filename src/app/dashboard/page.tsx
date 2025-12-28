@@ -647,7 +647,7 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
                   onChange={(e) => setGigSearch(e.target.value)}
                   className="text-center"
                 />
-                <Button onClick={searchGigs} className="h-14 text-lg bg-black text-white">
+                <Button onClick={gigSearch} className="h-14 text-lg bg-black text-white">
                   Search
                 </Button>
               </div>
