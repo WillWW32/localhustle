@@ -61,6 +61,9 @@ export default function Dashboard() {
   const [searchedOffers, setSearchedOffers] = useState<any[]>([])
   const [activeTab, setActiveTab] = useState<'wallet' | 'clips' | 'kids' | 'favorites' | 'payment-methods' | 'booster'>('wallet')
   const [savedMethods, setSavedMethods] = useState<any[]>([])
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState(false)
+  const [loading, setLoading] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -356,6 +359,53 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
       setFriendAmount('50')
     }
   }
+  
+  const handleAddCard = async () => {
+  if (!stripe || !elements) return
+
+  setError(null)
+  setSuccess(false)
+  setLoading(true)
+
+  const cardElement = elements.getElement(CardElement)
+  if (!cardElement) {
+    setError('Card element not found')
+    setLoading(false)
+    return
+  }
+
+  const { error: stripeError, paymentMethod } = await stripe.createPaymentMethod({
+    type: 'card',
+    card: cardElement,
+  })
+
+  if (stripeError) {
+    setError(stripeError.message || 'Payment error')
+    setLoading(false)
+    return
+  }
+
+  const response = await fetch('/api/attach-payment-method', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      payment_method_id: paymentMethod.id,
+      business_id: business.id,
+    }),
+  })
+
+  const data = await response.json()
+
+  if (data.error) {
+    setError(data.error)
+  } else {
+    setSuccess(true)
+    // Refresh saved methods or update state
+    setSavedMethods([...savedMethods, data.method])
+  }
+
+  setLoading(false)
+}
 
   const handleAddFunds = async (amount: number) => {
     const response = await fetch('/api/checkout', {
