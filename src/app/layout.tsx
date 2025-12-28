@@ -66,9 +66,15 @@ export default function RootLayout({
             </Link>
 
             {/* Slogan — Visible on Mobile & Desktop, Bigger */}
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-mono text-center">
-        {displayedSlogan}
-            </h2>
+            <p className="slogan-large font-mono text-center">
+            {displayedSlogan}
+            </p>
+            {/* Downward Triangle */}
+              <div className="w-0 h-0 mx-auto 
+                border-l-[30px] border-l-transparent
+                border-r-[30px] border-r-transparent
+                border-t-[40px] border-t-black" />
+            </div>
           </div>
         </header>
 

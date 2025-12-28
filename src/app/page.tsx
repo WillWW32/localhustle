@@ -40,8 +40,8 @@ export default function Home() {
       {/* Hero Section */}
       <section className="py-20 px-6 sm:px-12 lg:px-32 text-center">
         {/* Main Heading — Black Block, White Text */}
-        <div className="bg-black p-16 mb-20">
-  <h1 className="text-3xl sm:text-5xl font-bold !text-white leading-tight">
+        <div className="black-block-heading">
+  <h1 className="text-3xl sm:text-5xl font-bold leading-tight">
     We Connect Local Businesses with Student Athletes<br />
     for Scholarships & NIL Deals
   </h1>
@@ -49,7 +49,7 @@ export default function Home() {
 
         {/* Subheadline */}
         <p className="text-xl sm:text-2xl mb-24 max-w-4xl mx-auto leading-relaxed">
-          Student athletes earn <strong>Freedom Scholarships</strong>
+          Student athletes earn <strong>Freedom Scholarships </strong>
           plus NIL gigs from local supporters.<br />
 
         </p>
@@ -63,11 +63,11 @@ export default function Home() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-16 max-w-6xl mx-auto">
           {/* Student Athletes */}
           <div className="text-center">
-            <div className="bg-black text-white p-8 mb-6">
-              <h2 className="text-2xl font-bold">
-                Student Athletes
-              </h2>
-            </div>
+            <div className="black-block-heading">
+  <h2 className="text-2xl font-bold">
+    Student Athletes
+  </h2>
+</div>
             <h3 className="text-xl font-bold mb-6">
               Earn Money & Freedom Scholarships<br />
               for Your Hustle
@@ -81,11 +81,11 @@ export default function Home() {
 
           {/* Parents */}
           <div className="text-center">
-            <div className="bg-black text-white p-8 mb-6">
-              <h2 className="text-2xl font-bold">
-                Parents
-              </h2>
-            </div>
+            <div className="black-block-heading">
+  <h2 className="text-2xl font-bold">
+    Parents
+  </h2>
+</div>
             <h3 className="text-xl font-bold mb-6">
               Less Financial Stress,<br />
               Help Them Earn Real Scholarships
@@ -99,11 +99,11 @@ export default function Home() {
 
           {/* Businesses */}
           <div className="text-center">
-            <div className="bg-black text-white p-8 mb-6">
-              <h2 className="text-2xl font-bold">
-                Businesses
-              </h2>
-            </div>
+            <div className="black-block-heading">
+  <h2 className="text-2xl font-bold">
+    Local Business
+  </h2>
+</div>
             <h3 className="text-xl font-bold mb-6">
               Become the Hometown Hero with the
               Best Local Advertising<br />
