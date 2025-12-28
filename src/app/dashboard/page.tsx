@@ -179,6 +179,21 @@ export default function Dashboard() {
     setIsRecurring(false)
     setScholarshipAmount('')
   }
+  
+  const searchGigs = () => {
+  if (!gigSearch.trim()) {
+    setSearchedOffers(offers)
+    return
+  }
+
+  const lower = gigSearch.toLowerCase()
+  const filtered = offers.filter((o: any) => 
+    o.type.toLowerCase().includes(lower) ||
+    o.description.toLowerCase().includes(lower) ||
+    o.location?.toLowerCase().includes(lower)
+  )
+  setSearchedOffers(filtered)
+}
 
   const handleAthletesChange = (value: number) => {
     setNumAthletes(value)
