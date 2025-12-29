@@ -64,6 +64,7 @@ export default function Dashboard() {
   const [paymentLoading, setPaymentLoading] = useState(false)
   const [paymentError, setPaymentError] = useState<string | null>(null)
   const [paymentSuccess, setPaymentSuccess] = useState(false)
+  const [completedGigs, setCompletedGigs] = useState(0)
   const router = useRouter()
   
 
@@ -141,6 +142,14 @@ export default function Dashboard() {
         .order('created_at', { ascending: false })
       setOffers(openOffers || [])
       setSearchedOffers(openOffers || [])
+      
+      const { count } = await supabase
+        .from('clips')
+        .select('id', { count: 'exact' })
+        .eq('athlete_id', user.id)
+        .eq('status', 'approved')
+
+      setCompletedGigs(count || 0)
     }
 
     if (prof.role === 'business') {
