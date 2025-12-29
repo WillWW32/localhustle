@@ -155,11 +155,32 @@ Contact: ${profile?.email}
   </div>
 ) : (
         {/* Application Form — Only if Qualified */}
-        {qualified && (
-          <div className="bg-gray-100 p-16 border-4 border-black mb-20">
-            <h2 className="text-3xl font-bold text-center mb-12">
-              Apply for Brand Deals
-            </h2>
+        {qualified ? (
+  <div className="bg-purple-100 p-12 border-4 border-purple-600 text-center">
+    <p className="text-3xl font-bold mb-4 text-purple-800">
+      You're Qualified! 🎉
+    </p>
+    <p className="text-xl">
+      Submit your application below — brands are waiting.
+    </p>
+  </div>
+) : (
+  <div className="bg-gray-100 p-12 border-4 border-black text-center">
+    <p className="text-2xl mb-4">
+      {8 - completedGigs} more gigs to qualify
+    </p>
+    <p className="text-lg">
+      Complete 8 approved gigs to become eligible for national brand deals.
+    </p>
+  </div>
+)}
+
+{/* Application Form — Only if Qualified */}
+{qualified && (
+  <div className="bg-gray-100 p-16 border-4 border-black mb-20">
+    <h2 className="text-3xl font-bold text-center mb-12">
+      Apply for Brand Deals
+    </h2>
 
             <div className="max-w-3xl mx-auto space-y-12">
               <div>
