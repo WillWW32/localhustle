@@ -66,17 +66,17 @@ export default function RootLayout({
       />
     </Link>
 
-    {/* Slogan + Downward Triangle */}
-    <div className="text-center">
-      <p className="text-3xl sm:text-4xl lg:text-5xl font-mono mb-4">
-        {displayedSlogan}
-      </p>
-
-      {/* Downward Triangle — Fixed & Visible */}
-      <div className="w-0 h-0 mx-auto border-l-[30px] border-l-transparent border-r-[30px] border-r-transparent border-t-[40px] border-t-black" />
+    {/* Slogan — Now Matches Subhead Size */}
+    <div className="subhead-white-black">
+      {displayedSlogan}
     </div>
+
+    {/* Downward Triangle — Fixed & Visible */}
+    <div className="w-0 h-0 border-l-[40px] border-l-transparent border-r-[40px] border-r-transparent border-t-[60px] border-t-black" />
   </div>
-</header>        {children}
+</header>
+
+       {children}
 
         {/* Share with Teammates Banner — Only on non-business pages */}
         {!isBusinessPage && (
@@ -94,38 +94,39 @@ export default function RootLayout({
         )}
 
         {/* Footer */}
-        <footer className="bg-white border-t-4 border-black py-12">
-          <div className="max-w-4xl mx-auto px-6">
-            <nav className="flex flex-wrap justify-center gap-x-12 gap-y-6 mb-8">
-              <a href="/" className="text-gray-600 hover:text-black text-base no-underline">
-                Home
-              </a>
-              <a href="/get-started" className="text-gray-600 hover:text-black text-base no-underline">
-                Get Started
-              </a>
-              <a href="/business-onboard" className="text-gray-600 hover:text-black text-base no-underline">
-                For Businesses
-              </a>
-              <a href="/faq" className="text-gray-600 hover:text-black text-base no-underline">
-                FAQ
-              </a>
-              <a href="/ambassador" className="text-gray-600 hover:text-black text-base no-underline">
-                Ambassador Program
-              </a>
-              <a href="/privacy" className="text-gray-600 hover:text-black text-base no-underline">
-                Privacy
-              </a>
-              <a href="/terms" className="text-gray-600 hover:text-black text-base no-underline">
-                Terms
-              </a>
-            </nav>
+        <footer className="bg-white border-t-4 border-black py-16 mt-auto">
+  <div className="max-w-6xl mx-auto px-6">
+    {/* Footer Links — Horizontal, Spaced, Gray */}
+    <nav className="flex flex-wrap justify-center gap-x-12 gap-y-6 mb-12">
+      
+      <a href="/" className="text-gray-600 hover:text-black text-lg no-underline">
+        How It Works
+      </a>
+      <a href="/get-started" className="text-gray-600 hover:text-black text-lg no-underline">
+        Athletes
+      </a>
+      <a href="/parent-onboard" className="text-gray-600 hover:text-black text-lg no-underline">
+        Parents
+      </a>
+      <a href="/business-onboard" className="text-gray-600 hover:text-black text-lg no-underline">
+        Businesses
+      </a>
+      <a href="/ambassador" className="text-gray-600 hover:text-black text-lg no-underline">
+        Ambassador Program
+      </a>
+      <a href="/privacy" className="text-gray-600 hover:text-black text-lg no-underline">
+        Privacy
+      </a>
+      <a href="/terms" className="text-gray-600 hover:text-black text-lg no-underline">
+        Terms
+      </a>
+    </nav>
 
-            <p className="text-gray-500 text-sm text-center">
-              © 2025 LocalHustle — Community Driven Support for Student Athletes
-            </p>
-          </div>
-        </footer>
-      </body>
+    <p className="text-gray-500 text-sm text-center">
+      © 2025 LocalHustle — Community Driven Support for Student Athletes
+    </p>
+  </div>
+</footer>      </body>
     </html>
   )
 }
