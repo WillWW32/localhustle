@@ -550,7 +550,78 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
         </div>
       </div>
     </div>
+{/* First-Time Athlete Setup Banner */}
+{profile?.role === 'athlete' && (
+  <div className="bg-blue-100 p-12 border-4 border-blue-600 mb-16 rounded-lg">
+    <h3 className="text-3xl font-bold mb-8 text-center">
+      Complete 3 Steps to Start Earning
+    </h3>
 
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+      {/* Step 1: Profile Photo + Bio */}
+      <div className={`text-center p-6 border-4 rounded-lg ${profilePic && bio ? 'bg-green-100 border-green-600' : 'bg-gray-100 border-black'}`}>
+        <p className="text-xl font-bold mb-2">
+          {profilePic && bio ? 'Complete!' : 'Step 1'}
+        </p>
+        <p className="text-lg">Complete Your Profile</p>
+        {!(profilePic && bio) && (
+          <p className="text-sm mt-2 text-gray-600">
+            Photo + bio help businesses choose you
+          </p>
+        )}
+      </div>
+
+      {/* Step 2: Select Gigs */}
+      <div className={`text-center p-6 border-4 rounded-lg ${selectedGigs.length > 0 ? 'bg-green-100 border-green-600' : 'bg-gray-100 border-black'}`}>
+        <p className="text-xl font-bold mb-2">
+          {selectedGigs.length > 0 ? 'Complete!' : 'Step 2'}
+        </p>
+        <p className="text-lg">Choose Gigs You Offer</p>
+        {selectedGigs.length === 0 ? (
+          <p className="text-sm mt-2 text-gray-600">
+            Businesses need to know what you'll do
+          </p>
+        ) : (
+          <p className="text-sm mt-2 text-gray-600">
+            {selectedGigs.length} gig{selectedGigs.length > 1 ? 's' : ''} selected
+          </p>
+        )}
+      </div>
+
+      {/* Step 3: Payout Method */}
+      <div className={`text-center p-6 border-4 rounded-lg ${profile.payout_method_setup ? 'bg-green-100 border-green-600' : 'bg-gray-100 border-black'}`}>
+        <p className="text-xl font-bold mb-2">
+          {profile.payout_method_setup ? 'Complete!' : 'Step 3'}
+        </p>
+        <p className="text-lg">Add Debit Card</p>
+        {!profile.payout_method_setup ? (
+          <>
+            <p className="text-sm mt-2 text-gray-600">
+              Required for instant payouts
+            </p>
+            <Button 
+              onClick={() => router.push('/payout-setup')}
+              className="mt-4 w-full h-14 text-lg bg-black text-white"
+            >
+              Add Card
+            </Button>
+          </>
+        ) : (
+          <p className="text-sm mt-2 text-gray-600">
+            Payouts enabled
+          </p>
+        )}
+      </div>
+    </div>
+
+    {/* All Complete Message */}
+    {(profilePic && bio && selectedGigs.length > 0 && profile.payout_method_setup) && (
+      <p className="text-2xl text-center mt-12 text-green-600 font-bold">
+        All steps complete — you're ready to earn!
+      </p>
+    )}
+  </div>
+)}
     {/* Step 1: Complete Profile */}
     <div className="bg-green-100 p-8 border-4 border-green-600 rounded-lg">
       <h2 className="text-3xl font-bold mb-8">
@@ -1246,38 +1317,14 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
             </div>
           )}
 
-          {/* Connect with Stripe */}
-          {business && !business.stripe_account_id && (
-            <div className="my-16">
-              <p className="text-lg mb-6">
-                Connect your Stripe account to automatically fund all approved gigs.
-              </p>
-              <Button
-                onClick={async () => {
-                  const response = await fetch('/api/connect-onboarding', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ business_id: business.id }),
-                  })
-                  const { url } = await response.json()
-                  window.location.href = url
-                }}
-                className="w-full max-w-md h-20 text-2xl bg-purple-600 text-white"
-              >
-                Connect with Stripe
-              </Button>
-            </div>
-          )}
-
-          {/* Booster Events CTA */}
-          <div className="my-16">
-            <Button 
-              onClick={() => router.push('/booster-events')}
-              className="w-full max-w-md h-20 text-2xl bg-green-400 text-black"
-            >
-              Create Booster Club Event
-            </Button>
-          </div>
+          
+          <div className="bg-purple-100 p-8 border-4 border-purple-600 mb-16">
+  <h3 className="text-2xl font-bold mb-4">Freedom Scholarships</h3>
+  <p className="text-lg">
+    Unrestricted cash — paid instantly.<br />
+    Use for books, food, rent — whatever you need. No rules.
+  </p>
+</div>
         </div>
       )}
 

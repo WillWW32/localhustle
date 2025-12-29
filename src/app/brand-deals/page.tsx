@@ -16,6 +16,7 @@ export default function BrandDeals() {
   const [pitchMessage, setPitchMessage] = useState('')
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+  const [submitted, setSubmitted] = useState(false)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -37,7 +38,7 @@ export default function BrandDeals() {
         setSocialHandles(prof.social_handles || '')
       }
 
-      // Count approved gigs
+      // Count approved gigs — real data
       const { count } = await supabase
         .from('clips')
         .select('id', { count: 'exact' })
@@ -49,24 +50,41 @@ export default function BrandDeals() {
       setQualified(gigs >= 8)
 
       // Build stats string
-      setStats(`Completed Gigs: ${gigs} | Freedom Scholarships: $${gigs * 100}`)
+      setStats(`Completed Gigs: ${gigs}`)
     }
 
     fetchData()
   }, [router])
 
   const handleApply = async () => {
-    if (!qualified) {
-      alert('Complete 8 gigs to qualify for brand deals')
-      return
-    }
-
-    setLoading(true)
-
-    // In real app — send to backend for review
-    alert('Application submitted! We\'ll review and reach out soon.')
-    setLoading(false)
+  if (!qualified) {
+    alert('Complete 8 gigs to qualify')
+    return
   }
+
+  setLoading(true)
+
+  const emailBody = `
+Brand Deal Application from ${profile?.full_name || 'Athlete'}
+
+Stats: ${stats}
+Highlight Reel: ${highlightLink}
+Social Handles: ${socialHandles}
+
+Pitch:
+${pitchMessage}
+
+Contact: ${profile?.email}
+  `.trim()
+
+  // Simple mailto — opens email client
+  const mailtoLink = `mailto:teamlocalhustle@gmail.com?subject=Brand Deal Application - ${profile?.full_name || 'Athlete'}&body=${encodeURIComponent(emailBody)}`
+
+  window.location.href = mailtoLink
+
+  alert('Opening email client — send to teamlocalhustle@gmail.com')
+  setLoading(false)
+}
 
   return (
     <div className="min-h-screen bg-white text-black font-mono py-20 px-6">
@@ -75,47 +93,67 @@ export default function BrandDeals() {
           Land National Brand Deals
         </h1>
 
-        {/* Qualification Progress Meter */}
-        <div className="bg-gray-100 p-12 border-4 border-black mb-20">
-          <h2 className="text-3xl font-bold text-center mb-8">
-            Your Progress to Brand Deal Eligibility
-          </h2>
+        {/* Progress Meter */}
+<div className="bg-gray-100 p-12 border-4 border-black mb-16">
+  <h2 className="text-3xl font-bold mb-8 text-center">
+    Your Path to Bigger Opportunities
+  </h2>
 
-          <div className="max-w-2xl mx-auto">
-            {/* Progress Bar */}
-            <div className="relative h-20 bg-gray-300 border-4 border-black mb-12 overflow-hidden">
-              <div 
-                className="absolute h-full bg-purple-600 transition-all duration-700"
-                style={{ width: `${Math.min((completedGigs / 8) * 100, 100)}%` }}
-              />
-              <p className="absolute inset-0 flex items-center justify-center text-3xl font-bold">
-                {completedGigs} / 8 Gigs
-              </p>
-            </div>
+  <div className="max-w-2xl mx-auto">
+    {/* Bolder Progress Bar */}
+    <div className="relative h-24 bg-gray-300 border-4 border-black mb-8 overflow-hidden">
+      <div 
+        className="absolute inset-0 h-full bg-purple-700 transition-all duration-700 ease-out"
+        style={{ width: `${Math.min((completedGigs / 8) * 100, 100)}%` }}
+      />
+      {/* Centered Text */}
+      <div className="absolute inset-0 flex items-center justify-center">
+        <p className="text-4xl font-bold text-white drop-shadow-lg">
+          {completedGigs} / 8 Gigs
+        </p>
+      </div>
+    </div>
 
-            {/* Status Message */}
-            {qualified ? (
-              <div className="bg-purple-100 p-12 border-4 border-purple-600 text-center">
-                <p className="text-3xl font-bold mb-4 text-purple-800">
-                  You're Qualified! 🎉
-                </p>
-                <p className="text-xl">
-                  Submit your application below — brands are waiting.
-                </p>
-              </div>
-            ) : (
-              <div className="bg-gray-100 p-12 border-4 border-black text-center">
-                <p className="text-2xl mb-4">
-                  {8 - completedGigs} more gigs to qualify
-                </p>
-                <p className="text-lg">
-                  Complete 8 approved gigs to become eligible for national brand deals.
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
+    {/* Milestones */}
+    <div className="grid grid-cols-2 gap-8">
+      <div className={`text-center p-6 border-4 ${completedGigs >= 4 ? 'bg-green-100 border-green-600' : 'bg-gray-100 border-black'}`}>
+        <p className="text-xl font-bold mb-2">
+          {completedGigs >= 4 ? 'Qualified!' : `${4 - completedGigs} gigs to go`}
+        </p>
+        <p className="text-lg">
+          Freedom Scholarship Eligible<br />
+          <span className="text-sm">Unrestricted cash bonus</span>
+        </p>
+      </div>
 
+      <div className={`text-center p-6 border-4 ${completedGigs >= 8 ? 'bg-purple-100 border-purple-600' : 'bg-gray-100 border-black'}`}>
+        <p className="text-xl font-bold mb-2">
+          {completedGigs >= 8 ? 'Qualified!' : `${8 - completedGigs} gigs to go`}
+        </p>
+        <p className="text-lg">
+          Brand Deal Eligible<br />
+          <span className="text-sm">National brand submissions</span>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>        
+        {submitted ? (
+  <div className="bg-green-100 p-12 border-4 border-green-600 mb-20">
+    <h3 className="text-3xl font-bold mb-8 text-center">
+      Thank You!
+    </h3>
+    <p className="text-xl text-center max-w-3xl mx-auto">
+      Thank you for submitting your application. It will be reviewed by the board along with our brand sponsors who will be watching your progress. We will notify you within the app for any brand deals offered.
+    </p>
+    <Button 
+      onClick={() => router.push('/dashboard')}
+      className="w-full max-w-md h-20 text-2xl bg-black text-white font-bold"
+    >
+      Back to Dashboard
+    </Button>
+  </div>
+) : (
         {/* Application Form — Only if Qualified */}
         {qualified && (
           <div className="bg-gray-100 p-16 border-4 border-black mb-20">

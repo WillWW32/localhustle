@@ -12,6 +12,7 @@ function ParentOnboardContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const kidId = searchParams.get('kid_id')
+  const [email, setEmail] = useState('')
 
   useEffect(() => {
     const fetchKid = async () => {
@@ -76,12 +77,23 @@ function ParentOnboardContent() {
         </p>
       </div>
 
-      <Button
-        onClick={sendMagicLink}
-        className="w-full max-w-md h-20 text-2xl bg-green-600 text-white font-bold"
-      >
-        Yes — Sponsor {kidName} Now
-      </Button>
+      <div className="max-w-md mx-auto space-y-8">
+  <Input
+    type="email"
+    placeholder="your@email.com"
+    value={email}
+    onChange={(e) => setEmail(e.target.value)}
+    className="h-20 text-2xl text-center border-4 border-black"
+  />
+
+  <Button
+    onClick={sendMagicLink}
+    disabled={loading || !email.trim()}
+    className="w-full h-20 text-2xl bg-green-600 text-white font-bold"
+  >
+    {loading ? 'Sending...' : `Yes — Sponsor ${kidName} Now`}
+  </Button>
+</div>
 
       <p className="text-lg mt-12 text-gray-600">
         You'll get a magic link — click it to set up your parent dashboard.
