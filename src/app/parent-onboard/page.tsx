@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 
 function ParentOnboardContent() {
   const [kidName, setKidName] = useState('your kid')
