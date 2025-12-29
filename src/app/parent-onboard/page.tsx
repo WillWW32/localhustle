@@ -9,18 +9,15 @@ import { Input } from '@/components/ui/input'
 
 function ParentOnboardContent() {
   const [kidName, setKidName] = useState('your kid')
-  const [loading, setLoading] = useState(true)
+  const [email, setEmail] = useState('')
+  const [loading, setLoading] = useState(false)
   const router = useRouter()
   const searchParams = useSearchParams()
   const kidId = searchParams.get('kid_id')
-  const [email, setEmail] = useState('')
 
   useEffect(() => {
     const fetchKid = async () => {
-      if (!kidId) {
-        setLoading(false)
-        return
-      }
+      if (!kidId) return
 
       const { data } = await supabase
         .from('profiles')
@@ -31,31 +28,35 @@ function ParentOnboardContent() {
       if (data?.full_name) {
         setKidName(data.full_name.split(' ')[0])
       }
-      setLoading(false)
     }
 
     fetchKid()
   }, [kidId])
 
   const sendMagicLink = async () => {
-  if (!kidId) return
+    if (!email.trim()) {
+      alert('Please enter your email')
+      return
+    }
 
-  const { error } = await supabase.auth.signInWithOtp({
-    email: '',
-    options: {
-      emailRedirectTo: `https://app.localhustle.org/parent-dashboard?kid_id=${kidId}`,
-      data: { role: 'parent' },
-    },
-  })
+    setLoading(true)
 
-  if (error) {
-    alert('Error: ' + error.message)
-  } else {
-    alert(`Magic link sent! Check your email to sponsor ${kidName}.`)
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        emailRedirectTo: `https://app.localhustle.org/parent-dashboard?kid_id=${kidId || ''}`,
+        data: { role: 'parent' },
+      },
+    })
+
+    if (error) {
+      alert('Error: ' + error.message)
+    } else {
+      alert(`Magic link sent! Check your email to sponsor ${kidName}.`)
+    }
+
+    setLoading(false)
   }
-}
-
-  if (loading) return <p className="text-center py-32 text-2xl">Loading...</p>
 
   return (
     <div className="min-h-screen bg-white text-black font-mono py-20 px-6 text-center">
@@ -79,22 +80,22 @@ function ParentOnboardContent() {
       </div>
 
       <div className="max-w-md mx-auto space-y-8">
-  <Input
-    type="email"
-    placeholder="your@email.com"
-    value={email}
-    onChange={(e) => setEmail(e.target.value)}
-    className="h-20 text-2xl text-center border-4 border-black"
-  />
+        <Input
+          type="email"
+          placeholder="your@email.com"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="h-20 text-2xl text-center border-4 border-black"
+        />
 
-  <Button
-    onClick={sendMagicLink}
-    disabled={loading || !email.trim()}
-    className="w-full h-20 text-2xl bg-green-600 text-white font-bold"
-  >
-    {loading ? 'Sending...' : `Yes — Sponsor ${kidName} Now`}
-  </Button>
-</div>
+        <Button
+          onClick={sendMagicLink}
+          disabled={loading || !email.trim()}
+          className="w-full h-20 text-2xl bg-green-600 text-white font-bold"
+        >
+          {loading ? 'Sending...' : `Yes — Sponsor ${kidName} Now`}
+        </Button>
+      </div>
 
       <p className="text-lg mt-12 text-gray-600">
         You'll get a magic link — click it to set up your parent dashboard.

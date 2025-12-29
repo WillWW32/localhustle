@@ -65,11 +65,9 @@ export default function Home() {
       <div className="min-h-screen bg-white text-black font-mono">
         {/* Hero */}
         <section className="py-20 px-6 sm:px-12 lg:px-32 text-center">
-          <div className="bg-black text-white p-16 mb-16 inline-block">
-            <h1 className="text-3xl sm:text-5xl font-bold leading-tight">
+          <div className="subhead-white-black">
               We Connect Local Businesses with Student Athletes<br />
               for Scholarships & NIL Deals
-            </h1>
           </div>
 
           <p className="text-xl sm:text-2xl mb-24 max-w-4xl mx-auto leading-relaxed">
@@ -82,8 +80,8 @@ export default function Home() {
 <section className="px-6 sm:px-12 lg:px-32 pb-24">
   <div className="grid grid-cols-1 md:grid-cols-3 gap-16 max-w-6xl mx-auto">
     <div className="text-center">
-      <div className="bg-black text-white p-8 mb-6">
-        <h2 className="text-2xl font-bold">Student Athletes</h2>
+      <div className="subhead-white-black">
+        Student Athletes
       </div>
       <p className="text-lg leading-relaxed px-4">
         • Earn money instantly with gigs + Freedom Scholarships.<br />
@@ -92,8 +90,8 @@ export default function Home() {
     </div>
 
     <div className="text-center">
-      <div className="bg-black text-white p-8 mb-6">
-        <h2 className="text-2xl font-bold">Parents</h2>
+      <div className="subhead-white-black">
+        Parent
       </div>
       <p className="text-lg leading-relaxed px-4">
         • Less financial stress.<br />
@@ -102,8 +100,8 @@ export default function Home() {
     </div>
 
     <div className="text-center">
-      <div className="bg-black text-white p-8 mb-6">
-        <h2 className="text-2xl font-bold">Businesses</h2>
+      <div className="subhead-white-black">
+        Businesses
       </div>
       <p className="text-lg leading-relaxed px-4">
         • Best local advertising + become the hometown hero.<br />
@@ -146,63 +144,63 @@ export default function Home() {
           </p>
         </section>
 
-        {/* Bottom CTA */}
+        {/* Bottom CTA — 3-Stage Toggle */}
         <section className="py-24 px-6 sm:px-12 lg:px-32 text-center">
-          <p className="text-2xl mb-12">Who are you?</p>
+            <p className="text-2xl mb-12">Who are you?</p>
 
-          <div className="w-full max-w-lg mx-auto space-y-12">
-            
-            {/* 3 Role Buttons */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <Button
-                onClick={() => setRole('athlete')}
-                variant={role === 'athlete' ? 'default' : 'outline'}
-                className="h-20 text-xl sm:text-2xl font-bold"
-              >
+            <div className="w-full max-w-lg mx-auto space-y-12">
+            {/* 3-Stage Toggle */}
+            <div className="grid grid-cols-1 gap-4">
+            <button
+             onClick={() => setRole('athlete')}
+             className={`h-20 text-2xl font-bold transition-all ${
+                role === 'athlete' ? 'bg-black text-white' : 'bg-gray-200 text-black border-4 border-black'
+               }`}
+            >
                 Student Athlete
-              </Button>
+            </button>
 
-              <Button
-                onClick={() => setRole('parent')}
-                variant={role === 'parent' ? 'default' : 'outline'}
-                className="h-20 text-xl sm:text-2xl font-bold"
-              >
-                Parent
-              </Button>
+            <button
+             onClick={() => setRole('parent')}
+                className={`h-20 text-2xl font-bold transition-all ${
+               role === 'parent' ? 'bg-green-600 text-white' : 'bg-gray-200 text-black border-4 border-black'
+             }`}
+            >
+             Parent
+            </button>
 
-              <Button
+            <button
                 onClick={() => setRole('business')}
-                variant={role === 'business' ? 'default' : 'outline'}
-                className="h-20 text-xl sm:text-2xl font-bold"
-              >
-                Business
-              </Button>
+             className={`h-20 text-2xl font-bold transition-all ${
+               role === 'business' ? 'bg-purple-600 text-white' : 'bg-gray-200 text-black border-4 border-black'
+              }`}
+             >
+             Business
+            </button>
             </div>
-            
-            {/* Email Field First */}
-            <Input
-              type="email"
-              placeholder="your@email.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="h-20 text-2xl text-center border-4 border-black"
-            />
 
-            
+            {/* Email */}
+            <Input
+            type="email"
+             placeholder="your@email.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="h-20 text-2xl text-center border-4 border-black"
+            />
 
             {/* Go Button */}
             <Button
-              onClick={sendMagicLink}
-              disabled={loading || !role}
-              className="w-full h-20 text-3xl bg-black text-white font-bold"
+             onClick={sendMagicLink}
+             disabled={loading || !role}
+             className="w-full h-20 text-3xl bg-black text-white font-bold"
             >
-              {loading ? 'Sending...' : 'Go'}
+             {loading ? 'Sending...' : 'Go'}
             </Button>
 
             {loading && (
-              <p className="text-center text-xl mt-4">Sending magic link...</p>
+             <p className="text-center text-xl mt-4">Sending magic link...</p>
             )}
-          </div>
+            </div>
         </section>
       </div>
     </>

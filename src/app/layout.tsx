@@ -51,37 +51,32 @@ export default function RootLayout({
       <head />
       <body>
         {/* Header */}
-        <header className="bg-white border-b-4 border-black py-8">
-          <div className="max-w-6xl mx-auto px-6 flex flex-col items-center gap-8">
-            <Link href="/">
-              <Image
-                src="/logo.png"
-                alt="LocalHustle Logo"
-                width={0}
-                height={0}
-                sizes="100vw"
-                style={{ width: 'auto', height: '110px' }}
-                priority
-              />
-            </Link>
+        
+<header className="bg-white border-b-4 border-black py-8">
+  <div className="max-w-6xl mx-auto px-6 flex flex-col items-center gap-8">
+    <Link href="/">
+      <Image
+        src="/logo.png"
+        alt="LocalHustle Logo"
+        width={0}
+        height={0}
+        sizes="100vw"
+        style={{ width: 'auto', height: '120px' }}
+        priority
+      />
+    </Link>
 
-            {/* Slogan + Downward Triangle */}
-            <div className="text-center">
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-mono mb-4">
-            {displayedSlogan}
-            </h2>
+    {/* Slogan + Downward Triangle */}
+    <div className="text-center">
+      <p className="text-3xl sm:text-4xl lg:text-5xl font-mono mb-4">
+        {displayedSlogan}
+      </p>
 
-            {/* Downward Triangle */}
-            <div className="w-0 h-0 mx-auto 
-            border-l-[30px] border-l-transparent
-            border-r-[30px] border-r-transparent
-            border-t-[40px] border-t-black" 
-            />
-            </div>
-          </div>
-        </header>
-
-        {children}
+      {/* Downward Triangle — Fixed & Visible */}
+      <div className="w-0 h-0 mx-auto border-l-[30px] border-l-transparent border-r-[30px] border-r-transparent border-t-[40px] border-t-black" />
+    </div>
+  </div>
+</header>        {children}
 
         {/* Share with Teammates Banner — Only on non-business pages */}
         {!isBusinessPage && (
