@@ -36,22 +36,22 @@ function ParentOnboardContent() {
   }, [kidId])
 
   const sendMagicLink = async () => {
-    if (!kidId) return
+  if (!kidId) return
 
-    const { error } = await supabase.auth.signInWithOtp({
-      email: '',
-      options: {
-        emailRedirectTo: `https://app.localhustle.org/dashboard?fund_kid=${kidId}`,
-        data: { role: 'parent' },
-      },
-    })
+  const { error } = await supabase.auth.signInWithOtp({
+    email: '',
+    options: {
+      emailRedirectTo: `https://app.localhustle.org/parent-dashboard?kid_id=${kidId}`,
+      data: { role: 'parent' },
+    },
+  })
 
-    if (error) {
-      alert('Error: ' + error.message)
-    } else {
-      alert(`Magic link sent! Check your email to sponsor ${kidName}.`)
-    }
+  if (error) {
+    alert('Error: ' + error.message)
+  } else {
+    alert(`Magic link sent! Check your email to sponsor ${kidName}.`)
   }
+}
 
   if (loading) return <p className="text-center py-32 text-2xl">Loading...</p>
 

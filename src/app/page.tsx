@@ -79,45 +79,70 @@ export default function Home() {
         </section>
 
         {/* Benefits Grid */}
-        <section className="px-6 sm:px-12 lg:px-32 pb-24">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-16 max-w-6xl mx-auto">
-            <div className="text-center">
-              <div className="bg-black text-white p-8 mb-6">
-                <h2 className="text-2xl font-bold">Student Athletes</h2>
-              </div>
-              <p className="text-lg leading-relaxed px-4">
-                Earn money instantly + Freedom Scholarships.<br />
-                Complete 4 gigs → qualify for national brand deals.
-              </p>
-            </div>
+<section className="px-6 sm:px-12 lg:px-32 pb-24">
+  <div className="grid grid-cols-1 md:grid-cols-3 gap-16 max-w-6xl mx-auto">
+    <div className="text-center">
+      <div className="bg-black text-white p-8 mb-6">
+        <h2 className="text-2xl font-bold">Student Athletes</h2>
+      </div>
+      <p className="text-lg leading-relaxed px-4">
+        • Earn money instantly with gigs + Freedom Scholarships.<br />
+        • Complete 4 gigs → qualify for national brand deals.
+      </p>
+    </div>
 
-            <div className="text-center">
-              <div className="bg-black text-white p-8 mb-6">
-                <h2 className="text-2xl font-bold">Parents</h2>
-              </div>
-              <p className="text-lg leading-relaxed px-4">
-                Less financial stress.<br />
-                Help your kid earn real money & scholarships.
-              </p>
-            </div>
+    <div className="text-center">
+      <div className="bg-black text-white p-8 mb-6">
+        <h2 className="text-2xl font-bold">Parents</h2>
+      </div>
+      <p className="text-lg leading-relaxed px-4">
+        • Less financial stress.<br />
+        • Help your kid earn real money & scholarships.
+      </p>
+    </div>
 
-            <div className="text-center">
-              <div className="bg-black text-white p-8 mb-6">
-                <h2 className="text-2xl font-bold">Businesses</h2>
-              </div>
-              <p className="text-lg leading-relaxed px-4">
-                Best local advertising + become the hometown hero.<br />
-                Award Freedom Scholarships — real impact.
-              </p>
-            </div>
-          </div>
-        </section>
+    <div className="text-center">
+      <div className="bg-black text-white p-8 mb-6">
+        <h2 className="text-2xl font-bold">Businesses</h2>
+      </div>
+      <p className="text-lg leading-relaxed px-4">
+        • Best local advertising + become the hometown hero.<br />
+        • Award Freedom Scholarships — real community impact.
+      </p>
+    </div>
+  </div>
+</section>
+        
+        {/* How It Works — Define Key Terms */}
+<section className="py-24 px-6 sm:px-12 lg:px-32 bg-gray-50">
+  <h2 className="text-3xl sm:text-4xl font-bold text-center mb-16">
+    How It Works
+  </h2>
+
+  <div className="max-w-4xl mx-auto space-y-16">
+    <div className="bg-white p-12 border-4 border-black">
+      <h3 className="text-2xl font-bold mb-6">What is a Gig?</h3>
+      <p className="text-lg leading-relaxed">
+        A gig is a simple task funded by a local business — like making a 15-second shoutout video, running a youth clinic, or competing in a challenge.<br />
+        Athletes complete the gig → business approves → athlete gets paid instantly.
+      </p>
+    </div>
+
+    <div className="bg-white p-12 border-4 border-black">
+      <h3 className="text-2xl font-bold mb-6">What is a Freedom Scholarship?</h3>
+      <p className="text-lg leading-relaxed">
+        Unrestricted cash awarded by businesses or the platform — paid instantly to the athlete.<br />
+        No strings attached — use for books, food, rent, gear — whatever they need to succeed.
+      </p>
+    </div>
+  </div>
+</section>
 
         {/* Emotional Close */}
         <section className="py-24 px-6 sm:px-12 lg:px-32 text-center bg-gray-50">
           <p className="text-2xl sm:text-3xl max-w-4xl mx-auto leading-relaxed">
-            Real money. Real scholarships. Real community.<br />
-            Keep kids in sports. Build stronger towns.
+            Real money. Real scholarships. Real NIL deals.<br />
+            Keep kids in sports. Build stronger communities.
           </p>
         </section>
 
@@ -126,15 +151,7 @@ export default function Home() {
           <p className="text-2xl mb-12">Who are you?</p>
 
           <div className="w-full max-w-lg mx-auto space-y-12">
-            {/* Email Field First */}
-            <Input
-              type="email"
-              placeholder="your@email.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="h-20 text-2xl text-center border-4 border-black"
-            />
-
+            
             {/* 3 Role Buttons */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <Button
@@ -161,6 +178,17 @@ export default function Home() {
                 Business
               </Button>
             </div>
+            
+            {/* Email Field First */}
+            <Input
+              type="email"
+              placeholder="your@email.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="h-20 text-2xl text-center border-4 border-black"
+            />
+
+            
 
             {/* Go Button */}
             <Button
