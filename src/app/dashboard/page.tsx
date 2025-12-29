@@ -68,95 +68,117 @@ export default function Dashboard() {
   
 
   useEffect(() => {
-    const fetchData = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-        router.replace('/')
-        return
-      }
+  const fetchData = async () => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      router.replace('/')
+      return
+    }
 
-      let prof = null
-      const { data: existingProf } = await supabase
+    // Check for force business view from business-onboard
+    const urlParams = new URLSearchParams(window.location.search)
+    const forceBusiness = urlParams.get('view') === 'business'
+
+    let prof = null
+    const { data: existingProf } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', user.id)
+      .single()
+
+    if (existingProf) {
+      prof = existingProf
+    } else {
+      // New user — default to athlete unless forced
+      const metadataRole = user.user_metadata?.role || 'athlete'
+      const { data: newProf } = await supabase
+        .from('profiles')
+        .insert({
+          id: user.id,
+          email: user.email,
+          role: forceBusiness ? 'business' : metadataRole,
+        })
+        .select()
+        .single()
+      prof = newProf
+    }
+
+    // Force business role if coming from business-onboard
+    if (forceBusiness && prof.role !== 'business') {
+      await supabase
+        .from('profiles')
+        .update({ role: 'business' })
+        .eq('id', user.id)
+
+      // Refresh profile
+      const { data: updatedProf } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', user.id)
         .single()
-
-      if (existingProf) {
-        prof = existingProf
-      } else {
-        const metadataRole = user.user_metadata?.role || 'athlete'
-        const { data: newProf } = await supabase
-          .from('profiles')
-          .insert({
-            id: user.id,
-            email: user.email,
-            role: metadataRole,
-          })
-          .select()
-          .single()
-        prof = newProf
-      }
-
-      setProfile(prof)
-
-      if (prof.role === 'athlete') {
-        if (prof.selected_gigs) setSelectedGigs(prof.selected_gigs)
-        setProfilePic(prof.profile_pic || '')
-        setHighlightLink(prof.highlight_link || '')
-        setSocialFollowers(prof.social_followers || '')
-        setBio(prof.bio || '')
-
-        const { data: squadMembers } = await supabase
-          .from('profiles')
-          .select('email, created_at')
-          .eq('referred_by', user.id)
-        setSquad(squadMembers || [])
-
-        const { data: openOffers } = await supabase
-          .from('offers')
-          .select('*')
-          .eq('status', 'active')
-          .order('created_at', { ascending: false })
-        setOffers(openOffers || [])
-        setSearchedOffers(openOffers || [])
-      }
-
-      if (prof.role === 'business') {
-        const { data: biz } = await supabase
-          .from('businesses')
-          .select('*')
-          .eq('owner_id', user.id)
-          .single()
-        setBusiness(biz)
-
-        const { data: referred } = await supabase
-          .from('profiles')
-          .select('id, full_name, email, school')
-          .eq('referred_by', biz.id)
-        setReferredAthletes(referred || [])
-
-        const { data: clips } = await supabase
-          .from('clips')
-          .select('*, offers(*), profiles(email, parent_email)')
-          .eq('status', 'pending')
-          .in('offer_id', (await supabase.from('offers').select('id').eq('business_id', biz.id)).data?.map(o => o.id) || [])
-        setPendingClips(clips || [])
-
-        // Fetch saved payment methods when business loads
-        if (biz.id) {
-          const response = await fetch('/api/list-payment-methods', {
-            method: 'POST',
-            body: JSON.stringify({ business_id: biz.id }),
-          })
-          const data = await response.json()
-          setSavedMethods(data.methods || [])
-        }
-      }
+      prof = updatedProf
     }
 
-    fetchData()
-  }, [router])
+    setProfile(prof)
+
+    if (prof.role === 'athlete') {
+      if (prof.selected_gigs) setSelectedGigs(prof.selected_gigs)
+      setProfilePic(prof.profile_pic || '')
+      setHighlightLink(prof.highlight_link || '')
+      setSocialFollowers(prof.social_followers || '')
+      setBio(prof.bio || '')
+
+      const { data: squadMembers } = await supabase
+        .from('profiles')
+        .select('email, created_at')
+        .eq('referred_by', user.id)
+      setSquad(squadMembers || [])
+
+      const { data: openOffers } = await supabase
+        .from('offers')
+        .select('*')
+        .eq('status', 'active')
+        .order('created_at', { ascending: false })
+      setOffers(openOffers || [])
+      setSearchedOffers(openOffers || [])
+    }
+
+    if (prof.role === 'business') {
+      const { data: biz } = await supabase
+        .from('businesses')
+        .select('*')
+        .eq('owner_id', user.id)
+        .single()
+      setBusiness(biz)
+
+      const { data: referred } = await supabase
+        .from('profiles')
+        .select('id, full_name, email, school')
+        .eq('referred_by', biz.id)
+      setReferredAthletes(referred || [])
+
+      const { data: clips } = await supabase
+        .from('clips')
+        .select('*, offers(*), profiles(email, parent_email)')
+        .eq('status', 'pending')
+        .in('offer_id', (await supabase.from('offers').select('id').eq('business_id', biz.id)).data?.map(o => o.id) || [])
+      setPendingClips(clips || [])
+
+      // Fetch saved payment methods when business loads
+      if (biz?.id) {
+        const response = await fetch('/api/list-payment-methods', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ business_id: biz.id }),
+        })
+        const data = await response.json()
+        setSavedMethods(data.methods || [])
+      }
+    }
+  }
+
+  fetchData()
+}, [router])
 
   const handleSaveProfile = async () => {
     const { error } = await supabase
