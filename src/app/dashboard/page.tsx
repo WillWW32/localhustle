@@ -507,66 +507,109 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
       </div>
 
       {profile.role === 'athlete' ? (
-        <div className="max-w-4xl mx-auto space-y-32 font-mono text-center text-lg">
-          {/* Athlete content — your full original athlete sections */}
-          {/* Step 1: Complete Profile */}
-          <div className="bg-green-100 p-8 border-4 border-green-600 rounded-lg">
-            <h2 className="text-3xl font-bold mb-8">
-              Step 1 — Complete Your Profile
-            </h2>
-            <div className="max-w-2xl mx-auto bg-gray-100 p-8 border-4 border-black rounded-lg">
-              <div className="mb-12">
-                <div className="relative w-40 h-40 mx-auto rounded-full overflow-hidden border-4 border-black">
-                  {profilePic ? (
-                    <img src={profilePic} alt="Profile" className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full bg-gray-300 flex items-center justify-center">
-                      <p className="text-gray-600">Tap to Upload</p>
-                    </div>
-                  )}
-                </div>
-                <input
-                  type="file"
-                  accept="image/*"
-                  capture="environment"
-                  onChange={async (e) => {
-                    const file = e.target.files?.[0]
-                    if (!file || !profile) return
+  <div className="max-w-4xl mx-auto space-y-32 font-mono text-center text-lg">
+    {/* Qualification Progress Meter — Top of Athlete Dashboard */}
+    <div className="bg-gray-100 p-12 border-4 border-black mb-16">
+      <h2 className="text-3xl font-bold mb-8">
+        Your Path to Bigger Opportunities
+      </h2>
 
-                    const fileExt = file.name.split('.').pop()
-                    const fileName = `${profile.id}.${fileExt}`
-                    const filePath = `${profile.id}/${fileName}`
+      <div className="max-w-2xl mx-auto">
+        {/* Progress Bar */}
+        <div className="relative h-16 bg-gray-300 border-4 border-black mb-8 overflow-hidden">
+          <div 
+            className="absolute h-full bg-green-600 transition-all duration-500"
+            style={{ width: `${Math.min((completedGigs / 8) * 100, 100)}%` }}
+          />
+          <p className="absolute inset-0 flex items-center justify-center text-2xl font-bold">
+            {completedGigs} / 8 Gigs Completed
+          </p>
+        </div>
 
-                    const { error: uploadError } = await supabase.storage
-                      .from('profile-pics')
-                      .upload(filePath, file, { upsert: true })
+        {/* Milestones */}
+        <div className="grid grid-cols-2 gap-8">
+          <div className={`text-center p-6 border-4 ${completedGigs >= 4 ? 'bg-green-100 border-green-600' : 'bg-gray-100 border-black'}`}>
+            <p className="text-xl font-bold mb-2">
+              {completedGigs >= 4 ? 'Qualified!' : `${4 - completedGigs} gigs to go`}
+            </p>
+            <p className="text-lg">
+              Freedom Scholarship Eligible<br />
+              <span className="text-sm">Unrestricted cash bonus</span>
+            </p>
+          </div>
 
-                    if (uploadError) {
-                      alert('Upload failed: ' + uploadError.message)
-                      return
-                    }
+          <div className={`text-center p-6 border-4 ${completedGigs >= 8 ? 'bg-purple-100 border-purple-600' : 'bg-gray-100 border-black'}`}>
+            <p className="text-xl font-bold mb-2">
+              {completedGigs >= 8 ? 'Qualified!' : `${8 - completedGigs} gigs to go`}
+            </p>
+            <p className="text-lg">
+              Brand Deal Eligible<br />
+              <span className="text-sm">National brand submissions</span>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
 
-                    const { data: urlData } = supabase.storage
-                      .from('profile-pics')
-                      .getPublicUrl(filePath)
-
-                    setProfilePic(urlData.publicUrl)
-
-                    await supabase
-                      .from('profiles')
-                      .update({ profile_pic: urlData.publicUrl })
-                      .eq('id', profile.id)
-                  }}
-                  className="hidden"
-                  id="photo-upload"
-                />
-                <label htmlFor="photo-upload" className="block mt-4">
-                  <div className="px-8 py-4 bg-black text-white text-center cursor-pointer font-bold text-lg">
-                    Upload Photo
-                  </div>
-                </label>
+    {/* Step 1: Complete Profile */}
+    <div className="bg-green-100 p-8 border-4 border-green-600 rounded-lg">
+      <h2 className="text-3xl font-bold mb-8">
+        Step 1 — Complete Your Profile
+      </h2>
+      <div className="max-w-2xl mx-auto bg-gray-100 p-8 border-4 border-black rounded-lg">
+        <div className="mb-12">
+          <div className="relative w-40 h-40 mx-auto rounded-full overflow-hidden border-4 border-black">
+            {profilePic ? (
+              <img src={profilePic} alt="Profile" className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full bg-gray-300 flex items-center justify-center">
+                <p className="text-gray-600">Tap to Upload</p>
               </div>
+            )}
+          </div>
+          <input
+            type="file"
+            accept="image/*"
+            capture="environment"
+            onChange={async (e) => {
+              const file = e.target.files?.[0]
+              if (!file || !profile) return
 
+              const fileExt = file.name.split('.').pop()
+              const fileName = `${profile.id}.${fileExt}`
+              const filePath = `${profile.id}/${fileName}`
+
+              const { error: uploadError } = await supabase.storage
+                .from('profile-pics')
+                .upload(filePath, file, { upsert: true })
+
+              if (uploadError) {
+                alert('Upload failed: ' + uploadError.message)
+                return
+              }
+
+              const { data: urlData } = supabase.storage
+                .from('profile-pics')
+                .getPublicUrl(filePath)
+
+              setProfilePic(urlData.publicUrl)
+
+              await supabase
+                .from('profiles')
+                .update({ profile_pic: urlData.publicUrl })
+                .eq('id', profile.id)
+            }}
+            className="hidden"
+            id="photo-upload"
+          />
+          <label htmlFor="photo-upload" className="block mt-4">
+            <div className="px-8 py-4 bg-black text-white text-center cursor-pointer font-bold text-lg">
+              Upload Photo
+            </div>
+          </label>
+        </div>
+
+      
               <div className="mb-8">
                 <label className="block text-lg mb-2">Name</label>
                 <Input placeholder="Your Name" value={profile?.full_name || ''} disabled className="text-center" />
