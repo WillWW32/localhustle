@@ -149,35 +149,38 @@ export default function Home() {
             <p className="text-2xl mb-12">Who are you?</p>
 
             <div className="w-full max-w-lg mx-auto space-y-12">
-            {/* 3-Stage Toggle */}
-            <div className="grid grid-cols-1 gap-4">
-            <button
-             onClick={() => setRole('athlete')}
-             className={`h-20 text-2xl font-bold transition-all ${
-                role === 'athlete' ? 'bg-black text-white' : 'bg-gray-200 text-black border-4 border-black'
-               }`}
-            >
-                Student Athlete
-            </button>
+            {/* Role Selector — Clear Selected State */}
+<div className="grid grid-cols-1 gap-6 max-w-md mx-auto">
+  <Button
+    onClick={() => setRole('athlete')}
+    variant={role === 'athlete' ? 'default' : 'outline'}
+    className={`h-20 text-2xl font-bold transition-all ${
+      role === 'athlete' ? 'bg-black text-white' : 'border-4 border-black'
+    }`}
+  >
+    Student Athlete
+  </Button>
 
-            <button
-             onClick={() => setRole('parent')}
-                className={`h-20 text-2xl font-bold transition-all ${
-               role === 'parent' ? 'bg-green-600 text-white' : 'bg-gray-200 text-black border-4 border-black'
-             }`}
-            >
-             Parent
-            </button>
+  <Button
+    onClick={() => setRole('parent')}
+    variant={role === 'parent' ? 'default' : 'outline'}
+    className={`h-20 text-2xl font-bold transition-all ${
+      role === 'parent' ? 'bg-green-600 text-white' : 'border-4 border-black'
+    }`}
+  >
+    Parent
+  </Button>
 
-            <button
-                onClick={() => setRole('business')}
-             className={`h-20 text-2xl font-bold transition-all ${
-               role === 'business' ? 'bg-purple-600 text-white' : 'bg-gray-200 text-black border-4 border-black'
-              }`}
-             >
-             Business
-            </button>
-            </div>
+  <Button
+    onClick={() => setRole('business')}
+    variant={role === 'business' ? 'default' : 'outline'}
+    className={`h-20 text-2xl font-bold transition-all ${
+      role === 'business' ? 'bg-purple-600 text-white' : 'border-4 border-black'
+    }`}
+  >
+    Business
+  </Button>
+</div>
 
             {/* Email */}
             <Input
