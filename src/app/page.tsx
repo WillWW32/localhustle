@@ -151,35 +151,38 @@ export default function Home() {
             <div className="w-full max-w-lg mx-auto space-y-12">
             {/* Role Selector — Clear Selected State */}
 <div className="grid grid-cols-1 gap-6 max-w-md mx-auto">
-  <Button
-    onClick={() => setRole('athlete')}
-    variant={role === 'athlete' ? 'default' : 'outline'}
-    className={`h-20 text-2xl font-bold transition-all ${
-      role === 'athlete' ? 'bg-black text-white' : 'border-4 border-black'
-    }`}
-  >
-    Student Athlete
-  </Button>
+  <button
+  onClick={() => setRole('athlete')}
+  className={`w-full h-20 text-2xl font-bold transition-all rounded-none border-4 border-black ${
+    role === 'athlete' 
+      ? 'bg-black text-white' 
+      : 'bg-white text-black hover:bg-gray-50'  // ← Lighter hover
+  }`}
+>
+  Student Athlete
+</button>
 
-  <Button
-    onClick={() => setRole('parent')}
-    variant={role === 'parent' ? 'default' : 'outline'}
-    className={`h-20 text-2xl font-bold transition-all ${
-      role === 'parent' ? 'bg-green-600 text-white' : 'border-4 border-black'
-    }`}
-  >
-    Parent
-  </Button>
+<button
+  onClick={() => setRole('parent')}
+  className={`w-full h-20 text-2xl font-bold transition-all rounded-none border-4 border-black ${
+    role === 'parent' 
+      ? 'bg-green-600 text-white' 
+      : 'bg-white text-black hover:bg-gray-50'  // ← Lighter hover
+  }`}
+>
+  Parent
+</button>
 
-  <Button
-    onClick={() => setRole('business')}
-    variant={role === 'business' ? 'default' : 'outline'}
-    className={`h-20 text-2xl font-bold transition-all ${
-      role === 'business' ? 'bg-purple-600 text-white' : 'border-4 border-black'
-    }`}
-  >
-    Business
-  </Button>
+<button
+  onClick={() => setRole('business')}
+  className={`w-full h-20 text-2xl font-bold transition-all rounded-none border-4 border-black ${
+    role === 'business' 
+      ? 'bg-purple-600 text-white' 
+      : 'bg-white text-black hover:bg-gray-50'  // ← Lighter hover
+  }`}
+>
+  Business
+</button>
 </div>
 
             {/* Email */}
