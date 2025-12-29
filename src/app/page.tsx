@@ -27,10 +27,13 @@ export default function Home() {
 
     setLoading(true)
 
-    let path = '/dashboard'
-    if (role === 'athlete') path = '/get-started'
-    if (role === 'parent') path = '/parent-onboard'
-    if (role === 'business') path = '/business-onboard'
+    const paths = {
+    athlete: '/get-started',
+    parent: '/parent-onboard',
+    business: '/business-onboard',
+  }
+
+  const redirectPath = paths[role]
 
     const { error } = await supabase.auth.signInWithOtp({
       email,
@@ -144,70 +147,70 @@ export default function Home() {
           </p>
         </section>
 
-        {/* Bottom CTA — 3-Stage Toggle */}
-        <section className="py-24 px-6 sm:px-12 lg:px-32 text-center">
-            <p className="text-2xl mb-12">Who are you?</p>
+       {/* Bottom CTA — 3-Stage Toggle with Hard-Wired Onboarding */}
+<section className="py-24 px-6 sm:px-12 lg:px-32 text-center">
+  <p className="text-2xl mb-12">Who are you?</p>
 
-            <div className="w-full max-w-lg mx-auto space-y-12">
-            {/* Role Selector — Clear Selected State */}
-<div className="grid grid-cols-1 gap-6 max-w-md mx-auto">
-  <button
-  onClick={() => setRole('athlete')}
-  className={`w-full h-20 text-2xl font-bold transition-all rounded-none border-4 border-black ${
-    role === 'athlete' 
-      ? 'bg-black text-white' 
-      : 'bg-white text-black hover:bg-gray-50'  // ← Lighter hover
-  }`}
->
-  Student Athlete
-</button>
+  <div className="w-full max-w-lg mx-auto space-y-12">
+    {/* Role Selector — Strong Selected State, No Variant */}
+    <div className="grid grid-cols-1 gap-6">
+      <button
+        onClick={() => setRole('athlete')}
+        className={`w-full h-20 text-2xl font-bold transition-all rounded-none border-4 border-black ${
+          role === 'athlete'
+            ? 'bg-black text-white'
+            : 'bg-white text-black hover:bg-gray-50'
+        }`}
+      >
+        Student Athlete
+      </button>
 
-<button
-  onClick={() => setRole('parent')}
-  className={`w-full h-20 text-2xl font-bold transition-all rounded-none border-4 border-black ${
-    role === 'parent' 
-      ? 'bg-green-600 text-white' 
-      : 'bg-white text-black hover:bg-gray-50'  // ← Lighter hover
-  }`}
->
-  Parent
-</button>
+      <button
+        onClick={() => setRole('parent')}
+        className={`w-full h-20 text-2xl font-bold transition-all rounded-none border-4 border-black ${
+          role === 'parent'
+            ? 'bg-green-600 text-white'
+            : 'bg-white text-black hover:bg-gray-50'
+        }`}
+      >
+        Parent
+      </button>
 
-<button
-  onClick={() => setRole('business')}
-  className={`w-full h-20 text-2xl font-bold transition-all rounded-none border-4 border-black ${
-    role === 'business' 
-      ? 'bg-purple-600 text-white' 
-      : 'bg-white text-black hover:bg-gray-50'  // ← Lighter hover
-  }`}
->
-  Business
-</button>
-</div>
+      <button
+        onClick={() => setRole('business')}
+        className={`w-full h-20 text-2xl font-bold transition-all rounded-none border-4 border-black ${
+          role === 'business'
+            ? 'bg-purple-600 text-white'
+            : 'bg-white text-black hover:bg-gray-50'
+        }`}
+      >
+        Business
+      </button>
+    </div>
 
-            {/* Email */}
-            <Input
-            type="email"
-             placeholder="your@email.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="h-20 text-2xl text-center border-4 border-black"
-            />
+    {/* Email */}
+    <Input
+      type="email"
+      placeholder="your@email.com"
+      value={email}
+      onChange={(e) => setEmail(e.target.value)}
+      className="h-20 text-2xl text-center border-4 border-black"
+    />
 
-            {/* Go Button */}
-            <Button
-             onClick={sendMagicLink}
-             disabled={loading || !role}
-             className="w-full h-20 text-3xl bg-black text-white font-bold"
-            >
-             {loading ? 'Sending...' : 'Go'}
-            </Button>
+    {/* Go Button — Sends to Correct Onboarding */}
+    <Button
+      onClick={sendMagicLink}
+      disabled={loading || !role}
+      className="w-full h-20 text-3xl bg-black text-white font-bold"
+    >
+      {loading ? 'Sending...' : 'Go'}
+    </Button>
 
-            {loading && (
-             <p className="text-center text-xl mt-4">Sending magic link...</p>
-            )}
-            </div>
-        </section>
+    {loading && (
+      <p className="text-center text-xl mt-4">Sending magic link...</p>
+    )}
+  </div>
+</section>
       </div>
     </>
   )
