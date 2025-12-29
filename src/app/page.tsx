@@ -15,7 +15,7 @@ export default function Home() {
   const [loading, setLoading] = useState(false)
   const router = useRouter()
 
-  cconst sendMagicLink = async () => {
+  const sendMagicLink = async () => {
   if (!email.trim()) {
     alert('Please enter your email')
     return
