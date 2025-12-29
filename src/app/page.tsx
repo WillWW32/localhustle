@@ -151,43 +151,52 @@ export default function Home() {
 <section className="py-24 px-6 sm:px-12 lg:px-32 text-center">
   <p className="text-2xl mb-12">Who are you?</p>
 
-  <div className="w-full max-w-lg mx-auto space-y-12">
-    {/* Role Selector — Strong Selected State, No Variant */}
-    <div className="grid grid-cols-1 gap-6">
-      <button
-        onClick={() => setRole('athlete')}
-        className={`w-full h-20 text-2xl font-bold transition-all rounded-none border-4 border-black ${
-          role === 'athlete'
-            ? 'bg-black text-white'
-            : 'bg-white text-black hover:bg-gray-50'
-        }`}
-      >
-        Student Athlete
-      </button>
+  {/* Role Selector — Radio Style with Checkmark & Persistent State */}
+<div className="w-full max-w-3xl mx-auto mb-12">
+  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <button
+      onClick={() => setRole('athlete')}
+      className={`relative h-24 px-8 py-6 text-2xl font-bold border-4 rounded-none transition-all ${
+        role === 'athlete'
+          ? 'bg-green-600 text-white border-green-600'
+          : 'bg-white text-black border-black hover:bg-gray-50'
+      }`}
+    >
+      Student Athlete
+      {role === 'athlete' && (
+        <span className="absolute top-2 right-2 text-3xl">✓</span>
+      )}
+    </button>
 
-      <button
-        onClick={() => setRole('parent')}
-        className={`w-full h-20 text-2xl font-bold transition-all rounded-none border-4 border-black ${
-          role === 'parent'
-            ? 'bg-green-600 text-white'
-            : 'bg-white text-black hover:bg-gray-50'
-        }`}
-      >
-        Parent
-      </button>
+    <button
+      onClick={() => setRole('parent')}
+      className={`relative h-24 px-8 py-6 text-2xl font-bold border-4 rounded-none transition-all ${
+        role === 'parent'
+          ? 'bg-green-600 text-white border-green-600'
+          : 'bg-white text-black border-black hover:bg-gray-50'
+      }`}
+    >
+      Parent
+      {role === 'parent' && (
+        <span className="absolute top-2 right-2 text-3xl">✓</span>
+      )}
+    </button>
 
-      <button
-        onClick={() => setRole('business')}
-        className={`w-full h-20 text-2xl font-bold transition-all rounded-none border-4 border-black ${
-          role === 'business'
-            ? 'bg-purple-600 text-white'
-            : 'bg-white text-black hover:bg-gray-50'
-        }`}
-      >
-        Business
-      </button>
-    </div>
-
+    <button
+      onClick={() => setRole('business')}
+      className={`relative h-24 px-8 py-6 text-2xl font-bold border-4 rounded-none transition-all ${
+        role === 'business'
+          ? 'bg-green-600 text-white border-green-600'
+          : 'bg-white text-black border-black hover:bg-gray-50'
+      }`}
+    >
+      Business
+      {role === 'business' && (
+        <span className="absolute top-2 right-2 text-3xl">✓</span>
+      )}
+    </button>
+  </div>
+</div>
     {/* Email */}
     <Input
       type="email"
