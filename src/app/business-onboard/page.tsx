@@ -17,25 +17,24 @@ const gigTypes = [
 export default function BusinessOnboard() {
   const router = useRouter()
 
-  // Force role = 'business' for any user on this page
+  // Force role = 'business' for any user landing here
   useEffect(() => {
     const setBusinessRole = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
-      const { data: existingProf } = await supabase
+      const { data: prof } = await supabase
         .from('profiles')
         .select('role')
         .eq('id', user.id)
         .single()
 
-      if (!existingProf || existingProf.role !== 'business') {
+      if (!prof || prof.role !== 'business') {
         await supabase
           .from('profiles')
           .upsert({ 
             id: user.id, 
-            role: 'business',
-            email: user.email // ensure email is there
+            role: 'business' 
           })
       }
     }
