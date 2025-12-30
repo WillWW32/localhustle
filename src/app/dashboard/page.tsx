@@ -370,6 +370,21 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
       alert('Stripe failed to load')
       return
     }
+    
+    const searchGigs = () => {
+  if (!gigSearch.trim()) {
+    setSearchedOffers(offers)
+    return
+  }
+
+  const lower = gigSearch.toLowerCase()
+  const filtered = offers.filter((o: any) => 
+    o.type.toLowerCase().includes(lower) ||
+    o.description.toLowerCase().includes(lower) ||
+    o.location?.toLowerCase().includes(lower)
+  )
+  setSearchedOffers(filtered)
+}
 
     // @ts-ignore
     const { error } = await stripe.redirectToCheckout({ sessionId: id })
