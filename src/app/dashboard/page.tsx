@@ -936,7 +936,7 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
                 </div>
               )}
             </div>
-          ))}
+          )}
         </div>
       </>
     )}
