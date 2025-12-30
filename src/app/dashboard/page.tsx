@@ -1230,7 +1230,7 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
                 },
               },
             }}
-          />
+          </>
         </div>
 
         {paymentError && <p className="text-red-600 text-center mb-8 text-xl">{paymentError}</p>}
