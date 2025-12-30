@@ -716,7 +716,6 @@ fetchLatestScholarship()}
                   >
                     {selectedGigs.includes(gig.title) ? 'Selected ✓' : 'Select This Gig'}
                   </Button>
-                  <div className="border-t-4 border-black mt-8"></div>
                 </div>
               ))}
             </div>
