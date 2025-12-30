@@ -7,9 +7,6 @@ import { signOut } from '@/lib/auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { loadStripe } from '@stripe/stripe-js'
-import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js'
-
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
 
 const athleteGigTypes = [
   { title: 'ShoutOut', description: 'Visit a favorite business and make a quick shoutout 15-sec reel about what you like or your favorite order.' },
@@ -60,13 +57,15 @@ export default function Dashboard() {
   const [gigSearch, setGigSearch] = useState('')
   const [searchedOffers, setSearchedOffers] = useState<any[]>([])
   const [activeTab, setActiveTab] = useState<'wallet' | 'clips' | 'kids' | 'favorites' | 'payment-methods' | 'booster'>('wallet')
-  const [savedMethods, setSavedMethods] = useState<any[]>([])
-  const [paymentLoading, setPaymentLoading] = useState(false)
-  const [paymentError, setPaymentError] = useState<string | null>(null)
-  const [paymentSuccess, setPaymentSuccess] = useState(false)
+  const [athleteSearch, setAthleteSearch] = useState('')
+  const [searchResults, setSearchResults] = useState<any[]>([])
+  const [selectedAthlete, setSelectedAthlete] = useState<any>(null)
+  const [scholarshipAmount, setScholarshipAmount] = useState('')
+  const [standaloneScholarshipAmount, setStandaloneScholarshipAmount] = useState('')
+  const [standaloneScholarshipMessage, setStandaloneScholarshipMessage] = useState('')
+  const [scholarshipMessage, setScholarshipMessage] = useState('')
+  const [scholarshipLoading, setScholarshipLoading] = useState(false)
   const router = useRouter()
-  const stripe = useStripe()
-  const elements = useElements()
 
   useEffect(() => {
     const fetchData = async () => {
@@ -143,17 +142,6 @@ export default function Dashboard() {
           .eq('status', 'pending')
           .in('offer_id', (await supabase.from('offers').select('id').eq('business_id', biz.id)).data?.map(o => o.id) || [])
         setPendingClips(clips || [])
-
-        // Fetch saved payment methods
-        if (biz?.id) {
-          const response = await fetch('/api/list-payment-methods', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ business_id: biz.id }),
-          })
-          const data = await response.json()
-          setSavedMethods(data.methods || [])
-        }
       }
     }
 
@@ -358,6 +346,65 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
     }
   }
 
+  const searchAthletes = async () => {
+  if (!athleteSearch.trim()) {
+    setSearchResults([])
+    return
+  }
+
+  const { data } = await supabase
+    .from('profiles')
+    .select('id, full_name, email, school')
+    .or(`full_name.ilike.%${athleteSearch}%,email.ilike.%${athleteSearch}%,school.ilike.%${athleteSearch}%`)
+    .limit(10)
+
+  setSearchResults(data || [])
+}
+
+const awardScholarship = async () => {
+  if (!selectedAthlete || !scholarshipAmount || parseFloat(scholarshipAmount) <= 0) {
+    alert('Select an athlete and enter a valid amount')
+    return
+  }
+
+  const amount = parseFloat(scholarshipAmount)
+  setScholarshipLoading(true)
+
+  const response = await fetch('/api/payout', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      athlete_id: selectedAthlete.id,
+      amount,
+      type: 'freedom_scholarship',
+      message: scholarshipMessage,
+    }),
+  })
+
+  const data = await response.json()
+
+  if (data.error) {
+    alert('Error: ' + data.error)
+  } else {
+    await supabase
+      .from('scholarships')
+      .insert({
+        business_id: business.id,
+        athlete_id: selectedAthlete.id,
+        amount,
+        message: scholarshipMessage || 'Great hustle!',
+      })
+
+    alert(`$${amount} Freedom Scholarship awarded to ${selectedAthlete.full_name || selectedAthlete.email}!`)
+    setScholarshipAmount('')
+    setScholarshipMessage('')
+    setSelectedAthlete(null)
+    setSearchResults([])
+    setAthleteSearch('')
+  }
+
+  setScholarshipLoading(false)
+}
   const handleAddFunds = async (amount: number) => {
     const response = await fetch('/api/checkout', {
       method: 'POST',
@@ -370,21 +417,6 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
       alert('Stripe failed to load')
       return
     }
-    
-    const searchGigs = () => {
-  if (!gigSearch.trim()) {
-    setSearchedOffers(offers)
-    return
-  }
-
-  const lower = gigSearch.toLowerCase()
-  const filtered = offers.filter((o: any) => 
-    o.type.toLowerCase().includes(lower) ||
-    o.description.toLowerCase().includes(lower) ||
-    o.location?.toLowerCase().includes(lower)
-  )
-  setSearchedOffers(filtered)
-}
 
     // @ts-ignore
     const { error } = await stripe.redirectToCheckout({ sessionId: id })
@@ -393,59 +425,128 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
       alert(error.message)
     }
   }
-
-  const handleAddCard = async () => {
-    if (!stripe || !elements) {
-      setPaymentError('Stripe not loaded')
+  
+  // Stand-alone Freedom Scholarship
+  const searchAthletes = async () => {
+    if (!athleteSearch.trim()) {
+      setSearchResults([])
       return
     }
 
-    setPaymentError(null)
-    setPaymentSuccess(false)
-    setPaymentLoading(true)
+    const { data } = await supabase
+      .from('profiles')
+      .select('id, full_name, email, school')
+      .or(`full_name.ilike.%${athleteSearch}%,email.ilike.%${athleteSearch}%,school.ilike.%${athleteSearch}%`)
+      .limit(10)
 
-    const cardElement = elements.getElement(CardElement)
-    if (!cardElement) {
-      setPaymentError('Card element not found')
-      setPaymentLoading(false)
+    setSearchResults(data || [])
+  }
+
+  const awardScholarship = async () => {
+    if (!selectedAthlete || !standaloneScholarshipAmount || parseFloat(standaloneScholarshipAmount) <= 0) {
+      alert('Select an athlete and enter a valid amount')
       return
     }
 
-    const { error: stripeError, paymentMethod } = await stripe.createPaymentMethod({
-      type: 'card',
-      card: cardElement,
-    })
+    const amount = parseFloat(standaloneScholarshipAmount)
+    setScholarshipLoading(true)
 
-    if (stripeError) {
-      setPaymentError(stripeError.message || 'Payment error')
-      setPaymentLoading(false)
-      return
-    }
-
-    const response = await fetch('/api/attach-payment-method', {
+    const response = await fetch('/api/payout', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        payment_method_id: paymentMethod.id,
-        business_id: business.id,
+        athlete_id: selectedAthlete.id,
+        amount,
+        type: 'freedom_scholarship',
+        message: standaloneScholarshipMessage || 'Great hustle!',
       }),
     })
 
     const data = await response.json()
 
     if (data.error) {
-      setPaymentError(data.error)
+      alert('Error: ' + data.error)
     } else {
-      setPaymentSuccess(true)
-      setSavedMethods([...savedMethods, data.method])
+      await supabase
+        .from('scholarships')
+        .insert({
+          business_id: business.id,
+          athlete_id: selectedAthlete.id,
+          amount,
+          message: standaloneScholarshipMessage || 'Great hustle!',
+        })
+
+      alert(`$${amount} Freedom Scholarship awarded to ${selectedAthlete.full_name || selectedAthlete.email}!`)
+      setStandaloneScholarshipAmount('')
+      setStandaloneScholarshipMessage('')
+      setSelectedAthlete(null)
+      setSearchResults([])
+      setAthleteSearch('')
     }
 
-    setPaymentLoading(false)
+    setScholarshipLoading(false)
   }
+  
+  const fetchLatestScholarship = async () => {
+  const { data: latestScholarship } = await supabase
+    .from('scholarships')
+    .select('*, businesses(name)')
+    .eq('athlete_id', user.id)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .single()
+
+  if (latestScholarship) {
+    setRecentScholarship({
+      ...latestScholarship,
+      business_name: latestScholarship.businesses?.name || 'a supporter',
+    })
+  }
+}
+
+fetchLatestScholarship()}
 
   if (!profile) return <p className="container text-center py-32">Loading...</p>
 
   return (
+    
+    {/* First-Time Setup Banner */}
+{profile?.role === 'athlete' && (
+  <div className="bg-blue-100 p-12 border-4 border-blue-600 mb-16">
+    <h3 className="text-3xl font-bold mb-8">
+      Complete 3 Steps to Start Earning
+    </h3>
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+      <div className={`text-center p-6 border-4 ${profilePic ? 'bg-green-100 border-green-600' : 'bg-gray-100 border-black'}`}>
+        <p className="text-xl font-bold mb-2">
+          {profilePic ? 'Complete!' : 'Step 1'}
+        </p>
+        <p>Profile Photo</p>
+      </div>
+      <div className={`text-center p-6 border-4 ${selectedGigs.length > 0 ? 'bg-green-100 border-green-600' : 'bg-gray-100 border-black'}`}>
+        <p className="text-xl font-bold mb-2">
+          {selectedGigs.length > 0 ? 'Complete!' : 'Step 2'}
+        </p>
+        <p>Select Gigs</p>
+      </div>
+      <div className={`text-center p-6 border-4 ${profile.payout_method_setup ? 'bg-green-100 border-green-600' : 'bg-gray-100 border-black'}`}>
+        <p className="text-xl font-bold mb-2">
+          {profile.payout_method_setup ? 'Complete!' : 'Step 3'}
+        </p>
+        <p>Add Debit Card</p>
+        {!profile.payout_method_setup && (
+          <Button 
+            onClick={() => router.push('/payout-setup')}
+            className="mt-4 w-full h-14 text-lg bg-black text-white"
+          >
+            Add Card
+          </Button>
+        )}
+      </div>
+    </div>
+  </div>
+)}
+    
     <div className="container py-8">
       <p className="text-center mb-12 text-xl font-mono">Welcome, {profile.email}</p>
 
@@ -460,10 +561,51 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
           {profile.role === 'athlete' ? 'Pitch businesses, claim gigs, build your squad and earn together.' : 'Post gigs to get authentic content. Review clips — only approve what you love. Become the hometown hero.'}
         </p>
       </div>
+        
+       {/* Qualification Progress Meter */}
+<div className="bg-gray-100 p-12 border-4 border-black mb-16">
+  <h2 className="text-3xl font-bold mb-8 text-center">
+    Your Path to Bigger Opportunities
+  </h2>
 
+  <div className="max-w-2xl mx-auto">
+    {/* Progress Bar */}
+    <div className="relative h-16 bg-gray-300 border-4 border-black mb-8 overflow-hidden">
+      <div 
+        className="absolute h-full bg-green-600 transition-all duration-500"
+        style={{ width: `${Math.min((completedGigs / 8) * 100, 100)}%` }}
+      />
+      <p className="absolute inset-0 flex items-center justify-center text-2xl font-bold">
+        {completedGigs} / 8 Gigs Completed
+      </p>
+    </div>
+
+    {/* Milestones */}
+    <div className="grid grid-cols-2 gap-8">
+      <div className={`text-center p-6 border-4 ${completedGigs >= 4 ? 'bg-green-100 border-green-600' : 'bg-gray-100 border-black'}`}>
+        <p className="text-xl font-bold mb-2">
+          {completedGigs >= 4 ? 'Qualified!' : `${4 - completedGigs} gigs to go`}
+        </p>
+        <p className="text-lg">
+          Freedom Scholarship Eligible<br />
+          <span className="text-sm">Unrestricted cash bonus</span>
+        </p>
+      </div>
+
+      <div className={`text-center p-6 border-4 ${completedGigs >= 8 ? 'bg-purple-100 border-purple-600' : 'bg-gray-100 border-black'}`}>
+        <p className="text-xl font-bold mb-2">
+          {completedGigs >= 8 ? 'Qualified!' : `${8 - completedGigs} gigs to go`}
+        </p>
+        <p className="text-lg">
+          Brand Deal Eligible<br />
+          <span className="text-sm">National brand submissions</span>
+        </p>
+      </div>
+    </div>
+  </div>
+</div> 
       {profile.role === 'athlete' ? (
         <div className="max-w-4xl mx-auto space-y-32 font-mono text-center text-lg">
-          {/* Athlete content — all your original athlete sections preserved */}
           {/* Step 1: Complete Profile */}
           <div className="bg-green-100 p-8 border-4 border-green-600 rounded-lg">
             <h2 className="text-3xl font-bold mb-8">
@@ -586,7 +728,7 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
           {/* Step 3: Pitch Local Businesses */}
           <div className="bg-green-100 p-8 border-4 border-green-600 rounded-lg">
             <h2 className="text-3xl font-bold mb-8">
-              Step 3 — Pitch Local Businesses
+              Step 3 — Pitch Local Businesses - click on pitch below
             </h2>
             <p className="mb-8 text-xl">
               Click the button below to reveal your personalized pitch letter — copy or share it with your favorite local spots!
@@ -675,7 +817,39 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
               Freedom Scholarships are unrestricted cash paid instantly — use for books, food, rent — whatever you need.
             </p>
           </div>
+          {/* Social Share After Scholarship */}
+{profile?.role === 'athlete' && recentScholarship && !recentScholarship.shared && (
+  <div className="bg-purple-100 p-12 border-4 border-purple-600 mb-16">
+    <h3 className="text-3xl font-bold mb-8 text-center">
+      You Just Earned a Freedom Scholarship! 🎉
+    </h3>
+    <p className="text-xl mb-8 text-center">
+      ${recentScholarship.amount} from {recentScholarship.business_name}<br />
+      "{recentScholarship.message}"
+    </p>
+    <Button
+      onClick={async () => {
+        const text = `Just earned a $${recentScholarship.amount} Freedom Scholarship from ${recentScholarship.business_name} on @LocalHustle! 💰\n\n"${recentScholarship.message}"\n\nReal money for college — no restrictions.\n\nJoin here: https://app.localhustle.org?ref=${profile.id}`
 
+        if (navigator.share) {
+          await navigator.share({ text })
+        } else {
+          navigator.clipboard.writeText(text)
+          alert('Share text copied!')
+        }
+
+        // Mark as shared (optional — backend flag)
+        await supabase
+          .from('scholarships')
+          .update({ shared: true })
+          .eq('id', recentScholarship.id)
+      }}
+      className="w-full max-w-md h-20 text-2xl bg-purple-600 text-white font-bold"
+    >
+      Share Your Win
+    </Button>
+  </div>
+)}
           {/* Your Squad */}
           <div>
             <h2 className="text-3xl font-bold mb-8">Your Squad</h2>
@@ -725,376 +899,471 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
             </Button>
           </div>
         </div>
+        
       ) : (
-  <div className="max-w-4xl mx-auto space-y-16 font-mono text-center text-lg">
-    {/* Business Tabs */}
-    <div className="flex justify-center gap-4 flex-wrap mb-12">
-      <Button
-        onClick={() => setActiveTab('wallet')}
-        variant={activeTab === 'wallet' ? 'default' : 'outline'}
-        className="px-8 py-4 text-xl"
-      >
-        Wallet & Gigs
-      </Button>
-      <Button
-        onClick={() => setActiveTab('clips')}
-        variant={activeTab === 'clips' ? 'default' : 'outline'}
-        className="px-8 py-4 text-xl"
-      >
-        Pending Clips
-      </Button>
-      <Button
-        onClick={() => setActiveTab('kids')}
-        variant={activeTab === 'kids' ? 'default' : 'outline'}
-        className="px-8 py-4 text-xl"
-      >
-        My Kid's Challenges
-      </Button>
-      <Button
-        onClick={() => setActiveTab('favorites')}
-        variant={activeTab === 'favorites' ? 'default' : 'outline'}
-        className="px-8 py-4 text-xl"
-      >
-        Favorite Athletes
-      </Button>
-      <Button
-        onClick={() => setActiveTab('payment-methods')}
-        variant={activeTab === 'payment-methods' ? 'default' : 'outline'}
-        className="px-8 py-4 text-xl"
-      >
-        Payment Methods
-      </Button>
-      <Button
-        onClick={() => setActiveTab('booster')}
-        variant={activeTab === 'booster' ? 'default' : 'outline'}
-        className="px-8 py-4 text-xl"
-      >
-        Booster Events
-      </Button>
-    </div>
+      
+        <div className="max-w-4xl mx-auto space-y-16 font-mono text-center text-lg">
+          {/* Business Tabs */}
+<div className="flex justify-center gap-4 flex-wrap mb-12">
+  <Button
+    onClick={() => setActiveTab('wallet')}
+    variant={activeTab === 'wallet' ? 'default' : 'outline'}
+    className="px-8 py-4 text-xl"
+  >
+    Wallet & Gigs
+  </Button>
+  <Button
+    onClick={() => setActiveTab('clips')}
+    variant={activeTab === 'clips' ? 'default' : 'outline'}
+    className="px-8 py-4 text-xl"
+  >
+    Pending Clips
+  </Button>
+  <Button
+    onClick={() => setActiveTab('kids')}
+    variant={activeTab === 'kids' ? 'default' : 'outline'}
+    className="px-8 py-4 text-xl"
+  >
+    My Kid's Challenges
+  </Button>
+  <Button
+    onClick={() => setActiveTab('favorites')}
+    variant={activeTab === 'favorites' ? 'default' : 'outline'}
+    className="px-8 py-4 text-xl"
+  >
+    Favorite Athletes
+  </Button>
+  <Button
+    onClick={() => setActiveTab('payment-methods')}
+    variant={activeTab === 'payment-methods' ? 'default' : 'outline'}
+    className="px-8 py-4 text-xl"
+  >
+    Payment Methods
+  </Button>
+  <Button
+    onClick={() => setActiveTab('booster')}
+    variant={activeTab === 'booster' ? 'default' : 'outline'}
+    className="px-8 py-4 text-xl"
+  >
+    Booster Events
+  </Button>
+</div>
 
-    {/* Wallet & Gigs Tab */}
-    {activeTab === 'wallet' && (
-      <>
-        {/* Wallet Balance + Auto-Top-Up + Add Funds */}
-        <div className="mb-16">
-          <p className="text-3xl mb-4 font-bold">Wallet balance: ${business?.wallet_balance?.toFixed(2) || '0.00'}</p>
+          {/* Tab Content */}
+          {activeTab === 'wallet' && (
+            <>
+              {/* Wallet Balance + Auto-Top-Up + Add Funds */}
+              <div className="mb-16">
+                <p className="text-3xl mb-4 font-bold">Wallet balance: ${business?.wallet_balance?.toFixed(2) || '0.00'}</p>
 
-          <div className="max-w-md mx-auto mb-12 p-6 bg-gray-100 border-4 border-black">
-            <label className="flex items-center justify-between cursor-pointer">
-              <span className="text-xl font-bold">Auto-Top-Up</span>
-              <input
-                type="checkbox"
-                checked={business?.auto_top_up ?? true}
-                onChange={async (e) => {
-                  const enabled = e.target.checked
-                  await supabase
-                    .from('businesses')
-                    .update({ auto_top_up: enabled })
-                    .eq('id', business.id)
-                  setBusiness({ ...business, auto_top_up: enabled })
-                  alert(enabled ? 'Auto-top-up enabled!' : 'Auto-top-up disabled')
-                }}
-                className="w-8 h-8"
-              />
-            </label>
-            <p className="text-lg mt-4">
-              When balance &lt; $100, add $500 automatically
-            </p>
-          </div>
+                <div className="max-w-md mx-auto mb-12 p-6 bg-gray-100 border-4 border-black">
+                  <label className="flex items-center justify-between cursor-pointer">
+                    <span className="text-xl font-bold">Auto-Top-Up</span>
+                    <input
+                      type="checkbox"
+                      checked={business?.auto_top_up ?? true}
+                      onChange={async (e) => {
+                        const enabled = e.target.checked
+                        await supabase
+                          .from('businesses')
+                          .update({ auto_top_up: enabled })
+                          .eq('id', business.id)
+                        setBusiness({ ...business, auto_top_up: enabled })
+                        alert(enabled ? 'Auto-top-up enabled!' : 'Auto-top-up disabled')
+                      }}
+                      className="w-8 h-8"
+                    />
+                  </label>
+                  <p className="text-lg mt-4">
+                    Never run out — when balance falls below $100, automatically add $500.
+                  </p>
+                </div>
 
-          <p className="text-lg mb-8">
-            Top up your wallet — post gigs anytime. Most businesses start with $500–$1000.
-          </p>
+                <p className="text-lg mb-8">
+                  Top up your wallet — post gigs anytime. Most businesses start with $500–$1000.
+                </p>
 
-          <div className="flex flex-wrap justify-center gap-4 mb-8">
-            <Button 
-              onClick={() => handleAddFunds(100)}
-              className="w-48 h-14 text-lg bg-black text-white"
-            >
-              + $100
-            </Button>
-            <Button 
-              onClick={() => handleAddFunds(500)}
-              className="w-48 h-14 text-lg bg-black text-white"
-            >
-              + $500
-            </Button>
-            <Button 
-              onClick={() => handleAddFunds(1000)}
-              className="w-48 h-14 text-lg bg-black text-white"
-            >
-              + $1000
-            </Button>
-            <Button 
-              onClick={() => {
-                const custom = prompt('Enter custom amount:')
-                if (custom !== null && custom.trim() !== '' && !isNaN(Number(custom)) && Number(custom) > 0) {
-                  handleAddFunds(Number(custom))
-                }
-              }}
-              className="w-48 h-14 text-lg bg-green-400 text-black"
-            >
-              Custom Amount
-            </Button>
-          </div>
+                <div className="flex flex-wrap justify-center gap-4 mb-8">
+                  <Button 
+                    onClick={() => handleAddFunds(100)}
+                    className="w-48 h-14 text-lg bg-black text-white"
+                  >
+                    + $100
+                  </Button>
+                  <Button 
+                    onClick={() => handleAddFunds(500)}
+                    className="w-48 h-14 text-lg bg-black text-white"
+                  >
+                    + $500
+                  </Button>
+                  <Button 
+                    onClick={() => handleAddFunds(1000)}
+                    className="w-48 h-14 text-lg bg-black text-white"
+                  >
+                    + $1000
+                  </Button>
+                  <Button 
+                    onClick={() => {
+                      const custom = prompt('Enter custom amount:')
+                      if (custom !== null && custom.trim() !== '' && !isNaN(Number(custom)) && Number(custom) > 0) {
+                        handleAddFunds(Number(custom))
+                      }
+                    }}
+                    className="w-48 h-14 text-lg bg-green-400 text-black"
+                  >
+                    Custom Amount
+                  </Button>
+                </div>
 
-          <p className="text-sm text-gray-600">
-            Transaction fee covers legal NIL compliance, bonus & challenge distributions, credit card fees, and platform expenses.
-          </p>
-        </div>
+                <p className="text-sm text-gray-600">
+                  Transaction fee covers legal NIL compliance, bonus & challenge distributions, credit card fees, and platform expenses.
+                </p>
+              </div>
 
-        {/* Create a Gig */}
-        <h3 className="text-2xl mb-8 font-bold">Create a Gig</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-16">
-          {businessGigTypes.map((gig) => (
-            <div key={gig.title}>
-              <button
-                onClick={() => handleGigSelect(gig)}
-                className="w-full h-80 bg-black text-white p-8 flex flex-col items-center justify-center hover:bg-gray-800 transition"
-              >
-                <span className="text-3xl mb-4">{gig.title}</span>
-                <span className="text-2xl mb-4">${gig.baseAmount}+</span>
-                <span className="text-lg">{gig.description}</span>
-              </button>
+              <h3 className="text-2xl mb-8 font-bold">Create a Gig</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-16">
+                {businessGigTypes.map((gig) => (
+                  <div key={gig.title}>
+                    <button
+                      onClick={() => handleGigSelect(gig)}
+                      className="w-full h-80 bg-black text-white p-8 flex flex-col items-center justify-center hover:bg-gray-800 transition"
+                    >
+                      <span className="text-3xl mb-4">{gig.title}</span>
+                      <span className="text-2xl mb-4">${gig.baseAmount}+</span>
+                      <span className="text-lg">{gig.description}</span>
+                    </button>
 
-              {selectedGig?.title === gig.title && (
-                <div className="mt-8 bg-gray-100 p-8 border-4 border-black max-w-2xl mx-auto">
-                  <h3 className="text-2xl mb-6 font-bold">Customize Your {gig.title}</h3>
-                  <div className="space-y-6">
-                    <div>
-                      <label className="block text-lg mb-2">Number of Athletes</label>
-                      <select
-                        value={numAthletes}
-                        onChange={(e) => handleAthletesChange(Number(e.target.value))}
-                        className="w-full p-4 text-lg border-4 border-black"
-                      >
-                        {[1,2,3,4,5,6,7,8,9,10].map(n => (
-                          <option key={n} value={n}>{n} athlete{n > 1 ? 's' : ''}</option>
-                        ))}
-                      </select>
-                      <p className="text-sm mt-2">+ $75 per additional athlete</p>
-                    </div>
+                    {selectedGig?.title === gig.title && (
+                      <div className="mt-8 bg-gray-100 p-8 border-4 border-black max-w-2xl mx-auto">
+                        <h3 className="text-2xl mb-6 font-bold">Customize Your {gig.title}</h3>
+                        <div className="space-y-6">
+                          <div>
+                            <label className="block text-lg mb-2">Number of Athletes</label>
+                            <select
+                              value={numAthletes}
+                              onChange={(e) => handleAthletesChange(Number(e.target.value))}
+                              className="w-full p-4 text-lg border-4 border-black"
+                            >
+                              {[1,2,3,4,5,6,7,8,9,10].map(n => (
+                                <option key={n} value={n}>{n} athlete{n > 1 ? 's' : ''}</option>
+                              ))}
+                            </select>
+                            <p className="text-sm mt-2">+ $75 per additional athlete</p>
+                          </div>
 
-                    <div>
-                      <label className="block text-lg mb-2">Date</label>
-                      <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
-                    </div>
+                          <div>
+                            <label className="block text-lg mb-2">Date</label>
+                            <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+                          </div>
 
-                    <div>
-                      <label className="block text-lg mb-2">Location</label>
-                      <Input placeholder="e.g., Bridge Pizza" value={location} onChange={(e) => setLocation(e.target.value)} />
-                    </div>
+                          <div>
+                            <label className="block text-lg mb-2">Location</label>
+                            <Input placeholder="e.g., Bridge Pizza" value={location} onChange={(e) => setLocation(e.target.value)} />
+                          </div>
 
-                    <div>
-                      <label className="block text-lg mb-2">Your Phone (for athlete contact)</label>
-                      <Input placeholder="(555) 123-4567" value={businessPhone} onChange={(e) => setBusinessPhone(e.target.value)} />
-                    </div>
+                          <div>
+                            <label className="block text-lg mb-2">Your Phone (for athlete contact)</label>
+                            <Input placeholder="(555) 123-4567" value={businessPhone} onChange={(e) => setBusinessPhone(e.target.value)} />
+                          </div>
 
-                    <div>
-                      <label className="block text-lg mb-2">
-                        <input type="checkbox" checked={isRecurring} onChange={(e) => setIsRecurring(e.target.checked)} className="mr-2" />
-                        Make this recurring monthly
-                      </label>
-                    </div>
+                          <div>
+                            <label className="block text-lg mb-2">
+                              <input type="checkbox" checked={isRecurring} onChange={(e) => setIsRecurring(e.target.checked)} />
+                              Make this recurring monthly
+                            </label>
+                          </div>
 
-                    <div>
-                      <label className="block text-lg mb-2">Offer Amount</label>
-                      <Input
-                        placeholder="Enter Offer Amount - Min $50"
-                        value={amount}
-                        onChange={(e) => setAmount(e.target.value)}
-                      />
-                    </div>
+                          <div>
+                            <label className="block text-lg mb-2">Offer Amount</label>
+                            <Input
+                              placeholder="Enter Offer Amount - Min $50"
+                              value={amount}
+                              onChange={(e) => setAmount(e.target.value)}
+                            />
+                          </div>
 
-                    <div>
-                      <label className="block text-lg mb-2">Add Freedom Scholarship (Optional)</label>
-                      <Input
-                        placeholder="Scholarship amount (e.g., 500)"
-                        value={scholarshipAmount}
-                        onChange={(e) => setScholarshipAmount(e.target.value)}
-                      />
-                      <p className="text-sm mt-2 text-green-600 font-bold">
-                        Paid instantly to athlete — unrestricted cash for college.
-                      </p>
-                    </div>
+                          <div>
+                            <label className="block text-lg mb-2">Add Freedom Scholarship (Optional)</label>
+                            <Input
+                              placeholder="Scholarship amount (e.g., 500)"
+                              value={scholarshipAmount}
+                              onChange={(e) => setScholarshipAmount(e.target.value)}
+                            />
+                            <p className="text-sm mt-2 text-green-600 font-bold">
+                              Paid instantly to athlete — unrestricted cash for college.
+                            </p>
+                          </div>
 
-                    <div>
-                      <label className="block text-lg mb-2">Custom Details</label>
-                      <textarea
-                        placeholder="Add your details (e.g., Come to Bridge Pizza this Friday)"
-                        value={customDetails}
-                        onChange={(e) => setCustomDetails(e.target.value)}
-                        className="w-full h-40 p-4 text-lg border-4 border-black font-mono"
-                      />
-                    </div>
+                          <div>
+                            <label className="block text-lg mb-2">Custom Details</label>
+                            <textarea
+                              placeholder="Add your details (e.g., Come to Bridge Pizza this Friday)"
+                              value={customDetails}
+                              onChange={(e) => setCustomDetails(e.target.value)}
+                              className="w-full h-40 p-4 text-lg border-4 border-black font-mono"
+                            />
+                          </div>
 
-                    <Button onClick={handlePost} className="w-full h-20 text-2xl bg-green-400 text-black">
-                      Fund & Post Offer
-                    </Button>
+                          <Button onClick={handlePost} className="w-full h-20 text-2xl bg-green-400 text-black">
+                            Fund & Post Offer
+                          </Button>
+                        </div>
+                      </div>
+                    )}
                   </div>
+                ))}
+              </div>
+            </>
+            {/* Stand-Alone Freedom Scholarship */}
+              <div className="my-24">
+                <h3 className="text-3xl font-bold mb-8 text-center">Award a Freedom Scholarship</h3>
+                <p className="text-xl mb-12 max-w-4xl mx-auto text-center">
+                  Give unrestricted cash directly to an athlete — paid instantly.<br />
+                  Real impact. Real hero status.
+                </p>
+
+                <div className="max-w-2xl mx-auto space-y-8">
+                  <Input 
+                    placeholder="Search athlete by name, email, or school"
+                    value={athleteSearch}
+                    onChange={(e) => setAthleteSearch(e.target.value)}
+                    className="text-center"
+                  />
+                  <Button onClick={searchAthletes} className="w-full h-16 text-xl bg-black text-white">
+                    Search Athletes
+                  </Button>
+
+                  {searchResults.length > 0 && (
+                    <div className="space-y-4">
+                      {searchResults.map((athlete) => (
+                        <div key={athlete.id} className="border-4 border-black p-6 bg-gray-100">
+                          <p className="text-lg">
+                            {athlete.full_name || athlete.email} — {athlete.school}
+                          </p>
+                          <Button 
+                            onClick={() => setSelectedAthlete(athlete)}
+                            className="mt-4 w-full h-14 text-lg bg-green-600 text-white"
+                          >
+                            Select This Athlete
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {selectedAthlete && (
+                    <div className="border-4 border-green-600 p-8 bg-green-100">
+                      <p className="text-xl mb-4 text-center">
+                        Selected: {selectedAthlete.full_name || selectedAthlete.email} ({selectedAthlete.school})
+                      </p>
+                      <Input 
+                        placeholder="Scholarship amount (e.g., 500)"
+                        value={standaloneScholarshipAmount}
+                        onChange={(e) => setStandaloneScholarshipAmount(e.target.value)}
+                        className="mb-6"
+                      />
+                      <textarea 
+                        placeholder="Optional message (e.g., Great season — use for books!)"
+                        value={standaloneScholarshipMessage}
+                        onChange={(e) => setStandaloneScholarshipMessage(e.target.value)}
+                        className="w-full p-4 text-lg border-4 border-black font-mono mb-6"
+                      />
+                      <Button 
+                        onClick={awardScholarship}
+                        disabled={scholarshipLoading}
+                        className="w-full h-16 text-xl bg-green-600 text-white font-bold"
+                      >
+                        {scholarshipLoading ? 'Awarding...' : 'Award Freedom Scholarship Instantly'}
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
+          
+
+          {activeTab === 'clips' && (
+            <div>
+              <h3 className="text-2xl mb-8 font-bold">Pending Clips to Review</h3>
+              {pendingClips.length === 0 ? (
+                <p className="text-gray-600 mb-12">No pending clips — post offers to get started!</p>
+              ) : (
+                <div className="space-y-16">
+                  {pendingClips.map((clip) => (
+                    <div key={clip.id} className="border-4 border-black p-8 bg-white max-w-2xl mx-auto">
+                      <p className="font-bold mb-4 text-left">From: {clip.profiles.email}</p>
+                      <p className="mb-6 text-left">Offer: {clip.offers.type} — ${clip.offers.amount}</p>
+                      <video controls className="w-full mb-8">
+                        <source src={clip.video_url} type="video/mp4" />
+                      </video>
+                      <p className="text-sm text-gray-600 mb-4">
+                        Prove it with timelapse or witness video — easy!
+                      </p>
+                      <Button 
+                        onClick={() => approveClip(clip)}
+                        className="w-full h-16 text-xl bg-black text-white"
+                      >
+                        Approve & Send to Parent
+                      </Button>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
-          ))}
-          </div>
-        </>
-    )}
-
-    {/* Pending Clips Tab */}
-    {activeTab === 'clips' && (
-      <div>
-        <h3 className="text-2xl mb-8 font-bold">Pending Clips to Review</h3>
-        {pendingClips.length === 0 ? (
-          <p className="text-gray-600 mb-12">No pending clips — post offers to get started!</p>
-        ) : (
-          <div className="space-y-16">
-            {pendingClips.map((clip) => (
-              <div key={clip.id} className="border-4 border-black p-8 bg-white max-w-2xl mx-auto">
-                <p className="font-bold mb-4 text-left">From: {clip.profiles.email}</p>
-                <p className="mb-6 text-left">Offer: {clip.offers.type} — ${clip.offers.amount}</p>
-                <video controls className="w-full mb-8">
-                  <source src={clip.video_url} type="video/mp4" />
-                </video>
-                <p className="text-sm text-gray-600 mb-4">
-                  Prove it with timelapse or witness video — easy!
-                </p>
-                <Button 
-                  onClick={() => approveClip(clip)}
-                  className="w-full h-16 text-xl bg-black text-white"
-                >
-                  Approve & Send to Parent
-                </Button>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    )}
-
-    {/* My Kid's Challenges Tab */}
-    {activeTab === 'kids' && (
-      <div>
-        <h3 className="text-3xl mb-8 font-bold">My Kid's Challenges</h3>
-        <p className="mb-8 text-lg">
-          Create a challenge for your kid — they complete, you approve, they get paid.
-        </p>
-        <div className="space-y-8 max-w-2xl mx-auto">
-          {referredAthletes.length === 0 ? (
-            <p className="text-gray-600">No referred athletes yet — wait for kids to pitch you!</p>
-          ) : (
-            referredAthletes.map((kid) => (
-              <div key={kid.id} className="border-4 border-black p-8 bg-gray-100">
-                <p className="font-bold text-2xl mb-4">{kid.full_name || kid.email}</p>
-                <p className="mb-6 text-lg">
-                  Prove it with timelapse or witness video — easy!
-                </p>
-                <Button 
-                  onClick={() => createChallengeForKid(kid)}
-                  className="w-full h-16 text-xl bg-green-400 text-black"
-                >
-                  Create Challenge for {kid.full_name?.split(' ')[0] || 'Kid'}
-                </Button>
-              </div>
-            ))
           )}
-        </div>
-      </div>
-    )}
 
-    {/* Favorite Athletes Tab */}
-    {activeTab === 'favorites' && (
-      <div>
-        <h3 className="text-3xl mb-8 font-bold">Favorite Athletes</h3>
-        <p className="mb-8 text-lg">
-          Quick access to athletes you like — re-fund gigs easily.
-        </p>
-        <p className="text-gray-600 mb-12">
-          No favorites yet — add from clips or kids.
-        </p>
-      </div>
-    )}
+          {activeTab === 'kids' && (
+            <div>
+              <h3 className="text-3xl mb-8 font-bold">My Kid's Challenges</h3>
+              <p className="mb-8 text-lg">
+                Create a challenge for your kid — they complete, you approve, they get paid.
+              </p>
+              <div className="space-y-8 max-w-2xl mx-auto">
+                {referredAthletes.length === 0 ? (
+                  <p className="text-gray-600">No referred athletes yet — wait for kids to pitch you!</p>
+                ) : (
+                  referredAthletes.map((kid) => (
+                    <div key={kid.id} className="border-4 border-black p-8 bg-gray-100">
+                      <p className="font-bold text-2xl mb-4">{kid.full_name || kid.email}</p>
+                      <p className="mb-6 text-lg">
+                        Prove it with timelapse or witness video — easy!
+                      </p>
+                      <Button 
+                        onClick={() => createChallengeForKid(kid)}
+                        className="w-full h-16 text-xl bg-green-400 text-black"
+                      >
+                        Create Challenge for {kid.full_name?.split(' ')[0] || 'Kid'}
+                      </Button>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
 
-    {/* Payment Methods Tab — Full & Active */}
-    {activeTab === 'payment-methods' && (
-      <Elements stripe={stripePromise}>
-        <div>
-          <h3 className="text-3xl mb-8 font-bold">Payment Methods</h3>
-          <p className="text-xl mb-12">
-            Saved cards for wallet top-ups and auto-top-up.<br />
-            Add or manage cards below.
-          </p>
+          {activeTab === 'favorites' && (
+            <div>
+              <h3 className="text-3xl mb-8 font-bold">Favorite Athletes</h3>
+              <p className="mb-8 text-lg">
+                Quick access to athletes you like — re-fund gigs easily.
+              </p>
+              <p className="text-gray-600 mb-12">
+                No favorites yet — add from clips or kids.
+              </p>
+            </div>
+          )}
 
-          {/* Saved Cards */}
-          {savedMethods.length === 0 ? (
-            <p className="text-gray-600 mb-12 text-xl">
-              No saved cards yet.
+          {/* Payment Methods Tab — Full Function (API Connected) */}
+{activeTab === 'payment-methods' && (
+  <div>
+    <h3 className="text-3xl mb-8 font-bold">Payment Methods</h3>
+    <p className="text-xl mb-12">
+      Saved cards for wallet top-ups and auto-top-up.
+    </p>
+
+    {/* List Saved Cards */}
+    {savedMethods.length === 0 ? (
+      <p className="text-gray-600 mb-12 text-xl">
+        No saved cards yet.
+      </p>
+    ) : (
+      <div className="space-y-8 mb-16 max-w-2xl mx-auto">
+        {savedMethods.map((method) => (
+          <div key={method.id} className="border-4 border-black p-8 bg-gray-100">
+            <p className="text-xl">
+              {method.brand.toUpperCase()} •••• {method.last4}<br />
+              Expires {method.exp_month}/{method.exp_year}
             </p>
-          ) : (
-            <div className="space-y-8 mb-16 max-w-2xl mx-auto">
-              {savedMethods.map((method) => (
-                <div key={method.id} className="border-4 border-black p-8 bg-gray-100">
-                  <p className="text-xl">
-                    {method.brand.toUpperCase()} •••• {method.last4}<br />
-                    Expires {method.exp_month}/{method.exp_year}
-                  </p>
-                </div>
-              ))}
+          </div>
+        ))}
+      </div>
+    )}
+
+    {/* Add New Card */}
+    <div className="max-w-2xl mx-auto">
+      <div className="bg-gray-100 p-12 border-4 border-black mb-12">
+        <h4 className="text-2xl font-bold mb-6 text-center">
+          Add New Card
+        </h4>
+        <CardElement 
+          options={{
+            style: {
+              base: {
+                fontSize: '20px',
+                color: '#000',
+                fontFamily: 'Courier New, monospace',
+                '::placeholder': { color: '#666' },
+              },
+            },
+          }}
+        />
+      </div>
+
+      {error && <p className="text-red-600 text-center mb-8 text-xl">{error}</p>}
+      {success && <p className="text-green-600 text-center mb-8 text-xl">Card added successfully!</p>}
+
+      <Button 
+        onClick={handleAddCard}
+        disabled={loading}
+        className="w-full h-20 text-2xl bg-black text-white font-bold"
+      >
+        {loading ? 'Adding...' : 'Save Card'}
+      </Button>
+    </div>
+  </div>
+)}
+          {activeTab === 'booster' && (
+            <div>
+              <h3 className="text-3xl mb-8 font-bold">Booster Events</h3>
+              <p className="mb-8 text-lg">
+                Create a booster club event — crowd-fund team expenses.
+              </p>
+              <Button 
+                onClick={() => router.push('/booster-events')}
+                className="w-full max-w-md h-20 text-2xl bg-green-400 text-black"
+              >
+                Create Booster Club Event
+              </Button>
             </div>
           )}
 
-          {/* Add New Card */}
-          <div className="max-w-2xl mx-auto">
-            <div className="bg-gray-100 p-12 border-4 border-black mb-12">
-              <h4 className="text-2xl font-bold mb-6 text-center">
-                Add New Card
-              </h4>
-              <CardElement 
-                options={{
-                  style: {
-                    base: {
-                      fontSize: '20px',
-                      color: '#000',
-                      fontFamily: 'Courier New, monospace',
-                      '::placeholder': { color: '#666' },
-                    },
-                  },
+          {/* Connect with Stripe */}
+          {business && !business.stripe_account_id && (
+            <div className="my-16">
+              <p className="text-lg mb-6">
+                Connect your Stripe account to automatically fund all approved gigs.
+              </p>
+              <Button
+                onClick={async () => {
+                  const response = await fetch('/api/connect-onboarding', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ business_id: business.id }),
+                  })
+                  const { url } = await response.json()
+                  window.location.href = url
                 }}
-              />
+                className="w-full max-w-md h-20 text-2xl bg-purple-600 text-white"
+              >
+                Connect with Stripe
+              </Button>
             </div>
+          )}
 
-            {paymentError && <p className="text-red-600 text-center mb-8 text-xl">{paymentError}</p>}
-            {paymentSuccess && <p className="text-green-600 text-center mb-8 text-xl">Card added!</p>}
-
+          {/* Booster Events CTA */}
+          <div className="my-16">
             <Button 
-              onClick={handleAddCard}
-              disabled={paymentLoading}
-              className="w-full h-20 text-2xl bg-black text-white font-bold"
+              onClick={() => router.push('/booster-events')}
+              className="w-full max-w-md h-20 text-2xl bg-green-400 text-black"
             >
-              {paymentLoading ? 'Adding...' : 'Save Card'}
+              Create Booster Club Event
             </Button>
           </div>
         </div>
-      </Elements>
-    )}
+      )}
 
-    {/* Booster Events Tab */}
-    {activeTab === 'booster' && (
-      <div>
-        <h3 className="text-3xl mb-8 font-bold">Booster Events</h3>
-        <p className="mb-8 text-lg">
-          Create a booster club event — crowd-fund team expenses.
-        </p>
-        <Button 
-          onClick={() => router.push('/booster-events')}
-          className="w-full max-w-md h-20 text-2xl bg-green-400 text-black"
-        >
-          Create Booster Club Event
-        </Button>
-      </div>
-    )}
-    
-    {/* Log Out */}
+      {/* Log Out */}
       <div className="text-center mt-32">
         <Button onClick={async () => {
           await signOut()
@@ -1105,5 +1374,5 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
         </Button>
       </div>
     </div>
-)
+  )
 }
