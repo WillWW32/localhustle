@@ -1326,41 +1326,6 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
             </div>
           )}
 
-          {/* Connect with Stripe */}
-          {business && !business.stripe_account_id && (
-            <div className="my-16">
-              <p className="text-lg mb-6">
-                Connect your Stripe account to automatically fund all approved gigs.
-              </p>
-              <Button
-                onClick={async () => {
-                  const response = await fetch('/api/connect-onboarding', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ business_id: business.id }),
-                  })
-                  const { url } = await response.json()
-                  window.location.href = url
-                }}
-                className="w-full max-w-md h-20 text-2xl bg-purple-600 text-white"
-              >
-                Connect with Stripe
-              </Button>
-            </div>
-          )}
-
-          {/* Booster Events CTA */}
-          <div className="my-16">
-            <Button 
-              onClick={() => router.push('/booster-events')}
-              className="w-full max-w-md h-20 text-2xl bg-green-400 text-black"
-            >
-              Create Booster Club Event
-            </Button>
-          </div>
-        </div>
-      )}
-
       {/* Log Out */}
       <div className="text-center mt-32">
         <Button onClick={async () => {
