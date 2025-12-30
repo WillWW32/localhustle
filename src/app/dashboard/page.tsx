@@ -897,8 +897,8 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
           </div>
         </div>
         
-      ) : (
-      
+) : (
+  <>
         <div className="max-w-4xl mx-auto space-y-16 font-mono text-center text-lg">
           {/* Business Tabs */}
 <div className="flex justify-center gap-4 flex-wrap mb-12">
@@ -1338,7 +1338,6 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
         </Button>
       </div>
     </div>
-  </div>
-</div>  {/* Force close any stray open div */}
+  </>
 )
 }
