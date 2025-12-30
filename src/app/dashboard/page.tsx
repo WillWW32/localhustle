@@ -1111,6 +1111,7 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
                 ))}
               </div>
             </>
+            )
             {/* Stand-Alone Freedom Scholarship */}
               <div className="my-24">
                 <h3 className="text-3xl font-bold mb-8 text-center">Award a Freedom Scholarship</h3>
