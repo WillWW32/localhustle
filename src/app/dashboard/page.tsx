@@ -358,24 +358,25 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
   }
 
   const handleAddFunds = async (amount: number) => {
-    const response = await fetch('/api/checkout', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ amount, business_id: business.id }),
-    })
-    const { id } = await response.json()
-    const stripe = await loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
-    if (!stripe) {
-      alert('Stripe failed to load')
-      return
-    }
+  const response = await fetch('/api/checkout', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ amount, business_id: business.id }),
+  })
+  const { id } = await response.json()
 
-    const { error } = await stripe.redirectToCheckout({ sessionId: id })
-
-    if (error) {
-      alert(error.message)
-    }
+  const stripe = await stripePromise
+  if (!stripe) {
+    alert('Stripe failed to load')
+    return
   }
+
+  const { error } = await stripe.redirectToCheckout({ sessionId: id })
+
+  if (error) {
+    alert(error.message)
+  }
+}
 
   const handleAddCard = async () => {
     if (!stripe || !elements) {
