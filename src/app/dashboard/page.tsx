@@ -7,9 +7,6 @@ import { signOut } from '@/lib/auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { loadStripe } from '@stripe/stripe-js'
-import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js'
-
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
 
 const athleteGigTypes = [
   { title: 'ShoutOut', description: 'Visit a favorite business and make a quick shoutout 15-sec reel about what you like or your favorite order.' },
@@ -60,13 +57,15 @@ export default function Dashboard() {
   const [gigSearch, setGigSearch] = useState('')
   const [searchedOffers, setSearchedOffers] = useState<any[]>([])
   const [activeTab, setActiveTab] = useState<'wallet' | 'clips' | 'kids' | 'favorites' | 'payment-methods' | 'booster'>('wallet')
-  const [savedMethods, setSavedMethods] = useState<any[]>([])
-  const [paymentLoading, setPaymentLoading] = useState(false)
-  const [paymentError, setPaymentError] = useState<string | null>(null)
-  const [paymentSuccess, setPaymentSuccess] = useState(false)
+  const [athleteSearch, setAthleteSearch] = useState('')
+  const [searchResults, setSearchResults] = useState<any[]>([])
+  const [selectedAthlete, setSelectedAthlete] = useState<any>(null)
+  const [scholarshipAmount, setScholarshipAmount] = useState('')
+  const [standaloneScholarshipAmount, setStandaloneScholarshipAmount] = useState('')
+  const [standaloneScholarshipMessage, setStandaloneScholarshipMessage] = useState('')
+  const [scholarshipMessage, setScholarshipMessage] = useState('')
+  const [scholarshipLoading, setScholarshipLoading] = useState(false)
   const router = useRouter()
-  const stripe = useStripe()
-  const elements = useElements()
 
   useEffect(() => {
     const fetchData = async () => {
@@ -143,16 +142,6 @@ export default function Dashboard() {
           .eq('status', 'pending')
           .in('offer_id', (await supabase.from('offers').select('id').eq('business_id', biz.id)).data?.map(o => o.id) || [])
         setPendingClips(clips || [])
-
-        if (biz?.id) {
-          const response = await fetch('/api/list-payment-methods', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ business_id: biz.id }),
-          })
-          const data = await response.json()
-          setSavedMethods(data.methods || [])
-        }
       }
     }
 
@@ -357,96 +346,207 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
     }
   }
 
-  const handleAddFunds = async (amount: number) => {
-  const response = await fetch('/api/checkout', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ amount, business_id: business.id }),
-  })
-  const { id } = await response.json()
-
-  const stripe = await stripePromise
-  if (!stripe) {
-    alert('Stripe failed to load')
+  const searchAthletes = async () => {
+  if (!athleteSearch.trim()) {
+    setSearchResults([])
     return
   }
 
+  const { data } = await supabase
+    .from('profiles')
+    .select('id, full_name, email, school')
+    .or(`full_name.ilike.%${athleteSearch}%,email.ilike.%${athleteSearch}%,school.ilike.%${athleteSearch}%`)
+    .limit(10)
+
+  setSearchResults(data || [])
 }
 
-  const handleAddCard = async () => {
-    if (!stripe || !elements) {
-      setPaymentError('Stripe not loaded')
-      return
-    }
+const awardScholarship = async () => {
+  if (!selectedAthlete || !scholarshipAmount || parseFloat(scholarshipAmount) <= 0) {
+    alert('Select an athlete and enter a valid amount')
+    return
+  }
 
-    setPaymentError(null)
-    setPaymentSuccess(false)
-    setPaymentLoading(true)
+  const amount = parseFloat(scholarshipAmount)
+  setScholarshipLoading(true)
 
-    const cardElement = elements.getElement(CardElement)
-    if (!cardElement) {
-      setPaymentError('Card element not found')
-      setPaymentLoading(false)
-      return
-    }
+  const response = await fetch('/api/payout', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      athlete_id: selectedAthlete.id,
+      amount,
+      type: 'freedom_scholarship',
+      message: scholarshipMessage,
+    }),
+  })
 
-    const { error: stripeError, paymentMethod } = await stripe.createPaymentMethod({
-      type: 'card',
-      card: cardElement,
+  const data = await response.json()
+
+  if (data.error) {
+    alert('Error: ' + data.error)
+  } else {
+    await supabase
+      .from('scholarships')
+      .insert({
+        business_id: business.id,
+        athlete_id: selectedAthlete.id,
+        amount,
+        message: scholarshipMessage || 'Great hustle!',
+      })
+
+    alert(`$${amount} Freedom Scholarship awarded to ${selectedAthlete.full_name || selectedAthlete.email}!`)
+    setScholarshipAmount('')
+    setScholarshipMessage('')
+    setSelectedAthlete(null)
+    setSearchResults([])
+    setAthleteSearch('')
+  }
+
+  setScholarshipLoading(false)
+}
+  const handleAddFunds = async (amount: number) => {
+    const response = await fetch('/api/checkout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ amount, business_id: business.id }),
     })
-
-    if (stripeError) {
-      setPaymentError(stripeError.message || 'Payment error')
-      setPaymentLoading(false)
+    const { id } = await response.json()
+    const stripe = await loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
+    if (!stripe) {
+      alert('Stripe failed to load')
       return
     }
 
-    const response = await fetch('/api/attach-payment-method', {
+    // @ts-ignore
+    const { error } = await stripe.redirectToCheckout({ sessionId: id })
+
+    if (error) {
+      alert(error.message)
+    }
+  }
+  
+  // Stand-alone Freedom Scholarship
+  const searchAthletes = async () => {
+    if (!athleteSearch.trim()) {
+      setSearchResults([])
+      return
+    }
+
+    const { data } = await supabase
+      .from('profiles')
+      .select('id, full_name, email, school')
+      .or(`full_name.ilike.%${athleteSearch}%,email.ilike.%${athleteSearch}%,school.ilike.%${athleteSearch}%`)
+      .limit(10)
+
+    setSearchResults(data || [])
+  }
+
+  const awardScholarship = async () => {
+    if (!selectedAthlete || !standaloneScholarshipAmount || parseFloat(standaloneScholarshipAmount) <= 0) {
+      alert('Select an athlete and enter a valid amount')
+      return
+    }
+
+    const amount = parseFloat(standaloneScholarshipAmount)
+    setScholarshipLoading(true)
+
+    const response = await fetch('/api/payout', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        payment_method_id: paymentMethod.id,
-        business_id: business.id,
+        athlete_id: selectedAthlete.id,
+        amount,
+        type: 'freedom_scholarship',
+        message: standaloneScholarshipMessage || 'Great hustle!',
       }),
     })
 
     const data = await response.json()
 
     if (data.error) {
-      setPaymentError(data.error)
+      alert('Error: ' + data.error)
     } else {
-      setPaymentSuccess(true)
-      setSavedMethods([...savedMethods, data.method])
+      await supabase
+        .from('scholarships')
+        .insert({
+          business_id: business.id,
+          athlete_id: selectedAthlete.id,
+          amount,
+          message: standaloneScholarshipMessage || 'Great hustle!',
+        })
+
+      alert(`$${amount} Freedom Scholarship awarded to ${selectedAthlete.full_name || selectedAthlete.email}!`)
+      setStandaloneScholarshipAmount('')
+      setStandaloneScholarshipMessage('')
+      setSelectedAthlete(null)
+      setSearchResults([])
+      setAthleteSearch('')
     }
 
-    setPaymentLoading(false)
+    setScholarshipLoading(false)
   }
+  
+  const fetchLatestScholarship = async () => {
+  const { data: latestScholarship } = await supabase
+    .from('scholarships')
+    .select('*, businesses(name)')
+    .eq('athlete_id', user.id)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .single()
 
-  const fetchSavedMethods = async () => {
-    if (!business) return
-
-    const response = await fetch('/api/list-payment-methods', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ business_id: business.id }),
+  if (latestScholarship) {
+    setRecentScholarship({
+      ...latestScholarship,
+      business_name: latestScholarship.businesses?.name || 'a supporter',
     })
-
-    const data = await response.json()
-
-    if (data.methods) {
-      setSavedMethods(data.methods)
-    }
   }
+}
 
-  useEffect(() => {
-    if (business && activeTab === 'payment-methods') {
-      fetchSavedMethods()
-    }
-  }, [business, activeTab])
+fetchLatestScholarship()}
 
   if (!profile) return <p className="container text-center py-32">Loading...</p>
 
   return (
+    
+    {/* First-Time Setup Banner */}
+{profile?.role === 'athlete' && (
+  <div className="bg-blue-100 p-12 border-4 border-blue-600 mb-16">
+    <h3 className="text-3xl font-bold mb-8">
+      Complete 3 Steps to Start Earning
+    </h3>
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+      <div className={`text-center p-6 border-4 ${profilePic ? 'bg-green-100 border-green-600' : 'bg-gray-100 border-black'}`}>
+        <p className="text-xl font-bold mb-2">
+          {profilePic ? 'Complete!' : 'Step 1'}
+        </p>
+        <p>Profile Photo</p>
+      </div>
+      <div className={`text-center p-6 border-4 ${selectedGigs.length > 0 ? 'bg-green-100 border-green-600' : 'bg-gray-100 border-black'}`}>
+        <p className="text-xl font-bold mb-2">
+          {selectedGigs.length > 0 ? 'Complete!' : 'Step 2'}
+        </p>
+        <p>Select Gigs</p>
+      </div>
+      <div className={`text-center p-6 border-4 ${profile.payout_method_setup ? 'bg-green-100 border-green-600' : 'bg-gray-100 border-black'}`}>
+        <p className="text-xl font-bold mb-2">
+          {profile.payout_method_setup ? 'Complete!' : 'Step 3'}
+        </p>
+        <p>Add Debit Card</p>
+        {!profile.payout_method_setup && (
+          <Button 
+            onClick={() => router.push('/payout-setup')}
+            className="mt-4 w-full h-14 text-lg bg-black text-white"
+          >
+            Add Card
+          </Button>
+        )}
+      </div>
+    </div>
+  </div>
+)}
+    
     <div className="container py-8">
       <p className="text-center mb-12 text-xl font-mono">Welcome, {profile.email}</p>
 
@@ -461,10 +561,51 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
           {profile.role === 'athlete' ? 'Pitch businesses, claim gigs, build your squad and earn together.' : 'Post gigs to get authentic content. Review clips — only approve what you love. Become the hometown hero.'}
         </p>
       </div>
+        
+       {/* Qualification Progress Meter */}
+<div className="bg-gray-100 p-12 border-4 border-black mb-16">
+  <h2 className="text-3xl font-bold mb-8 text-center">
+    Your Path to Bigger Opportunities
+  </h2>
 
+  <div className="max-w-2xl mx-auto">
+    {/* Progress Bar */}
+    <div className="relative h-16 bg-gray-300 border-4 border-black mb-8 overflow-hidden">
+      <div 
+        className="absolute h-full bg-green-600 transition-all duration-500"
+        style={{ width: `${Math.min((completedGigs / 8) * 100, 100)}%` }}
+      />
+      <p className="absolute inset-0 flex items-center justify-center text-2xl font-bold">
+        {completedGigs} / 8 Gigs Completed
+      </p>
+    </div>
+
+    {/* Milestones */}
+    <div className="grid grid-cols-2 gap-8">
+      <div className={`text-center p-6 border-4 ${completedGigs >= 4 ? 'bg-green-100 border-green-600' : 'bg-gray-100 border-black'}`}>
+        <p className="text-xl font-bold mb-2">
+          {completedGigs >= 4 ? 'Qualified!' : `${4 - completedGigs} gigs to go`}
+        </p>
+        <p className="text-lg">
+          Freedom Scholarship Eligible<br />
+          <span className="text-sm">Unrestricted cash bonus</span>
+        </p>
+      </div>
+
+      <div className={`text-center p-6 border-4 ${completedGigs >= 8 ? 'bg-purple-100 border-purple-600' : 'bg-gray-100 border-black'}`}>
+        <p className="text-xl font-bold mb-2">
+          {completedGigs >= 8 ? 'Qualified!' : `${8 - completedGigs} gigs to go`}
+        </p>
+        <p className="text-lg">
+          Brand Deal Eligible<br />
+          <span className="text-sm">National brand submissions</span>
+        </p>
+      </div>
+    </div>
+  </div>
+</div> 
       {profile.role === 'athlete' ? (
         <div className="max-w-4xl mx-auto space-y-32 font-mono text-center text-lg">
-          {/* Athlete content — all your original athlete sections */}
           {/* Step 1: Complete Profile */}
           <div className="bg-green-100 p-8 border-4 border-green-600 rounded-lg">
             <h2 className="text-3xl font-bold mb-8">
@@ -587,7 +728,7 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
           {/* Step 3: Pitch Local Businesses */}
           <div className="bg-green-100 p-8 border-4 border-green-600 rounded-lg">
             <h2 className="text-3xl font-bold mb-8">
-              Step 3 — Pitch Local Businesses
+              Step 3 — Pitch Local Businesses - click on pitch below
             </h2>
             <p className="mb-8 text-xl">
               Click the button below to reveal your personalized pitch letter — copy or share it with your favorite local spots!
@@ -676,7 +817,39 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
               Freedom Scholarships are unrestricted cash paid instantly — use for books, food, rent — whatever you need.
             </p>
           </div>
+          {/* Social Share After Scholarship */}
+{profile?.role === 'athlete' && recentScholarship && !recentScholarship.shared && (
+  <div className="bg-purple-100 p-12 border-4 border-purple-600 mb-16">
+    <h3 className="text-3xl font-bold mb-8 text-center">
+      You Just Earned a Freedom Scholarship! 🎉
+    </h3>
+    <p className="text-xl mb-8 text-center">
+      ${recentScholarship.amount} from {recentScholarship.business_name}<br />
+      "{recentScholarship.message}"
+    </p>
+    <Button
+      onClick={async () => {
+        const text = `Just earned a $${recentScholarship.amount} Freedom Scholarship from ${recentScholarship.business_name} on @LocalHustle! 💰\n\n"${recentScholarship.message}"\n\nReal money for college — no restrictions.\n\nJoin here: https://app.localhustle.org?ref=${profile.id}`
 
+        if (navigator.share) {
+          await navigator.share({ text })
+        } else {
+          navigator.clipboard.writeText(text)
+          alert('Share text copied!')
+        }
+
+        // Mark as shared (optional — backend flag)
+        await supabase
+          .from('scholarships')
+          .update({ shared: true })
+          .eq('id', recentScholarship.id)
+      }}
+      className="w-full max-w-md h-20 text-2xl bg-purple-600 text-white font-bold"
+    >
+      Share Your Win
+    </Button>
+  </div>
+)}
           {/* Your Squad */}
           <div>
             <h2 className="text-3xl font-bold mb-8">Your Squad</h2>
@@ -726,55 +899,57 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
             </Button>
           </div>
         </div>
+        
       ) : (
+      
         <div className="max-w-4xl mx-auto space-y-16 font-mono text-center text-lg">
           {/* Business Tabs */}
-          <div className="flex justify-center gap-4 flex-wrap mb-12">
-            <Button
-              onClick={() => setActiveTab('wallet')}
-              variant={activeTab === 'wallet' ? 'default' : 'outline'}
-              className="px-8 py-4 text-xl"
-            >
-              Wallet & Gigs
-            </Button>
-            <Button
-              onClick={() => setActiveTab('clips')}
-              variant={activeTab === 'clips' ? 'default' : 'outline'}
-              className="px-8 py-4 text-xl"
-            >
-              Pending Clips
-            </Button>
-            <Button
-              onClick={() => setActiveTab('kids')}
-              variant={activeTab === 'kids' ? 'default' : 'outline'}
-              className="px-8 py-4 text-xl"
-            >
-              My Kid's Challenges
-            </Button>
-            <Button
-              onClick={() => setActiveTab('favorites')}
-              variant={activeTab === 'favorites' ? 'default' : 'outline'}
-              className="px-8 py-4 text-xl"
-            >
-              Favorite Athletes
-            </Button>
-            <Button
-              onClick={() => setActiveTab('payment-methods')}
-              variant={activeTab === 'payment-methods' ? 'default' : 'outline'}
-              className="px-8 py-4 text-xl"
-            >
-              Payment Methods
-            </Button>
-            <Button
-              onClick={() => setActiveTab('booster')}
-              variant={activeTab === 'booster' ? 'default' : 'outline'}
-              className="px-8 py-4 text-xl"
-            >
-              Booster Events
-            </Button>
-          </div>
+<div className="flex justify-center gap-4 flex-wrap mb-12">
+  <Button
+    onClick={() => setActiveTab('wallet')}
+    variant={activeTab === 'wallet' ? 'default' : 'outline'}
+    className="px-8 py-4 text-xl"
+  >
+    Wallet & Gigs
+  </Button>
+  <Button
+    onClick={() => setActiveTab('clips')}
+    variant={activeTab === 'clips' ? 'default' : 'outline'}
+    className="px-8 py-4 text-xl"
+  >
+    Pending Clips
+  </Button>
+  <Button
+    onClick={() => setActiveTab('kids')}
+    variant={activeTab === 'kids' ? 'default' : 'outline'}
+    className="px-8 py-4 text-xl"
+  >
+    My Kid's Challenges
+  </Button>
+  <Button
+    onClick={() => setActiveTab('favorites')}
+    variant={activeTab === 'favorites' ? 'default' : 'outline'}
+    className="px-8 py-4 text-xl"
+  >
+    Favorite Athletes
+  </Button>
+  <Button
+    onClick={() => setActiveTab('payment-methods')}
+    variant={activeTab === 'payment-methods' ? 'default' : 'outline'}
+    className="px-8 py-4 text-xl"
+  >
+    Payment Methods
+  </Button>
+  <Button
+    onClick={() => setActiveTab('booster')}
+    variant={activeTab === 'booster' ? 'default' : 'outline'}
+    className="px-8 py-4 text-xl"
+  >
+    Booster Events
+  </Button>
+</div>
 
-          {/* Wallet & Gigs Tab */}
+          {/* Tab Content */}
           {activeTab === 'wallet' && (
             <>
               {/* Wallet Balance + Auto-Top-Up + Add Funds */}
@@ -800,7 +975,7 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
                     />
                   </label>
                   <p className="text-lg mt-4">
-                    When balance &lt; $100, add $500 automatically
+                    Never run out — when balance falls below $100, automatically add $500.
                   </p>
                 </div>
 
@@ -893,7 +1068,7 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
 
                           <div>
                             <label className="block text-lg mb-2">
-                              <input type="checkbox" checked={isRecurring} onChange={(e) => setIsRecurring(e.target.checked)} className="mr-2" />
+                              <input type="checkbox" checked={isRecurring} onChange={(e) => setIsRecurring(e.target.checked)} />
                               Make this recurring monthly
                             </label>
                           </div>
@@ -939,9 +1114,75 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
                 ))}
               </div>
             </>
-          )}
+            {/* Stand-Alone Freedom Scholarship */}
+              <div className="my-24">
+                <h3 className="text-3xl font-bold mb-8 text-center">Award a Freedom Scholarship</h3>
+                <p className="text-xl mb-12 max-w-4xl mx-auto text-center">
+                  Give unrestricted cash directly to an athlete — paid instantly.<br />
+                  Real impact. Real hero status.
+                </p>
 
-          {/* Pending Clips Tab */}
+                <div className="max-w-2xl mx-auto space-y-8">
+                  <Input 
+                    placeholder="Search athlete by name, email, or school"
+                    value={athleteSearch}
+                    onChange={(e) => setAthleteSearch(e.target.value)}
+                    className="text-center"
+                  />
+                  <Button onClick={searchAthletes} className="w-full h-16 text-xl bg-black text-white">
+                    Search Athletes
+                  </Button>
+
+                  {searchResults.length > 0 && (
+                    <div className="space-y-4">
+                      {searchResults.map((athlete) => (
+                        <div key={athlete.id} className="border-4 border-black p-6 bg-gray-100">
+                          <p className="text-lg">
+                            {athlete.full_name || athlete.email} — {athlete.school}
+                          </p>
+                          <Button 
+                            onClick={() => setSelectedAthlete(athlete)}
+                            className="mt-4 w-full h-14 text-lg bg-green-600 text-white"
+                          >
+                            Select This Athlete
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {selectedAthlete && (
+                    <div className="border-4 border-green-600 p-8 bg-green-100">
+                      <p className="text-xl mb-4 text-center">
+                        Selected: {selectedAthlete.full_name || selectedAthlete.email} ({selectedAthlete.school})
+                      </p>
+                      <Input 
+                        placeholder="Scholarship amount (e.g., 500)"
+                        value={standaloneScholarshipAmount}
+                        onChange={(e) => setStandaloneScholarshipAmount(e.target.value)}
+                        className="mb-6"
+                      />
+                      <textarea 
+                        placeholder="Optional message (e.g., Great season — use for books!)"
+                        value={standaloneScholarshipMessage}
+                        onChange={(e) => setStandaloneScholarshipMessage(e.target.value)}
+                        className="w-full p-4 text-lg border-4 border-black font-mono mb-6"
+                      />
+                      <Button 
+                        onClick={awardScholarship}
+                        disabled={scholarshipLoading}
+                        className="w-full h-16 text-xl bg-green-600 text-white font-bold"
+                      >
+                        {scholarshipLoading ? 'Awarding...' : 'Award Freedom Scholarship Instantly'}
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
+          
+
           {activeTab === 'clips' && (
             <div>
               <h3 className="text-2xl mb-8 font-bold">Pending Clips to Review</h3>
@@ -972,7 +1213,6 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
             </div>
           )}
 
-          {/* My Kid's Challenges Tab */}
           {activeTab === 'kids' && (
             <div>
               <h3 className="text-3xl mb-8 font-bold">My Kid's Challenges</h3>
@@ -1002,7 +1242,6 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
             </div>
           )}
 
-          {/* Favorite Athletes Tab */}
           {activeTab === 'favorites' && (
             <div>
               <h3 className="text-3xl mb-8 font-bold">Favorite Athletes</h3>
@@ -1015,70 +1254,65 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
             </div>
           )}
 
-          {/* Payment Methods Tab */}
-          {activeTab === 'payment-methods' && (
-            <Elements stripe={stripePromise}>
-              <div>
-                <h3 className="text-3xl mb-8 font-bold">Payment Methods</h3>
-                <p className="text-xl mb-12">
-                  Saved cards for wallet top-ups and auto-top-up.<br />
-                  Add or manage cards below.
-                </p>
+          {/* Payment Methods Tab — Full Function (API Connected) */}
+{activeTab === 'payment-methods' && (
+  <div>
+    <h3 className="text-3xl mb-8 font-bold">Payment Methods</h3>
+    <p className="text-xl mb-12">
+      Saved cards for wallet top-ups and auto-top-up.
+    </p>
 
-                {/* Saved Cards */}
-                {savedMethods.length === 0 ? (
-                  <p className="text-gray-600 mb-12 text-xl">
-                    No saved cards yet.
-                  </p>
-                ) : (
-                  <div className="space-y-8 mb-16 max-w-2xl mx-auto">
-                    {savedMethods.map((method) => (
-                      <div key={method.id} className="border-4 border-black p-8 bg-gray-100">
-                        <p className="text-xl">
-                          {method.brand.toUpperCase()} •••• {method.last4}<br />
-                          Expires {method.exp_month}/{method.exp_year}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                )}
+    {/* List Saved Cards */}
+    {savedMethods.length === 0 ? (
+      <p className="text-gray-600 mb-12 text-xl">
+        No saved cards yet.
+      </p>
+    ) : (
+      <div className="space-y-8 mb-16 max-w-2xl mx-auto">
+        {savedMethods.map((method) => (
+          <div key={method.id} className="border-4 border-black p-8 bg-gray-100">
+            <p className="text-xl">
+              {method.brand.toUpperCase()} •••• {method.last4}<br />
+              Expires {method.exp_month}/{method.exp_year}
+            </p>
+          </div>
+        ))}
+      </div>
+    )}
 
-                {/* Add New Card */}
-                <div className="max-w-2xl mx-auto">
-                  <div className="bg-gray-100 p-12 border-4 border-black mb-12">
-                    <h4 className="text-2xl font-bold mb-6 text-center">
-                      Add New Card
-                    </h4>
-                    <CardElement 
-                      options={{
-                        style: {
-                          base: {
-                            fontSize: '20px',
-                            color: '#000',
-                            fontFamily: 'Courier New, monospace',
-                            '::placeholder': { color: '#666' },
-                          },
-                        },
-                      }}
-                    />
-                  </div>
+    {/* Add New Card */}
+    <div className="max-w-2xl mx-auto">
+      <div className="bg-gray-100 p-12 border-4 border-black mb-12">
+        <h4 className="text-2xl font-bold mb-6 text-center">
+          Add New Card
+        </h4>
+        <CardElement 
+          options={{
+            style: {
+              base: {
+                fontSize: '20px',
+                color: '#000',
+                fontFamily: 'Courier New, monospace',
+                '::placeholder': { color: '#666' },
+              },
+            },
+          }}
+        />
+      </div>
 
-                  {paymentError && <p className="text-red-600 text-center mb-8 text-xl">{paymentError}</p>}
-                  {paymentSuccess && <p className="text-green-600 text-center mb-8 text-xl">Card added!</p>}
+      {error && <p className="text-red-600 text-center mb-8 text-xl">{error}</p>}
+      {success && <p className="text-green-600 text-center mb-8 text-xl">Card added successfully!</p>}
 
-                  <Button 
-                    onClick={handleAddCard}
-                    disabled={paymentLoading}
-                    className="w-full h-20 text-2xl bg-black text-white font-bold"
-                  >
-                    {paymentLoading ? 'Adding...' : 'Save Card'}
-                  </Button>
-                </div>
-              </div>
-            </Elements>
-          )}
-
-          {/* Booster Events Tab */}
+      <Button 
+        onClick={handleAddCard}
+        disabled={loading}
+        className="w-full h-20 text-2xl bg-black text-white font-bold"
+      >
+        {loading ? 'Adding...' : 'Save Card'}
+      </Button>
+    </div>
+  </div>
+)}
           {activeTab === 'booster' && (
             <div>
               <h3 className="text-3xl mb-8 font-bold">Booster Events</h3>
