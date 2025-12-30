@@ -38,7 +38,7 @@ export default function BusinessDashboard() {
   const [paymentLoading, setPaymentLoading] = useState(false)
   const [paymentError, setPaymentError] = useState<string | null>(null)
   const [paymentSuccess, setPaymentSuccess] = useState(false)
-  const [activeTab, setActiveTab] = useState<'wallet' | 'clips' | 'kids' | 'favorites' | 'payment-methods' | 'booster' | 'scholarships'>('wallet')
+  const [activeTab, setActiveTab] = useState<'wallet' | 'gigs' | 'clips' | 'kids' | 'favorites' | 'payment-methods' | 'scholarships' | 'booster'>('wallet')
   const [athleteSearch, setAthleteSearch] = useState('')
   const [searchResults, setSearchResults] = useState<any[]>([])
   const [selectedAthlete, setSelectedAthlete] = useState<any>(null)
