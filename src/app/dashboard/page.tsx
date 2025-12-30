@@ -1112,74 +1112,73 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
               </div>
             </>
           )}
-            {/* Stand-Alone Freedom Scholarship */}
-              <div className="my-24">
-                <h3 className="text-3xl font-bold mb-8 text-center">Award a Freedom Scholarship</h3>
-                <p className="text-xl mb-12 max-w-4xl mx-auto text-center">
-                  Give unrestricted cash directly to an athlete — paid instantly.<br />
-                  Real impact. Real hero status.
-                </p>
+        {/* Freedom Scholarships Tab */}
+{activeTab === 'scholarships' && (
+  <div className="my-24">
+    <h3 className="text-3xl font-bold mb-8 text-center">Award a Freedom Scholarship</h3>
+    <p className="text-xl mb-12 max-w-4xl mx-auto text-center">
+      Give unrestricted cash directly to an athlete — paid instantly.<br />
+      Real impact. Real hero status.
+    </p>
 
-                <div className="max-w-2xl mx-auto space-y-8">
-                  <Input 
-                    placeholder="Search athlete by name, email, or school"
-                    value={athleteSearch}
-                    onChange={(e) => setAthleteSearch(e.target.value)}
-                    className="text-center"
-                  />
-                  <Button onClick={searchAthletes} className="w-full h-16 text-xl bg-black text-white">
-                    Search Athletes
-                  </Button>
+    <div className="max-w-2xl mx-auto space-y-8">
+      <Input
+        placeholder="Search athlete by name, email, or school"
+        value={athleteSearch}
+        onChange={(e) => setAthleteSearch(e.target.value)}
+        className="text-center"
+      />
+      <Button onClick={searchAthletes} className="w-full h-16 text-xl bg-black text-white">
+        Search Athletes
+      </Button>
 
-                  {searchResults.length > 0 && (
-                    <div className="space-y-4">
-                      {searchResults.map((athlete) => (
-                        <div key={athlete.id} className="border-4 border-black p-6 bg-gray-100">
-                          <p className="text-lg">
-                            {athlete.full_name || athlete.email} — {athlete.school}
-                          </p>
-                          <Button 
-                            onClick={() => setSelectedAthlete(athlete)}
-                            className="mt-4 w-full h-14 text-lg bg-green-600 text-white"
-                          >
-                            Select This Athlete
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+      {searchResults.length > 0 && (
+        <div className="space-y-4">
+          {searchResults.map((athlete) => (
+            <div key={athlete.id} className="border-4 border-black p-6 bg-gray-100">
+              <p className="text-lg">
+                {athlete.full_name || athlete.email} — {athlete.school}
+              </p>
+              <Button
+                onClick={() => setSelectedAthlete(athlete)}
+                className="mt-4 w-full h-14 text-lg bg-green-600 text-white"
+              >
+                Select This Athlete
+              </Button>
+            </div>
+          ))}
+        </div>
+      )}
 
-                  {selectedAthlete && (
-                    <div className="border-4 border-green-600 p-8 bg-green-100">
-                      <p className="text-xl mb-4 text-center">
-                        Selected: {selectedAthlete.full_name || selectedAthlete.email} ({selectedAthlete.school})
-                      </p>
-                      <Input 
-                        placeholder="Scholarship amount (e.g., 500)"
-                        value={standaloneScholarshipAmount}
-                        onChange={(e) => setStandaloneScholarshipAmount(e.target.value)}
-                        className="mb-6"
-                      />
-                      <textarea 
-                        placeholder="Optional message (e.g., Great season — use for books!)"
-                        value={standaloneScholarshipMessage}
-                        onChange={(e) => setStandaloneScholarshipMessage(e.target.value)}
-                        className="w-full p-4 text-lg border-4 border-black font-mono mb-6"
-                      />
-                      <Button 
-                        onClick={awardScholarship}
-                        disabled={scholarshipLoading}
-                        className="w-full h-16 text-xl bg-green-600 text-white font-bold"
-                      >
-                        {scholarshipLoading ? 'Awarding...' : 'Award Freedom Scholarship Instantly'}
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </>
-           </div>
-          )}
+      {selectedAthlete && (
+        <div className="border-4 border-green-600 p-8 bg-green-100">
+          <p className="text-xl mb-4 text-center">
+            Selected: {selectedAthlete.full_name || selectedAthlete.email} ({selectedAthlete.school})
+          </p>
+          <Input
+            placeholder="Scholarship amount (e.g., 500)"
+            value={standaloneScholarshipAmount}
+            onChange={(e) => setStandaloneScholarshipAmount(e.target.value)}
+            className="mb-6"
+          />
+          <textarea
+            placeholder="Optional message (e.g., Great season — use for books!)"
+            value={standaloneScholarshipMessage}
+            onChange={(e) => setStandaloneScholarshipMessage(e.target.value)}
+            className="w-full p-4 text-lg border-4 border-black font-mono mb-6"
+          />
+          <Button
+            onClick={awardScholarship}
+            disabled={scholarshipLoading}
+            className="w-full h-16 text-xl bg-green-600 text-white font-bold"
+          >
+            {scholarshipLoading ? 'Awarding...' : 'Award Freedom Scholarship Instantly'}
+          </Button>
+        </div>
+      )}
+    </div>
+  </div>
+)}
           
 
           {activeTab === 'clips' && (
