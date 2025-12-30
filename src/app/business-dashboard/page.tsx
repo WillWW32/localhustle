@@ -187,11 +187,7 @@ export default function BusinessDashboard() {
       return
     }
 
-    const { error } = await stripe.redirectToCheckout({ sessionId: id })
-
-    if (error) {
-      alert(error.message)
-    }
+    
   }
 
   const handleAddCard = async () => {
