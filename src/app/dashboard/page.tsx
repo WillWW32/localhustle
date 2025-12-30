@@ -1263,9 +1263,7 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
             </div>
           )}
         </div>
-    </div>
-          
-
+    
       {/* Log Out */}
       <div className="text-center mt-32">
         <Button onClick={async () => {
