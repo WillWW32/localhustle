@@ -1230,7 +1230,7 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
                 },
               },
             }}
-          </>
+          />
         </div>
 
         {paymentError && <p className="text-red-600 text-center mb-8 text-xl">{paymentError}</p>}
@@ -1262,7 +1262,6 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
               </Button>
             </div>
           )}
-        </div>
     
       {/* Log Out */}
       <div className="text-center mt-32">
