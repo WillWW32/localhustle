@@ -137,11 +137,11 @@ Thanks! Love you.
         </p>
 
         <Button 
-          onClick={() => router.push('/dashboard')}
-          className="w-full max-w-md h-20 text-3xl bg-black text-white font-bold"
-        >
-          Go to Dashboard
-        </Button>
+  onClick={() => router.push('/athlete-dashboard')}
+  className="w-full max-w-md h-20 text-2xl bg-black text-white mx-auto block"
+>
+  Back to Dashboard
+</Button>
       </div>
     </div>
   )

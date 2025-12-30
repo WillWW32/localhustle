@@ -123,11 +123,11 @@ export default function BusinessOnboard() {
         {/* Main CTA */}
         <div className="text-center">
           <Button
-            onClick={() => router.push('/dashboard?view=business')}
-            className="w-full max-w-2xl h-24 text-3xl bg-black text-white font-bold"
-          >
-            Go to Admin Console — Start Funding Gigs & Scholarships
-          </Button>
+  onClick={() => router.push('/business-dashboard')}
+  className="w-full max-w-2xl h-24 text-3xl bg-black text-white font-bold"
+>
+  Go to Admin Console — Start Funding Gigs & Scholarships
+</Button>
         </div>
       </div>
     </div>

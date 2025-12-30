@@ -16,37 +16,40 @@ export default function Home() {
   const router = useRouter()
 
   const sendMagicLink = async () => {
-    if (!email.trim()) {
-      alert('Please enter your email')
-      return
-    }
-    if (!role) {
-      alert('Please select your role')
-      return
-    }
-
-    setLoading(true)
-
-    let path = '/dashboard'
-    if (role === 'athlete') path = '/get-started'
-    if (role === 'parent') path = '/parent-onboard'
-    if (role === 'business') path = '/business-onboard'
-
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        emailRedirectTo: `https://app.localhustle.org${path}`,
-      },
-    })
-
-    if (error) {
-      alert('Error: ' + error.message)
-    } else {
-      alert('Magic link sent! Check your email.')
-    }
-
-    setLoading(false)
+  if (!email.trim()) {
+    alert('Please enter your email')
+    return
   }
+  if (!role) {
+    alert('Please select your role')
+    return
+  }
+
+  setLoading(true)
+
+  const paths = {
+    athlete: '/athlete-dashboard',
+    parent: '/parent-dashboard',
+    business: '/business-dashboard',
+  }
+
+  const redirectPath = paths[role]
+
+  const { error } = await supabase.auth.signInWithOtp({
+    email,
+    options: {
+      emailRedirectTo: `https://app.localhustle.org${redirectPath}`,
+    },
+  })
+
+  if (error) {
+    alert('Error: ' + error.message)
+  } else {
+    alert('Magic link sent! Check your email.')
+  }
+
+  setLoading(false)
+}
 
   return (
     <>

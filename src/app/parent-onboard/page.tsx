@@ -61,7 +61,7 @@ function ParentOnboardContent() {
   return (
     <div className="min-h-screen bg-white text-black font-mono py-20 px-6 text-center">
       <h1 className="text-4xl sm:text-6xl font-bold mb-12">
-        Hey Parent of {kidName}!
+        Hey {kidName} Parent!
       </h1>
 
       <p className="text-xl sm:text-3xl mb-16 max-w-4xl mx-auto">
@@ -89,12 +89,12 @@ function ParentOnboardContent() {
         />
 
         <Button
-          onClick={sendMagicLink}
-          disabled={loading || !email.trim()}
-          className="w-full h-20 text-2xl bg-green-600 text-white font-bold"
-        >
-          {loading ? 'Sending...' : `Yes — Sponsor ${kidName} Now`}
-        </Button>
+          <Button
+      onClick={() => router.push(`/parent-dashboard?kid_id=${kidId}`)}
+      className="w-full max-w-md h-20 text-2xl bg-green-600 text-white font-bold"
+    >
+      Yes — Sponsor {kidName} Now
+    </Button>
       </div>
 
       <p className="text-lg mt-12 text-gray-600">
