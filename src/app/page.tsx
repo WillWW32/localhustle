@@ -16,40 +16,37 @@ export default function Home() {
   const router = useRouter()
 
   const sendMagicLink = async () => {
-  if (!email.trim()) {
-    alert('Please enter your email')
-    return
+    if (!email.trim()) {
+      alert('Please enter your email')
+      return
+    }
+    if (!role) {
+      alert('Please select your role')
+      return
+    }
+
+    setLoading(true)
+
+    let path = '/dashboard'
+    if (role === 'athlete') path = '/get-started'
+    if (role === 'parent') path = '/parent-onboard'
+    if (role === 'business') path = '/business-onboard'
+
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        emailRedirectTo: `https://app.localhustle.org${path}`,
+      },
+    })
+
+    if (error) {
+      alert('Error: ' + error.message)
+    } else {
+      alert('Magic link sent! Check your email.')
+    }
+
+    setLoading(false)
   }
-  if (!role) {
-    alert('Please select your role')
-    return
-  }
-
-  setLoading(true)
-
-  const paths = {
-    athlete: '/get-started',
-    parent: '/parent-onboard',
-    business: '/business-onboard',
-  }
-
-  const redirectPath = paths[role] || '/dashboard' // fallback if role missing (safe)
-
-  const { error } = await supabase.auth.signInWithOtp({
-    email,
-    options: {
-      emailRedirectTo: `https://app.localhustle.org${redirectPath}`,
-    },
-  })
-
-  if (error) {
-    alert('Error: ' + error.message)
-  } else {
-    alert('Magic link sent! Check your email.')
-  }
-
-  setLoading(false)
-}
 
   return (
     <>
@@ -68,9 +65,11 @@ export default function Home() {
       <div className="min-h-screen bg-white text-black font-mono">
         {/* Hero */}
         <section className="py-20 px-6 sm:px-12 lg:px-32 text-center">
-          <div className="subhead-white-black">
+          <div className="bg-black text-white p-16 mb-16">
+            <h1 className="text-3xl sm:text-5xl font-bold leading-tight">
               We Connect Local Businesses with Student Athletes<br />
               for Scholarships & NIL Deals
+            </h1>
           </div>
 
           <p className="text-xl sm:text-2xl mb-24 max-w-4xl mx-auto leading-relaxed">
@@ -80,146 +79,135 @@ export default function Home() {
         </section>
 
         {/* Benefits Grid */}
-<section className="px-6 sm:px-12 lg:px-32 pb-24">
-  <div className="grid grid-cols-1 md:grid-cols-3 gap-16 max-w-6xl mx-auto">
-    <div className="text-center">
-      <div className="subhead-white-black">
-        Student Athletes
-      </div>
-      <p className="text-lg leading-relaxed px-4">
-        • Earn money instantly with gigs + Freedom Scholarships.<br />
-        • Complete 4 gigs → qualify for national brand deals.
-      </p>
-    </div>
+        <section className="px-6 sm:px-12 lg:px-32 pb-24">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-16 max-w-6xl mx-auto">
+            <div className="text-center">
+              <div className="bg-black text-white p-8 mb-6">
+                <h2 className="text-2xl font-bold">Student Athletes</h2>
+              </div>
+              <p className="text-lg leading-relaxed px-4">
+                Earn money instantly + Freedom Scholarships.<br />
+                Complete 4 gigs → qualify for national brand deals.
+              </p>
+            </div>
 
-    <div className="text-center">
-      <div className="subhead-white-black">
-        Parent
-      </div>
-      <p className="text-lg leading-relaxed px-4">
-        • Less financial stress.<br />
-        • Help your kid earn real money & scholarships.
-      </p>
-    </div>
+            <div className="text-center">
+              <div className="bg-black text-white p-8 mb-6">
+                <h2 className="text-2xl font-bold">Parents</h2>
+              </div>
+              <p className="text-lg leading-relaxed px-4">
+                Less financial stress.<br />
+                Help your kid earn real money & scholarships.
+              </p>
+            </div>
 
-    <div className="text-center">
-      <div className="subhead-white-black">
-        Businesses
-      </div>
-      <p className="text-lg leading-relaxed px-4">
-        • Best local advertising + become the hometown hero.<br />
-        • Award Freedom Scholarships — real community impact.
-      </p>
-    </div>
-  </div>
-</section>
-        
-        {/* How It Works — Define Key Terms */}
-<section className="py-24 px-6 sm:px-12 lg:px-32 bg-gray-50">
-  <h2 className="text-3xl sm:text-4xl font-bold text-center mb-16">
-    How It Works
-  </h2>
+            <div className="text-center">
+              <div className="bg-black text-white p-8 mb-6">
+                <h2 className="text-2xl font-bold">Businesses</h2>
+              </div>
+              <p className="text-lg leading-relaxed px-4">
+                Best local advertising + become the hometown hero.<br />
+                Award Freedom Scholarships — real impact.
+              </p>
+            </div>
+          </div>
+        </section>
 
-  <div className="max-w-4xl mx-auto space-y-16">
-    <div className="bg-white p-12 border-4 border-black">
-      <h3 className="text-2xl font-bold mb-6">What is a Gig?</h3>
-      <p className="text-lg leading-relaxed">
-        A gig is a simple task funded by a local business — like making a 15-second shoutout video, running a youth clinic, or competing in a challenge.<br />
-        Athletes complete the gig → business approves → athlete gets paid instantly.
-      </p>
-    </div>
+        {/* How It Works */}
+        <section className="py-24 px-6 sm:px-12 lg:px-32 bg-gray-50">
+          <h2 className="text-3xl sm:text-4xl font-bold text-center mb-16">
+            How It Works
+          </h2>
 
-    <div className="bg-white p-12 border-4 border-black">
-      <h3 className="text-2xl font-bold mb-6">What is a Freedom Scholarship?</h3>
-      <p className="text-lg leading-relaxed">
-        Unrestricted cash awarded by businesses or the platform — paid instantly to the athlete.<br />
-        No strings attached — use for books, food, rent, gear — whatever they need to succeed.
-      </p>
-    </div>
-  </div>
-</section>
+          <div className="max-w-4xl mx-auto space-y-16">
+            <div className="bg-white p-12 border-4 border-black">
+              <h3 className="text-2xl font-bold mb-6">What is a Gig?</h3>
+              <p className="text-lg leading-relaxed">
+                A gig is a simple task funded by a local business — like making a 15-second shoutout video, running a youth clinic, or competing in a challenge.<br />
+                Athletes complete the gig → business approves → athlete gets paid instantly.
+              </p>
+            </div>
+
+            <div className="bg-white p-12 border-4 border-black">
+              <h3 className="text-2xl font-bold mb-6">What is a Freedom Scholarship?</h3>
+              <p className="text-lg leading-relaxed">
+                Unrestricted cash awarded by businesses or the platform paid instantly to the athlete.<br />
+                No strings attached — use for books, food, rent — whatever they need to succeed.
+              </p>
+            </div>
+          </div>
+        </section>
 
         {/* Emotional Close */}
         <section className="py-24 px-6 sm:px-12 lg:px-32 text-center bg-gray-50">
           <p className="text-2xl sm:text-3xl max-w-4xl mx-auto leading-relaxed">
-            Real money. Real scholarships. Real NIL deals.<br />
-            Keep kids in sports. Build stronger communities.
+            Real money. Real scholarships.<br />
+            Keep kids in sports longer. Build stronger communities.
           </p>
         </section>
 
-       {/* Bottom CTA — 3-Stage Toggle with Hard-Wired Onboarding */}
-<section className="py-24 px-6 sm:px-12 lg:px-32 text-center">
-  <p className="text-2xl mb-12">Who are you?</p>
+        {/* Bottom CTA */}
+        <section className="py-24 px-6 sm:px-12 lg:px-32 text-center">
+          <p className="text-2xl mb-12">Who are you?</p>
 
-  {/* Role Selector — Radio Style with Checkmark & Persistent State */}
-<div className="w-full max-w-3xl mx-auto mb-12">
-  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-    <button
-      onClick={() => setRole('athlete')}
-      className={`relative h-24 px-8 py-6 text-2xl font-bold border-4 rounded-none transition-all ${
-        role === 'athlete'
-          ? 'bg-green-600 text-white border-green-600'
-          : 'bg-white text-black border-black hover:bg-gray-50'
-      }`}
-    >
-      Student Athlete
-      {role === 'athlete' && (
-        <span className="absolute top-2 right-2 text-3xl">✓</span>
-      )}
-    </button>
+          <div className="w-full max-w-lg mx-auto space-y-12">
+            <Input
+              type="email"
+              placeholder="your@email.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="h-20 text-2xl text-center border-4 border-black"
+            />
 
-    <button
-      onClick={() => setRole('parent')}
-      className={`relative h-24 px-8 py-6 text-2xl font-bold border-4 rounded-none transition-all ${
-        role === 'parent'
-          ? 'bg-green-600 text-white border-green-600'
-          : 'bg-white text-black border-black hover:bg-gray-50'
-      }`}
-    >
-      Parent
-      {role === 'parent' && (
-        <span className="absolute top-2 right-2 text-3xl">✓</span>
-      )}
-    </button>
+            {/* Updated Role Selector — Light Green Selected */}
+            <div className="grid grid-cols-1 gap-6">
+              <button
+                onClick={() => setRole('athlete')}
+                className={`w-full h-20 text-2xl font-bold border-4 border-black transition-all ${
+                  role === 'athlete'
+                    ? 'bg-green-200 text-black'
+                    : 'bg-white text-black hover:bg-gray-50'
+                }`}
+              >
+                Student Athlete
+              </button>
 
-    <button
-      onClick={() => setRole('business')}
-      className={`relative h-24 px-8 py-6 text-2xl font-bold border-4 rounded-none transition-all ${
-        role === 'business'
-          ? 'bg-green-600 text-white border-green-600'
-          : 'bg-white text-black border-black hover:bg-gray-50'
-      }`}
-    >
-      Business
-      {role === 'business' && (
-        <span className="absolute top-2 right-2 text-3xl">✓</span>
-      )}
-    </button>
-  </div>
-</div>
-    {/* Email */}
-    <Input
-      type="email"
-      placeholder="your@email.com"
-      value={email}
-      onChange={(e) => setEmail(e.target.value)}
-      className="h-20 text-2xl text-center border-4 border-black"
-    />
+              <button
+                onClick={() => setRole('parent')}
+                className={`w-full h-20 text-2xl font-bold border-4 border-black transition-all ${
+                  role === 'parent'
+                    ? 'bg-green-200 text-black'
+                    : 'bg-white text-black hover:bg-gray-50'
+                }`}
+              >
+                Parent
+              </button>
 
-    {/* Go Button — Sends to Correct Onboarding */}
-    <Button
-      onClick={sendMagicLink}
-      disabled={loading || !role}
-      className="w-full h-20 text-3xl bg-black text-white font-bold"
-    >
-      {loading ? 'Sending...' : 'Go'}
-    </Button>
+              <button
+                onClick={() => setRole('business')}
+                className={`w-full h-20 text-2xl font-bold border-4 border-black transition-all ${
+                  role === 'business'
+                    ? 'bg-green-200 text-black'
+                    : 'bg-white text-black hover:bg-gray-50'
+                }`}
+              >
+                Business
+              </button>
+            </div>
 
-    {loading && (
-      <p className="text-center text-xl mt-4">Sending magic link...</p>
-    )}
-  </div>
-</section>
+            <Button
+              onClick={sendMagicLink}
+              disabled={loading || !role}
+              className="w-full h-20 text-3xl bg-black text-white font-bold"
+            >
+              {loading ? 'Sending...' : 'Go'}
+            </Button>
+
+            {loading && (
+              <p className="text-center text-xl mt-4">Sending magic link...</p>
+            )}
+          </div>
+        </section>
       </div>
     </>
   )
