@@ -688,7 +688,7 @@ fetchLatestScholarship()}
                   value={bio}
                   onChange={(e) => setBio(e.target.value)}
                   className="w-full p-4 text-lg border-4 border-black font-mono"
-                />
+                ></textarea>
               </div>
 
               <Button onClick={handleSaveProfile} className="w-full h-16 text-xl bg-black text-white">
@@ -1097,7 +1097,7 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
                               value={customDetails}
                               onChange={(e) => setCustomDetails(e.target.value)}
                               className="w-full h-40 p-4 text-lg border-4 border-black font-mono"
-                            />
+                            ></textarea>
                           </div>
 
                           <Button onClick={handlePost} className="w-full h-20 text-2xl bg-green-400 text-black">
@@ -1165,7 +1165,7 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
             value={standaloneScholarshipMessage}
             onChange={(e) => setStandaloneScholarshipMessage(e.target.value)}
             className="w-full p-4 text-lg border-4 border-black font-mono mb-6"
-          />
+          ></textarea>
           <Button
             onClick={awardScholarship}
             disabled={scholarshipLoading}
