@@ -1310,6 +1310,7 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
       </Button>
     </div>
   </div>
+  </Elements>
 )}
        {/* Booster Events Tab */}
       {activeTab === 'booster' && (
