@@ -506,9 +506,6 @@ const awardScholarship = async () => {
 
 fetchLatestScholarship()}
 
-  if (!profile) return <p className="container text-center py-32">Loading...</p>
-
-  return (
     
     {/* First-Time Setup Banner */}
 {profile?.role === 'athlete' && (
