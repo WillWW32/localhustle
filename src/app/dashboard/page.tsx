@@ -1259,6 +1259,6 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
           Log Out
         </Button>
       </div>
-  </div>
+  
  )
 }
