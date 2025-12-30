@@ -1281,6 +1281,17 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
           Create Booster Club Event
         </Button>
       </div>
+            
+            {/* Log Out */}
+      <div className="text-center mt-32">
+        <Button onClick={async () => {
+          await signOut()
+          router.push('/')
+          alert('Logged out successfully')
+        }} variant="outline" className="w-64 h-14 text-lg border-4 border-black">
+          Log Out
+        </Button>
+      </div>
     </div>
   </div>
  )
