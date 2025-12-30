@@ -981,7 +981,7 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
               />
             </label>
             <p className="text-lg mt-4">
-              When balance < $100, add $500 automatically
+              When balance &lt; $100, add $500 automatically
             </p>
           </div>
 
