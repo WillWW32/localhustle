@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import { signOut } from '@/lib/auth'
@@ -21,7 +21,7 @@ const businessGigTypes = [
   { title: 'Custom Gig', baseAmount: 200, description: 'Create a gig and offer it.' },
 ]
 
-export default function BusinessDashboard() {
+function BusinessDashboardContent() {
   const [business, setBusiness] = useState<any>(null)
   const [pendingClips, setPendingClips] = useState<any[]>([])
   const [referredAthletes, setReferredAthletes] = useState<any[]>([])
@@ -187,7 +187,11 @@ export default function BusinessDashboard() {
       return
     }
 
-    
+    const { error } = await stripe.redirectToCheckout({ sessionId: id })
+
+    if (error) {
+      alert(error.message)
+    }
   }
 
   const handleAddCard = async () => {
@@ -721,16 +725,63 @@ export default function BusinessDashboard() {
               Real impact. Real hero status.
             </p>
 
-            <Button 
-              onClick={() => router.push('/freedom-scholarship')}
-              className="w-full max-w-md h-20 text-2xl bg-purple-600 text-white font-bold"
-            >
-              Create Freedom Scholarship
-            </Button>
+            <div className="max-w-2xl mx-auto space-y-8">
+              <Input
+                placeholder="Search athlete by name, email, or school"
+                value={athleteSearch}
+                onChange={(e) => setAthleteSearch(e.target.value)}
+                className="text-center"
+              />
+              <Button onClick={searchAthletes} className="w-full h-16 text-xl bg-black text-white">
+                Search Athletes
+              </Button>
 
-            <p className="text-lg mt-12 text-gray-600">
-              Search athletes, set amount, add message — posted for them to accept.
-            </p>
+              {searchResults.length > 0 && (
+                <div className="space-y-4">
+                  {searchResults.map((athlete) => (
+                    <div key={athlete.id} className="border-4 border-black p-6 bg-gray-100">
+                      <p className="text-lg">
+                        {athlete.full_name || athlete.email} — {athlete.school}
+                      </p>
+                      <Button
+                        onClick={() => setSelectedAthlete(athlete)}
+                        className="mt-4 w-full h-14 text-lg bg-green-600 text-white"
+                      >
+                        Select This Athlete
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {selectedAthlete && (
+                <div className="border-4 border-green-600 p-8 bg-green-100">
+                  <p className="text-xl mb-4 text-center">
+                    Selected: {selectedAthlete.full_name || selectedAthlete.email} ({selectedAthlete.school})
+                  </p>
+                  <Input
+                    placeholder="Scholarship amount (e.g., 500)"
+                    value={standaloneScholarshipAmount}
+                    onChange={(e) => setStandaloneScholarshipAmount(e.target.value)}
+                    className="mb-6"
+                  />
+                  <textarea
+                    placeholder="Optional message (e.g., Great season — use for books!)"
+                    value={standaloneScholarshipMessage}
+                    onChange={(e) => setStandaloneScholarshipMessage(e.target.value)}
+                    className="w-full p-4 text-lg border-4 border-black font-mono mb-6"
+                    rows={6}
+                  />
+                  <Button
+                    onClick={awardScholarship}
+                    disabled={scholarshipLoading}
+                    className="w-full h-16 text-xl bg-green-600 text-white font-bold"
+                  >
+                    {scholarshipLoading ? 'Awarding...' : 'Award Freedom Scholarship Instantly'}
+                  </Button>
+                </div>
+              )}
+            </div>
           </div>
         )}
 
@@ -762,5 +813,15 @@ export default function BusinessDashboard() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function BusinessDashboard() {
+  return (
+    <Elements stripe={stripePromise}>
+      <Suspense fallback={<p className="container text-center py-32">Loading Stripe...</p>}>
+        <BusinessDashboardContent />
+      </Suspense>
+    </Elements>
   )
 }
