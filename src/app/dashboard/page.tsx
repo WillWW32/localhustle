@@ -1262,7 +1262,8 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
               </Button>
             </div>
           )}
-
+        </div>
+    </div>
           
 
       {/* Log Out */}
@@ -1276,6 +1277,5 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
         </Button>
       </div>
     </div>
-  )
   )
 }
