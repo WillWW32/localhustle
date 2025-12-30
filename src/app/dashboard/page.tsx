@@ -1311,20 +1311,21 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
     </div>
   </div>
 )}
-          {activeTab === 'booster' && (
-            <div>
-              <h3 className="text-3xl mb-8 font-bold">Booster Events</h3>
-              <p className="mb-8 text-lg">
-                Create a booster club event — crowd-fund team expenses.
-              </p>
-              <Button 
-                onClick={() => router.push('/booster-events')}
-                className="w-full max-w-md h-20 text-2xl bg-green-400 text-black"
-              >
-                Create Booster Club Event
-              </Button>
-            </div>
-          )}
+       {/* Booster Events Tab */}
+      {activeTab === 'booster' && (
+        <div>
+          <h3 className="text-3xl mb-8 font-bold">Booster Events</h3>
+          <p className="mb-8 text-lg">
+            Create a booster club event — crowd-fund team expenses.
+          </p>
+          <Button 
+            onClick={() => router.push('/booster-events')}
+            className="w-full max-w-md h-20 text-2xl bg-green-400 text-black"
+          >
+            Create Booster Club Event
+          </Button>
+        </div>
+      )}
 
       {/* Log Out */}
       <div className="text-center mt-32">
@@ -1337,7 +1338,7 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
         </Button>
       </div>
     </div>
-   </div>
+  </div>
+</div>  {/* Force close any stray open div */}
 )
-}
 }
