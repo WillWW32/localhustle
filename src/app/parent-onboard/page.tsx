@@ -89,7 +89,6 @@ function ParentOnboardContent() {
         />
 
         <Button
-          <Button
       onClick={() => router.push(`/parent-dashboard?kid_id=${kidId}`)}
       className="w-full max-w-md h-20 text-2xl bg-green-600 text-white font-bold"
     >
