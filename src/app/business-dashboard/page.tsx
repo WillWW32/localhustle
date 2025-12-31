@@ -173,20 +173,6 @@ function BusinessDashboardContent() {
     }
   }
 
-  const handleAddFunds = async (amount: number) => {
-    const response = await fetch('/api/checkout', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ amount, business_id: business.id }),
-    })
-    const { id } = await response.json()
-    const stripe = await loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
-    if (!stripe) {
-      alert('Stripe failed to load')
-      return
-    }
-  }
-
   const handleAddCard = async () => {
     if (!stripe || !elements) {
       setPaymentError('Stripe not loaded')
@@ -295,11 +281,9 @@ function BusinessDashboardContent() {
     setScholarshipLoading(false)
   }
 
-  if (!business) return <p className="container text-center py-32">Loading...</p>
-
   return (
     <div className="container py-8">
-      <p className="text-center mb-12 text-xl font-mono">Welcome, {business.name}</p>
+      <p className="text-center mb-12 text-xl font-mono">Welcome, {business?.name || 'Business'}</p>
 
       <div className="bg-black text-white p-8 mb-12">
         <h1 className="text-3xl font-bold">
@@ -410,19 +394,19 @@ function BusinessDashboardContent() {
               <div>
                 <h3 className="text-2xl font-bold mb-8 text-center">Add Funds</h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                  <Button onClick={() => handleAddFunds(100)} className="h-16 text-xl bg-black text-white">
+                  <Button onClick={() => alert('+ $100')} className="h-16 text-xl bg-black text-white">
                     + $100
                   </Button>
-                  <Button onClick={() => handleAddFunds(500)} className="h-16 text-xl bg-black text-white">
+                  <Button onClick={() => alert('+ $500')} className="h-16 text-xl bg-black text-white">
                     + $500
                   </Button>
-                  <Button onClick={() => handleAddFunds(1000)} className="h-16 text-xl bg-black text-white">
+                  <Button onClick={() => alert('+ $1000')} className="h-16 text-xl bg-black text-white">
                     + $1000
                   </Button>
                   <Button 
                     onClick={() => {
                       const amt = prompt('Custom amount:')
-                      if (amt && !isNaN(Number(amt))) handleAddFunds(Number(amt))
+                      if (amt) alert(`+ $${amt}`)
                     }}
                     className="h-16 text-xl bg-green-400 text-black"
                   >
@@ -653,7 +637,7 @@ function BusinessDashboardContent() {
               <h3 className="text-3xl mb-8 font-bold">Payment Methods</h3>
               <p className="text-xl mb-12">
                 Saved cards for wallet top-ups and auto-top-up.<br />
-                Add or manage cards below.
+                Add or manage cards below to fund gigs and scholarships.
               </p>
 
               {/* Saved Cards */}
