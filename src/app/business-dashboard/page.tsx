@@ -305,6 +305,38 @@ function BusinessDashboardContent() {
   return (
     <div className="container py-8">
       <p className="text-center mb-12 text-xl font-mono">Welcome, {business?.name || 'Business Owner'}</p>
+      
+      {/* Role Switcher — Small & Conditional */}
+{hasMultipleRoles && (
+  <div className="max-w-md mx-auto mb-8 p-4 bg-gray-100 border-2 border-black rounded-lg">
+    <p className="text-center text-sm font-bold mb-3">
+      Need to switch roles?
+    </p>
+    <div className="flex justify-center gap-2">
+      <Button
+        size="sm"
+        variant={currentRole === 'athlete' ? 'default' : 'outline'}
+        onClick={() => router.push('/athlete-dashboard')}
+      >
+        Athlete
+      </Button>
+      <Button
+        size="sm"
+        variant={currentRole === 'parent' ? 'default' : 'outline'}
+        onClick={() => router.push('/parent-dashboard')}
+      >
+        Parent
+      </Button>
+      <Button
+        size="sm"
+        variant={currentRole === 'business' ? 'default' : 'outline'}
+        onClick={() => router.push('/business-dashboard')}
+      >
+        Business
+      </Button>
+    </div>
+  </div>
+)}
 
       <div className="bg-black text-white p-8 mb-12">
         <h1 className="text-3xl font-bold text-center">

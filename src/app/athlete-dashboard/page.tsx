@@ -28,6 +28,12 @@ export default function AthleteDashboard() {
   const [showPitchLetter, setShowPitchLetter] = useState(false)
   const [gigSearch, setGigSearch] = useState('')
   const [searchedOffers, setSearchedOffers] = useState<any[]>([])
+  const [gigCount, setGigCount] = useState(0)
+  const [showFundFriend, setShowFundFriend] = useState(false)
+  const [friendEmail, setFriendEmail] = useState('')
+  const [friendName, setFriendName] = useState('')
+  const [friendChallenge, setFriendChallenge] = useState('')
+  const [friendAmount, setFriendAmount] = useState('50')
   const router = useRouter()
 
   useEffect(() => {
@@ -51,6 +57,7 @@ export default function AthleteDashboard() {
         setHighlightLink(prof.highlight_link || '')
         setSocialFollowers(prof.social_followers || '')
         setBio(prof.bio || '')
+        setGigCount(prof.gig_count || 0)
 
         const { data: squadMembers } = await supabase
           .from('profiles')
@@ -167,22 +174,105 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
     setSearchedOffers(filtered)
   }
 
+  const inviteFriend = async () => {
+    if (!friendEmail || !friendChallenge) {
+      alert('Please enter friend email and challenge')
+      return
+    }
+
+    const response = await fetch('/api/invite-friend-athlete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        friend_email: friendEmail,
+        friend_name: friendName,
+        challenge_description: friendChallenge,
+        amount: parseFloat(friendAmount),
+        athlete_id: profile.id,
+      }),
+    })
+
+    const data = await response.json()
+
+    if (data.error) {
+      alert('Error: ' + data.error)
+    } else {
+      alert('Friend invited!')
+      setShowFundFriend(false)
+      setFriendEmail('')
+      setFriendName('')
+      setFriendChallenge('')
+      setFriendAmount('50')
+    }
+  }
+
   if (!profile) return <p className="container text-center py-32">Loading...</p>
 
   return (
     <div className="container py-8">
       <p className="text-center mb-12 text-xl font-mono">Welcome, {profile.email}</p>
 
+      {/* Role Switcher */}
+      <div className="max-w-md mx-auto mb-8 p-4 bg-gray-100 border-2 border-black rounded-lg">
+        <p className="text-center text-sm font-bold mb-3">
+          Need to switch roles?
+        </p>
+        <div className="flex justify-center gap-2">
+          <Button
+            size="sm"
+            variant="default"
+            className="bg-black text-white"
+          >
+            Athlete
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => router.push('/parent-dashboard')}
+          >
+            Parent
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => router.push('/business-dashboard')}
+          >
+            Business
+          </Button>
+        </div>
+      </div>
+
       <div className="bg-black text-white p-8 mb-12">
-        <h1 className="text-3xl font-bold">
+        <h1 className="text-3xl font-bold text-center">
           Your Athlete Dashboard
         </h1>
       </div>
 
       <div className="bg-black text-white p-8 mb-12">
-        <p className="text-lg leading-relaxed">
+        <p className="text-lg leading-relaxed text-center max-w-3xl mx-auto">
+          Businesses struggle with social media — you are the answer.<br />
           Pitch businesses, claim gigs, build your squad and earn together.
         </p>
+      </div>
+
+      {/* Progress Meter */}
+      <div className="max-w-3xl mx-auto mb-16 p-12 bg-gray-100 border-4 border-black">
+        <h2 className="text-3xl font-bold mb-8 text-center">
+          Your Progress to Big Rewards
+        </h2>
+        <div className="bg-gray-200 h-12 border-4 border-black relative mb-8">
+          <div 
+            className="bg-green-500 h-full transition-all"
+            style={{ width: `${(gigCount / 8) * 100}%` }}
+          />
+          <div className="absolute inset-0 flex items-center justify-center text-2xl font-bold">
+            {gigCount} / 8 Gigs
+          </div>
+        </div>
+        <div className="flex justify-between text-lg">
+          <span>4 gigs → Freedom Scholarship</span>
+          <span>8 gigs → Brand Deals</span>
+        </div>
       </div>
 
       <div className="max-w-4xl mx-auto space-y-32 font-mono text-center text-lg">
@@ -191,6 +281,9 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
           <h2 className="text-3xl font-bold mb-8">
             Step 1 — Complete Your Profile
           </h2>
+          <p className="text-xl mb-12">
+            Businesses see this — make it great!
+          </p>
           <div className="max-w-2xl mx-auto bg-gray-100 p-8 border-4 border-black rounded-lg">
             <div className="mb-12">
               <div className="relative w-40 h-40 mx-auto rounded-full overflow-hidden border-4 border-black">
@@ -290,7 +383,7 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">
             {athleteGigTypes.map((gig) => (
-              <div key={gig.title} className="border-4 border-black p-8 bg-gray-100">
+              <div key={gig.title} className="border-4 border-black p-8 bg-gray-100 hover:bg-gray-200 transition">
                 <h3 className="text-2xl font-bold mb-4">{gig.title}</h3>
                 <p className="mb-8">{gig.description}</p>
                 <Button 
@@ -376,7 +469,10 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
                   <p className="font-bold text-2xl mb-6">{offer.type.toUpperCase()} — ${offer.amount}</p>
                   <p className="mb-8">{offer.description}</p>
                   <Button 
-                    onClick={() => router.push(`/claim/${offer.id}`)}
+                    onClick={() => {
+                      router.push(`/claim/${offer.id}`)
+                      setShowFundFriend(true)
+                    }}
                     className="w-full h-16 text-xl bg-black text-white"
                   >
                     Claim Gig
@@ -386,6 +482,25 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
             </div>
           )}
         </div>
+
+        {/* Fund a Friend */}
+        {showFundFriend && (
+          <div className="max-w-2xl mx-auto mb-16 p-12 bg-green-100 border-4 border-green-600">
+            <h3 className="text-3xl font-bold mb-8 text-center">Invite a Teammate</h3>
+            <p className="text-xl mb-8 text-center">
+              Help a friend get started — invite them with a pre-funded challenge.
+            </p>
+            <div className="space-y-6">
+              <Input placeholder="Friend's email" value={friendEmail} onChange={(e) => setFriendEmail(e.target.value)} />
+              <Input placeholder="Friend's name (optional)" value={friendName} onChange={(e) => setFriendName(e.target.value)} />
+              <Input placeholder="Challenge description" value={friendChallenge} onChange={(e) => setFriendChallenge(e.target.value)} />
+              <Input placeholder="Amount (default $50)" value={friendAmount} onChange={(e) => setFriendAmount(e.target.value)} />
+              <Button onClick={inviteFriend} className="w-full h-16 text-xl bg-green-600 text-white">
+                Send Invite & Fund Challenge
+              </Button>
+            </div>
+          </div>
+        )}
 
         {/* Your Earnings + Freedom Scholarships */}
         <div className="max-w-2xl mx-auto bg-gray-100 p-8 border-4 border-black rounded-lg">
