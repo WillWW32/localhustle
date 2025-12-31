@@ -185,12 +185,6 @@ function BusinessDashboardContent() {
       alert('Stripe failed to load')
       return
     }
-
-    const { error } = await stripe.redirectToCheckout({ sessionId: id })
-
-    if (error) {
-      alert(error.message)
-    }
   }
 
   const handleAddCard = async () => {
