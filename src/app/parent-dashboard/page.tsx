@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, Suspense } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import { signOut } from '@/lib/auth'
 import { Button } from '@/components/ui/button'
@@ -26,16 +26,17 @@ function ParentDashboardContent() {
   const [paymentError, setPaymentError] = useState<string | null>(null)
   const [paymentSuccess, setPaymentSuccess] = useState(false)
   const [activeTab, setActiveTab] = useState<'wallet' | 'clips' | 'kids' | 'scholarships'>('wallet')
-  const [athleteSearch, setAthleteSearch] = useState('')
-  const [searchResults, setSearchResults] = useState<any[]>([])
-  const [selectedAthlete, setSelectedAthlete] = useState<any>(null)
-  const [standaloneScholarshipAmount, setStandaloneScholarshipAmount] = useState('')
-  const [standaloneScholarshipMessage, setStandaloneScholarshipMessage] = useState('')
-  const [scholarshipLoading, setScholarshipLoading] = useState(false)
   const router = useRouter()
   const searchParams = useSearchParams()
+  const pathname = usePathname()
   const stripe = useStripe()
   const elements = useElements()
+
+  const currentRole = pathname.includes('athlete-dashboard') 
+    ? 'athlete' 
+    : pathname.includes('parent-dashboard') 
+      ? 'parent' 
+      : 'business'
 
   useEffect(() => {
     const fetchData = async () => {
@@ -213,65 +214,6 @@ function ParentDashboardContent() {
     }
   }
 
-  const searchAthletes = async () => {
-    if (!athleteSearch.trim()) {
-      setSearchResults([])
-      return
-    }
-
-    const { data } = await supabase
-      .from('profiles')
-      .select('id, full_name, email, school')
-      .or(`full_name.ilike.%${athleteSearch}%,email.ilike.%${athleteSearch}%,school.ilike.%${athleteSearch}%`)
-      .limit(10)
-
-    setSearchResults(data || [])
-  }
-
-  const awardScholarship = async () => {
-    if (!selectedAthlete || !standaloneScholarshipAmount || parseFloat(standaloneScholarshipAmount) <= 0) {
-      alert('Select an athlete and enter a valid amount')
-      return
-    }
-
-    setScholarshipLoading(true)
-
-    const response = await fetch('/api/payout', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        athlete_id: selectedAthlete.id,
-        amount: parseFloat(standaloneScholarshipAmount),
-        type: 'freedom_scholarship',
-        message: standaloneScholarshipMessage || 'Great hustle!',
-      }),
-    })
-
-    const data = await response.json()
-
-    if (data.error) {
-      alert('Error: ' + data.error)
-    } else {
-      await supabase
-        .from('scholarships')
-        .insert({
-          parent_id: parent.id,
-          athlete_id: selectedAthlete.id,
-          amount: parseFloat(standaloneScholarshipAmount),
-          message: standaloneScholarshipMessage || 'Great hustle!',
-        })
-
-      alert(`$${standaloneScholarshipAmount} Freedom Scholarship awarded to ${selectedAthlete.full_name || selectedAthlete.email}!`)
-      setStandaloneScholarshipAmount('')
-      setStandaloneScholarshipMessage('')
-      setSelectedAthlete(null)
-      setSearchResults([])
-      setAthleteSearch('')
-    }
-
-    setScholarshipLoading(false)
-  }
-
   return (
     <div className="container py-8">
       <p className="text-center mb-12 text-xl font-mono">Welcome, Parent!</p>
@@ -284,21 +226,21 @@ function ParentDashboardContent() {
         <div className="flex justify-center gap-2">
           <Button
             size="sm"
-            variant="outline"
+            variant={currentRole === 'athlete' ? 'default' : 'outline'}
             onClick={() => router.push('/athlete-dashboard')}
           >
             Athlete
           </Button>
           <Button
             size="sm"
-            variant="default"
-            className="bg-black text-white"
+            variant={currentRole === 'parent' ? 'default' : 'outline'}
+            className={currentRole === 'parent' ? 'bg-black text-white' : ''}
           >
             Parent
           </Button>
           <Button
             size="sm"
-            variant="outline"
+            variant={currentRole === 'business' ? 'default' : 'outline'}
             onClick={() => router.push('/business-dashboard')}
           >
             Business
@@ -331,13 +273,13 @@ function ParentDashboardContent() {
           </p>
           <Button
             onClick={() => {
-              const link = `https://app.localhustle.org/athlete-onboard?parent_id=${parent.id}`
+              const link = `https://app.localhustle.org/athlete-onboard?parent_id=${parent?.id || ''}`
               navigator.clipboard.writeText(link)
               alert('Invite link copied to clipboard!')
             }}
             className="w-full max-w-md h-20 text-2xl bg-black text-white font-bold"
           >
-            Copy Invite Link for Your Kid
+            Generate Invite Link for Your Kid
           </Button>
         </div>
       )}
