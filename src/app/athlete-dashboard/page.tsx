@@ -1,11 +1,15 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import { signOut } from '@/lib/auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { loadStripe } from '@stripe/stripe-js'
+import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js'
+
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
 
 const athleteGigTypes = [
   { title: 'ShoutOut', description: 'Visit a favorite business and make a quick shoutout 15-sec reel about what you like or your favorite order.' },
@@ -16,7 +20,7 @@ const athleteGigTypes = [
   { title: 'Custom Gig', description: 'Create a gig and offer it.' },
 ]
 
-export default function AthleteDashboard() {
+function AthleteDashboardContent() {
   const [profile, setProfile] = useState<any>(null)
   const [offers, setOffers] = useState<any[]>([])
   const [selectedGigs, setSelectedGigs] = useState<string[]>([])
@@ -34,7 +38,13 @@ export default function AthleteDashboard() {
   const [friendName, setFriendName] = useState('')
   const [friendChallenge, setFriendChallenge] = useState('')
   const [friendAmount, setFriendAmount] = useState('50')
+  const [savedMethods, setSavedMethods] = useState<any[]>([])
+  const [paymentLoading, setPaymentLoading] = useState(false)
+  const [paymentError, setPaymentError] = useState<string | null>(null)
+  const [paymentSuccess, setPaymentSuccess] = useState(false)
   const router = useRouter()
+  const stripe = useStripe()
+  const elements = useElements()
 
   useEffect(() => {
     const fetchData = async () => {
@@ -72,6 +82,15 @@ export default function AthleteDashboard() {
           .order('created_at', { ascending: false })
         setOffers(openOffers || [])
         setSearchedOffers(openOffers || [])
+
+        // Fetch saved payment methods for payouts
+        const response = await fetch('/api/list-payment-methods', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ athlete_id: prof.id }),
+        })
+        const data = await response.json()
+        setSavedMethods(data.methods || [])
       }
     }
 
@@ -206,6 +225,56 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
     }
   }
 
+  const handleAddDebitCard = async () => {
+    if (!stripe || !elements) {
+      setPaymentError('Stripe not loaded')
+      return
+    }
+
+    setPaymentError(null)
+    setPaymentSuccess(false)
+    setPaymentLoading(true)
+
+    const cardElement = elements.getElement(CardElement)
+    if (!cardElement) {
+      setPaymentError('Card element not found')
+      setPaymentLoading(false)
+      return
+    }
+
+    const { error: stripeError, paymentMethod } = await stripe.createPaymentMethod({
+      type: 'card',
+      card: cardElement,
+    })
+
+    if (stripeError) {
+      setPaymentError(stripeError.message || 'Payment error')
+      setPaymentLoading(false)
+      return
+    }
+
+    const response = await fetch('/api/attach-payment-method', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        payment_method_id: paymentMethod.id,
+        athlete_id: profile.id,
+      }),
+    })
+
+    const data = await response.json()
+
+    if (data.error) {
+      setPaymentError(data.error)
+    } else {
+      setPaymentSuccess(true)
+      setSavedMethods([...savedMethods, data.method])
+      setTimeout(() => setPaymentSuccess(false), 5000)
+    }
+
+    setPaymentLoading(false)
+  }
+
   if (!profile) return <p className="container text-center py-32">Loading...</p>
 
   return (
@@ -255,6 +324,27 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
         </p>
       </div>
 
+      {/* Step-by-Step Guidance */}
+    <div className="bg-gray-100 p-8 border-4 border-black rounded-lg mb-16">
+    <h2 className="text-3xl font-bold mb-8 text-center">
+        Get Started in 4 Steps
+    </h2>
+    <ol className="space-y-8 text-left max-w-2xl mx-auto">
+      <li className="text-xl">
+       <strong>Step 1: Complete profile</strong> — Businesses see this.
+      </li>
+      <li className="text-xl">
+          <strong>Step 2: Choose gigs</strong> — Businesses will see these.
+     </li>
+     <li className="text-xl">
+       <strong>Step 3: Pitch or claim gigs</strong> — Get the gig, complete it.
+      </li>
+     <li className="text-xl">
+       <strong>Step 4: Complete & earn</strong> — Get paid instantly upon approval.
+      </li>
+     </ol>
+    </div>
+    
       {/* Progress Meter */}
       <div className="max-w-3xl mx-auto mb-16 p-12 bg-gray-100 border-4 border-black">
         <h2 className="text-3xl font-bold mb-8 text-center">
@@ -412,7 +502,7 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
             {showPitchLetter ? 'Hide Pitch Letter' : 'Show Pitch Letter'}
           </Button>
           {showPitchLetter && (
-            <div className="bg-gray-100 p-8 border-4 border-black mb-8 max-w-3xl mx-auto">
+            <div className="bg-gray-100 p-8 border-4 border-black mb-8 max-w-4xl mx-auto">
               <pre className="text-left whitespace-pre-wrap text-base">
                 {`Hey [Business Name],
 
@@ -469,10 +559,7 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
                   <p className="font-bold text-2xl mb-6">{offer.type.toUpperCase()} — ${offer.amount}</p>
                   <p className="mb-8">{offer.description}</p>
                   <Button 
-                    onClick={() => {
-                      router.push(`/claim/${offer.id}`)
-                      setShowFundFriend(true)
-                    }}
+                    onClick={() => router.push(`/claim/${offer.id}`)}
                     className="w-full h-16 text-xl bg-black text-white"
                   >
                     Claim Gig
@@ -483,34 +570,77 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
           )}
         </div>
 
-        {/* Fund a Friend */}
-        {showFundFriend && (
-          <div className="max-w-2xl mx-auto mb-16 p-12 bg-green-100 border-4 border-green-600">
-            <h3 className="text-3xl font-bold mb-8 text-center">Invite a Teammate</h3>
-            <p className="text-xl mb-8 text-center">
-              Help a friend get started — invite them with a pre-funded challenge.
-            </p>
-            <div className="space-y-6">
-              <Input placeholder="Friend's email" value={friendEmail} onChange={(e) => setFriendEmail(e.target.value)} />
-              <Input placeholder="Friend's name (optional)" value={friendName} onChange={(e) => setFriendName(e.target.value)} />
-              <Input placeholder="Challenge description" value={friendChallenge} onChange={(e) => setFriendChallenge(e.target.value)} />
-              <Input placeholder="Amount (default $50)" value={friendAmount} onChange={(e) => setFriendAmount(e.target.value)} />
-              <Button onClick={inviteFriend} className="w-full h-16 text-xl bg-green-600 text-white">
-                Send Invite & Fund Challenge
-              </Button>
-            </div>
-          </div>
-        )}
-
         {/* Your Earnings + Freedom Scholarships */}
-        <div className="max-w-2xl mx-auto bg-gray-100 p-8 border-4 border-black rounded-lg">
-          <h2 className="text-3xl font-bold mb-8">Your Earnings</h2>
-          <p className="text-xl mb-4">Total Earned: $125</p>
-          <p className="text-xl mb-8 text-green-600 font-bold">Freedom Scholarships Earned: $500</p>
-          <p className="text-lg mb-8">
-            Freedom Scholarships are unrestricted cash paid instantly — use for books, food, rent — whatever you need.
-          </p>
+<div className="bg-green-100 p-8 border-4 border-green-600 rounded-lg">
+  <h2 className="text-3xl font-bold mb-8">
+    Your Earnings
+  </h2>
+  <p className="text-xl mb-4">
+    Total Earned: ${profile?.total_earnings || 0}
+  </p>
+  <p className="text-xl mb-8 text-green-600 font-bold">
+    Freedom Scholarships Earned: ${profile?.scholarships_earned || 0}
+  </p>
+  <p className="text-lg mb-8">
+    Freedom Scholarships are unrestricted cash paid instantly — use for books, food, rent — whatever you need.
+  </p>
+  <p className="text-lg mb-8 text-center text-gray-600">
+    Pending payouts: ${profile?.pending_payouts || 0}
+  </p>
+</div>
+
+        {/* Debit Card Payout Setup */}
+<div className="bg-green-100 p-8 border-4 border-green-600 rounded-lg">
+  <h2 className="text-3xl font-bold mb-8">
+    Payouts — Add Debit Card
+  </h2>
+  <p className="text-xl mb-12">
+    Add your debit card to receive earnings instantly upon approval.
+  </p>
+  <div className="max-w-2xl mx-auto bg-gray-100 p-8 border-4 border-black rounded-lg">
+    <Elements stripe={stripePromise}>
+      <div className="space-y-8">
+        <CardElement 
+          options={{
+            style: {
+              base: {
+                fontSize: '20px',
+                color: '#000',
+                fontFamily: 'Courier New, monospace',
+                '::placeholder': { color: '#666' },
+              },
+            },
+          }}
+        />
+        {paymentError && <p className="text-red-600 text-center text-xl">{paymentError}</p>}
+        {paymentSuccess && <p className="text-green-600 text-center text-xl">Debit card saved — payouts ready!</p>}
+        <Button 
+          onClick={handleAddDebitCard}
+          disabled={paymentLoading}
+          className="w-full h-16 text-xl bg-black text-white"
+        >
+          {paymentLoading ? 'Saving...' : 'Save Debit Card'}
+        </Button>
+      </div>
+    </Elements>
+
+    {savedMethods.length > 0 && (
+      <div className="mt-12">
+        <h4 className="text-2xl font-bold mb-8 text-center">Saved Debit Cards</h4>
+        <div className="space-y-6">
+          {savedMethods.map((method) => (
+            <div key={method.id} className="bg-gray-100 p-8 border-4 border-black">
+              <p className="text-xl">
+                {method.brand.toUpperCase()} •••• {method.last4}<br />
+                Expires {method.exp_month}/{method.exp_year}
+              </p>
+            </div>
+          ))}
         </div>
+      </div>
+    )}
+  </div>
+</div>
 
         {/* Your Squad */}
         <div>
@@ -573,5 +703,15 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
         </Button>
       </div>
     </div>
+  )
+}
+
+export default function AthleteDashboard() {
+  return (
+    <Elements stripe={stripePromise}>
+      <Suspense fallback={<p className="container text-center py-32">Loading Stripe...</p>}>
+        <AthleteDashboardContent />
+      </Suspense>
+    </Elements>
   )
 }
