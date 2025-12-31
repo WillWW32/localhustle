@@ -14,14 +14,29 @@ export async function POST(request: Request) {
       payment_method: payment_method_id,
       confirmation_method: 'manual',
       confirm: true,
-      return_url: 'https://app.localhustle.org/business-dashboard', // optional
     })
 
     // Update wallet balance in Supabase
-    await supabase
+    const { data: currentBusiness, error: fetchError } = await supabase
       .from('businesses')
-      .update({ wallet_balance: supabase.raw('wallet_balance + ?', [amount]) })
+      .select('wallet_balance')
       .eq('id', business_id)
+      .single()
+
+    if (fetchError || !currentBusiness) {
+      return NextResponse.json({ error: 'Business not found' }, { status: 404 })
+    }
+
+    const newBalance = (currentBusiness.wallet_balance || 0) + amount
+
+    const { error: updateError } = await supabase
+      .from('businesses')
+      .update({ wallet_balance: newBalance })
+      .eq('id', business_id)
+
+    if (updateError) {
+      return NextResponse.json({ error: updateError.message }, { status: 500 })
+    }
 
     return NextResponse.json({ success: true })
   } catch (error: any) {
