@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabaseClient'
 import { signOut } from '@/lib/auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { usePathname } from 'next/navigation'
 import { loadStripe } from '@stripe/stripe-js'
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js'
 
@@ -50,6 +51,13 @@ function BusinessDashboardContent() {
   const elements = useElements()
   
   const hasMultipleRoles = true
+  
+  const pathname = usePathname()
+  const currentRole = pathname.includes('athlete-dashboard') 
+    ? 'athlete' 
+    : pathname.includes('parent-dashboard') 
+      ? 'parent' 
+      : 'business'
 
   useEffect(() => {
     const fetchData = async () => {
@@ -239,6 +247,7 @@ function BusinessDashboardContent() {
     setPaymentLoading(false)
   }
 
+  
   const searchAthletes = async () => {
     if (!athleteSearch.trim()) {
       setSearchResults([])
@@ -310,26 +319,26 @@ function BusinessDashboardContent() {
     </p>
     <div className="flex justify-center gap-2">
       <Button
-        size="sm"
-        variant={currentRole === 'athlete' ? 'default' : 'outline'}
-        onClick={() => router.push('/athlete-dashboard')}
-      >
-        Athlete
-      </Button>
-      <Button
-        size="sm"
-        variant={currentRole === 'parent' ? 'default' : 'outline'}
-        onClick={() => router.push('/parent-dashboard')}
-      >
-        Parent
-      </Button>
-      <Button
-        size="sm"
-        variant={currentRole === 'business' ? 'default' : 'outline'}
-        onClick={() => router.push('/business-dashboard')}
-      >
-        Business
-      </Button>
+  size="sm"
+  variant={currentRole === 'athlete' ? 'default' : 'outline'}
+  onClick={() => router.push('/athlete-dashboard')}
+>
+  Athlete
+</Button>
+<Button
+  size="sm"
+  variant={currentRole === 'parent' ? 'default' : 'outline'}
+  onClick={() => router.push('/parent-dashboard')}
+>
+  Parent
+</Button>
+<Button
+  size="sm"
+  variant={currentRole === 'business' ? 'default' : 'outline'}
+  onClick={() => router.push('/business-dashboard')}
+>
+  Business
+</Button>
     </div>
   </div>
 )}
