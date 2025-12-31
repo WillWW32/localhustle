@@ -49,53 +49,52 @@ function BusinessDashboardContent() {
   const stripe = useStripe()
   const elements = useElements()
 
- useEffect(() => {
-  const fetchData = async () => {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      router.replace('/')
-      return
-    }
-
-    const { data: biz } = await supabase
-      .from('businesses')
-      .select('*')
-      .eq('owner_id', user.id)
-      .single()
-
-    if (biz) {
-      setBusiness(biz)
-
-      const { data: referred } = await supabase
-        .from('profiles')
-        .select('id, full_name, email, school')
-        .eq('referred_by', biz.id)
-      setReferredAthletes(referred || [])
-
-      const { data: clips } = await supabase
-        .from('clips')
-        .select('*, offers(*), profiles(email, parent_email)')
-        .eq('status', 'pending')
-        .in('offer_id', (await supabase.from('offers').select('id').eq('business_id', biz.id)).data?.map(o => o.id) || [])
-      setPendingClips(clips || [])
-
-      // Fetch saved payment methods
-      if (biz?.id) {
-        const response = await fetch('/api/list-payment-methods', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ business_id: biz.id }),
-        })
-        const data = await response.json()
-        setSavedMethods(data.methods || [])
+  useEffect(() => {
+    const fetchData = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        router.replace('/')
+        return
       }
-    } else {
-      setBusiness(null)  // No redirect — stay on dashboard
-    }
-  }
 
-  fetchData()
-}, [router])
+      const { data: biz } = await supabase
+        .from('businesses')
+        .select('*')
+        .eq('owner_id', user.id)
+        .single()
+
+      if (biz) {
+        setBusiness(biz)
+
+        const { data: referred } = await supabase
+          .from('profiles')
+          .select('id, full_name, email, school')
+          .eq('referred_by', biz.id)
+        setReferredAthletes(referred || [])
+
+        const { data: clips } = await supabase
+          .from('clips')
+          .select('*, offers(*), profiles(email, parent_email)')
+          .eq('status', 'pending')
+          .in('offer_id', (await supabase.from('offers').select('id').eq('business_id', biz.id)).data?.map(o => o.id) || [])
+        setPendingClips(clips || [])
+
+        if (biz?.id) {
+          const response = await fetch('/api/list-payment-methods', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ business_id: biz.id }),
+          })
+          const data = await response.json()
+          setSavedMethods(data.methods || [])
+        }
+      } else {
+        setBusiness(null)
+      }
+    }
+
+    fetchData()
+  }, [router])
 
   const handleGigSelect = (gig: any) => {
     setSelectedGig(gig)
@@ -187,6 +186,11 @@ function BusinessDashboardContent() {
       return
     }
 
+    const { error } = await stripe.redirectToCheckout({ sessionId: id })
+
+    if (error) {
+      alert(error.message)
+    }
   }
 
   const handleAddCard = async () => {
@@ -655,7 +659,7 @@ function BusinessDashboardContent() {
               <h3 className="text-3xl mb-8 font-bold">Payment Methods</h3>
               <p className="text-xl mb-12">
                 Saved cards for wallet top-ups and auto-top-up.<br />
-                Add or manage cards below to fund gigs and scholarships.
+                Add or manage cards below.
               </p>
 
               {/* Saved Cards */}
