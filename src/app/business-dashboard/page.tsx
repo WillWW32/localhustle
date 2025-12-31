@@ -38,7 +38,7 @@ function BusinessDashboardContent() {
   const [paymentLoading, setPaymentLoading] = useState(false)
   const [paymentError, setPaymentError] = useState<string | null>(null)
   const [paymentSuccess, setPaymentSuccess] = useState(false)
-  const [activeTab, setActiveTab] = useState<'wallet' | 'gigs' | 'clips' | 'kids' | 'favorites' | 'payment-methods' | 'scholarships' | 'booster'>('wallet')
+  const [activeTab, setActiveTab] = useState<'wallet' | 'gigs' | 'clips' | 'kids' | 'favorites' | 'scholarships' | 'booster'>('wallet')
   const [athleteSearch, setAthleteSearch] = useState('')
   const [searchResults, setSearchResults] = useState<any[]>([])
   const [selectedAthlete, setSelectedAthlete] = useState<any>(null)
@@ -173,6 +173,26 @@ function BusinessDashboardContent() {
     }
   }
 
+  const handleAddFunds = async (amount: number) => {
+    const response = await fetch('/api/checkout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ amount, business_id: business.id }),
+    })
+    const { id } = await response.json()
+    const stripe = await loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
+    if (!stripe) {
+      alert('Stripe failed to load')
+      return
+    }
+
+    const { error } = await stripe.redirectToCheckout({ sessionId: id })
+
+    if (error) {
+      alert(error.message)
+    }
+  }
+
   const handleAddCard = async () => {
     if (!stripe || !elements) {
       setPaymentError('Stripe not loaded')
@@ -217,6 +237,7 @@ function BusinessDashboardContent() {
     } else {
       setPaymentSuccess(true)
       setSavedMethods([...savedMethods, data.method])
+      setTimeout(() => setPaymentSuccess(false), 5000)
     }
 
     setPaymentLoading(false)
@@ -283,205 +304,280 @@ function BusinessDashboardContent() {
 
   return (
     <div className="container py-8">
-      <p className="text-center mb-12 text-xl font-mono">Welcome, {business?.name || 'Business'}</p>
+      <p className="text-center mb-12 text-xl font-mono">Welcome, {business?.name || 'Business Owner'}</p>
 
       <div className="bg-black text-white p-8 mb-12">
-        <h1 className="text-3xl font-bold">
+        <h1 className="text-3xl font-bold text-center">
           Your Business Admin Console
         </h1>
       </div>
 
       <div className="bg-black text-white p-8 mb-12">
-        <p className="text-lg leading-relaxed">
-          Post gigs to get authentic content. Review clips — only approve what you love. Become the hometown hero.
+        <p className="text-lg leading-relaxed text-center">
+          The easiest way to get new customers with authentic content from local athletes.<br />
+          Post gigs, review clips — only approve what you love.<br />
+          Become the hometown hero with Freedom Scholarships.
         </p>
       </div>
 
       <div className="max-w-4xl mx-auto space-y-16 font-mono text-center text-lg">
-        {/* Business Tabs */}
-        <div className="flex justify-center gap-4 flex-wrap mb-12">
-          <Button
-            onClick={() => setActiveTab('wallet')}
-            variant={activeTab === 'wallet' ? 'default' : 'outline'}
-            className="px-8 py-4 text-xl"
-          >
-            Wallet
-          </Button>
-          <Button
-            onClick={() => setActiveTab('gigs')}
-            variant={activeTab === 'gigs' ? 'default' : 'outline'}
-            className="px-8 py-4 text-xl"
-          >
-            Create Gigs
-          </Button>
-          <Button
-            onClick={() => setActiveTab('clips')}
-            variant={activeTab === 'clips' ? 'default' : 'outline'}
-            className="px-8 py-4 text-xl"
-          >
-            Pending Clips
-          </Button>
-          <Button
-            onClick={() => setActiveTab('kids')}
-            variant={activeTab === 'kids' ? 'default' : 'outline'}
-            className="px-8 py-4 text-xl"
-          >
-            My Kid's Challenges
-          </Button>
-          <Button
-            onClick={() => setActiveTab('favorites')}
-            variant={activeTab === 'favorites' ? 'default' : 'outline'}
-            className="px-8 py-4 text-xl"
-          >
-            Favorite Athletes
-          </Button>
-          <Button
-            onClick={() => setActiveTab('payment-methods')}
-            variant={activeTab === 'payment-methods' ? 'default' : 'outline'}
-            className="px-8 py-4 text-xl"
-          >
-            Payment Methods
-          </Button>
-          <Button
-            onClick={() => setActiveTab('scholarships')}
-            variant={activeTab === 'scholarships' ? 'default' : 'outline'}
-            className="px-8 py-4 text-xl"
-          >
-            Freedom Scholarships
-          </Button>
-          <Button
-            onClick={() => setActiveTab('booster')}
-            variant={activeTab === 'booster' ? 'default' : 'outline'}
-            className="px-8 py-4 text-xl"
-          >
-            Booster Events
-          </Button>
+        {/* Sticky Tabs */}
+        <div className="sticky top-0 bg-white z-10 border-b-4 border-black py-4 mb-12">
+          <div className="flex justify-center gap-4 flex-wrap">
+            <Button
+              onClick={() => setActiveTab('wallet')}
+              variant={activeTab === 'wallet' ? 'default' : 'outline'}
+              className="px-8 py-4 text-xl"
+            >
+              Wallet
+            </Button>
+            <Button
+              onClick={() => setActiveTab('gigs')}
+              variant={activeTab === 'gigs' ? 'default' : 'outline'}
+              className="px-8 py-4 text-xl"
+            >
+              Create Gigs
+            </Button>
+            <Button
+              onClick={() => setActiveTab('clips')}
+              variant={activeTab === 'clips' ? 'default' : 'outline'}
+              className="px-8 py-4 text-xl"
+            >
+              Pending Clips
+            </Button>
+            <Button
+              onClick={() => setActiveTab('kids')}
+              variant={activeTab === 'kids' ? 'default' : 'outline'}
+              className="px-8 py-4 text-xl"
+            >
+              My Kid's Challenges
+            </Button>
+            <Button
+              onClick={() => setActiveTab('favorites')}
+              variant={activeTab === 'favorites' ? 'default' : 'outline'}
+              className="px-8 py-4 text-xl"
+            >
+              Favorite Athletes
+            </Button>
+            <Button
+              onClick={() => setActiveTab('scholarships')}
+              variant={activeTab === 'scholarships' ? 'default' : 'outline'}
+              className="px-8 py-4 text-xl"
+            >
+              Freedom Scholarships
+            </Button>
+            <Button
+              onClick={() => setActiveTab('booster')}
+              variant={activeTab === 'booster' ? 'default' : 'outline'}
+              className="px-8 py-4 text-xl"
+            >
+              Booster Events
+            </Button>
+          </div>
         </div>
 
-        {/* Wallet Tab */}
+        {/* Wallet Tab — Combined with Payment Methods */}
         {activeTab === 'wallet' && (
-          <div>
-            <h2 className="text-4xl font-bold mb-8">Wallet</h2>
-            <p className="text-3xl mb-12">
-              Balance: ${business?.wallet_balance?.toFixed(2) || '0.00'}
-            </p>
-
-            {/* Auto-Top-Up */}
-            <div className="max-w-sm mx-auto mb-16 p-8 bg-gray-100 border-4 border-black">
-              <label className="flex flex-col items-center gap-4 cursor-pointer">
-                <span className="text-2xl font-bold">Auto-Top-Up</span>
-                <input
-                  type="checkbox"
-                  checked={business?.auto_top_up ?? false}
-                  onChange={async (e) => {
-                    const enabled = e.target.checked
-                    await supabase
-                      .from('businesses')
-                      .update({ auto_top_up: enabled })
-                      .eq('id', business.id)
-                    setBusiness({ ...business, auto_top_up: enabled })
-                  }}
-                  className="w-8 h-8"
-                />
-              </label>
-              <p className="text-lg mt-4">
-                When balance &lt; $100, add $500 automatically
-              </p>
+          <div className="space-y-24">
+            {/* Step-by-Step Guidance */}
+            <div className="bg-gray-100 p-12 border-4 border-black max-w-3xl mx-auto">
+              <h3 className="text-3xl font-bold mb-12 text-center">
+                Get Started in 4 Steps
+              </h3>
+              <ol className="text-xl space-y-8">
+                <li><strong>Step 1:</strong> Complete your business profile below</li>
+                <li><strong>Step 2:</strong> Add a card for funding</li>
+                <li><strong>Step 3:</strong> Add funds to your wallet</li>
+                <li><strong>Step 4:</strong> Post gigs and award scholarships</li>
+              </ol>
             </div>
 
-            {/* Add Funds */}
-            <div className="max-w-2xl mx-auto space-y-12">
-              <div>
-                <h3 className="text-2xl font-bold mb-8 text-center">Add Funds</h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                  <Button onClick={() => alert('+ $100')} className="h-16 text-xl bg-black text-white">
-                    + $100
-                  </Button>
-                  <Button onClick={() => alert('+ $500')} className="h-16 text-xl bg-black text-white">
-                    + $500
-                  </Button>
-                  <Button onClick={() => alert('+ $1000')} className="h-16 text-xl bg-black text-white">
-                    + $1000
-                  </Button>
-                  <Button 
-                    onClick={() => {
-                      const amt = prompt('Custom amount:')
-                      if (amt) alert(`+ $${amt}`)
-                    }}
-                    className="h-16 text-xl bg-green-400 text-black"
-                  >
-                    Custom
-                  </Button>
-                </div>
-              </div>
-
-              {/* Card Entry */}
-              <div className="bg-gray-100 p-12 border-4 border-black">
-                <h4 className="text-2xl font-bold mb-8 text-center">
-                  Add Card for Top-Ups
-                </h4>
-                <p className="text-lg mb-8 text-center">
-                  Use this card to fund gigs and scholarships.
+            {/* Profile Setup — Only if incomplete */}
+            {(!business?.name || !business?.phone) && (
+              <div className="max-w-2xl mx-auto p-12 bg-yellow-100 border-4 border-yellow-600">
+                <h3 className="text-3xl font-bold mb-8 text-center">
+                  Step 1: Complete Your Business Profile
+                </h3>
+                <p className="text-xl mb-12 text-center">
+                  Add your business name and contact info to post gigs and award scholarships.
                 </p>
-                <Elements stripe={stripePromise}>
-                  <div className="space-y-8">
-                    <CardElement 
-                      options={{
-                        style: {
-                          base: {
-                            fontSize: '20px',
-                            color: '#000',
-                            fontFamily: 'Courier New, monospace',
-                            '::placeholder': { color: '#666' },
-                          },
-                        },
-                      }}
+                <div className="space-y-8">
+                  <div>
+                    <label className="block text-lg mb-2">Business Name</label>
+                    <Input 
+                      value={business?.name || ''} 
+                      onChange={(e) => setBusiness({ ...business, name: e.target.value })}
+                      placeholder="e.g., Bridge Pizza"
                     />
-                    <Button onClick={handleAddCard} className="w-full h-16 text-xl bg-black text-white">
-                      Save Card
-                    </Button>
                   </div>
-                </Elements>
-              </div>
-
-              {/* Saved Cards */}
-              {savedMethods.length > 0 && (
-                <div>
-                  <h4 className="text-2xl font-bold mb-8 text-center">Saved Cards</h4>
-                  <div className="space-y-6">
-                    {savedMethods.map((method) => (
-                      <div key={method.id} className="bg-gray-100 p-8 border-4 border-black">
-                        <p className="text-xl">
-                          {method.brand.toUpperCase()} •••• {method.last4}<br />
-                          Expires {method.exp_month}/{method.exp_year}
-                        </p>
-                      </div>
-                    ))}
+                  <div>
+                    <label className="block text-lg mb-2">Contact Phone</label>
+                    <Input 
+                      value={business?.phone || ''} 
+                      onChange={(e) => setBusiness({ ...business, phone: e.target.value })}
+                      placeholder="(555) 123-4567"
+                    />
                   </div>
+                  <Button 
+                    onClick={async () => {
+                      const { error } = await supabase
+                        .from('businesses')
+                        .update({ name: business.name, phone: business.phone })
+                        .eq('id', business.id)
+                      if (error) {
+                        alert('Error saving profile')
+                      } else {
+                        alert('Profile saved!')
+                        setBusiness({ ...business, name: business.name, phone: business.phone })
+                      }
+                    }}
+                    className="w-full h-16 text-xl bg-black text-white"
+                  >
+                    Save Profile
+                  </Button>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
+
+            {/* Full Wallet — Only after profile complete */}
+            {(business?.name && business?.phone) && (
+              <>
+                <div>
+                  <h2 className="text-4xl font-bold mb-8 text-center">Wallet</h2>
+                  <p className="text-3xl mb-12 text-center">
+                    Balance: ${business?.wallet_balance?.toFixed(2) || '0.00'}
+                  </p>
+
+                  {/* Auto-Top-Up */}
+                  <div className="max-w-sm mx-auto mb-16 p-8 bg-gray-100 border-4 border-black">
+                    <label className="flex flex-col items-center gap-4 cursor-pointer">
+                      <span className="text-2xl font-bold">Auto-Top-Up (recommended)</span>
+                      <input
+                        type="checkbox"
+                        checked={business?.auto_top_up ?? true}
+                        onChange={async (e) => {
+                          const enabled = e.target.checked
+                          await supabase
+                            .from('businesses')
+                            .update({ auto_top_up: enabled })
+                            .eq('id', business.id)
+                          setBusiness({ ...business, auto_top_up: enabled })
+                          alert(enabled ? 'Auto-top-up enabled!' : 'Auto-top-up disabled')
+                        }}
+                        className="w-8 h-8"
+                      />
+                    </label>
+                    <p className="text-lg mt-4 text-center">
+                      When balance &lt; $100, add $500 automatically
+                    </p>
+                  </div>
+
+                  <p className="text-lg mb-12 text-center max-w-3xl mx-auto">
+                    Top up your wallet — post gigs anytime. Most businesses start with $500–$1000.<br />
+                    You only pay for content you approve.
+                  </p>
+
+                  {/* Add Funds */}
+                  <div className="mb-16">
+                    <h3 className="text-2xl font-bold mb-8 text-center">Step 3: Add Funds</h3>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-3xl mx-auto">
+                      <Button onClick={() => handleAddFunds(100)} className="h-16 text-xl bg-black text-white">
+                        + $100
+                      </Button>
+                      <Button onClick={() => handleAddFunds(500)} className="h-16 text-xl bg-black text-white">
+                        + $500
+                      </Button>
+                      <Button onClick={() => handleAddFunds(1000)} className="h-16 text-xl bg-black text-white">
+                        + $1000
+                      </Button>
+                      <Button 
+                        onClick={() => {
+                          const amt = prompt('Custom amount:')
+                          if (amt && !isNaN(Number(amt))) handleAddFunds(Number(amt))
+                        }}
+                        className="h-16 text-xl bg-green-400 text-black"
+                      >
+                        Custom
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Card Entry */}
+                  <div className="max-w-2xl mx-auto mb-16">
+                    <div className="bg-gray-100 p-12 border-4 border-black">
+                      <h4 className="text-2xl font-bold mb-8 text-center">
+                        Step 2: Add Card for Top-Ups
+                      </h4>
+                      <p className="text-lg mb-8 text-center">
+                        Use this card to fund gigs and scholarships — safe and secure.
+                      </p>
+                      <CardElement 
+                        options={{
+                          style: {
+                            base: {
+                              fontSize: '20px',
+                              color: '#000',
+                              fontFamily: 'Courier New, monospace',
+                              '::placeholder': { color: '#666' },
+                            },
+                          },
+                        }}
+                      />
+                      {paymentError && <p className="text-red-600 text-center mt-6 text-xl">{paymentError}</p>}
+                      {paymentSuccess && <p className="text-green-600 text-center mt-6 text-xl">Card saved!</p>}
+                      <Button 
+                        onClick={handleAddCard}
+                        disabled={paymentLoading}
+                        className="w-full h-16 text-xl bg-black text-white mt-8"
+                      >
+                        {paymentLoading ? 'Saving...' : 'Save Card'}
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Saved Cards */}
+                  {savedMethods.length > 0 && (
+                    <div className="max-w-2xl mx-auto">
+                      <h4 className="text-2xl font-bold mb-8 text-center">Saved Cards</h4>
+                      <div className="space-y-6">
+                        {savedMethods.map((method) => (
+                          <div key={method.id} className="bg-gray-100 p-8 border-4 border-black">
+                            <p className="text-xl">
+                              {method.brand.toUpperCase()} •••• {method.last4}<br />
+                              Expires {method.exp_month}/{method.exp_year}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
           </div>
         )}
 
         {/* Create Gigs Tab */}
         {activeTab === 'gigs' && (
           <div>
-            <h2 className="text-4xl font-bold mb-12">Create a Gig</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-12 max-w-5xl mx-auto">
+            <h2 className="text-4xl font-bold mb-12 text-center">Step 4: Create a Gig</h2>
+            <p className="text-lg mb-12 text-center max-w-3xl mx-auto">
+              Choose a gig type. Athletes create authentic content for you. Review and approve — only pay for what you love.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12 max-w-5xl mx-auto">
               {businessGigTypes.map((gig) => (
-                <div key={gig.title}>
+                <div key={gig.title} className="border-4 border-black bg-gray-100 hover:bg-gray-200 transition">
                   <button
                     onClick={() => handleGigSelect(gig)}
-                    className="w-full h-80 bg-black text-white p-8 flex flex-col items-center justify-center hover:bg-gray-800 transition"
+                    className="w-full p-12 flex flex-col items-center justify-center"
                   >
-                    <span className="text-3xl mb-4">{gig.title}</span>
-                    <span className="text-2xl mb-4">${gig.baseAmount}+</span>
-                    <span className="text-lg">{gig.description}</span>
+                    <h3 className="text-3xl font-bold mb-6">{gig.title}</h3>
+                    <p className="text-2xl mb-6">${gig.baseAmount}+</p>
+                    <p className="text-lg text-center leading-relaxed px-4">{gig.description}</p>
                   </button>
 
                   {selectedGig?.title === gig.title && (
-                    <div className="mt-8 bg-gray-100 p-8 border-4 border-black max-w-2xl mx-auto">
+                    <div className="p-12 border-t-4 border-black bg-white">
                       <h3 className="text-2xl mb-6 font-bold">Customize Your {gig.title}</h3>
                       <div className="space-y-6">
                         <div>
@@ -628,69 +724,6 @@ function BusinessDashboardContent() {
               No favorites yet — add from clips or kids.
             </p>
           </div>
-        )}
-
-        {/* Payment Methods Tab */}
-        {activeTab === 'payment-methods' && (
-          <Elements stripe={stripePromise}>
-            <div>
-              <h3 className="text-3xl mb-8 font-bold">Payment Methods</h3>
-              <p className="text-xl mb-12">
-                Saved cards for wallet top-ups and auto-top-up.<br />
-                Add or manage cards below to fund gigs and scholarships.
-              </p>
-
-              {/* Saved Cards */}
-              {savedMethods.length === 0 ? (
-                <p className="text-gray-600 mb-12 text-xl">
-                  No saved cards yet.
-                </p>
-              ) : (
-                <div className="space-y-8 mb-16 max-w-2xl mx-auto">
-                  {savedMethods.map((method) => (
-                    <div key={method.id} className="border-4 border-black p-8 bg-gray-100">
-                      <p className="text-xl">
-                        {method.brand.toUpperCase()} •••• {method.last4}<br />
-                        Expires {method.exp_month}/{method.exp_year}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* Add New Card */}
-              <div className="max-w-2xl mx-auto">
-                <div className="bg-gray-100 p-12 border-4 border-black mb-12">
-                  <h4 className="text-2xl font-bold mb-6 text-center">
-                    Add New Card
-                  </h4>
-                  <CardElement 
-                    options={{
-                      style: {
-                        base: {
-                          fontSize: '20px',
-                          color: '#000',
-                          fontFamily: 'Courier New, monospace',
-                          '::placeholder': { color: '#666' },
-                        },
-                      },
-                    }}
-                  />
-                </div>
-
-                {paymentError && <p className="text-red-600 text-center mb-8 text-xl">{paymentError}</p>}
-                {paymentSuccess && <p className="text-green-600 text-center mb-8 text-xl">Card added!</p>}
-
-                <Button 
-                  onClick={handleAddCard}
-                  disabled={paymentLoading}
-                  className="w-full h-20 text-2xl bg-black text-white font-bold"
-                >
-                  {paymentLoading ? 'Adding...' : 'Save Card'}
-                </Button>
-              </div>
-            </div>
-          </Elements>
         )}
 
         {/* Freedom Scholarships Tab */}
