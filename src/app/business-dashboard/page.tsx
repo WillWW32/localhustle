@@ -48,6 +48,8 @@ function BusinessDashboardContent() {
   const router = useRouter()
   const stripe = useStripe()
   const elements = useElements()
+  
+  const hasMultipleRoles = true
 
   useEffect(() => {
     const fetchData = async () => {
