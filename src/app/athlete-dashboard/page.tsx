@@ -604,7 +604,7 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
   </div>
 </div>
 
-        {{/* Your Earnings + Freedom Scholarships */}
+        {/* Your Earnings + Freedom Scholarships */}
 <div className="max-w-2xl mx-auto bg-gray-100 p-8 border-4 border-black rounded-lg">
   <h2 className="text-3xl font-bold mb-8">Your Earnings</h2>
   <p className="text-xl mb-4">Total Earned: ${profile?.total_earnings?.toFixed(2) || '0.00'}</p>
