@@ -555,27 +555,28 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
     <Elements stripe={stripePromise}>
       <div className="space-y-12">
         {/* Cardholder Name — Editable */}
-<div className="mb-8">
+<div className="mb-6">
   <label className="block text-lg mb-2 text-center">Cardholder Name</label>
-  <Input 
-    placeholder="Your Name" 
-    value={profile?.full_name || ''} 
-    onChange={(e) => setCardholderName(e.target.value)}  // add state if needed
-    className="text-center max-w-md mx-auto"
+  <Input
+    placeholder="Your Name"
+    value={cardholderName}
+    onChange={(e) => setCardholderName(e.target.value)}
+    className="text-center max-w-md mx-auto h-12"  // shorter height
   />
 </div>
 
 {/* Card Element — Bordered & Spacious */}
-<div className="bg-white p-12 border-4 border-black rounded-lg max-w-2xl mx-auto mb-12">
+<div className="bg-white p-16 border-4 border-black rounded-lg max-w-2xl mx-auto mb-16">
   <CardElement 
   onReady={(element) => setCardElementReady(true)} 
     options={{
       style: {
         base: {
-          fontSize: '14px',
+          fontSize: '18px',
           color: '#000',
           fontFamily: 'Courier New, monospace',
           '::placeholder': { color: '#666' },
+          lineHeight: '1.8',
         },
       },
     }}
