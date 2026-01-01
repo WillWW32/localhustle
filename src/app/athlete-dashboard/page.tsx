@@ -1,11 +1,16 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import { signOut } from '@/lib/auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { loadStripe } from '@stripe/stripe-js'
+import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js'
+
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
 
 const athleteGigTypes = [
   { title: 'ShoutOut', description: 'Visit a favorite business and make a quick shoutout 15-sec reel about what you like or your favorite order.' },
@@ -16,7 +21,7 @@ const athleteGigTypes = [
   { title: 'Custom Gig', description: 'Create a gig and offer it.' },
 ]
 
-export default function AthleteDashboard() {
+function AthleteDashboardContent() {
   const [profile, setProfile] = useState<any>(null)
   const [offers, setOffers] = useState<any[]>([])
   const [selectedGigs, setSelectedGigs] = useState<string[]>([])
@@ -29,7 +34,25 @@ export default function AthleteDashboard() {
   const [gigSearch, setGigSearch] = useState('')
   const [searchedOffers, setSearchedOffers] = useState<any[]>([])
   const [gigCount, setGigCount] = useState(0)
+  const [showFundFriend, setShowFundFriend] = useState(false)
+  const [friendEmail, setFriendEmail] = useState('')
+  const [friendName, setFriendName] = useState('')
+  const [friendChallenge, setFriendChallenge] = useState('')
+  const [friendAmount, setFriendAmount] = useState('50')
+  const [savedMethods, setSavedMethods] = useState<any[]>([])
+  const [paymentLoading, setPaymentLoading] = useState(false)
+  const [paymentError, setPaymentError] = useState<string | null>(null)
+  const [paymentSuccess, setPaymentSuccess] = useState(false)
   const router = useRouter()
+  const pathname = usePathname()
+  const stripe = useStripe()
+  const elements = useElements()
+
+  const currentRole = pathname.includes('athlete-dashboard') 
+    ? 'athlete' 
+    : pathname.includes('parent-dashboard') 
+      ? 'parent' 
+      : 'business'
 
   useEffect(() => {
     const fetchData = async () => {
@@ -41,7 +64,7 @@ export default function AthleteDashboard() {
 
       const { data: prof } = await supabase
         .from('profiles')
-        .select('id, full_name, email, school, gig_count, profile_pic, highlight_link, social_followers, bio, total_earnings, scholarships_earned, pending_payouts')
+        .select('*')
         .eq('id', user.id)
         .single()
 
@@ -67,6 +90,15 @@ export default function AthleteDashboard() {
           .order('created_at', { ascending: false })
         setOffers(openOffers || [])
         setSearchedOffers(openOffers || [])
+
+        // Fetch saved payment methods for payouts
+        const response = await fetch('/api/list-payment-methods', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ athlete_id: prof.id }),
+        })
+        const data = await response.json()
+        setSavedMethods(data.methods || [])
       }
     }
 
@@ -119,6 +151,7 @@ Thanks either way!
 
 – ${profile?.email.split('@')[0] || 'me'}
 ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athlete'}`
+
     navigator.clipboard.writeText(letterText)
     alert('Letter copied to clipboard!')
   }
@@ -169,41 +202,93 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
     setSearchedOffers(filtered)
   }
 
+  const inviteFriend = async () => {
+    if (!friendEmail || !friendChallenge) {
+      alert('Please enter friend email and challenge')
+      return
+    }
+
+    const response = await fetch('/api/invite-friend-athlete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        friend_email: friendEmail,
+        friend_name: friendName,
+        challenge_description: friendChallenge,
+        amount: parseFloat(friendAmount),
+        athlete_id: profile.id,
+      }),
+    })
+
+    const data = await response.json()
+
+    if (data.error) {
+      alert('Error: ' + data.error)
+    } else {
+      alert('Friend invited!')
+      setShowFundFriend(false)
+      setFriendEmail('')
+      setFriendName('')
+      setFriendChallenge('')
+      setFriendAmount('50')
+    }
+  }
+
+  const handleAddDebitCard = async () => {
+    if (!stripe || !elements) {
+      setPaymentError('Stripe not loaded')
+      return
+    }
+
+    setPaymentError(null)
+    setPaymentSuccess(false)
+    setPaymentLoading(true)
+
+    const cardElement = elements.getElement(CardElement)
+    if (!cardElement) {
+      setPaymentError('Card element not found')
+      setPaymentLoading(false)
+      return
+    }
+
+    const { error: stripeError, paymentMethod } = await stripe.createPaymentMethod({
+      type: 'card',
+      card: cardElement,
+    })
+
+    if (stripeError) {
+      setPaymentError(stripeError.message || 'Payment error')
+      setPaymentLoading(false)
+      return
+    }
+
+    const response = await fetch('/api/attach-payment-method', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        payment_method_id: paymentMethod.id,
+        athlete_id: profile.id,
+      }),
+    })
+
+    const data = await response.json()
+
+    if (data.error) {
+      setPaymentError(data.error)
+    } else {
+      setPaymentSuccess(true)
+      setSavedMethods([...savedMethods, data.method])
+      setTimeout(() => setPaymentSuccess(false), 5000)
+    }
+
+    setPaymentLoading(false)
+  }
+
   if (!profile) return <p className="container text-center py-32">Loading...</p>
 
   return (
-    <div className="container py-8">
+    <div className="container py-8 relative">
       <p className="text-center mb-12 text-xl font-mono">Welcome, {profile.email}</p>
-
-      {/* Role Switcher */}
-      <div className="max-w-md mx-auto mb-8 p-4 bg-gray-100 border-2 border-black rounded-lg">
-        <p className="text-center text-sm font-bold mb-3">
-          Need to switch roles?
-        </p>
-        <div className="flex justify-center gap-2">
-          <Button
-            size="sm"
-            variant="default"
-            className="bg-black text-white"
-          >
-            Athlete
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => router.push('/parent-dashboard')}
-          >
-            Parent
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => router.push('/business-dashboard')}
-          >
-            Business
-          </Button>
-        </div>
-      </div>
 
       <div className="bg-black text-white p-8 mb-12">
         <h1 className="text-3xl font-bold text-center">
@@ -217,25 +302,6 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
           Pitch businesses, claim gigs, build your squad and earn together.
         </p>
       </div>
-      
-      {/* How It Works Banner */}
-<div className="bg-green-100 p-12 border-4 border-green-600 rounded-lg mb-16">
-  <h2 className="text-3xl font-bold mb-8 text-center">
-    How It Works
-  </h2>
-  <p className="text-xl mb-8 text-center font-bold">
-    Businesses struggle with social media — you are the answer.
-  </p>
-  <ol className="space-y-6 text-left max-w-2xl mx-auto text-xl">
-    <li><strong>Complete your profile</strong> — businesses see this!</li>
-    <li><strong>Choose gigs</strong> — let businesses know what you're willing to do.</li>
-    <li><strong>Pitch or claim gigs</strong> — get selected and complete the gig.</li>
-    <li><strong>Earn instantly</strong> — get paid upon approval, no waiting.</li>
-  </ol>
-  <p className="text-xl mt-12 text-center">
-    Every gig gets you closer to Freedom Scholarships and brand deals.
-  </p>
-</div>
 
       {/* Progress Meter */}
       <div className="max-w-3xl mx-auto mb-16 p-12 bg-gray-100 border-4 border-black">
@@ -394,7 +460,7 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
             {showPitchLetter ? 'Hide Pitch Letter' : 'Show Pitch Letter'}
           </Button>
           {showPitchLetter && (
-            <div className="bg-gray-100 p-8 border-4 border-black mb-8 max-w-3xl mx-auto">
+            <div className="bg-gray-100 p-8 border-4 border-black mb-8 max-w-4xl mx-auto">
               <pre className="text-left whitespace-pre-wrap text-base">
                 {`Hey [Business Name],
 
@@ -462,72 +528,75 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
           )}
         </div>
 
-        {/* Your Earnings + Freedom Scholarships */}
-<div className="max-w-2xl mx-auto bg-gray-100 p-8 border-4 border-black rounded-lg">
-  <h2 className="text-3xl font-bold mb-8">Your Earnings</h2>
-  <p className="text-xl mb-4">Total Earned: ${profile?.total_earnings?.toFixed(2) || '0.00'}</p>
-  <p className="text-xl mb-8 text-green-600 font-bold">Freedom Scholarships Earned: ${profile?.scholarships_earned?.toFixed(2) || '0.00'}</p>
-  <p className="text-lg mb-8">
-    Freedom Scholarships are unrestricted cash paid instantly — use for books, food, rent — whatever you need.
-  </p>
-  <p className="text-lg text-center text-gray-600">
-    Pending payouts: ${profile?.pending_payouts?.toFixed(2) || '0.00'}
-  </p>
-</div>
-        
-        {/* Debit Card Payout Setup */}
-<div className="max-w-2xl mx-auto bg-gray-100 p-8 border-4 border-black rounded-lg mb-16">
-  <h2 className="text-3xl font-bold mb-8 text-center">
-    Payouts — Add Debit Card
-  </h2>
-  <p className="text-xl mb-12 text-center">
-    Add your debit card to receive earnings instantly upon approval.
-  </p>
-  <p className="text-center text-lg mb-8 text-gray-600">
-    Secure by Stripe — your card details are safe and encrypted.
-  </p>
-  <Elements stripe={stripePromise}>
-    <div className="space-y-8">
-      <CardElement 
-        options={{
-          style: {
-            base: {
-              fontSize: '20px',
-              color: '#000',
-              fontFamily: 'Courier New, monospace',
-              '::placeholder': { color: '#666' },
-            },
-          },
-        }}
-      />
-      {paymentError && <p className="text-red-600 text-center text-xl">{paymentError}</p>}
-      {paymentSuccess && <p className="text-green-600 text-center text-xl">Debit card saved — payouts ready!</p>}
-      <Button 
-        onClick={handleAddDebitCard}
-        disabled={paymentLoading}
-        className="w-full h-16 text-xl bg-black text-white"
-      >
-        {paymentLoading ? 'Saving...' : 'Save Debit Card'}
-      </Button>
-    </div>
-  </Elements>
-
-  {savedMethods.length > 0 && (
-    <div className="mt-12">
-      <h4 className="text-2xl font-bold mb-8 text-center">Saved Debit Cards</h4>
-      <div className="space-y-6">
-        {savedMethods.map((method) => (
-          <div key={method.id} className="bg-gray-100 p-8 border-4 border-black">
-            <p className="text-xl">
-              {method.brand.toUpperCase()} •••• {method.last4}<br />
-              Expires {method.exp_month}/{method.exp_year}
+        {/* Payouts — Debit Card Entry */}
+        <div className="max-w-3xl mx-auto mb-16">
+          <div className="bg-gray-100 p-16 border-4 border-black rounded-lg shadow-lg">
+            <h2 className="text-3xl font-bold mb-8 text-center">
+              Payouts — Add Debit Card
+            </h2>
+            <p className="text-xl mb-12 text-center">
+              Add your debit card to receive earnings instantly upon approval.
             </p>
+            <p className="text-center text-lg mb-12 text-gray-600 font-bold">
+              Secure by Stripe — your card details are safe and encrypted.
+            </p>
+            <Elements stripe={stripePromise}>
+              <div className="space-y-12">
+                <div className="bg-white p-8 border-4 border-black rounded-lg">
+                  <CardElement 
+                    options={{
+                      style: {
+                        base: {
+                          fontSize: '20px',
+                          color: '#000',
+                          fontFamily: 'Courier New, monospace',
+                          '::placeholder': { color: '#666' },
+                          backgroundColor: '#fff',
+                          padding: '20px',
+                        },
+                      },
+                    }}
+                  />
+                </div>
+                {paymentError && <p className="text-red-600 text-center text-xl">{paymentError}</p>}
+                {paymentSuccess && <p className="text-green-600 text-center text-xl">Debit card saved — payouts ready!</p>}
+                <Button 
+                  onClick={handleAddDebitCard}
+                  disabled={paymentLoading}
+                  className="w-full h-20 text-2xl bg-black text-white font-bold"
+                >
+                  {paymentLoading ? 'Saving...' : 'Save Debit Card'}
+                </Button>
+              </div>
+            </Elements>
+
+            {savedMethods.length > 0 && (
+              <div className="mt-16">
+                <h4 className="text-2xl font-bold mb-8 text-center">Saved Debit Cards</h4>
+                <div className="space-y-8">
+                  {savedMethods.map((method) => (
+                    <div key={method.id} className="bg-white p-8 border-4 border-black rounded-lg">
+                      <p className="text-xl">
+                        {method.brand.toUpperCase()} •••• {method.last4}<br />
+                        Expires {method.exp_month}/{method.exp_year}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
-        ))}
-      </div>
-    </div>
-  )}
-</div>
+        </div>
+
+        {/* Your Earnings + Freedom Scholarships */}
+        <div className="max-w-2xl mx-auto bg-gray-100 p-8 border-4 border-black rounded-lg">
+          <h2 className="text-3xl font-bold mb-8">Your Earnings</h2>
+          <p className="text-xl mb-4">Total Earned: $125</p>
+          <p className="text-xl mb-8 text-green-600 font-bold">Freedom Scholarships Earned: $500</p>
+          <p className="text-lg mb-8">
+            Freedom Scholarships are unrestricted cash paid instantly — use for books, food, rent — whatever you need.
+          </p>
+        </div>
 
         {/* Your Squad */}
         <div>
@@ -590,5 +659,15 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
         </Button>
       </div>
     </div>
+  )
+}
+
+export default function AthleteDashboard() {
+  return (
+    <Elements stripe={stripePromise}>
+      <Suspense fallback={<p className="container text-center py-32">Loading Stripe...</p>}>
+        <AthleteDashboardContent />
+      </Suspense>
+    </Elements>
   )
 }

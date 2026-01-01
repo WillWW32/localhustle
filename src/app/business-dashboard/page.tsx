@@ -311,37 +311,22 @@ function BusinessDashboardContent() {
     <div className="container py-8">
       <p className="text-center mb-12 text-xl font-mono">Welcome, {business?.name || 'Business Owner'}</p>
       
-      {/* Role Switcher — Small & Conditional */}
-{hasMultipleRoles && (
-  <div className="max-w-md mx-auto mb-8 p-4 bg-gray-100 border-2 border-black rounded-lg">
-    <p className="text-center text-sm font-bold mb-3">
+{/* Role Switcher — Tiny Toggle (Parent <--> Business) */}
+<div className="fixed bottom-4 right-4 z-50">
+  <div className="bg-gray-100 p-2 border-2 border-black rounded-lg shadow-lg w-32">
+    <p className="text-center text-xs font-bold mb-1">
       Need to switch roles?
     </p>
-    <div className="flex justify-center gap-2">
-      <Button
-  size="sm"
-  variant={currentRole === 'athlete' ? 'default' : 'outline'}
-  onClick={() => router.push('/athlete-dashboard')}
->
-  Athlete
-</Button>
-<Button
-  size="sm"
-  variant={currentRole === 'parent' ? 'default' : 'outline'}
-  onClick={() => router.push('/parent-dashboard')}
->
-  Parent
-</Button>
-<Button
-  size="sm"
-  variant={currentRole === 'business' ? 'default' : 'outline'}
-  onClick={() => router.push('/business-dashboard')}
->
-  Business
-</Button>
+    <div className="flex items-center justify-center gap-1">
+      <span className="text-xs">Parent</span>
+      <label className="relative inline-flex items-center cursor-pointer">
+        <input type="checkbox" className="sr-only peer" checked={currentRole === 'business'} onChange={() => router.push('/business-dashboard')} />
+        <div className="w-10 h-5 bg-gray-400 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-black"></div>
+      </label>
+      <span className="text-xs">Business</span>
     </div>
   </div>
-)}
+</div>
 
       <div className="bg-black text-white p-8 mb-12">
         <h1 className="text-3xl font-bold text-center">
@@ -539,39 +524,46 @@ function BusinessDashboardContent() {
                     </div>
                   </div>
 
-                  {/* Card Entry */}
-                  <div className="max-w-2xl mx-auto mb-16">
-                    <div className="bg-gray-100 p-12 border-4 border-black">
-                      <h4 className="text-2xl font-bold mb-8 text-center">
-                        Step 2: Add Card for Top-Ups
-                      </h4>
-                      <p className="text-lg mb-8 text-center">
-                        Use this card to fund gigs and scholarships — safe and secure.
-                      </p>
-                      <CardElement 
-                        options={{
-                          style: {
-                            base: {
-                              fontSize: '20px',
-                              color: '#000',
-                              fontFamily: 'Courier New, monospace',
-                              '::placeholder': { color: '#666' },
-                            },
-                          },
-                        }}
-                      />
-                      {paymentError && <p className="text-red-600 text-center mt-6 text-xl">{paymentError}</p>}
-                      {paymentSuccess && <p className="text-green-600 text-center mt-6 text-xl">Card saved!</p>}
-                      <Button 
-                        onClick={handleAddCard}
-                        disabled={paymentLoading}
-                        className="w-full h-16 text-xl bg-black text-white mt-8"
-                      >
-                        {paymentLoading ? 'Saving...' : 'Save Card'}
-                      </Button>
-                    </div>
-                  </div>
-
+                  {/* Card Entry — Spacious Shopping Cart Style */}
+<div className="max-w-3xl mx-auto mb-16">
+  <div className="bg-white p-16 border-4 border-black rounded-lg shadow-lg">
+    <h4 className="text-3xl font-bold mb-8 text-center">
+      Add Card for Funding
+    </h4>
+    <p className="text-xl mb-12 text-center text-gray-600">
+      Secure by Stripe — your card details are safe and encrypted.
+    </p>
+    <Elements stripe={stripePromise}>
+      <div className="space-y-12">
+        <div className="bg-gray-50 p-8 border-4 border-gray-300 rounded-lg">
+          <CardElement 
+            options={{
+              style: {
+                base: {
+                  fontSize: '22px',
+                  color: '#000',
+                  fontFamily: 'Courier New, monospace',
+                  '::placeholder': { color: '#666' },
+                  backgroundColor: '#fff',
+                  padding: '20px',
+                },
+              },
+            }}
+          />
+        </div>
+        {paymentError && <p className="text-red-600 text-center text-xl">{paymentError}</p>}
+        {paymentSuccess && <p className="text-green-600 text-center text-xl">Card saved!</p>}
+        <Button 
+          onClick={handleAddCard}
+          disabled={paymentLoading}
+          className="w-full h-20 text-2xl bg-black text-white font-bold"
+        >
+          {paymentLoading ? 'Saving...' : 'Save Card'}
+        </Button>
+      </div>
+    </Elements>
+  </div>
+</div>
                   {/* Saved Cards */}
                   {savedMethods.length > 0 && (
                     <div className="max-w-2xl mx-auto">
