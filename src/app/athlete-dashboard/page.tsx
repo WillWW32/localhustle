@@ -278,23 +278,6 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
       }),
     })
 
-    const cardElement = elements.getElement(CardElement)
-    if (!cardElement) {
-    setPaymentError('Card not ready — try again')
-    return
-    }
-    const data = await response.json()
-
-    if (data.error) {
-      setPaymentError(data.error)
-    } else {
-      setPaymentSuccess(true)
-      setSavedMethods([...savedMethods, data.method])
-      setTimeout(() => setPaymentSuccess(false), 5000)
-    }
-
-    setPaymentLoading(false)
-  }
 
   if (!profile) return <p className="container text-center py-32">Loading...</p>
 
