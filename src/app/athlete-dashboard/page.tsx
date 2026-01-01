@@ -439,28 +439,68 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
         </div>
 
         {/* Step 2: Choose Gigs You Offer */}
-        <div className="bg-green-100 p-8 border-4 border-green-600 rounded-lg">
-          <h2 className="text-3xl font-bold mb-8">
-            Step 2 — Choose Gigs You Offer
-          </h2>
-          <p className="mb-12 text-xl">
-            Select the gigs you're willing to do — businesses will see these.
-          </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">
-            {athleteGigTypes.map((gig) => (
-              <div key={gig.title} className="border-4 border-black p-8 bg-gray-100 hover:bg-gray-200 transition">
-                <h3 className="text-2xl font-bold mb-4">{gig.title}</h3>
-                <p className="mb-8">{gig.description}</p>
-                <Button 
-                  onClick={() => toggleGigSelection(gig.title)}
-                  className="w-full h-16 text-xl bg-black text-white hover:bg-gray-800"
-                >
-                  {selectedGigs.includes(gig.title) ? 'Selected ✓' : 'Select This Gig'}
-                </Button>
-              </div>
-            ))}
-          </div>
+<div className="bg-green-100 p-8 border-4 border-green-600 rounded-lg">
+  <h2 className="text-3xl font-bold mb-8">
+    Step 2 — Choose Gigs You Offer
+  </h2>
+  <p className="mb-12 text-xl">
+    Select the gigs you're willing to do — businesses will see these.
+  </p>
+  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">
+    {athleteGigTypes.map((gig) => {
+      const isSelected = selectedGigs.includes(gig.title)
+      const gigSlug = gig.title.toLowerCase().replace(' ', '-')
+
+      const parentMessage = `Hey Mom/Dad! Can you sponsor my ${gig.title} challenge on LocalHustle? I'd earn real money if I complete it. Here's the link: https://app.localhustle.org/parent-onboard?kid_id=${profile?.id || 'fallback'}&gig=${gigSlug}`
+
+      const businessMessage = `Hey! Can you sponsor my ${gig.title} gig on LocalHustle? I'd create ${gig.description.toLowerCase()} for your business. Link: https://app.localhustle.org/business-onboard?ref=${profile?.id || 'fallback'}&gig=${gigSlug}`
+
+      const share = (message: string) => {
+        if (navigator.share) {
+          navigator.share({
+            title: `Sponsor my ${gig.title} gig!`,
+            text: message,
+          }).catch(() => {
+            navigator.clipboard.writeText(message)
+            alert('Message copied!')
+          })
+        } else {
+          navigator.clipboard.writeText(message)
+          alert('Message copied!')
+        }
+      }
+
+      return (
+        <div key={gig.title} className="border-4 border-black p-8 bg-gray-100 hover:bg-gray-200 transition">
+          <h3 className="text-2xl font-bold mb-4">{gig.title}</h3>
+          <p className="mb-8">{gig.description}</p>
+          <Button 
+            onClick={() => toggleGigSelection(gig.title)}
+            className="w-full h-16 text-xl bg-black text-white hover:bg-gray-800 mb-4"
+          >
+            {isSelected ? 'Selected ✓' : 'Select This Gig'}
+          </Button>
+          {isSelected && (
+            <div className="space-y-4">
+              <Button 
+                onClick={() => share(parentMessage)}
+                className="w-full h-16 text-xl bg-green-600 text-white"
+              >
+                Share with Parent
+              </Button>
+              <Button 
+                onClick={() => share(businessMessage)}
+                className="w-full h-16 text-xl bg-black text-white"
+              >
+                Share with Business
+              </Button>
+            </div>
+          )}
         </div>
+      )
+    })}
+  </div>
+</div>
 
         {/* Step 3: Pitch Local Businesses */}
         <div className="bg-green-100 p-8 border-4 border-green-600 rounded-lg">
