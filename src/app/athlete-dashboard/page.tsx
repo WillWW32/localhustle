@@ -319,7 +319,7 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
         </div>
         <div className="flex justify-between text-lg">
           <span>4 gigs → Freedom Scholarship</span>
-          <span>8 gigs → Brand Deals</span>
+          <span>→ 8 gigs → Brand Deals</span>
         </div>
       </div>
 
@@ -528,76 +528,117 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
           )}
         </div>
 
-        {/* Payouts — Debit Card Entry */}
-        <div className="max-w-3xl mx-auto mb-16">
-          <div className="bg-gray-100 p-16 border-4 border-black rounded-lg shadow-lg">
-            <h2 className="text-3xl font-bold mb-8 text-center">
-              Payouts — Add Debit Card
-            </h2>
-            <p className="text-xl mb-12 text-center">
-              Add your debit card to receive earnings instantly upon approval.
-            </p>
-            <p className="text-center text-lg mb-12 text-gray-600 font-bold">
-              Secure by Stripe — your card details are safe and encrypted.
-            </p>
-            <Elements stripe={stripePromise}>
-              <div className="space-y-12">
-                <div className="bg-white p-8 border-4 border-black rounded-lg">
-                  <CardElement 
-                    options={{
-                      style: {
-                        base: {
-                          fontSize: '20px',
-                          color: '#000',
-                          fontFamily: 'Courier New, monospace',
-                          '::placeholder': { color: '#666' },
-                          backgroundColor: '#fff',
-                          padding: '20px',
-                        },
-                      },
-                    }}
-                  />
-                </div>
-                {paymentError && <p className="text-red-600 text-center text-xl">{paymentError}</p>}
-                {paymentSuccess && <p className="text-green-600 text-center text-xl">Debit card saved — payouts ready!</p>}
-                <Button 
-                  onClick={handleAddDebitCard}
-                  disabled={paymentLoading}
-                  className="w-full h-20 text-2xl bg-black text-white font-bold"
-                >
-                  {paymentLoading ? 'Saving...' : 'Save Debit Card'}
-                </Button>
-              </div>
-            </Elements>
+        {/* Payouts — Debit Card Setup */}
+<div className="max-w-3xl mx-auto mb-16">
+  <div className="bg-gray-100 p-16 border-4 border-black rounded-lg shadow-lg">
+    <h2 className="text-3xl font-bold mb-8 text-center">
+      Payouts — Add Debit Card
+    </h2>
+    <p className="text-xl mb-12 text-center">
+      Add your debit card to receive earnings instantly upon approval.
+    </p>
+    <p className="text-center text-lg mb-12 text-gray-600 font-bold">
+      Secure by Stripe — your card details are safe and encrypted.
+    </p>
 
-            {savedMethods.length > 0 && (
-              <div className="mt-16">
-                <h4 className="text-2xl font-bold mb-8 text-center">Saved Debit Cards</h4>
-                <div className="space-y-8">
-                  {savedMethods.map((method) => (
-                    <div key={method.id} className="bg-white p-8 border-4 border-black rounded-lg">
-                      <p className="text-xl">
-                        {method.brand.toUpperCase()} •••• {method.last4}<br />
-                        Expires {method.exp_month}/{method.exp_year}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
+    <Elements stripe={stripePromise}>
+      <div className="space-y-12">
+        {/* Name Field — Pre-filled from profile */}
+        <div>
+          <label className="block text-lg mb-2 text-center">Cardholder Name</label>
+          <Input 
+            value={profile?.full_name || ''} 
+            disabled 
+            className="text-center max-w-md mx-auto"
+          />
         </div>
 
-        {/* Your Earnings + Freedom Scholarships */}
-        <div className="max-w-2xl mx-auto bg-gray-100 p-8 border-4 border-black rounded-lg">
-          <h2 className="text-3xl font-bold mb-8">Your Earnings</h2>
-          <p className="text-xl mb-4">Total Earned: $125</p>
-          <p className="text-xl mb-8 text-green-600 font-bold">Freedom Scholarships Earned: $500</p>
-          <p className="text-lg mb-8">
-            Freedom Scholarships are unrestricted cash paid instantly — use for books, food, rent — whatever you need.
-          </p>
+        {/* Card Element — Bordered Container */}
+        <div className="bg-white p-8 border-4 border-black rounded-lg max-w-2xl mx-auto">
+          <CardElement 
+            options={{
+              style: {
+                base: {
+                  fontSize: '20px',
+                  color: '#000',
+                  fontFamily: 'Courier New, monospace',
+                  '::placeholder': { color: '#666' },
+                },
+              },
+            }}
+          />
         </div>
 
+        {paymentError && <p className="text-red-600 text-center text-xl">{paymentError}</p>}
+        {paymentSuccess && <p className="text-green-600 text-center text-xl">Debit card saved — payouts ready!</p>}
+
+        {/* Save Button — Extra Padding Above */}
+        <div className="mt-12">
+          <Button 
+            onClick={handleAddDebitCard}
+            disabled={paymentLoading}
+            className="w-full max-w-md mx-auto h-20 text-2xl bg-black text-white font-bold"
+          >
+            {paymentLoading ? 'Saving...' : 'Save Debit Card'}
+          </Button>
+        </div>
+      </div>
+    </Elements>
+
+    {/* Saved Cards */}
+    {savedMethods.length > 0 && (
+      <div className="mt-16">
+        <h4 className="text-2xl font-bold mb-8 text-center">Saved Debit Cards</h4>
+        <div className="space-y-8 max-w-2xl mx-auto">
+          {savedMethods.map((method) => (
+            <div key={method.id} className="bg-white p-8 border-4 border-black rounded-lg">
+              <p className="text-xl">
+                {method.brand.toUpperCase()} •••• {method.last4}<br />
+                Expires {method.exp_month}/{method.exp_year}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+    )}
+  </div>
+</div>
+
+        {{/* Your Earnings + Freedom Scholarships */}
+<div className="max-w-2xl mx-auto bg-gray-100 p-8 border-4 border-black rounded-lg">
+  <h2 className="text-3xl font-bold mb-8">Your Earnings</h2>
+  <p className="text-xl mb-4">Total Earned: ${profile?.total_earnings?.toFixed(2) || '0.00'}</p>
+  <p className="text-xl mb-8 text-green-600 font-bold">Freedom Scholarships Earned: ${profile?.scholarships_earned?.toFixed(2) || '0.00'}</p>
+  <p className="text-lg mb-8">
+    Freedom Scholarships are unrestricted cash paid instantly — use for books, food, rent — whatever you need.
+  </p>
+
+  {gigCount < 4 ? (
+    <p className="text-xl text-center font-bold text-green-600">
+      Complete 4 gigs to qualify for Freedom Scholarships!
+    </p>
+  ) : (
+    <div className="bg-green-100 p-12 border-4 border-green-600 rounded-lg">
+      <h3 className="text-2xl font-bold mb-4 text-center">
+        You Qualify for a Freedom Scholarship!
+      </h3>
+      <p className="text-lg mb-8 text-center">
+        Apply now — tell us your story in a quick message.
+      </p>
+      <textarea 
+        placeholder="Why you deserve a Freedom Scholarship (short message about your hustle)"
+        className="w-full p-4 text-lg border-4 border-black font-mono mb-6"
+        rows={6}
+      />
+      <Button className="w-full h-16 text-xl bg-green-600 text-white font-bold mb-4">
+        Submit Application
+      </Button>
+      <Button variant="outline" className="w-full h-16 text-xl border-4 border-black">
+        Share Application Link
+      </Button>
+    </div>
+  )}
+</div>
         {/* Your Squad */}
         <div>
           <h2 className="text-3xl font-bold mb-8">Your Squad</h2>
