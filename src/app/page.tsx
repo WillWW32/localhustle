@@ -140,6 +140,45 @@ export default function Home() {
             </div>
           </div>
         </section>
+        
+                {/* Key Outcomes Grid — Ties Directly to Top 12 */}
+        <section className="py-24 px-6 sm:px-12 lg:px-32">
+          <h2 className="text-3xl sm:text-4xl font-bold text-center mb-16">
+            Real Impact for Everyone
+          </h2>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12 max-w-6xl mx-auto">
+            <div className="bg-green-100 p-12 border-4 border-green-600 text-center">
+              <p className="text-2xl font-bold mb-4">Athletes Stay in Sport</p>
+              <p className="text-lg">Earn money early → less likely to quit due to costs</p>
+            </div>
+
+            <div className="bg-green-100 p-12 border-4 border-green-600 text-center">
+              <p className="text-2xl font-bold mb-4">Freedom Scholarships</p>
+              <p className="text-lg">Complete 4 gigs → unlock unrestricted cash for college</p>
+            </div>
+
+            <div className="bg-green-100 p-12 border-4 border-green-600 text-center">
+              <p className="text-2xl font-bold mb-4">Parents Relieved</p>
+              <p className="text-lg">Kid earns their way → less financial pressure on family</p>
+            </div>
+
+            <div className="bg-green-100 p-12 border-4 border-green-600 text-center">
+              <p className="text-2xl font-bold mb-4">Businesses Win Big</p>
+              <p className="text-lg">Authentic content + hero status in community</p>
+            </div>
+
+            <div className="bg-green-100 p-12 border-4 border-green-600 text-center">
+              <p className="text-2xl font-bold mb-4">Kids Learn Hustle</p>
+              <p className="text-lg">Real work → entrepreneurship → financial literacy</p>
+            </div>
+
+            <div className="bg-green-100 p-12 border-4 border-green-600 text-center">
+              <p className="text-2xl font-bold mb-4">Stronger Towns</p>
+              <p className="text-lg">Local support loops back into youth sports</p>
+            </div>
+          </div>
+        </section>
 
         {/* Emotional Close */}
         <section className="py-24 px-6 sm:px-12 lg:px-32 text-center bg-gray-50">
@@ -150,64 +189,71 @@ export default function Home() {
         </section>
 
         {/* Bottom CTA */}
-        <section className="py-24 px-6 sm:px-12 lg:px-32 text-center">
-          <p className="text-2xl mb-12">Who are you?</p>
+                {/* Bottom CTA — Polished */}
+        <section className="py-32 px-6 sm:px-12 lg:px-32 text-center bg-white">
+          <div className="max-w-lg mx-auto space-y-16">
 
-          <div className="w-full max-w-lg mx-auto space-y-12">
-            <Input
-              type="email"
-              placeholder="your@email.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="h-20 text-2xl text-center border-4 border-black"
-            />
+            <div>
+              <p className="text-2xl mb-4 text-gray-600">Enter your email</p>
+              <Input
+                type="email"
+                placeholder="your@email.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="h-20 text-2xl text-center border-4 border-black font-mono"
+              />
+            </div>
 
-            {/* Updated Role Selector — Light Green Selected */}
-            <div className="grid grid-cols-1 gap-6">
-              <button
-                onClick={() => setRole('athlete')}
-                className={`w-full h-20 text-2xl font-bold border-4 border-black transition-all ${
-                  role === 'athlete'
-                    ? 'bg-green-200 text-black'
-                    : 'bg-white text-black hover:bg-gray-50'
-                }`}
-              >
-                Student Athlete
-              </button>
+            <div>
+              <p className="text-2xl mb-8 text-gray-600">Choose your role</p>
+              <div className="grid grid-cols-1 gap-8">
+                <button
+                  onClick={() => setRole('athlete')}
+                  className={`w-full h-24 text-3xl font-bold border-4 border-black transition-all duration-300 shadow-lg ${
+                    role === 'athlete'
+                      ? 'bg-green-400 text-black scale-105 shadow-2xl'
+                      : 'bg-white text-black hover:bg-gray-100'
+                  }`}
+                >
+                  Student Athlete
+                </button>
 
-              <button
-                onClick={() => setRole('parent')}
-                className={`w-full h-20 text-2xl font-bold border-4 border-black transition-all ${
-                  role === 'parent'
-                    ? 'bg-green-200 text-black'
-                    : 'bg-white text-black hover:bg-gray-50'
-                }`}
-              >
-                Parent
-              </button>
+                <button
+                  onClick={() => setRole('parent')}
+                  className={`w-full h-24 text-3xl font-bold border-4 border-black transition-all duration-300 shadow-lg ${
+                    role === 'parent'
+                      ? 'bg-green-400 text-black scale-105 shadow-2xl'
+                      : 'bg-white text-black hover:bg-gray-100'
+                  }`}
+                >
+                  Parent
+                </button>
 
-              <button
-                onClick={() => setRole('business')}
-                className={`w-full h-20 text-2xl font-bold border-4 border-black transition-all ${
-                  role === 'business'
-                    ? 'bg-green-200 text-black'
-                    : 'bg-white text-black hover:bg-gray-50'
-                }`}
-              >
-                Business
-              </button>
+                <button
+                  onClick={() => setRole('business')}
+                  className={`w-full h-24 text-3xl font-bold border-4 border-black transition-all duration-300 shadow-lg ${
+                    role === 'business'
+                      ? 'bg-green-400 text-black scale-105 shadow-2xl'
+                      : 'bg-white text-black hover:bg-gray-100'
+                  }`}
+                >
+                  Business
+                </button>
+              </div>
             </div>
 
             <Button
               onClick={sendMagicLink}
-              disabled={loading || !role}
-              className="w-full h-20 text-3xl bg-black text-white font-bold"
+              disabled={loading || !email.trim() || !role}
+              className="w-full h-24 text-4xl bg-black text-white font-bold hover:bg-gray-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? 'Sending...' : 'Go'}
+              {loading ? 'Sending Magic Link...' : 'Send Magic Link'}
             </Button>
 
             {loading && (
-              <p className="text-center text-xl mt-4">Sending magic link...</p>
+              <p className="text-xl text-gray-600 animate-pulse">
+                Check your inbox (and spam) in a few seconds...
+              </p>
             )}
           </div>
         </section>

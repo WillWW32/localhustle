@@ -39,6 +39,17 @@ function ParentDashboardContent() {
       : 'business'
 
   useEffect(() => {
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+    }, [activeTab])
+    
+  useEffect(() => {
+  const tab = searchParams.get('tab')
+  if (tab === 'clips' || tab === 'kids' || tab === 'wallet') {
+    setActiveTab(tab as any)
+  }
+    }, [searchParams])
+
+  useEffect(() => {
     const fetchData = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
@@ -218,22 +229,7 @@ function ParentDashboardContent() {
     <div className="container py-8">
       <p className="text-center mb-12 text-xl font-mono">Welcome, Parent!</p>
 
-      {/* Role Switcher — Tiny Toggle (Parent <--> Business) */}
-<div className="fixed bottom-4 right-4 z-50">
-  <div className="bg-gray-100 p-2 border-2 border-black rounded-lg shadow-lg w-32">
-    <p className="text-center text-xs font-bold mb-1">
-      Need to switch roles?
-    </p>
-    <div className="flex items-center justify-center gap-1">
-      <span className="text-xs">Parent</span>
-      <label className="relative inline-flex items-center cursor-pointer">
-        <input type="checkbox" className="sr-only peer" checked={currentRole === 'parent'} onChange={() => router.push('/business-dashboard')} />
-        <div className="w-10 h-5 bg-gray-400 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-black"></div>
-      </label>
-      <span className="text-xs">Business</span>
-    </div>
-  </div>
-</div>
+    
 
       <div className="bg-black text-white p-8 mb-12">
         <h1 className="text-3xl font-bold text-center">
@@ -249,25 +245,54 @@ function ParentDashboardContent() {
         </p>
       </div>
 
-      {/* No Kid Yet Banner */}
+      {/* No Kid Yet Banner — Enhanced with Native Share */}
       {kids.length === 0 && (
-        <div className="bg-yellow-100 p-12 border-4 border-yellow-600 mb-16 text-center max-w-3xl mx-auto">
-          <h2 className="text-3xl font-bold mb-4">
+        <div className="bg-yellow-100 p-12 border-4 border-yellow-600 mb-16 text-center max-w-3xl mx-auto rounded-lg">
+          <h2 className="text-3xl font-bold mb-4 font-mono">
             No Kids Linked Yet
           </h2>
-          <p className="text-xl mb-8">
-            Invite your kid to get started — they'll share their progress with you.
+          <p className="text-xl mb-10 font-mono leading-relaxed">
+            Send your kid their personal invite link.<br />
+            Once they sign up, you’ll see their progress and approve earnings.
           </p>
+
           <Button
-            onClick={() => {
-              const link = `https://app.localhustle.org/athlete-onboard?parent_id=${parent?.id || ''}`
-              navigator.clipboard.writeText(link)
-              alert('Invite link copied to clipboard!')
+            onClick={async () => {
+              const inviteLink = `https://app.localhustle.org/athlete-onboard?parent_id=${parent?.id || ''}`
+              const shareText = "Hey! I set up LocalHustle for you — earn real money this off-season with simple gigs from local businesses. Use this link to get started and link to my parent account:"
+              
+              const shareData = {
+                title: "Join me on LocalHustle",
+                text: shareText,
+                url: inviteLink,
+              }
+
+              if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+                try {
+                  await navigator.share(shareData)
+                  return
+                } catch (err: any) {
+                  if (err.name !== 'AbortError') {
+                    console.warn('Share failed:', err)
+                  }
+                }
+              }
+
+              try {
+                await navigator.clipboard.writeText(`${shareText}\n\n${inviteLink}`)
+                alert('✅ Invite link + message copied!\n\nPaste it into a text, email, or AirDrop to your kid.')
+              } catch (err) {
+                prompt('Copy this link and message manually:', `${shareText}\n\n${inviteLink}`)
+              }
             }}
-            className="w-full max-w-md h-20 text-2xl bg-black text-white font-bold"
+            className="w-full max-w-md h-20 text-2xl bg-black text-white font-bold hover:bg-gray-800 transition"
           >
-            Generate Invite Link for Your Kid
+            Send Invite to My Kid
           </Button>
+
+          <p className="text-sm text-gray-600 mt-6 font-mono">
+            Works with Text, Email, AirDrop, WhatsApp, and more
+          </p>
         </div>
       )}
 
@@ -303,63 +328,64 @@ function ParentDashboardContent() {
         </div>
       )}
 
-      {/* Tabs */}
-      <div className="sticky top-0 bg-white z-10 border-b-4 border-black py-4 mb-12">
-        <div className="flex justify-center gap-4 flex-wrap">
+      {/* Tabs — Sticky, with counts where useful */}
+      <div className="sticky top-0 bg-white z-30 border-b-4 border-black py-4 shadow-lg">
+        <div className="flex justify-center gap-3 flex-wrap px-4">
           <Button
             onClick={() => setActiveTab('wallet')}
             variant={activeTab === 'wallet' ? 'default' : 'outline'}
-            className="px-8 py-4 text-xl"
+            className="px-6 py-4 text-lg font-mono font-bold min-w-[100px]"
           >
             Wallet
           </Button>
           <Button
             onClick={() => setActiveTab('clips')}
             variant={activeTab === 'clips' ? 'default' : 'outline'}
-            className="px-8 py-4 text-xl"
+            className="px-6 py-4 text-lg font-mono font-bold min-w-[100px]"
           >
-            Pending Clips
+            Pending Clips ({pendingClips.length})
           </Button>
           <Button
             onClick={() => setActiveTab('kids')}
             variant={activeTab === 'kids' ? 'default' : 'outline'}
-            className="px-8 py-4 text-xl"
+            className="px-6 py-4 text-lg font-mono font-bold min-w-[100px]"
           >
-            My Kids
+            My Kids ({kids.length})
           </Button>
           <Button
             onClick={() => router.push('/freedom-scholarship')}
-            variant={activeTab === 'scholarships' ? 'default' : 'outline'}
-            className="px-8 py-4 text-xl"
+            className="px-6 py-4 text-lg font-mono font-bold bg-green-500 text-black border-4 border-black hover:bg-green-400"
           >
-            Freedom Scholarships
+            Scholarships
           </Button>
         </div>
       </div>
 
-      {/* Wallet Tab */}
-      {activeTab === 'wallet' && (
-        <div className="space-y-16">
-          <div>
-            <h2 className="text-4xl font-bold mb-8 text-center">Wallet</h2>
-            <p className="text-3xl mb-12 text-center">
+      {/* ACTIVE TAB CONTENT ONLY — appears directly below tabs */}
+      <div className="pt-8 pb-32 min-h-screen">
+
+        {/* Wallet Tab */}
+        {activeTab === 'wallet' && (
+          <div className="space-y-16 px-4">
+            <h2 className="text-4xl font-bold mb-8 text-center font-mono">Wallet</h2>
+            <p className="text-3xl mb-12 text-center font-mono">
               Balance: ${parent?.wallet_balance?.toFixed(2) || '0.00'}
             </p>
 
-            <p className="text-lg mb-12 text-center max-w-3xl mx-auto">
+            <p className="text-lg mb-12 text-center max-w-3xl mx-auto font-mono">
               Add funds to sponsor challenges and scholarships.<br />
               You only pay when your kid completes and you approve.
             </p>
 
             {/* Add Funds */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-16">
-              <Button onClick={() => handleAddFunds(100)} className="h-16 text-xl bg-black text-white">
+              <Button onClick={() => handleAddFunds(100)} className="h-16 text-xl bg-black text-white font-mono">
                 + $100
               </Button>
-              <Button onClick={() => handleAddFunds(500)} className="h-16 text-xl bg-black text-white">
+              <Button onClick={() => handleAddFunds(500)} className="h-16 text-xl bg-black text-white font-mono">
                 + $500
               </Button>
-              <Button onClick={() => handleAddFunds(1000)} className="h-16 text-xl bg-black text-white">
+              <Button onClick={() => handleAddFunds(1000)} className="h-16 text-xl bg-black text-white font-mono">
                 + $1000
               </Button>
               <Button 
@@ -367,61 +393,61 @@ function ParentDashboardContent() {
                   const amt = prompt('Custom amount:')
                   if (amt && !isNaN(Number(amt))) handleAddFunds(Number(amt))
                 }}
-                className="h-16 text-xl bg-green-400 text-black"
+                className="h-16 text-xl bg-green-400 text-black font-mono"
               >
                 Custom
               </Button>
             </div>
 
             {/* Card Entry — Spacious Shopping Cart Style */}
-<div className="max-w-3xl mx-auto mb-16">
-  <div className="bg-white p-16 border-4 border-black rounded-lg shadow-lg">
-    <h4 className="text-3xl font-bold mb-8 text-center">
-      Add Card for Funding
-    </h4>
-    <p className="text-xl mb-12 text-center text-gray-600">
-      Secure by Stripe — your card details are safe and encrypted.
-    </p>
-    <Elements stripe={stripePromise}>
-      <div className="space-y-12">
-        <div className="bg-gray-50 p-8 border-4 border-gray-300 rounded-lg">
-          <CardElement 
-            options={{
-              style: {
-                base: {
-                  fontSize: '22px',
-                  color: '#000',
-                  fontFamily: 'Courier New, monospace',
-                  '::placeholder': { color: '#666' },
-                  backgroundColor: '#fff',
-                  padding: '20px',
-                },
-              },
-            }}
-          />
-        </div>
-        {paymentError && <p className="text-red-600 text-center text-xl">{paymentError}</p>}
-        {paymentSuccess && <p className="text-green-600 text-center text-xl">Card saved!</p>}
-        <Button 
-          onClick={handleAddCard}
-          disabled={paymentLoading}
-          className="w-full h-20 text-2xl bg-black text-white font-bold"
-        >
-          {paymentLoading ? 'Saving...' : 'Save Card'}
-        </Button>
-      </div>
-    </Elements>
-  </div>
-</div>
+            <div className="max-w-3xl mx-auto mb-16">
+              <div className="bg-white p-16 border-4 border-black rounded-lg shadow-lg">
+                <h4 className="text-3xl font-bold mb-8 text-center font-mono">
+                  Add Card for Funding
+                </h4>
+                <p className="text-xl mb-12 text-center text-gray-600 font-mono">
+                  Secure by Stripe — your card details are safe and encrypted.
+                </p>
+                <Elements stripe={stripePromise}>
+                  <div className="space-y-12">
+                    <div className="bg-gray-50 p-8 border-4 border-gray-300 rounded-lg">
+                      <CardElement 
+                        options={{
+                          style: {
+                            base: {
+                              fontSize: '22px',
+                              color: '#000',
+                              fontFamily: 'Courier New, monospace',
+                              '::placeholder': { color: '#666' },
+                              backgroundColor: '#fff',
+                              padding: '20px',
+                            },
+                          },
+                        }}
+                      />
+                    </div>
+                    {paymentError && <p className="text-red-600 text-center text-xl">{paymentError}</p>}
+                    {paymentSuccess && <p className="text-green-600 text-center text-xl">Card saved!</p>}
+                    <Button 
+                      onClick={handleAddCard}
+                      disabled={paymentLoading}
+                      className="w-full h-20 text-2xl bg-black text-white font-bold font-mono"
+                    >
+                      {paymentLoading ? 'Saving...' : 'Save Card'}
+                    </Button>
+                  </div>
+                </Elements>
+              </div>
+            </div>
 
             {/* Saved Cards */}
             {savedMethods.length > 0 && (
               <div className="max-w-2xl mx-auto">
-                <h4 className="text-2xl font-bold mb-8 text-center">Saved Cards</h4>
+                <h4 className="text-2xl font-bold mb-8 text-center font-mono">Saved Cards</h4>
                 <div className="space-y-6">
                   {savedMethods.map((method) => (
                     <div key={method.id} className="bg-gray-100 p-8 border-4 border-black">
-                      <p className="text-xl">
+                      <p className="text-xl font-mono">
                         {method.brand.toUpperCase()} •••• {method.last4}<br />
                         Expires {method.exp_month}/{method.exp_year}
                       </p>
@@ -431,86 +457,87 @@ function ParentDashboardContent() {
               </div>
             )}
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Pending Clips Tab */}
-      {activeTab === 'clips' && (
-        <div>
-          <h3 className="text-3xl mb-8 font-bold">Pending Clips to Approve</h3>
-          {pendingClips.length === 0 ? (
-            <p className="text-gray-600 mb-12">No pending clips — post offers to get started!</p>
-          ) : (
-            <div className="space-y-16">
-              {pendingClips.map((clip) => (
-                <div key={clip.id} className="border-4 border-black p-8 bg-white max-w-2xl mx-auto">
-                  <p className="font-bold mb-4 text-left">From: {clip.profiles.full_name}</p>
-                  <p className="mb-6 text-left">Offer: {clip.offers.type} — ${clip.offers.amount}</p>
-                  <video controls className="w-full mb-8">
-                    <source src={clip.video_url} type="video/mp4" />
-                  </video>
-                  <p className="text-sm text-gray-600 mb-4">
-                    Prove it with timelapse or witness video — easy!
-                  </p>
-                  <Button 
-                    onClick={() => approveClip(clip)}
-                    className="w-full h-16 text-xl bg-black text-white"
-                  >
-                    Approve & Pay
-                  </Button>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* My Kids Tab */}
-      {activeTab === 'kids' && (
-        <div>
-          <h3 className="text-3xl mb-8 font-bold">My Kids</h3>
-          <div className="space-y-12 max-w-3xl mx-auto">
-            {kids.length === 0 ? (
-              <p className="text-gray-600">No kids linked yet — wait for invite.</p>
+        {/* Pending Clips Tab */}
+        {activeTab === 'clips' && (
+          <div className="px-4">
+            <h3 className="text-3xl mb-8 font-bold text-center font-mono">Pending Clips to Approve</h3>
+            {pendingClips.length === 0 ? (
+              <p className="text-xl text-center text-gray-600 font-mono mb-12">No pending clips — post offers to get started!</p>
             ) : (
-              kids.map((kid) => (
-                <div key={kid.id} className="bg-gray-100 p-8 border-4 border-black">
-                  <div className="flex items-center gap-8 mb-8">
-                    <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-black">
-                      <img src={kid.profile_pic || '/default-avatar.png'} alt={kid.full_name} className="w-full h-full object-cover" />
-                    </div>
-                    <div>
-                      <h4 className="text-2xl font-bold">{kid.full_name}</h4>
-                      <p className="text-xl">{kid.school}</p>
-                      <p className="text-lg">Gigs completed: {kid.gig_count}</p>
-                    </div>
+              <div className="space-y-16">
+                {pendingClips.map((clip) => (
+                  <div key={clip.id} className="border-4 border-black p-8 bg-white max-w-2xl mx-auto">
+                    <p className="font-bold mb-4 text-left font-mono">From: {clip.profiles.full_name}</p>
+                    <p className="mb-6 text-left font-mono">Offer: {clip.offers.type} — ${clip.offers.amount}</p>
+                    <video controls className="w-full mb-8 rounded">
+                      <source src={clip.video_url} type="video/mp4" />
+                    </video>
+                    <p className="text-sm text-gray-600 mb-4 font-mono">
+                      Prove it with timelapse or witness video — easy!
+                    </p>
+                    <Button 
+                      onClick={() => approveClip(clip)}
+                      className="w-full h-16 text-xl bg-black text-white font-mono"
+                    >
+                      Approve & Pay
+                    </Button>
                   </div>
-                  <Button 
-                    onClick={() => setSelectedKid(kid)}
-                    className="w-full h-16 text-xl bg-black text-white"
-                  >
-                    View Progress
-                  </Button>
-                </div>
-              ))
+                ))}
+              </div>
             )}
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Fund a Friend */}
+        {/* My Kids Tab */}
+        {activeTab === 'kids' && (
+          <div className="px-4">
+            <h3 className="text-3xl mb-8 font-bold text-center font-mono">My Kids</h3>
+            <div className="space-y-12 max-w-3xl mx-auto">
+              {kids.length === 0 ? (
+                <p className="text-xl text-center text-gray-600 font-mono">No kids linked yet — wait for invite.</p>
+              ) : (
+                kids.map((kid) => (
+                  <div key={kid.id} className="bg-gray-100 p-8 border-4 border-black">
+                    <div className="flex items-center gap-8 mb-8">
+                      <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-black">
+                        <img src={kid.profile_pic || '/default-avatar.png'} alt={kid.full_name} className="w-full h-full object-cover" />
+                      </div>
+                      <div>
+                        <h4 className="text-2xl font-bold font-mono">{kid.full_name}</h4>
+                        <p className="text-xl font-mono">{kid.school}</p>
+                        <p className="text-lg font-mono">Gigs completed: {kid.gig_count}</p>
+                      </div>
+                    </div>
+                    <Button 
+                      onClick={() => setSelectedKid(kid)}
+                      className="w-full h-16 text-xl bg-black text-white font-mono"
+                    >
+                      View Progress
+                    </Button>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        )}
+
+      </div>
+
+      {/* Fund a Friend — shown below tab content */}
       {showFundFriend && (
         <div className="max-w-2xl mx-auto mb-16 p-12 bg-green-100 border-4 border-green-600">
-          <h3 className="text-3xl font-bold mb-8 text-center">Fund a Friend</h3>
-          <p className="text-xl mb-8 text-center">
+          <h3 className="text-3xl font-bold mb-8 text-center font-mono">Fund a Friend</h3>
+          <p className="text-xl mb-8 text-center font-mono">
             Invite a new athlete with a pre-funded challenge — help your kid's friend get started.
           </p>
           <div className="space-y-6">
-            <Input placeholder="Friend's email" value={friendEmail} onChange={(e) => setFriendEmail(e.target.value)} />
-            <Input placeholder="Friend's name (optional)" value={friendName} onChange={(e) => setFriendName(e.target.value)} />
-            <Input placeholder="Challenge description" value={friendChallenge} onChange={(e) => setFriendChallenge(e.target.value)} />
-            <Input placeholder="Amount (default $50)" value={friendAmount} onChange={(e) => setFriendAmount(e.target.value)} />
-            <Button onClick={fundFriend} className="w-full h-16 text-xl bg-green-600 text-white">
+            <Input placeholder="Friend's email" value={friendEmail} onChange={(e) => setFriendEmail(e.target.value)} className="font-mono" />
+            <Input placeholder="Friend's name (optional)" value={friendName} onChange={(e) => setFriendName(e.target.value)} className="font-mono" />
+            <Input placeholder="Challenge description" value={friendChallenge} onChange={(e) => setFriendChallenge(e.target.value)} className="font-mono" />
+            <Input placeholder="Amount (default $50)" value={friendAmount} onChange={(e) => setFriendAmount(e.target.value)} className="font-mono" />
+            <Button onClick={fundFriend} className="w-full h-16 text-xl bg-green-600 text-white font-mono">
               Send Invite & Fund Challenge
             </Button>
           </div>
@@ -518,15 +545,59 @@ function ParentDashboardContent() {
       )}
 
       {/* Log Out */}
-      <div className="text-center mt-32">
+      <div className="text-center mt-32 pb-32">
         <Button onClick={async () => {
           await signOut()
           router.push('/')
           alert('Logged out successfully')
-        }} variant="outline" className="w-64 h-14 text-lg border-4 border-black">
+        }} variant="outline" className="w-64 h-14 text-lg border-4 border-black font-mono">
           Log Out
         </Button>
       </div>
+      
+      {/* Role Switcher — Bold 150px Slide Switch (Parent ↔ Business) */}
+<div className="fixed bottom-6 right-6 z-50">
+  <div className="bg-white border-4 border-black rounded-full shadow-2xl overflow-hidden w-[150px] h-16 flex items-center">
+    {/* Background sliding indicator */}
+    <div 
+      className={`absolute inset-0 w-1/2 bg-black transition-transform duration-300 ease-in-out ${
+        currentRole === 'parent' ? 'translate-x-0' : 'translate-x-full'
+      }`}
+    />
+
+    {/* Parent Label */}
+    <button
+      onClick={() => router.push('/parent-dashboard')}
+      className="relative z-10 flex-1 h-full flex items-center justify-center"
+      disabled={currentRole === 'parent'}
+    >
+      <span className={`text-lg font-bold font-mono transition-colors ${
+        currentRole === 'parent' ? 'text-white' : 'text-black'
+      }`}>
+        Parent
+      </span>
+    </button>
+
+    {/* Business Label */}
+    <button
+      onClick={() => router.push('/business-dashboard')}
+      className="relative z-10 flex-1 h-full flex items-center justify-center"
+      disabled={currentRole === 'business'}
+    >
+      <span className={`text-lg font-bold font-mono transition-colors ${
+        currentRole === 'business' ? 'text-white' : 'text-black'
+      }`}>
+        Business
+      </span>
+    </button>
+  </div>
+
+  {/* Optional: Small hint text below */}
+  <p className="text-center text-xs font-mono mt-2 text-gray-600">
+    Switch role
+  </p>
+</div>
+
     </div>
   )
 }

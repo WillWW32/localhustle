@@ -1,12 +1,11 @@
 'use client'
 
 import { useState, useEffect, Suspense } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import { signOut } from '@/lib/auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { usePathname } from 'next/navigation'
 import { loadStripe } from '@stripe/stripe-js'
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js'
 
@@ -39,7 +38,7 @@ function BusinessDashboardContent() {
   const [paymentLoading, setPaymentLoading] = useState(false)
   const [paymentError, setPaymentError] = useState<string | null>(null)
   const [paymentSuccess, setPaymentSuccess] = useState(false)
-  const [activeTab, setActiveTab] = useState<'wallet' | 'gigs' | 'clips' | 'kids' | 'favorites' | 'scholarships' | 'booster'>('wallet')
+  const [activeTab, setActiveTab] = useState<'wallet' | 'gigs' | 'clips' | 'kids' | 'favorites' | 'scholarships' | 'booster'>('gigs')
   const [athleteSearch, setAthleteSearch] = useState('')
   const [searchResults, setSearchResults] = useState<any[]>([])
   const [selectedAthlete, setSelectedAthlete] = useState<any>(null)
@@ -47,17 +46,11 @@ function BusinessDashboardContent() {
   const [standaloneScholarshipMessage, setStandaloneScholarshipMessage] = useState('')
   const [scholarshipLoading, setScholarshipLoading] = useState(false)
   const router = useRouter()
+  const pathname = usePathname()
   const stripe = useStripe()
   const elements = useElements()
-  
-  const hasMultipleRoles = true
-  
-  const pathname = usePathname()
-  const currentRole = pathname.includes('athlete-dashboard') 
-    ? 'athlete' 
-    : pathname.includes('parent-dashboard') 
-      ? 'parent' 
-      : 'business'
+
+  const currentRole = pathname.includes('athlete-dashboard') ? 'athlete' : pathname.includes('parent-dashboard') ? 'parent' : 'business'
 
   useEffect(() => {
     const fetchData = async () => {
@@ -82,14 +75,16 @@ function BusinessDashboardContent() {
           .eq('referred_by', biz.id)
         setReferredAthletes(referred || [])
 
+        const { data: offers } = await supabase.from('offers').select('id').eq('business_id', biz.id)
+        const offerIds = offers?.map(o => o.id) || []
         const { data: clips } = await supabase
           .from('clips')
           .select('*, offers(*), profiles(email, parent_email)')
           .eq('status', 'pending')
-          .in('offer_id', (await supabase.from('offers').select('id').eq('business_id', biz.id)).data?.map(o => o.id) || [])
+          .in('offer_id', offerIds)
         setPendingClips(clips || [])
 
-        if (biz?.id) {
+        if (biz.id) {
           const response = await fetch('/api/list-payment-methods', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -98,8 +93,6 @@ function BusinessDashboardContent() {
           const data = await response.json()
           setSavedMethods(data.methods || [])
         }
-      } else {
-        setBusiness(null)
       }
     }
 
@@ -184,16 +177,28 @@ function BusinessDashboardContent() {
   }
 
   const handleAddFunds = async (amount: number) => {
-    const response = await fetch('/api/checkout', {
+    if (savedMethods.length === 0) {
+      alert('Please add a card first')
+      return
+    }
+
+    const response = await fetch('/api/charge-card', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ amount, business_id: business.id }),
+      body: JSON.stringify({
+        amount,
+        payment_method_id: savedMethods[0].id,
+        business_id: business.id,
+      }),
     })
-    const { id } = await response.json()
-    const stripe = await loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
-    if (!stripe) {
-      alert('Stripe failed to load')
-      return
+
+    const data = await response.json()
+
+    if (data.error) {
+      alert('Charge failed: ' + data.error)
+    } else {
+      alert(`$${amount} added to wallet!`)
+      setBusiness({ ...business, wallet_balance: business.wallet_balance + amount })
     }
   }
 
@@ -247,7 +252,6 @@ function BusinessDashboardContent() {
     setPaymentLoading(false)
   }
 
-  
   const searchAthletes = async () => {
     if (!athleteSearch.trim()) {
       setSearchResults([])
@@ -308,30 +312,11 @@ function BusinessDashboardContent() {
   }
 
   return (
-    <div className="container py-8">
-      <p className="text-center mb-12 text-xl font-mono">Welcome, {business?.name || 'Business Owner'}</p>
-      
-{/* Role Switcher — Tiny Toggle (Parent <--> Business) */}
-<div className="fixed bottom-4 right-4 z-50">
-  <div className="bg-gray-100 p-2 border-2 border-black rounded-lg shadow-lg w-32">
-    <p className="text-center text-xs font-bold mb-1">
-      Need to switch roles?
-    </p>
-    <div className="flex items-center justify-center gap-1">
-      <span className="text-xs">Parent</span>
-      <label className="relative inline-flex items-center cursor-pointer">
-        <input type="checkbox" className="sr-only peer" checked={currentRole === 'business'} onChange={() => router.push('/business-dashboard')} />
-        <div className="w-10 h-5 bg-gray-400 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-black"></div>
-      </label>
-      <span className="text-xs">Business</span>
-    </div>
-  </div>
-</div>
+    <div className="container py-8 font-mono">
+      <p className="text-center mb-12 text-xl">Welcome, {business?.name || 'Business Owner'}!</p>
 
       <div className="bg-black text-white p-8 mb-12">
-        <h1 className="text-3xl font-bold text-center">
-          Your Business Admin Console
-        </h1>
+        <h1 className="text-3xl font-bold text-center">Your Business Admin Console</h1>
       </div>
 
       <div className="bg-black text-white p-8 mb-12">
@@ -342,66 +327,39 @@ function BusinessDashboardContent() {
         </p>
       </div>
 
-      <div className="max-w-4xl mx-auto space-y-16 font-mono text-center text-lg">
-        {/* Sticky Tabs */}
-        <div className="sticky top-0 bg-white z-10 border-b-4 border-black py-4 mb-12">
-          <div className="flex justify-center gap-4 flex-wrap">
-            <Button
-              onClick={() => setActiveTab('wallet')}
-              variant={activeTab === 'wallet' ? 'default' : 'outline'}
-              className="px-8 py-4 text-xl"
-            >
-              Wallet
-            </Button>
-            <Button
-              onClick={() => setActiveTab('gigs')}
-              variant={activeTab === 'gigs' ? 'default' : 'outline'}
-              className="px-8 py-4 text-xl"
-            >
-              Create Gigs
-            </Button>
-            <Button
-              onClick={() => setActiveTab('clips')}
-              variant={activeTab === 'clips' ? 'default' : 'outline'}
-              className="px-8 py-4 text-xl"
-            >
-              Pending Clips
-            </Button>
-            <Button
-              onClick={() => setActiveTab('kids')}
-              variant={activeTab === 'kids' ? 'default' : 'outline'}
-              className="px-8 py-4 text-xl"
-            >
-              My Kid's Challenges
-            </Button>
-            <Button
-              onClick={() => setActiveTab('favorites')}
-              variant={activeTab === 'favorites' ? 'default' : 'outline'}
-              className="px-8 py-4 text-xl"
-            >
-              Favorite Athletes
-            </Button>
-            <Button
-              onClick={() => setActiveTab('scholarships')}
-              variant={activeTab === 'scholarships' ? 'default' : 'outline'}
-              className="px-8 py-4 text-xl"
-            >
-              Freedom Scholarships
-            </Button>
-            <Button
-              onClick={() => setActiveTab('booster')}
-              variant={activeTab === 'booster' ? 'default' : 'outline'}
-              className="px-8 py-4 text-xl"
-            >
-              Booster Events
-            </Button>
-          </div>
+      {/* Sticky Tabs with Counts */}
+      <div className="sticky top-0 bg-white z-30 border-b-4 border-black py-4 shadow-lg">
+        <div className="flex justify-center gap-3 flex-wrap px-4">
+          <Button onClick={() => setActiveTab('wallet')} variant={activeTab === 'wallet' ? 'default' : 'outline'} className="px-6 py-4 text-lg font-bold min-w-[100px]">
+            Wallet
+          </Button>
+          <Button onClick={() => setActiveTab('gigs')} variant={activeTab === 'gigs' ? 'default' : 'outline'} className="px-6 py-4 text-lg font-bold min-w-[100px]">
+            Create Gigs
+          </Button>
+          <Button onClick={() => setActiveTab('clips')} variant={activeTab === 'clips' ? 'default' : 'outline'} className="px-6 py-4 text-lg font-bold min-w-[100px]">
+            Clips ({pendingClips.length})
+          </Button>
+          <Button onClick={() => setActiveTab('kids')} variant={activeTab === 'kids' ? 'default' : 'outline'} className="px-6 py-4 text-lg font-bold min-w-[100px]">
+            My Kids ({referredAthletes.length})
+          </Button>
+          <Button onClick={() => setActiveTab('favorites')} variant={activeTab === 'favorites' ? 'default' : 'outline'} className="px-6 py-4 text-lg font-bold min-w-[100px]">
+            Favorites
+          </Button>
+          <Button onClick={() => setActiveTab('scholarships')} variant={activeTab === 'scholarships' ? 'default' : 'outline'} className="px-6 py-4 text-lg bg-green-500 text-black border-4 border-black hover:bg-green-400 font-bold min-w-[140px]">
+            Scholarships
+          </Button>
+          <Button onClick={() => setActiveTab('booster')} variant={activeTab === 'booster' ? 'default' : 'outline'} className="px-6 py-4 text-lg font-bold min-w-[100px]">
+            Booster
+          </Button>
         </div>
+      </div>
 
-        {/* Wallet Tab — Combined with Payment Methods */}
+      {/* ACTIVE TAB CONTENT ONLY */}
+      <div className="pt-8 pb-40">
+
+        {/* Wallet Tab */}
         {activeTab === 'wallet' && (
-          <div className="space-y-24">
-            {/* Step-by-Step Guidance */}
+          <div className="space-y-32 px-4">
             <div className="bg-gray-100 p-12 border-4 border-black max-w-3xl mx-auto">
               <h3 className="text-3xl font-bold mb-12 text-center">
                 Get Started in 4 Steps
@@ -414,7 +372,6 @@ function BusinessDashboardContent() {
               </ol>
             </div>
 
-            {/* Profile Setup — Only if incomplete */}
             {(!business?.name || !business?.phone) && (
               <div className="max-w-2xl mx-auto p-12 bg-yellow-100 border-4 border-yellow-600">
                 <h3 className="text-3xl font-bold mb-8 text-center">
@@ -426,42 +383,26 @@ function BusinessDashboardContent() {
                 <div className="space-y-8">
                   <div>
                     <label className="block text-lg mb-2">Business Name</label>
-                    <Input 
-                      value={business?.name || ''} 
-                      onChange={(e) => setBusiness({ ...business, name: e.target.value })}
-                      placeholder="e.g., Bridge Pizza"
-                    />
+                    <Input value={business?.name || ''} onChange={(e) => setBusiness({ ...business, name: e.target.value })} placeholder="e.g., Bridge Pizza" />
                   </div>
                   <div>
                     <label className="block text-lg mb-2">Contact Phone</label>
-                    <Input 
-                      value={business?.phone || ''} 
-                      onChange={(e) => setBusiness({ ...business, phone: e.target.value })}
-                      placeholder="(555) 123-4567"
-                    />
+                    <Input value={business?.phone || ''} onChange={(e) => setBusiness({ ...business, phone: e.target.value })} placeholder="(555) 123-4567" />
                   </div>
-                  <Button 
-                    onClick={async () => {
-                      const { error } = await supabase
-                        .from('businesses')
-                        .update({ name: business.name, phone: business.phone })
-                        .eq('id', business.id)
-                      if (error) {
-                        alert('Error saving profile')
-                      } else {
-                        alert('Profile saved!')
-                        setBusiness({ ...business, name: business.name, phone: business.phone })
-                      }
-                    }}
-                    className="w-full h-16 text-xl bg-black text-white"
-                  >
+                  <Button onClick={async () => {
+                    const { error } = await supabase.from('businesses').update({ name: business.name, phone: business.phone }).eq('id', business.id)
+                    if (error) alert('Error saving profile')
+                    else {
+                      alert('Profile saved!')
+                      setBusiness({ ...business })
+                    }
+                  }} className="w-full h-16 text-xl bg-black text-white">
                     Save Profile
                   </Button>
                 </div>
               </div>
             )}
 
-            {/* Full Wallet — Only after profile complete */}
             {(business?.name && business?.phone) && (
               <>
                 <div>
@@ -470,24 +411,15 @@ function BusinessDashboardContent() {
                     Balance: ${business?.wallet_balance?.toFixed(2) || '0.00'}
                   </p>
 
-                  {/* Auto-Top-Up */}
                   <div className="max-w-sm mx-auto mb-16 p-8 bg-gray-100 border-4 border-black">
                     <label className="flex flex-col items-center gap-4 cursor-pointer">
                       <span className="text-2xl font-bold">Auto-Top-Up (recommended)</span>
-                      <input
-                        type="checkbox"
-                        checked={business?.auto_top_up ?? true}
-                        onChange={async (e) => {
-                          const enabled = e.target.checked
-                          await supabase
-                            .from('businesses')
-                            .update({ auto_top_up: enabled })
-                            .eq('id', business.id)
-                          setBusiness({ ...business, auto_top_up: enabled })
-                          alert(enabled ? 'Auto-top-up enabled!' : 'Auto-top-up disabled')
-                        }}
-                        className="w-8 h-8"
-                      />
+                      <input type="checkbox" checked={business?.auto_top_up ?? true} onChange={async (e) => {
+                        const enabled = e.target.checked
+                        await supabase.from('businesses').update({ auto_top_up: enabled }).eq('id', business.id)
+                        setBusiness({ ...business, auto_top_up: enabled })
+                        alert(enabled ? 'Auto-top-up enabled!' : 'Auto-top-up disabled')
+                      }} className="w-8 h-8" />
                     </label>
                     <p className="text-lg mt-4 text-center">
                       When balance &lt; $100, add $500 automatically
@@ -499,72 +431,53 @@ function BusinessDashboardContent() {
                     You only pay for content you approve.
                   </p>
 
-                  {/* Add Funds */}
-                  <div className="mb-16">
+                  <div className="mb-24">
                     <h3 className="text-2xl font-bold mb-8 text-center">Step 3: Add Funds</h3>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-3xl mx-auto">
-                      <Button onClick={() => handleAddFunds(100)} className="h-16 text-xl bg-black text-white">
-                        + $100
-                      </Button>
-                      <Button onClick={() => handleAddFunds(500)} className="h-16 text-xl bg-black text-white">
-                        + $500
-                      </Button>
-                      <Button onClick={() => handleAddFunds(1000)} className="h-16 text-xl bg-black text-white">
-                        + $1000
-                      </Button>
-                      <Button 
-                        onClick={() => {
-                          const amt = prompt('Custom amount:')
-                          if (amt && !isNaN(Number(amt))) handleAddFunds(Number(amt))
-                        }}
-                        className="h-16 text-xl bg-green-400 text-black"
-                      >
-                        Custom
-                      </Button>
+                      <Button onClick={() => handleAddFunds(100)} className="h-16 text-xl bg-black text-white">+ $100</Button>
+                      <Button onClick={() => handleAddFunds(500)} className="h-16 text-xl bg-black text-white">+ $500</Button>
+                      <Button onClick={() => handleAddFunds(1000)} className="h-16 text-xl bg-black text-white">+ $1000</Button>
+                      <Button onClick={() => {
+                        const amt = prompt('Custom amount:')
+                        if (amt && !isNaN(Number(amt))) handleAddFunds(Number(amt))
+                      }} className="h-16 text-xl bg-green-400 text-black">Custom</Button>
                     </div>
                   </div>
 
-                  {/* Card Entry — Spacious Shopping Cart Style */}
-<div className="max-w-3xl mx-auto mb-16">
-  <div className="bg-white p-16 border-4 border-black rounded-lg shadow-lg">
-    <h4 className="text-3xl font-bold mb-8 text-center">
-      Add Card for Funding
-    </h4>
-    <p className="text-xl mb-12 text-center text-gray-600">
-      Secure by Stripe — your card details are safe and encrypted.
-    </p>
-    <Elements stripe={stripePromise}>
-      <div className="space-y-12">
-        <div className="bg-gray-50 p-8 border-4 border-gray-300 rounded-lg">
-          <CardElement 
-            options={{
-              style: {
-                base: {
-                  fontSize: '22px',
-                  color: '#000',
-                  fontFamily: 'Courier New, monospace',
-                  '::placeholder': { color: '#666' },
-                  backgroundColor: '#fff',
-                  padding: '20px',
-                },
-              },
-            }}
-          />
-        </div>
-        {paymentError && <p className="text-red-600 text-center text-xl">{paymentError}</p>}
-        {paymentSuccess && <p className="text-green-600 text-center text-xl">Card saved!</p>}
-        <Button 
-          onClick={handleAddCard}
-          disabled={paymentLoading}
-          className="w-full h-20 text-2xl bg-black text-white font-bold"
-        >
-          {paymentLoading ? 'Saving...' : 'Save Card'}
-        </Button>
-      </div>
-    </Elements>
-  </div>
-</div>
-                  {/* Saved Cards */}
+                  <div className="max-w-3xl mx-auto py-24">
+                    <div className="bg-white p-20 border-4 border-black rounded-lg shadow-2xl">
+                      <h4 className="text-3xl font-bold mb-12 text-center">
+                        Add Card for Funding
+                      </h4>
+                      <p className="text-xl mb-16 text-center text-gray-600">
+                        Secure by Stripe — your card details are safe and encrypted.
+                      </p>
+                      <Elements stripe={stripePromise}>
+                        <div className="space-y-16">
+                          <div className="bg-gray-50 p-12 border-4 border-gray-300 rounded-lg">
+                            <CardElement options={{
+                              style: {
+                                base: {
+                                  fontSize: '22px',
+                                  color: '#000',
+                                  fontFamily: 'Courier New, monospace',
+                                  '::placeholder': { color: '#666' },
+                                  backgroundColor: '#fff',
+                                  padding: '20px',
+                                },
+                              },
+                            }} />
+                          </div>
+                          {paymentError && <p className="text-red-600 text-center text-xl">{paymentError}</p>}
+                          {paymentSuccess && <p className="text-green-600 text-center text-xl">Card saved!</p>}
+                          <Button onClick={handleAddCard} disabled={paymentLoading} className="w-full h-20 text-2xl bg-black text-white font-bold">
+                            {paymentLoading ? 'Saving...' : 'Save Card'}
+                          </Button>
+                        </div>
+                      </Elements>
+                    </div>
+                  </div>
+
                   {savedMethods.length > 0 && (
                     <div className="max-w-2xl mx-auto">
                       <h4 className="text-2xl font-bold mb-8 text-center">Saved Cards</h4>
@@ -588,7 +501,7 @@ function BusinessDashboardContent() {
 
         {/* Create Gigs Tab */}
         {activeTab === 'gigs' && (
-          <div>
+          <div className="px-4">
             <h2 className="text-4xl font-bold mb-12 text-center">Step 4: Create a Gig</h2>
             <p className="text-lg mb-12 text-center max-w-3xl mx-auto">
               Choose a gig type. Athletes create authentic content for you. Review and approve — only pay for what you love.
@@ -683,17 +596,17 @@ function BusinessDashboardContent() {
 
         {/* Pending Clips Tab */}
         {activeTab === 'clips' && (
-          <div>
+          <div className="px-4">
             <h3 className="text-2xl mb-8 font-bold">Pending Clips to Review</h3>
             {pendingClips.length === 0 ? (
-              <p className="text-gray-600 mb-12">No pending clips — post offers to get started!</p>
+              <p className="text-gray-600 mb-12 text-center text-xl">No pending clips — post offers to get started!</p>
             ) : (
               <div className="space-y-16">
                 {pendingClips.map((clip) => (
                   <div key={clip.id} className="border-4 border-black p-8 bg-white max-w-2xl mx-auto">
                     <p className="font-bold mb-4 text-left">From: {clip.profiles.email}</p>
                     <p className="mb-6 text-left">Offer: {clip.offers.type} — ${clip.offers.amount}</p>
-                    <video controls className="w-full mb-8">
+                    <video controls className="w-full mb-8 rounded">
                       <source src={clip.video_url} type="video/mp4" />
                     </video>
                     <p className="text-sm text-gray-600 mb-4">
@@ -714,19 +627,19 @@ function BusinessDashboardContent() {
 
         {/* My Kid's Challenges Tab */}
         {activeTab === 'kids' && (
-          <div>
-            <h3 className="text-3xl mb-8 font-bold">My Kid's Challenges</h3>
-            <p className="mb-8 text-lg">
+          <div className="px-4">
+            <h3 className="text-3xl mb-8 font-bold text-center">My Kid's Challenges</h3>
+            <p className="mb-8 text-lg text-center">
               Create a challenge for your kid — they complete, you approve, they get paid.
             </p>
             <div className="space-y-8 max-w-2xl mx-auto">
               {referredAthletes.length === 0 ? (
-                <p className="text-gray-600">No referred athletes yet — wait for kids to pitch you!</p>
+                <p className="text-gray-600 text-center text-xl">No referred athletes yet — wait for kids to pitch you!</p>
               ) : (
                 referredAthletes.map((kid) => (
                   <div key={kid.id} className="border-4 border-black p-8 bg-gray-100">
-                    <p className="font-bold text-2xl mb-4">{kid.full_name || kid.email}</p>
-                    <p className="mb-6 text-lg">
+                    <p className="font-bold text-2xl mb-4 text-center">{kid.full_name || kid.email}</p>
+                    <p className="mb-6 text-lg text-center">
                       Prove it with timelapse or witness video — easy!
                     </p>
                     <Button 
@@ -744,12 +657,12 @@ function BusinessDashboardContent() {
 
         {/* Favorite Athletes Tab */}
         {activeTab === 'favorites' && (
-          <div>
+          <div className="px-4 text-center py-20">
             <h3 className="text-3xl mb-8 font-bold">Favorite Athletes</h3>
-            <p className="mb-8 text-lg">
+            <p className="text-xl mb-8">
               Quick access to athletes you like — re-fund gigs easily.
             </p>
-            <p className="text-gray-600 mb-12">
+            <p className="text-gray-600 text-xl">
               No favorites yet — add from clips or kids.
             </p>
           </div>
@@ -757,9 +670,9 @@ function BusinessDashboardContent() {
 
         {/* Freedom Scholarships Tab */}
         {activeTab === 'scholarships' && (
-          <div>
-            <h3 className="text-3xl mb-8 font-bold">Freedom Scholarships</h3>
-            <p className="text-xl mb-12 max-w-3xl mx-auto">
+          <div className="px-4">
+            <h3 className="text-3xl mb-8 font-bold text-center">Freedom Scholarships</h3>
+            <p className="text-xl mb-12 text-center max-w-3xl mx-auto">
               Award unrestricted cash to any athlete — paid instantly.<br />
               Real impact. Real hero status.
             </p>
@@ -769,7 +682,7 @@ function BusinessDashboardContent() {
                 placeholder="Search athlete by name, email, or school"
                 value={athleteSearch}
                 onChange={(e) => setAthleteSearch(e.target.value)}
-                className="text-center"
+                className="text-center text-lg"
               />
               <Button onClick={searchAthletes} className="w-full h-16 text-xl bg-black text-white">
                 Search Athletes
@@ -779,7 +692,7 @@ function BusinessDashboardContent() {
                 <div className="space-y-4">
                   {searchResults.map((athlete) => (
                     <div key={athlete.id} className="border-4 border-black p-6 bg-gray-100">
-                      <p className="text-lg">
+                      <p className="text-lg text-center">
                         {athlete.full_name || athlete.email} — {athlete.school}
                       </p>
                       <Button
@@ -802,13 +715,13 @@ function BusinessDashboardContent() {
                     placeholder="Scholarship amount (e.g., 500)"
                     value={standaloneScholarshipAmount}
                     onChange={(e) => setStandaloneScholarshipAmount(e.target.value)}
-                    className="mb-6"
+                    className="mb-6 text-center"
                   />
                   <textarea
                     placeholder="Optional message (e.g., Great season — use for books!)"
                     value={standaloneScholarshipMessage}
                     onChange={(e) => setStandaloneScholarshipMessage(e.target.value)}
-                    className="w-full p-4 text-lg border-4 border-black font-mono mb-6"
+                    className="w-full p-4 text-lg border-4 border-black font-mono mb-6 bg-white"
                     rows={6}
                   />
                   <Button
@@ -826,7 +739,7 @@ function BusinessDashboardContent() {
 
         {/* Booster Events Tab */}
         {activeTab === 'booster' && (
-          <div>
+          <div className="px-4 text-center py-20">
             <h3 className="text-3xl mb-8 font-bold">Booster Events</h3>
             <p className="mb-8 text-lg">
               Create a booster club event — crowd-fund team expenses.
@@ -840,16 +753,31 @@ function BusinessDashboardContent() {
           </div>
         )}
 
-        {/* Log Out */}
-        <div className="text-center mt-32">
-          <Button onClick={async () => {
-            await signOut()
-            router.push('/')
-            alert('Logged out successfully')
-          }} variant="outline" className="w-64 h-14 text-lg border-4 border-black">
-            Log Out
-          </Button>
+      </div>
+
+      {/* Log Out */}
+      <div className="text-center py-20">
+        <Button onClick={async () => {
+          await signOut()
+          router.push('/')
+          alert('Logged out successfully')
+        }} variant="outline" className="w-64 h-14 text-lg border-4 border-black">
+          Log Out
+        </Button>
+      </div>
+
+      {/* Role Switcher — Fixed at Bottom */}
+      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
+        <div className="bg-white border-4 border-black rounded-full shadow-2xl overflow-hidden w-[150px] h-16 flex items-center">
+          <div className={`absolute inset-0 w-1/2 bg-black transition-transform duration-300 ease-in-out ${currentRole === 'parent' ? 'translate-x-0' : 'translate-x-full'}`} />
+          <button onClick={() => router.push('/parent-dashboard')} className="relative z-10 flex-1 h-full flex items-center justify-center" disabled={currentRole === 'parent'}>
+            <span className={`text-lg font-bold font-mono transition-colors ${currentRole === 'parent' ? 'text-white' : 'text-black'}`}>Parent</span>
+          </button>
+          <button onClick={() => router.push('/business-dashboard')} className="relative z-10 flex-1 h-full flex items-center justify-center" disabled={currentRole === 'business'}>
+            <span className={`text-lg font-bold font-mono transition-colors ${currentRole === 'business' ? 'text-white' : 'text-black'}`}>Business</span>
+          </button>
         </div>
+        <p className="text-center text-xs font-mono mt-2 text-gray-600">Switch role</p>
       </div>
     </div>
   )
@@ -858,7 +786,7 @@ function BusinessDashboardContent() {
 export default function BusinessDashboard() {
   return (
     <Elements stripe={stripePromise}>
-      <Suspense fallback={<p className="container text-center py-32">Loading Stripe...</p>}>
+      <Suspense fallback={<p className="text-center py-32 text-2xl">Loading...</p>}>
         <BusinessDashboardContent />
       </Suspense>
     </Elements>
