@@ -43,6 +43,8 @@ function AthleteDashboardContent() {
   const [paymentLoading, setPaymentLoading] = useState(false)
   const [paymentError, setPaymentError] = useState<string | null>(null)
   const [paymentSuccess, setPaymentSuccess] = useState(false)
+  const [cardholderName, setCardholderName] = useState(profile?.full_name || '')
+  const [cardElementReady, setCardElementReady] = useState(false)
   const router = useRouter()
   const pathname = usePathname()
   const stripe = useStripe()
@@ -386,15 +388,24 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
             </div>
 
             <div className="mb-8">
-              <label className="block text-lg mb-2">Name</label>
-              <Input placeholder="Your Name" value={profile?.full_name || ''} disabled className="text-center" />
-            </div>
+  <label className="block text-lg mb-2">Name</label>
+  <Input 
+    placeholder="Your Name" 
+    value={profile?.full_name || ''} 
+    onChange={(e) => setProfile({ ...profile, full_name: e.target.value })}
+    className="text-center" 
+  />
+</div>
 
-            <div className="mb-8">
-              <label className="block text-lg mb-2">School</label>
-              <Input placeholder="Your School" value={profile?.school || ''} disabled className="text-center" />
-            </div>
-
+<div className="mb-8">
+  <label className="block text-lg mb-2">School</label>
+  <Input 
+    placeholder="Your School" 
+    value={profile?.school || ''} 
+    onChange={(e) => setProfile({ ...profile, school: e.target.value })}
+    className="text-center" 
+  />
+</div>
             <div className="mb-8">
               <label className="block text-lg mb-2">Highlight Reel Link</label>
               <Input placeholder="YouTube / Hudl link" value={highlightLink} onChange={(e) => setHighlightLink(e.target.value)} className="text-center" />
@@ -543,44 +554,50 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
 
     <Elements stripe={stripePromise}>
       <div className="space-y-12">
-        {/* Name Field — Pre-filled from profile */}
-        <div>
-          <label className="block text-lg mb-2 text-center">Cardholder Name</label>
-          <Input 
-            value={profile?.full_name || ''} 
-            disabled 
-            className="text-center max-w-md mx-auto"
-          />
-        </div>
+        {/* Cardholder Name — Editable */}
+<div className="mb-8">
+  <label className="block text-lg mb-2 text-center">Cardholder Name</label>
+  <Input 
+    placeholder="Your Name" 
+    value={profile?.full_name || ''} 
+    onChange={(e) => setCardholderName(e.target.value)}  // add state if needed
+    className="text-center max-w-md mx-auto"
+  />
+</div>
 
-        {/* Card Element — Bordered Container */}
-        <div className="bg-white p-8 border-4 border-black rounded-lg max-w-2xl mx-auto">
-          <CardElement 
-            options={{
-              style: {
-                base: {
-                  fontSize: '20px',
-                  color: '#000',
-                  fontFamily: 'Courier New, monospace',
-                  '::placeholder': { color: '#666' },
-                },
-              },
-            }}
-          />
-        </div>
+{/* Card Element — Bordered & Spacious */}
+<div className="bg-white p-12 border-4 border-black rounded-lg max-w-2xl mx-auto mb-12">
+  <CardElement 
+  onReady={(element) => setCardElementReady(true)} 
+    options={{
+      style: {
+        base: {
+          fontSize: '14px',
+          color: '#000',
+          fontFamily: 'Courier New, monospace',
+          '::placeholder': { color: '#666' },
+        },
+      },
+    }}
+  />
+</div>
+
+<p className="text-center text-lg mb-12 text-gray-600 font-bold">
+  Secure by Stripe — your card details are safe and encrypted.
+</p>
 
         {paymentError && <p className="text-red-600 text-center text-xl">{paymentError}</p>}
         {paymentSuccess && <p className="text-green-600 text-center text-xl">Debit card saved — payouts ready!</p>}
 
         {/* Save Button — Extra Padding Above */}
         <div className="mt-12">
-          <Button 
-            onClick={handleAddDebitCard}
-            disabled={paymentLoading}
-            className="w-full max-w-md mx-auto h-20 text-2xl bg-black text-white font-bold"
-          >
-            {paymentLoading ? 'Saving...' : 'Save Debit Card'}
-          </Button>
+            <Button 
+                onClick={handleAddDebitCard}
+                disabled={paymentLoading}
+                className="w-full max-w-md mx-auto h-20 text-2xl bg-black text-white font-bold"
+            >
+                {paymentLoading ? 'Saving...' : 'Save Debit Card'}
+            </Button>
         </div>
       </div>
     </Elements>

@@ -69,10 +69,10 @@ export default function Home() {
         {/* Hero */}
         <section className="py-20 px-6 sm:px-12 lg:px-32 text-center">
           <div className="bg-black text-white p-16 mb-16">
-            <h1 className="text-3xl sm:text-5xl font-bold leading-tight">
+            <h2 className="text-3xl sm:text-5xl font-bold leading-tight">
               We Connect Local Businesses with Student Athletes<br />
               for Scholarships & NIL Deals
-            </h1>
+            </h2>
           </div>
 
           <p className="text-xl sm:text-2xl mb-24 max-w-4xl mx-auto leading-relaxed">
