@@ -107,7 +107,6 @@ function AthleteDashboardContent() {
     fetchData()
   }, [router])
 
-  const [cardholderName, setCardholderName] = useState('')
 
     useEffect(() => {
     if (profile?.full_name) setCardholderName(profile.full_name)
