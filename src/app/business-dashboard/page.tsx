@@ -38,19 +38,25 @@ function BusinessDashboardContent() {
   const [paymentLoading, setPaymentLoading] = useState(false)
   const [paymentError, setPaymentError] = useState<string | null>(null)
   const [paymentSuccess, setPaymentSuccess] = useState(false)
-  const [activeTab, setActiveTab] = useState<'wallet' | 'gigs' | 'clips' | 'kids' | 'favorites' | 'scholarships' | 'booster'>('gigs')
+  const [cardReady, setCardReady] = useState(false)
+  const [activeTab, setActiveTab] = useState<'wallet' | 'gigs' | 'clips' | 'kids' | 'favorites' | 'scholarships' | 'booster'>('wallet')
   const [athleteSearch, setAthleteSearch] = useState('')
   const [searchResults, setSearchResults] = useState<any[]>([])
   const [selectedAthlete, setSelectedAthlete] = useState<any>(null)
   const [standaloneScholarshipAmount, setStandaloneScholarshipAmount] = useState('')
   const [standaloneScholarshipMessage, setStandaloneScholarshipMessage] = useState('')
   const [scholarshipLoading, setScholarshipLoading] = useState(false)
+
   const router = useRouter()
   const pathname = usePathname()
   const stripe = useStripe()
   const elements = useElements()
 
-  const currentRole = pathname.includes('athlete-dashboard') ? 'athlete' : pathname.includes('parent-dashboard') ? 'parent' : 'business'
+  const currentRole = pathname.includes('athlete-dashboard') 
+    ? 'athlete' 
+    : pathname.includes('parent-dashboard') 
+      ? 'parent' 
+      : 'business'
 
   useEffect(() => {
     const fetchData = async () => {
@@ -98,6 +104,11 @@ function BusinessDashboardContent() {
 
     fetchData()
   }, [router])
+
+  // Auto-scroll to top when tab changes
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }, [activeTab])
 
   const handleGigSelect = (gig: any) => {
     setSelectedGig(gig)
@@ -205,6 +216,11 @@ function BusinessDashboardContent() {
   const handleAddCard = async () => {
     if (!stripe || !elements) {
       setPaymentError('Stripe not loaded')
+      return
+    }
+
+    if (!cardReady) {
+      setPaymentError('Card field still loading — please wait a second')
       return
     }
 
@@ -330,25 +346,53 @@ function BusinessDashboardContent() {
       {/* Sticky Tabs with Counts */}
       <div className="sticky top-0 bg-white z-30 border-b-4 border-black py-4 shadow-lg">
         <div className="flex justify-center gap-3 flex-wrap px-4">
-          <Button onClick={() => setActiveTab('wallet')} variant={activeTab === 'wallet' ? 'default' : 'outline'} className="px-6 py-4 text-lg font-bold min-w-[100px]">
+          <Button
+            onClick={() => setActiveTab('wallet')}
+            variant={activeTab === 'wallet' ? 'default' : 'outline'}
+            className="px-6 py-4 text-lg font-bold min-w-[100px]"
+          >
             Wallet
           </Button>
-          <Button onClick={() => setActiveTab('gigs')} variant={activeTab === 'gigs' ? 'default' : 'outline'} className="px-6 py-4 text-lg font-bold min-w-[100px]">
+          <Button
+            onClick={() => setActiveTab('gigs')}
+            variant={activeTab === 'gigs' ? 'default' : 'outline'}
+            className="px-6 py-4 text-lg font-bold min-w-[100px]"
+          >
             Create Gigs
           </Button>
-          <Button onClick={() => setActiveTab('clips')} variant={activeTab === 'clips' ? 'default' : 'outline'} className="px-6 py-4 text-lg font-bold min-w-[100px]">
+          <Button
+            onClick={() => setActiveTab('clips')}
+            variant={activeTab === 'clips' ? 'default' : 'outline'}
+            className="px-6 py-4 text-lg font-bold min-w-[100px]"
+          >
             Clips ({pendingClips.length})
           </Button>
-          <Button onClick={() => setActiveTab('kids')} variant={activeTab === 'kids' ? 'default' : 'outline'} className="px-6 py-4 text-lg font-bold min-w-[100px]">
+          <Button
+            onClick={() => setActiveTab('kids')}
+            variant={activeTab === 'kids' ? 'default' : 'outline'}
+            className="px-6 py-4 text-lg font-bold min-w-[100px]"
+          >
             My Kids ({referredAthletes.length})
           </Button>
-          <Button onClick={() => setActiveTab('favorites')} variant={activeTab === 'favorites' ? 'default' : 'outline'} className="px-6 py-4 text-lg font-bold min-w-[100px]">
+          <Button
+            onClick={() => setActiveTab('favorites')}
+            variant={activeTab === 'favorites' ? 'default' : 'outline'}
+            className="px-6 py-4 text-lg font-bold min-w-[100px]"
+          >
             Favorites
           </Button>
-          <Button onClick={() => setActiveTab('scholarships')} variant={activeTab === 'scholarships' ? 'default' : 'outline'} className="px-6 py-4 text-lg bg-green-500 text-black border-4 border-black hover:bg-green-400 font-bold min-w-[140px]">
+          <Button
+            onClick={() => setActiveTab('scholarships')}
+            variant={activeTab === 'scholarships' ? 'default' : 'outline'}
+            className="px-6 py-4 text-lg bg-green-500 text-black border-4 border-black hover:bg-green-400 font-bold min-w-[140px]"
+          >
             Scholarships
           </Button>
-          <Button onClick={() => setActiveTab('booster')} variant={activeTab === 'booster' ? 'default' : 'outline'} className="px-6 py-4 text-lg font-bold min-w-[100px]">
+          <Button
+            onClick={() => setActiveTab('booster')}
+            variant={activeTab === 'booster' ? 'default' : 'outline'}
+            className="px-6 py-4 text-lg font-bold min-w-[100px]"
+          >
             Booster
           </Button>
         </div>
@@ -360,18 +404,18 @@ function BusinessDashboardContent() {
         {/* Wallet Tab */}
         {activeTab === 'wallet' && (
           <div className="space-y-32 px-4">
-            <div className="bg-gray-100 p-12 border-4 border-black max-w-3xl mx-auto">
-              <h3 className="text-3xl font-bold mb-12 text-center">
-                Get Started in 4 Steps
-              </h3>
-              <ol className="text-xl space-y-8">
-                <li><strong>Step 1:</strong> Complete your business profile below</li>
-                <li><strong>Step 2:</strong> Add a card for funding</li>
-                <li><strong>Step 3:</strong> Add funds to your wallet</li>
-                <li><strong>Step 4:</strong> Post gigs and award scholarships</li>
+            {/* 4-Step Guidance — First thing */}
+            <div className="bg-black text-white p-16 border-4 border-black max-w-4xl mx-auto text-center">
+              <h2 className="text-4xl font-bold mb-12">Get Started in 4 Steps</h2>
+              <ol className="text-2xl space-y-8 max-w-2xl mx-auto text-left">
+                <li><strong>1.</strong> Complete your profile (name + phone)</li>
+                <li><strong>2.</strong> Add a card for funding</li>
+                <li><strong>3.</strong> Add funds to your wallet</li>
+                <li><strong>4.</strong> Post your first gig → start getting content</li>
               </ol>
             </div>
 
+            {/* Profile Completion */}
             {(!business?.name || !business?.phone) && (
               <div className="max-w-2xl mx-auto p-12 bg-yellow-100 border-4 border-yellow-600">
                 <h3 className="text-3xl font-bold mb-8 text-center">
@@ -383,208 +427,269 @@ function BusinessDashboardContent() {
                 <div className="space-y-8">
                   <div>
                     <label className="block text-lg mb-2">Business Name</label>
-                    <Input value={business?.name || ''} onChange={(e) => setBusiness({ ...business, name: e.target.value })} placeholder="e.g., Bridge Pizza" />
+                    <Input
+                      value={business?.name || ''}
+                      onChange={(e) => setBusiness({ ...business, name: e.target.value })}
+                      placeholder="e.g., Bridge Pizza"
+                    />
                   </div>
                   <div>
                     <label className="block text-lg mb-2">Contact Phone</label>
-                    <Input value={business?.phone || ''} onChange={(e) => setBusiness({ ...business, phone: e.target.value })} placeholder="(555) 123-4567" />
+                    <Input
+                      value={business?.phone || ''}
+                      onChange={(e) => setBusiness({ ...business, phone: e.target.value })}
+                      placeholder="(555) 123-4567"
+                    />
                   </div>
-                  <Button onClick={async () => {
-                    const { error } = await supabase.from('businesses').update({ name: business.name, phone: business.phone }).eq('id', business.id)
-                    if (error) alert('Error saving profile')
-                    else {
-                      alert('Profile saved!')
-                      setBusiness({ ...business })
-                    }
-                  }} className="w-full h-16 text-xl bg-black text-white">
+                  <Button
+                    onClick={async () => {
+                      const { error } = await supabase
+                        .from('businesses')
+                        .update({ name: business.name, phone: business.phone })
+                        .eq('id', business.id)
+                      if (error) alert('Error saving profile')
+                      else {
+                        alert('Profile saved!')
+                        setBusiness({ ...business })
+                      }
+                    }}
+                    className="w-full h-16 text-xl bg-black text-white"
+                  >
                     Save Profile
                   </Button>
                 </div>
               </div>
             )}
 
-            {(business?.name && business?.phone) && (
-              <>
-                <div>
-                  <h2 className="text-4xl font-bold mb-8 text-center">Wallet</h2>
-                  <p className="text-3xl mb-12 text-center">
-                    Balance: ${business?.wallet_balance?.toFixed(2) || '0.00'}
-                  </p>
-
-                  <div className="max-w-sm mx-auto mb-16 p-8 bg-gray-100 border-4 border-black">
-                    <label className="flex flex-col items-center gap-4 cursor-pointer">
-                      <span className="text-2xl font-bold">Auto-Top-Up (recommended)</span>
-                      <input type="checkbox" checked={business?.auto_top_up ?? true} onChange={async (e) => {
-                        const enabled = e.target.checked
-                        await supabase.from('businesses').update({ auto_top_up: enabled }).eq('id', business.id)
-                        setBusiness({ ...business, auto_top_up: enabled })
-                        alert(enabled ? 'Auto-top-up enabled!' : 'Auto-top-up disabled')
-                      }} className="w-8 h-8" />
-                    </label>
-                    <p className="text-lg mt-4 text-center">
-                      When balance &lt; $100, add $500 automatically
-                    </p>
-                  </div>
-
-                  <p className="text-lg mb-12 text-center max-w-3xl mx-auto">
-                    Top up your wallet — post gigs anytime. Most businesses start with $500–$1000.<br />
-                    You only pay for content you approve.
-                  </p>
-
-                  <div className="mb-24">
-                    <h3 className="text-2xl font-bold mb-8 text-center">Step 3: Add Funds</h3>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-3xl mx-auto">
-                      <Button onClick={() => handleAddFunds(100)} className="h-16 text-xl bg-black text-white">+ $100</Button>
-                      <Button onClick={() => handleAddFunds(500)} className="h-16 text-xl bg-black text-white">+ $500</Button>
-                      <Button onClick={() => handleAddFunds(1000)} className="h-16 text-xl bg-black text-white">+ $1000</Button>
-                      <Button onClick={() => {
-                        const amt = prompt('Custom amount:')
-                        if (amt && !isNaN(Number(amt))) handleAddFunds(Number(amt))
-                      }} className="h-16 text-xl bg-green-400 text-black">Custom</Button>
+            {/* Card Entry */}
+            <div className="max-w-3xl mx-auto py-24">
+              <div className="bg-white p-20 border-4 border-black rounded-lg shadow-2xl">
+                <h3 className="text-4xl font-bold mb-12 text-center">Step 2: Add Card for Funding</h3>
+                <p className="text-xl mb-16 text-center text-gray-600">
+                  Secure by Stripe — only used when you approve content.
+                </p>
+                <Elements stripe={stripePromise}>
+                  <div className="space-y-16">
+                    <div className="bg-gray-50 p-12 border-4 border-gray-300 rounded-lg">
+                      <CardElement
+                        onReady={() => setCardReady(true)}
+                        options={{
+                          style: {
+                            base: {
+                              fontSize: '22px',
+                              color: '#000',
+                              fontFamily: 'Courier New, monospace',
+                              '::placeholder': { color: '#666' },
+                              backgroundColor: '#fff',
+                              padding: '20px',
+                            },
+                          },
+                        }}
+                      />
                     </div>
+                    {paymentError && <p className="text-red-600 text-center text-2xl">{paymentError}</p>}
+                    {paymentSuccess && <p className="text-green-600 text-center text-2xl">Card saved successfully!</p>}
+                    <Button
+                      onClick={handleAddCard}
+                      disabled={paymentLoading || !cardReady}
+                      className="w-full h-20 text-3xl bg-black text-white font-bold"
+                    >
+                      {paymentLoading ? 'Saving...' : 'Save Card'}
+                    </Button>
                   </div>
+                </Elements>
+              </div>
+            </div>
 
-                  <div className="max-w-3xl mx-auto py-24">
-                    <div className="bg-white p-20 border-4 border-black rounded-lg shadow-2xl">
-                      <h4 className="text-3xl font-bold mb-12 text-center">
-                        Add Card for Funding
-                      </h4>
-                      <p className="text-xl mb-16 text-center text-gray-600">
-                        Secure by Stripe — your card details are safe and encrypted.
+            {/* Saved Cards */}
+            {savedMethods.length > 0 && (
+              <div className="max-w-2xl mx-auto">
+                <h4 className="text-2xl font-bold mb-8 text-center">Saved Cards</h4>
+                <div className="space-y-6">
+                  {savedMethods.map((method) => (
+                    <div key={method.id} className="bg-gray-100 p-8 border-4 border-black">
+                      <p className="text-xl">
+                        {method.brand.toUpperCase()} •••• {method.last4}<br />
+                        Expires {method.exp_month}/{method.exp_year}
                       </p>
-                      <Elements stripe={stripePromise}>
-                        <div className="space-y-16">
-                          <div className="bg-gray-50 p-12 border-4 border-gray-300 rounded-lg">
-                            <CardElement options={{
-                              style: {
-                                base: {
-                                  fontSize: '22px',
-                                  color: '#000',
-                                  fontFamily: 'Courier New, monospace',
-                                  '::placeholder': { color: '#666' },
-                                  backgroundColor: '#fff',
-                                  padding: '20px',
-                                },
-                              },
-                            }} />
-                          </div>
-                          {paymentError && <p className="text-red-600 text-center text-xl">{paymentError}</p>}
-                          {paymentSuccess && <p className="text-green-600 text-center text-xl">Card saved!</p>}
-                          <Button onClick={handleAddCard} disabled={paymentLoading} className="w-full h-20 text-2xl bg-black text-white font-bold">
-                            {paymentLoading ? 'Saving...' : 'Save Card'}
-                          </Button>
-                        </div>
-                      </Elements>
                     </div>
-                  </div>
-
-                  {savedMethods.length > 0 && (
-                    <div className="max-w-2xl mx-auto">
-                      <h4 className="text-2xl font-bold mb-8 text-center">Saved Cards</h4>
-                      <div className="space-y-6">
-                        {savedMethods.map((method) => (
-                          <div key={method.id} className="bg-gray-100 p-8 border-4 border-black">
-                            <p className="text-xl">
-                              {method.brand.toUpperCase()} •••• {method.last4}<br />
-                              Expires {method.exp_month}/{method.exp_year}
-                            </p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                  ))}
                 </div>
-              </>
+              </div>
+            )}
+
+            {/* Add Funds */}
+            {(business?.name && business?.phone) && savedMethods.length > 0 && (
+              <div className="max-w-3xl mx-auto">
+                <h3 className="text-4xl font-bold mb-12 text-center">Step 3: Add Funds to Wallet</h3>
+                <p className="text-xl mb-12 text-center">
+                  Current balance: ${business?.wallet_balance?.toFixed(2) || '0.00'}
+                </p>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+                  <Button onClick={() => handleAddFunds(100)} className="h-20 text-2xl bg-black text-white">
+                    + $100
+                  </Button>
+                  <Button onClick={() => handleAddFunds(500)} className="h-20 text-2xl bg-black text-white">
+                    + $500
+                  </Button>
+                  <Button onClick={() => handleAddFunds(1000)} className="h-20 text-2xl bg-black text-white">
+                    + $1000
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      const amt = prompt('Custom amount:')
+                      if (amt && !isNaN(Number(amt))) handleAddFunds(Number(amt))
+                    }}
+                    className="h-20 text-2xl bg-green-400 text-black"
+                  >
+                    Custom
+                  </Button>
+                </div>
+              </div>
             )}
           </div>
         )}
 
-        {/* Create Gigs Tab */}
+                {/* Create Gigs Tab — Clean Vertical Cards + Share on Post */}
         {activeTab === 'gigs' && (
           <div className="px-4">
-            <h2 className="text-4xl font-bold mb-12 text-center">Step 4: Create a Gig</h2>
-            <p className="text-lg mb-12 text-center max-w-3xl mx-auto">
-              Choose a gig type. Athletes create authentic content for you. Review and approve — only pay for what you love.
+            <h2 className="text-4xl font-bold mb-12 text-center font-mono">Step 4: Create a Gig</h2>
+            <p className="text-xl mb-16 text-center max-w-3xl mx-auto font-mono">
+              Choose a gig type. Athletes create authentic content for you.<br />
+              Review and approve — only pay for what you love.
             </p>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12 max-w-5xl mx-auto">
+
+            <div className="max-w-4xl mx-auto space-y-12">
               {businessGigTypes.map((gig) => (
-                <div key={gig.title} className="border-4 border-black bg-gray-100 hover:bg-gray-200 transition">
+                <div
+                  key={gig.title}
+                  className={`border-4 border-black transition-all ${
+                    selectedGig?.title === gig.title ? 'bg-green-100' : 'bg-white hover:bg-gray-50'
+                  }`}
+                >
+                  {/* Card Header — Click to Select */}
                   <button
                     onClick={() => handleGigSelect(gig)}
-                    className="w-full p-12 flex flex-col items-center justify-center"
+                    className="w-full p-12 text-left"
                   >
-                    <h3 className="text-3xl font-bold mb-6">{gig.title}</h3>
-                    <p className="text-2xl mb-6">${gig.baseAmount}+</p>
-                    <p className="text-lg text-center leading-relaxed px-4">{gig.description}</p>
+                    <h3 className="text-4xl font-bold mb-6 font-mono">{gig.title}</h3>
+                    <p className="text-3xl font-bold mb-8 text-green-600">${gig.baseAmount}+</p>
+                    <p className="text-xl leading-relaxed font-mono">{gig.description}</p>
                   </button>
 
+                  {/* Expanded Customize Panel */}
                   {selectedGig?.title === gig.title && (
-                    <div className="p-12 border-t-4 border-black bg-white">
-                      <h3 className="text-2xl mb-6 font-bold">Customize Your {gig.title}</h3>
-                      <div className="space-y-6">
+                    <div className="p-12 border-t-4 border-black bg-white space-y-10">
+                      <h3 className="text-3xl font-bold text-center mb-10 font-mono">
+                        Customize Your {gig.title}
+                      </h3>
+
+                      <div className="space-y-8 max-w-2xl mx-auto">
                         <div>
-                          <label className="block text-lg mb-2">Number of Athletes</label>
+                          <label className="block text-xl mb-3 font-mono">Number of Athletes</label>
                           <select
                             value={numAthletes}
                             onChange={(e) => handleAthletesChange(Number(e.target.value))}
-                            className="w-full p-4 text-lg border-4 border-black"
+                            className="w-full p-5 text-xl border-4 border-black font-mono bg-white"
                           >
                             {[1,2,3,4,5,6,7,8,9,10].map(n => (
-                              <option key={n} value={n}>{n} athlete{n > 1 ? 's' : ''}</option>
+                              <option key={n} value={n} className="text-xl">
+                                {n} athlete{n > 1 ? 's' : ''}
+                              </option>
                             ))}
                           </select>
-                          <p className="text-sm mt-2">+ $75 per additional athlete</p>
+                          <p className="text-lg mt-3 text-gray-600 font-mono">+ $75 per additional athlete</p>
                         </div>
 
                         <div>
-                          <label className="block text-lg mb-2">Date</label>
-                          <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+                          <label className="block text-xl mb-3 font-mono">Date (Optional)</label>
+                          <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="h-16 text-xl font-mono" />
                         </div>
 
                         <div>
-                          <label className="block text-lg mb-2">Location</label>
-                          <Input placeholder="e.g., Bridge Pizza" value={location} onChange={(e) => setLocation(e.target.value)} />
+                          <label className="block text-xl mb-3 font-mono">Location</label>
+                          <Input placeholder="e.g., Bridge Pizza" value={location} onChange={(e) => setLocation(e.target.value)} className="h-16 text-xl font-mono" />
                         </div>
 
                         <div>
-                          <label className="block text-lg mb-2">Your Phone (for athlete contact)</label>
-                          <Input placeholder="(555) 123-4567" value={businessPhone} onChange={(e) => setBusinessPhone(e.target.value)} />
+                          <label className="block text-xl mb-3 font-mono">Your Phone (for athlete contact)</label>
+                          <Input placeholder="(555) 123-4567" value={businessPhone} onChange={(e) => setBusinessPhone(e.target.value)} className="h-16 text-xl font-mono" />
                         </div>
 
                         <div className="flex justify-center">
-                          <label className="flex items-center gap-4 text-xl">
-                            <input 
-                              type="checkbox" 
-                              checked={isRecurring} 
+                          <label className="flex items-center gap-4 text-xl font-mono">
+                            <input
+                              type="checkbox"
+                              checked={isRecurring}
                               onChange={(e) => setIsRecurring(e.target.checked)}
-                              className="w-6 h-6"
+                              className="w-8 h-8"
                             />
                             Make this recurring monthly
                           </label>
                         </div>
 
                         <div>
-                          <label className="block text-lg mb-2">Offer Amount</label>
-                          <Input value={amount} onChange={(e) => setAmount(e.target.value)} />
+                          <label className="block text-xl mb-3 font-mono">Offer Amount</label>
+                          <Input value={amount} onChange={(e) => setAmount(e.target.value)} className="h-16 text-xl font-mono" />
                         </div>
 
                         <div>
-                          <label className="block text-lg mb-2">Freedom Scholarship (Optional)</label>
-                          <Input value={scholarshipAmount} onChange={(e) => setScholarshipAmount(e.target.value)} />
+                          <label className="block text-xl mb-3 font-mono">Freedom Scholarship Bonus (Optional)</label>
+                          <Input value={scholarshipAmount} onChange={(e) => setScholarshipAmount(e.target.value)} className="h-16 text-xl font-mono" />
                         </div>
 
                         <div>
-                          <label className="block text-lg mb-2">Custom Details</label>
-                          <textarea 
-                            value={customDetails} 
-                            onChange={(e) => setCustomDetails(e.target.value)} 
-                            className="w-full h-40 p-4 text-lg border-4 border-black font-mono"
+                          <label className="block text-xl mb-3 font-mono">Custom Details (Optional)</label>
+                          <textarea
+                            value={customDetails}
+                            onChange={(e) => setCustomDetails(e.target.value)}
+                            className="w-full h-48 p-6 text-xl border-4 border-black font-mono bg-white"
+                            placeholder="e.g., Wear our shirt, tag @yourbusiness, say our slogan..."
                           />
                         </div>
 
-                        <Button onClick={handlePost} className="w-full h-20 text-2xl bg-green-400 text-black">
-                          Fund & Post Offer
-                        </Button>
+                        <div className="space-y-6">
+                          <Button
+                            onClick={async () => {
+                              // Placeholder for real post logic
+                              await handlePost()
+
+                              // Native Share after post
+                              const shareText = `Hey! I just posted a $${amount || gig.baseAmount} ${gig.title} gig on LocalHustle. Complete it and get paid instantly!`
+                              const shareUrl = `https://app.localhustle.org/athlete-dashboard` // Replace with real gig link when available
+
+                              const shareData = {
+                                title: 'LocalHustle Gig Opportunity',
+                                text: shareText,
+                                url: shareUrl,
+                              }
+
+                              if (navigator.share && navigator.canShare(shareData)) {
+                                try {
+                                  await navigator.share(shareData)
+                                } catch (err) {
+                                  // Fallback to clipboard
+                                  navigator.clipboard.writeText(`${shareText}\n\n${shareUrl}`)
+                                  alert('Gig posted! Share link copied to clipboard.')
+                                }
+                              } else {
+                                navigator.clipboard.writeText(`${shareText}\n\n${shareUrl}`)
+                                alert('Gig posted! Share link copied to clipboard.')
+                              }
+                            }}
+                            className="w-full h-20 text-3xl bg-green-400 text-black font-bold font-mono hover:bg-green-500"
+                          >
+                            Fund & Post Offer
+                          </Button>
+
+                          <Button
+                            onClick={() => handleGigSelect(null)}
+                            variant="outline"
+                            className="w-full h-16 text-xl border-4 border-black font-mono"
+                          >
+                            Choose Different Gig
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   )}
@@ -593,7 +698,6 @@ function BusinessDashboardContent() {
             </div>
           </div>
         )}
-
         {/* Pending Clips Tab */}
         {activeTab === 'clips' && (
           <div className="px-4">
@@ -612,7 +716,7 @@ function BusinessDashboardContent() {
                     <p className="text-sm text-gray-600 mb-4">
                       Prove it with timelapse or witness video — easy!
                     </p>
-                    <Button 
+                    <Button
                       onClick={() => approveClip(clip)}
                       className="w-full h-16 text-xl bg-black text-white"
                     >
@@ -642,7 +746,7 @@ function BusinessDashboardContent() {
                     <p className="mb-6 text-lg text-center">
                       Prove it with timelapse or witness video — easy!
                     </p>
-                    <Button 
+                    <Button
                       onClick={() => createChallengeForKid(kid)}
                       className="w-full h-16 text-xl bg-green-400 text-black"
                     >
@@ -744,7 +848,7 @@ function BusinessDashboardContent() {
             <p className="mb-8 text-lg">
               Create a booster club event — crowd-fund team expenses.
             </p>
-            <Button 
+            <Button
               onClick={() => router.push('/booster-events')}
               className="w-full max-w-md h-20 text-2xl bg-green-400 text-black"
             >
@@ -757,24 +861,52 @@ function BusinessDashboardContent() {
 
       {/* Log Out */}
       <div className="text-center py-20">
-        <Button onClick={async () => {
-          await signOut()
-          router.push('/')
-          alert('Logged out successfully')
-        }} variant="outline" className="w-64 h-14 text-lg border-4 border-black">
+        <Button
+          onClick={async () => {
+            await signOut()
+            router.push('/')
+            alert('Logged out successfully')
+          }}
+          variant="outline"
+          className="w-64 h-14 text-lg border-4 border-black"
+        >
           Log Out
         </Button>
       </div>
 
-      {/* Role Switcher — Fixed at Bottom */}
+      {/* Role Switcher */}
       <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
         <div className="bg-white border-4 border-black rounded-full shadow-2xl overflow-hidden w-[150px] h-16 flex items-center">
-          <div className={`absolute inset-0 w-1/2 bg-black transition-transform duration-300 ease-in-out ${currentRole === 'parent' ? 'translate-x-0' : 'translate-x-full'}`} />
-          <button onClick={() => router.push('/parent-dashboard')} className="relative z-10 flex-1 h-full flex items-center justify-center" disabled={currentRole === 'parent'}>
-            <span className={`text-lg font-bold font-mono transition-colors ${currentRole === 'parent' ? 'text-white' : 'text-black'}`}>Parent</span>
+          <div
+            className={`absolute inset-0 w-1/2 bg-black transition-transform duration-300 ease-in-out ${
+              currentRole === 'parent' ? 'translate-x-0' : 'translate-x-full'
+            }`}
+          />
+          <button
+            onClick={() => router.push('/parent-dashboard')}
+            className="relative z-10 flex-1 h-full flex items-center justify-center"
+            disabled={currentRole === 'parent'}
+          >
+            <span
+              className={`text-lg font-bold font-mono transition-colors ${
+                currentRole === 'parent' ? 'text-white' : 'text-black'
+              }`}
+            >
+              Parent
+            </span>
           </button>
-          <button onClick={() => router.push('/business-dashboard')} className="relative z-10 flex-1 h-full flex items-center justify-center" disabled={currentRole === 'business'}>
-            <span className={`text-lg font-bold font-mono transition-colors ${currentRole === 'business' ? 'text-white' : 'text-black'}`}>Business</span>
+          <button
+            onClick={() => router.push('/business-dashboard')}
+            className="relative z-10 flex-1 h-full flex items-center justify-center"
+            disabled={currentRole === 'business'}
+          >
+            <span
+              className={`text-lg font-bold font-mono transition-colors ${
+                currentRole === 'business' ? 'text-white' : 'text-black'
+              }`}
+            >
+              Business
+            </span>
           </button>
         </div>
         <p className="text-center text-xs font-mono mt-2 text-gray-600">Switch role</p>
