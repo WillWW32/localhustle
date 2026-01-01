@@ -107,6 +107,12 @@ function AthleteDashboardContent() {
     fetchData()
   }, [router])
 
+  const [cardholderName, setCardholderName] = useState('')
+
+    useEffect(() => {
+    if (profile?.full_name) setCardholderName(profile.full_name)
+    }, [profile])
+
   const handleSaveProfile = async () => {
     const { error } = await supabase
       .from('profiles')
@@ -273,6 +279,11 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
       }),
     })
 
+    const cardElement = elements.getElement(CardElement)
+    if (!cardElement) {
+    setPaymentError('Card not ready — try again')
+    return
+    }
     const data = await response.json()
 
     if (data.error) {
@@ -570,20 +581,27 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
   <CardElement 
   onReady={(element) => setCardElementReady(true)} 
     options={{
-      style: {
-        base: {
-          fontSize: '18px',
-          color: '#000',
-          fontFamily: 'Courier New, monospace',
-          '::placeholder': { color: '#666' },
-          lineHeight: '1.8',
-        },
-      },
-    }}
-  />
+  style: {
+    base: {
+      fontSize: '16px',
+      color: '#000',
+      fontFamily: 'Courier New, monospace',
+      '::placeholder': { color: '#666' },
+      backgroundColor: '#fff',
+      lineHeight: '1.8',
+    },
+    invalid: {
+      color: '#fa755a',
+      iconColor: '#fa755a',
+    },
+  },
+  hidePostalCode: true,  // Most US users don't need it — cleaner form
+  disabled: false,
+}}  
+/>
 </div>
 
-<p className="text-center text-lg mb-12 text-gray-600 font-bold">
+<p className="text-center p-16 text-lg mb-12 text-gray-600 font-bold">
   Secure by Stripe — your card details are safe and encrypted.
 </p>
 
