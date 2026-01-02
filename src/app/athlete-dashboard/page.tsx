@@ -85,7 +85,6 @@ function AthleteDashboardContent() {
       setBio(prof.bio || '')
       setGigCount(prof.gig_count || 0)
 
-elements.getElement(CardElement)
       if (prof.debit_card_token) {
         setSavedMethods([{
           id: prof.debit_card_token,
@@ -272,7 +271,9 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
   setPaymentError(null)
   setPaymentSuccess(false)
   setPaymentLoading(true)
-
+    
+  const cardElement = elements.getElement(CardElement)
+    
   if (!cardElement) {
     setPaymentError('Card element not found')
     setPaymentLoading(false)
