@@ -200,7 +200,7 @@ const sendMagicLink = async (selectedRole: Role) => {
 
             <div>
               <p className="text-2xl mb-8 text-gray-600 font-mono">Choose your role</p>
-              <div className="grid grid-cols-1 gap-8">
+              <div className="grid grid-cols-1 gap-8 max-w-xs mx-auto">
                 <button
                   onClick={() => {
                     if (!email.trim()) {
@@ -211,13 +211,7 @@ const sendMagicLink = async (selectedRole: Role) => {
                     sendMagicLink('athlete')
                   }}
                   disabled={loading}
-                  style={{
-                    backgroundColor: role === 'athlete' ? '#d4edda' : '#ffffff',
-                    transform: role === 'athlete' ? 'scale(1.05)' : 'scale(1)',
-                    boxShadow: role === 'athlete' ? '0 10px 30px rgba(0,0,0,0.2)' : 'none',
-                    transition: 'all 0.3s ease',
-                  }}
-                  className="w-full h-24 text-3xl font-bold border-4 border-black"
+                  className={`btn-fixed-200 ${role === 'athlete' ? 'selected' : ''}`}
                 >
                   {loading && role === 'athlete' ? 'Sending...' : 'Student Athlete'}
                 </button>
@@ -232,13 +226,7 @@ const sendMagicLink = async (selectedRole: Role) => {
                     sendMagicLink('parent')
                   }}
                   disabled={loading}
-                  style={{
-                    backgroundColor: role === 'parent' ? '#d4edda' : '#ffffff',
-                    transform: role === 'parent' ? 'scale(1.05)' : 'scale(1)',
-                    boxShadow: role === 'parent' ? '0 10px 30px rgba(0,0,0,0.2)' : 'none',
-                    transition: 'all 0.3s ease',
-                  }}
-                  className="w-full h-24 text-3xl font-bold border-4 border-black"
+                  className={`btn-fixed-200 ${role === 'parent' ? 'selected' : ''}`}
                 >
                   {loading && role === 'parent' ? 'Sending...' : 'Parent'}
                 </button>
@@ -253,13 +241,7 @@ const sendMagicLink = async (selectedRole: Role) => {
                     sendMagicLink('business')
                   }}
                   disabled={loading}
-                  style={{
-                    backgroundColor: role === 'business' ? '#d4edda' : '#ffffff',
-                    transform: role === 'business' ? 'scale(1.05)' : 'scale(1)',
-                    boxShadow: role === 'business' ? '0 10px 30px rgba(0,0,0,0.2)' : 'none',
-                    transition: 'all 0.3s ease',
-                  }}
-                  className="w-full h-24 text-3xl font-bold border-4 border-black"
+                  className={`btn-fixed-200 ${role === 'business' ? 'selected' : ''}`}
                 >
                   {loading && role === 'business' ? 'Sending...' : 'Business'}
                 </button>

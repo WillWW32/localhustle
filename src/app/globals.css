@@ -18,7 +18,7 @@ html, body {
 
 /* Headings */
 h1 {
-  font-size: 3rem;
+  font-size: 2.5rem;
   font-weight: bold;
   margin-bottom: 3rem;
 }
@@ -149,21 +149,78 @@ button, [class*="btn"], .ui-button {
   justify-content: center !important;
 }
 
-/* Footer — extra small, gray, 2 lines on mobile */
-footer nav {
-  font-size: 0.55rem !important;
+/* Fixed Width Buttons — 200px, Cool Selected/Hover */
+.btn-fixed-200 {
+  width: 200px !important;
+  max-width: 200px !important;
+  padding: 1.5rem 1rem;
+  font-size: 1.5rem;
+  font-weight: bold;
+  background-color: #000000;
+  color: #ffffff;
+  border: 4px solid black;
+  transition: all 0.3s ease;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.15);
 }
 
-footer p {
-  font-size: 0.6rem !important;
+.btn-fixed-200:hover {
+  background-color: #e0e0e0; /* light gray */
+  color: #000000;
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px rgba(0,0,0,0.2);
+}
+
+.btn-fixed-200.selected {
+  background-color: #32cd32 !important; /* lime green */
+  color: #000000 !important;
+  transform: translateY(-6px) scale(1.05);
+  box-shadow: 0 16px 40px rgba(50,205,50,0.4);
+}
+
+/* Optional variant: softer green */
+.btn-fixed-200.selected-soft {
+  background-color: #d4edda;
+  color: #000000;
+}
+
+/* Footer — Super Small, Gray Hover Links */
+footer {
+  font-size: 6px !important;
+  line-height: 1.4;
+  color: #000000;
+  padding: 2rem 1rem;
+}
+
+footer a {
+  color: #000000;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+footer a:hover {
+  color: #666666; /* gray on hover */
+}
+
+footer nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
 }
 
 @media (min-width: 640px) {
   footer nav {
     flex-direction: row;
-    gap: 1.5rem;
+    justify-content: center;
+    gap: 2rem;
   }
 }
+
+footer p {
+  margin: 0;
+  opacity: 0.8;
+}
+
 /* Mobile Heading Size Fix */
 @media (max-width: 640px) {
   h1 { font-size: 2.5rem !important; }
