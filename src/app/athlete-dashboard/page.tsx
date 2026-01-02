@@ -258,9 +258,8 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
   }
 
   const handleAddDebitCard = async () => {
-  
   if (!stripe || !elements) {
-    setPaymentError('Stripe not loaded')
+    setPaymentError('Stripe not loaded — please refresh')
     return
   }
 
@@ -273,18 +272,18 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
   setPaymentSuccess(false)
   setPaymentLoading(true)
 
-  const CardElement = dynamic(() => import('@stripe/react-stripe-js').then(mod => mod.CardElement), { ssr: false })
+  // Get the actual mounted element instance
+  const cardElement = elements.getElement(CardElement)
 
   if (!cardElement) {
-    setPaymentError('Card element not found')
+    setPaymentError('Card element not found — please refresh and try again')
     setPaymentLoading(false)
     return
   }
 
-  // Correct — pass the element instance, not the component
   const { error: stripeError, paymentMethod } = await stripe.createPaymentMethod({
     type: 'card',
-    card: cardElement,  // ← This is the instance, not CardElement component
+    card: cardElement,  // ← instance, not the component
   })
 
   if (stripeError) {
@@ -304,8 +303,14 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
   // Save token directly to athlete profile
   const { error: dbError } = await supabase
     .from('profiles')
-    .update({ debit_card_token: paymentMethod.id })
-    .eq('id', user.id)  // or 'owner_id' if different
+    .update({
+      debit_card_token: paymentMethod.id,
+      card_brand: paymentMethod.card?.brand,
+      card_last4: paymentMethod.card?.last4,
+      card_exp_month: paymentMethod.card?.exp_month,
+      card_exp_year: paymentMethod.card?.exp_year,
+    })
+    .eq('id', user.id)
 
   if (dbError) {
     console.error('DB Error:', dbError)
@@ -314,12 +319,12 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
     return
   }
 
-  // Success — update local state to show saved card
+  // Success — update local state
   setPaymentSuccess(true)
   setSavedMethods([{
     id: paymentMethod.id,
-    brand: paymentMethod.card?.brand,
-    last4: paymentMethod.card?.last4,
+    brand: paymentMethod.card?.brand || 'Card',
+    last4: paymentMethod.card?.last4 || '••••',
     exp_month: paymentMethod.card?.exp_month,
     exp_year: paymentMethod.card?.exp_year,
   }])
