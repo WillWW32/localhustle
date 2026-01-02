@@ -27,6 +27,7 @@ const athleteGigTypes = [
 ]
 
 function AthleteDashboardContent() {
+  const [cardReady, setCardReady] = useState(false)
   const [profile, setProfile] = useState<any>(null)
   const [offers, setOffers] = useState<any[]>([])
   const [selectedGigs, setSelectedGigs] = useState<string[]>([])
@@ -625,7 +626,7 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
 {/* Card Element — Bordered & Spacious */}
 <div className="bg-white p-16 border-4 border-black rounded-lg max-w-2xl mx-auto mb-16">
   <CardElement 
-  onReady={(element) => setCardElementReady(true)} 
+  onReady={() => setCardReady(true)}
     options={{
   style: {
     base: {
