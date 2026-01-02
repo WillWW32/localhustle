@@ -274,7 +274,7 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
     
   const CardElement = dynamic(() => import('@stripe/react-stripe-js').then(mod => mod.CardElement), { ssr: false })
     
-  if (!cardElement) {
+  if (!CardElement) {
     setPaymentError('Card element not found')
     setPaymentLoading(false)
     return
@@ -282,7 +282,7 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
 
   const { error: stripeError, paymentMethod } = await stripe.createPaymentMethod({
     type: 'card',
-    card: cardElement,
+    card: CardElement,
   })
 
   if (stripeError) {
