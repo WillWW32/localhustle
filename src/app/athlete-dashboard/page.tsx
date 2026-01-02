@@ -29,6 +29,7 @@ const athleteGigTypes = [
 function AthleteDashboardContent() {
   const [cardReady, setCardReady] = useState(false)
   const [profile, setProfile] = useState<any>(null)
+  const [editingProfile, setEditingProfile] = useState(false)
   const [offers, setOffers] = useState<any[]>([])
   const [selectedGigs, setSelectedGigs] = useState<string[]>([])
   const [squad, setSquad] = useState<any[]>([])
@@ -371,111 +372,136 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
       </div>
 
       <div className="max-w-4xl mx-auto space-y-32 font-mono text-center text-lg">
-        {/* Step 1: Complete Profile */}
-        <div className="bg-green-100 p-8 border-4 border-green-600 rounded-lg">
-          <h2 className="text-3xl font-bold mb-8">
-            Step 1 — Complete Your Profile
-          </h2>
-          <p className="text-xl mb-12">
-            Businesses see this — make it great!
-          </p>
-          <div className="max-w-2xl mx-auto bg-gray-100 p-8 border-4 border-black rounded-lg">
-            <div className="mb-12">
-              <div className="relative w-40 h-40 mx-auto rounded-full overflow-hidden border-4 border-black">
-                {profilePic ? (
-                  <img src={profilePic} alt="Profile" className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full bg-gray-300 flex items-center justify-center">
-                    <p className="text-gray-600">Tap to Upload</p>
-                  </div>
-                )}
+        
+              {/* Step 1: Complete Your Profile */}
+      <div className="max-w-2xl mx-auto mb-32 p-12 bg-white border-4 border-black rounded-lg">
+        <h3 className="text-4xl font-bold mb-12 text-center font-mono">Step 1: Complete Your Profile</h3>
+
+        {/* Read-Only View — When Profile is Complete */}
+        {(profile?.full_name && profile?.school) && !editingProfile ? (
+          <div className="space-y-8">
+            <div className="flex items-center justify-between">
+              <p className="text-2xl font-mono">Full Name: {profile.full_name}</p>
+              <button 
+                onClick={() => setEditingProfile(true)}
+                className="text-2xl text-gray-600 hover:text-black font-mono"
+              >
+                ✏️ Edit
+              </button>
+            </div>
+            <p className="text-2xl font-mono">School: {profile.school}</p>
+            {profile.profile_pic && (
+              <div>
+                <p className="text-xl font-mono mb-4">Profile Pic:</p>
+                <img src={profile.profile_pic} alt="Profile" className="w-full max-w-md mx-auto border-4 border-black rounded-lg" />
               </div>
-              <input
-                type="file"
-                accept="image/*"
-                capture="environment"
-                onChange={async (e) => {
-                  const file = e.target.files?.[0]
-                  if (!file || !profile) return
-
-                  const fileExt = file.name.split('.').pop()
-                  const fileName = `${profile.id}.${fileExt}`
-                  const filePath = `${profile.id}/${fileName}`
-
-                  const { error: uploadError } = await supabase.storage
-                    .from('profile-pics')
-                    .upload(filePath, file, { upsert: true })
-
-                  if (uploadError) {
-                    alert('Upload failed: ' + uploadError.message)
-                    return
-                  }
-
-                  const { data: urlData } = supabase.storage
-                    .from('profile-pics')
-                    .getPublicUrl(filePath)
-
-                  setProfilePic(urlData.publicUrl)
-
-                  await supabase
-                    .from('profiles')
-                    .update({ profile_pic: urlData.publicUrl })
-                    .eq('id', profile.id)
-                }}
-                className="hidden"
-                id="photo-upload"
+            )}
+            {profile.highlight_link && (
+              <p className="text-xl font-mono break-all">Highlight Link: {profile.highlight_link}</p>
+            )}
+            {profile.social_followers && (
+              <p className="text-xl font-mono">Social Followers: {profile.social_followers}</p>
+            )}
+            {profile.bio && (
+              <div>
+                <p className="text-xl font-mono mb-4">Bio:</p>
+                <p className="text-lg font-mono whitespace-pre-wrap">{profile.bio}</p>
+              </div>
+            )}
+          </div>
+        ) : (
+          /* Edit Form — When Incomplete or Editing */
+          <div className="space-y-10">
+            <div>
+              <label className="block text-xl mb-4 font-mono">Full Name</label>
+              <Input
+                value={profile?.full_name || ''}
+                onChange={(e) => setProfile({ ...profile, full_name: e.target.value })}
+                placeholder="John Smith"
+                className="h-16 text-xl font-mono"
               />
-              <label htmlFor="photo-upload" className="block mt-4">
-                <div className="px-8 py-4 bg-black text-white text-center cursor-pointer font-bold text-lg">
-                  Upload Photo
+            </div>
+            <div>
+              <label className="block text-xl mb-4 font-mono">School</label>
+              <Input
+                value={profile?.school || ''}
+                onChange={(e) => setProfile({ ...profile, school: e.target.value })}
+                placeholder="Lincoln High School"
+                className="h-16 text-xl font-mono"
+              />
+            </div>
+            <div>
+              <label className="block text-xl mb-4 font-mono">Profile Pic (tap to upload)</label>
+              {profilePic ? (
+                <div className="mb-8">
+                  <img src={profilePic} alt="Preview" className="w-full max-w-md mx-auto border-4 border-black rounded-lg" />
+                  <Button onClick={() => setProfilePic('')} className="mt-4 w-full h-16 text-xl bg-black text-white font-mono">
+                    Remove Photo
+                  </Button>
                 </div>
-              </label>
+              ) : (
+                <Input
+                  type="file"
+                  accept="image/*"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0]
+                    if (!file) return
+
+                    const { data, error } = await supabase.storage
+                      .from('profile-pics')
+                      .upload(`public/${profile.id}.jpg`, file, { upsert: true })
+
+                    if (error) {
+                      alert('Upload error')
+                      return
+                    }
+
+                    const { data: urlData } = supabase.storage
+                      .from('profile-pics')
+                      .getPublicUrl(`public/${profile.id}.jpg`)
+
+                    setProfilePic(urlData.publicUrl)
+                  }}
+                  className="w-full h-16 text-xl font-mono border-4 border-black"
+                />
+              )}
             </div>
-
-            <div className="mb-8">
-  <label className="block text-lg mb-2">Name</label>
-  <Input 
-    placeholder="Your Name" 
-    value={profile?.full_name || ''} 
-    onChange={(e) => setProfile({ ...profile, full_name: e.target.value })}
-    className="text-center" 
-  />
-</div>
-
-<div className="mb-8">
-  <label className="block text-lg mb-2">School</label>
-  <Input 
-    placeholder="Your School" 
-    value={profile?.school || ''} 
-    onChange={(e) => setProfile({ ...profile, school: e.target.value })}
-    className="text-center" 
-  />
-</div>
-            <div className="mb-8">
-              <label className="block text-lg mb-2">Highlight Reel Link</label>
-              <Input placeholder="YouTube / Hudl link" value={highlightLink} onChange={(e) => setHighlightLink(e.target.value)} className="text-center" />
+            <div>
+              <label className="block text-xl mb-4 font-mono">Highlight Link</label>
+              <Input
+                value={highlightLink}
+                onChange={(e) => setHighlightLink(e.target.value)}
+                placeholder="https://hudl.com/your-highlights"
+                className="h-16 text-xl font-mono"
+              />
             </div>
-
-            <div className="mb-8">
-              <label className="block text-lg mb-2">Total Social Followers</label>
-              <Input placeholder="e.g., 5,000" value={socialFollowers} onChange={(e) => setSocialFollowers(e.target.value)} className="text-center" />
+            <div>
+              <label className="block text-xl mb-4 font-mono">Social Followers</label>
+              <Input
+                value={socialFollowers}
+                onChange={(e) => setSocialFollowers(e.target.value)}
+                placeholder="e.g., 5k IG followers"
+                className="h-16 text-xl font-mono"
+              />
             </div>
-
-            <div className="mb-12">
-              <label className="block text-lg mb-2">Bio</label>
+            <div>
+              <label className="block text-xl mb-4 font-mono">Bio</label>
               <textarea
-                placeholder="Short bio about you and your sport"
                 value={bio}
                 onChange={(e) => setBio(e.target.value)}
-                className="w-full p-4 text-lg border-4 border-black font-mono"
+                className="w-full h-40 p-6 text-xl border-4 border-black font-mono bg-white"
+                placeholder="Tell us about yourself..."
               />
             </div>
-
-            <Button onClick={handleSaveProfile} className="w-full h-16 text-xl bg-black text-white">
-              Save Profile
+            <Button
+              onClick={handleSaveProfile}
+              className="w-full h-20 text-3xl bg-black text-white font-bold font-mono"
+            >
+              Save Profile & Continue
             </Button>
           </div>
-        </div>
+        )}
+      </div>
 
         {/* Step 2: Choose Gigs You Offer */}
 <div className="bg-green-100 p-8 border-4 border-green-600 rounded-lg">
