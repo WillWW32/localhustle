@@ -10,13 +10,12 @@ import { loadStripe } from '@stripe/stripe-js'
 import { useStripe, useElements } from '@stripe/react-stripe-js'
 import dynamic from 'next/dynamic'
 
-const Elements = dynamic(() => import('@stripe/react-stripe-js').then(mod => mod.Elements), { ssr: false })
-const CardElement = dynamic(() => import('@stripe/react-stripe-js').then(mod => mod.CardElement), { ssr: false })
+// Dynamically import only the React components (client-side only)
+const Elements = dynamic(() => import('@stripe/react-stripe-js').then((mod) => mod.Elements), { ssr: false })
+const CardElement = dynamic(() => import('@stripe/react-stripe-js').then((mod) => mod.CardElement), { ssr: false })
 
-const stripePromise = dynamic(
-  () => import('@stripe/stripe-js').then((mod) => mod.loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)),
-  { ssr: false }
-)
+// Keep loadStripe static — it's safe and standard
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
 
 const businessGigTypes = [
   { title: 'ShoutOut', baseAmount: 50, description: 'Visit a favorite business and make a quick shoutout 15-sec reel about what you like or your favorite order.' },
