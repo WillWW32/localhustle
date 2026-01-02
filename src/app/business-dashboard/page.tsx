@@ -879,7 +879,6 @@ function BusinessDashboardContent() {
             </Button>
           </div>
         )}
-      </div> {/* <-- Closes the main ACTIVE TAB CONTENT div */}
 
       {/* Log Out — Small, 150px wide */}
       <div className="text-center py-20">
