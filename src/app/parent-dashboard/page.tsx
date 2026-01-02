@@ -1,14 +1,20 @@
 'use client'
 
 import { useState, useEffect, Suspense } from 'react'
-import { useRouter, useSearchParams, usePathname } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import { signOut } from '@/lib/auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { loadStripe } from '@stripe/stripe-js'
-import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js'
+import { useStripe, useElements } from '@stripe/react-stripe-js'
+import dynamic from 'next/dynamic'
 
+// Dynamic import for Stripe React components (client-only)
+const Elements = dynamic(() => import('@stripe/react-stripe-js').then((mod) => mod.Elements), { ssr: false })
+const CardElement = dynamic(() => import('@stripe/react-stripe-js').then((mod) => mod.CardElement), { ssr: false })
+
+// Static loadStripe (safe)
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
 
 function ParentDashboardContent() {
@@ -150,54 +156,61 @@ function ParentDashboardContent() {
   }
 
   const handleAddCard = async () => {
-    if (!stripe || !elements) {
-      setPaymentError('Stripe not loaded')
-      return
-    }
-
-    setPaymentError(null)
-    setPaymentSuccess(false)
-    setPaymentLoading(true)
-
-    const cardElement = elements.getElement(CardElement)
-    if (!cardElement) {
-      setPaymentError('Card element not found')
-      setPaymentLoading(false)
-      return
-    }
-
-    const { error: stripeError, paymentMethod } = await stripe.createPaymentMethod({
-      type: 'card',
-      card: cardElement,
-    })
-
-    if (stripeError) {
-      setPaymentError(stripeError.message || 'Payment error')
-      setPaymentLoading(false)
-      return
-    }
-
-    const response = await fetch('/api/attach-payment-method', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        payment_method_id: paymentMethod.id,
-        parent_id: parent.id,
-      }),
-    })
-
-    const data = await response.json()
-
-    if (data.error) {
-      setPaymentError(data.error)
-    } else {
-      setPaymentSuccess(true)
-      setSavedMethods([...savedMethods, data.method])
-      setTimeout(() => setPaymentSuccess(false), 5000)
-    }
-
-    setPaymentLoading(false)
+  if (!stripe || !elements) {
+    setPaymentError('Stripe not loaded — please refresh')
+    return
   }
+
+  if (!cardReady) {
+    setPaymentError('Card field still loading — please wait a second')
+    return
+  }
+
+  setPaymentError(null)
+  setPaymentSuccess(false)
+  setPaymentLoading(true)
+
+  // Critical bypass for dynamic import + TypeScript strict mode
+  const cardElement = (elements as any).getElement('card') || elements.getElement(CardElement as any)
+
+  if (!cardElement) {
+    setPaymentError('Card element not found — please refresh and try again')
+    setPaymentLoading(false)
+    return
+  }
+
+  const { error: stripeError, paymentMethod } = await stripe.createPaymentMethod({
+    type: 'card',
+    card: cardElement,
+  })
+
+  if (stripeError) {
+    setPaymentError(stripeError.message || 'Payment error')
+    setPaymentLoading(false)
+    return
+  }
+
+  const response = await fetch('/api/attach-payment-method', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      payment_method_id: paymentMethod.id,
+      business_id: business.id,
+    }),
+  })
+
+  const data = await response.json()
+
+  if (data.error) {
+    setPaymentError(data.error)
+  } else {
+    setPaymentSuccess(true)
+    setSavedMethods([...savedMethods, data.method])
+    setTimeout(() => setPaymentSuccess(false), 5000)
+  }
+
+  setPaymentLoading(false)
+}
 
   const handleAddFunds = async (amount: number) => {
     if (savedMethods.length === 0) {
