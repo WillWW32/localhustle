@@ -145,62 +145,72 @@ function ParentDashboardContent() {
     }
   }
 
-  const handleAddCard = async () => {
-    if (!stripe || !elements) {
-      setPaymentError('Stripe not loaded — please refresh')
-      return
-    }
-
-    if (!cardReady) {
-      setPaymentError('Card field still loading — please wait a second')
-      return
-    }
-
-    setPaymentError(null)
-    setPaymentSuccess(false)
-    setPaymentLoading(true)
-
-    // Critical bypass for dynamic import + TypeScript strict mode
-    const cardElement = (elements as any).getElement('card') || elements.getElement(CardElement as any)
-
-    if (!cardElement) {
-      setPaymentError('Card element not found — please refresh and try again')
-      setPaymentLoading(false)
-      return
-    }
-
-    const { error: stripeError, paymentMethod } = await stripe.createPaymentMethod({
-      type: 'card',
-      card: cardElement,
-    })
-
-    if (stripeError) {
-      setPaymentError(stripeError.message || 'Payment error')
-      setPaymentLoading(false)
-      return
-    }
-
-    const response = await fetch('/api/attach-payment-method', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        payment_method_id: paymentMethod.id,
-        business_id: parent.id,  // Parents use business_id (same table)
-      }),
-    })
-
-    const data = await response.json()
-
-    if (data.error) {
-      setPaymentError(data.error)
-    } else {
-      setPaymentSuccess(true)
-      setSavedMethods([...savedMethods, data.method])
-      setTimeout(() => setPaymentSuccess(false), 5000)
-    }
-
-    setPaymentLoading(false)
+  const handleAddCard = async () => {  // or handleAddDebitCard for athlete
+  if (!stripe || !elements) {
+    setPaymentError('Stripe not loaded')
+    return
   }
+
+  if (!cardReady) {
+    setPaymentError('Card loading — wait a second')
+    return
+  }
+
+  setPaymentError(null)
+  setPaymentSuccess(false)
+  setPaymentLoading(true)
+
+  const cardElement = (elements as any).getElement('card') || elements.getElement(CardElement as any)
+
+  if (!cardElement) {
+    setPaymentError('Card element not found')
+    setPaymentLoading(false)
+    return
+  }
+
+  const { error: stripeError, paymentMethod } = await stripe.createPaymentMethod({
+    type: 'card',
+    card: cardElement,
+  })
+
+  if (stripeError) {
+    setPaymentError(stripeError.message || 'Error')
+    setPaymentLoading(false)
+    return
+  }
+
+  // Get current user
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    setPaymentError('Not logged in')
+    setPaymentLoading(false)
+    return
+  }
+
+  // Save token directly to DB
+  const table = 'businesses'
+    const { error: dbError } = await supabase
+    .from(table)
+    .update({ debit_card_token: paymentMethod.id })
+    .eq('owner_id', user.id)  // or 'id' if using user.id directly
+
+  if (dbError) {
+    setPaymentError('Failed to save card')
+  } else {
+    setPaymentSuccess(true)
+    // Update local savedMethods for display
+    setSavedMethods([...savedMethods, {
+      id: paymentMethod.id,
+      brand: paymentMethod.card?.brand,
+      last4: paymentMethod.card?.last4,
+      exp_month: paymentMethod.card?.exp_month,
+      exp_year: paymentMethod.card?.exp_year,
+    }])
+    setTimeout(() => setPaymentSuccess(false), 5000)
+  }
+
+  setPaymentLoading(false)
+}
 
   const handleAddFunds = async (amount: number) => {
     if (savedMethods.length === 0) {

@@ -248,13 +248,14 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
   }
 
   const handleAddDebitCard = async () => {
-    if (!stripe || !elements) {
-    setPaymentError('Stripe not loaded — please refresh')
+    
+  if (!stripe || !elements) {
+    setPaymentError('Stripe not loaded')
     return
   }
 
   if (!cardReady) {
-    setPaymentError('Card field still loading — please wait a second')
+    setPaymentError('Card loading — wait a second')
     return
   }
 
@@ -262,11 +263,10 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
   setPaymentSuccess(false)
   setPaymentLoading(true)
 
-  // Critical bypass for dynamic import + TypeScript strict mode
   const cardElement = (elements as any).getElement('card') || elements.getElement(CardElement as any)
 
   if (!cardElement) {
-    setPaymentError('Card element not found — please refresh and try again')
+    setPaymentError('Card element not found')
     setPaymentLoading(false)
     return
   }
@@ -277,30 +277,38 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
   })
 
   if (stripeError) {
-    setPaymentError(stripeError.message || 'Payment error')
+    setPaymentError(stripeError.message || 'Error')
     setPaymentLoading(false)
     return
   }
 
-  // Assuming you have an athlete state — if not, fetch from supabase.auth or profiles table
-const { data: { user } } = await supabase.auth.getUser()
-const athleteId = user?.id  // or from your athlete profile state
+  // Get current user
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    setPaymentError('Not logged in')
+    setPaymentLoading(false)
+    return
+  }
 
-const response = await fetch('/api/attach-payment-method', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-    payment_method_id: paymentMethod.id,
-    athlete_id: athleteId,  // ← Correct for athlete
-  }),
-})
-  const data = await response.json()
+  // Save token directly to DB
+  const table = 'profiles'
+  const { error: dbError } = await supabase
+    .from(table)
+    .update({ debit_card_token: paymentMethod.id })
+    .eq('owner_id', user.id)  // or 'id' if using user.id directly
 
-  if (data.error) {
-    setPaymentError(data.error)
+  if (dbError) {
+    setPaymentError('Failed to save card')
   } else {
     setPaymentSuccess(true)
-    setSavedMethods([...savedMethods, data.method])
+    // Update local savedMethods for display
+    setSavedMethods([...savedMethods, {
+      id: paymentMethod.id,
+      brand: paymentMethod.card?.brand,
+      last4: paymentMethod.card?.last4,
+      exp_month: paymentMethod.card?.exp_month,
+      exp_year: paymentMethod.card?.exp_year,
+    }])
     setTimeout(() => setPaymentSuccess(false), 5000)
   }
 
