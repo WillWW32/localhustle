@@ -864,7 +864,7 @@ function BusinessDashboardContent() {
           </div>
         )}
 
-        {/* Booster Events Tab */}
+                {/* Booster Events Tab */}
         {activeTab === 'booster' && (
           <div className="px-4 text-center py-20">
             <h3 className="text-3xl mb-8 font-bold">Booster Events</h3>
@@ -879,10 +879,9 @@ function BusinessDashboardContent() {
             </Button>
           </div>
         )}
+      </div> {/* <-- Closes the main ACTIVE TAB CONTENT div */}
 
-      </div>
-
-      {/* Log Out */}
+      {/* Log Out — Small, 150px wide */}
       <div className="text-center py-20">
         <Button
           onClick={async () => {
@@ -891,13 +890,14 @@ function BusinessDashboardContent() {
             alert('Logged out successfully')
           }}
           variant="outline"
-          className="w-64 h-14 text-lg border-4 border-black"
+          style={{ width: '150px' }}
+          className="h-14 text-lg border-4 border-black"
         >
           Log Out
         </Button>
       </div>
 
-            {/* Role Switcher — Small Compact Toggle at Bottom */}
+      {/* Role Switcher — Small Compact Toggle at Bottom */}
       <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50">
         <div className="bg-white border-4 border-black rounded-full shadow-xl px-6 py-3 flex items-center gap-6">
           <span className="text-sm font-mono text-gray-600">Role:</span>
@@ -918,6 +918,7 @@ function BusinessDashboardContent() {
           </div>
         </div>
       </div>
+    </div> {/* <-- Closes the main container div */}
   )
 }
 
