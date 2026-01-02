@@ -272,7 +272,7 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
   setPaymentSuccess(false)
   setPaymentLoading(true)
     
-  const cardElement = elements.getElement(CardElement)
+  const CardElement = dynamic(() => import('@stripe/react-stripe-js').then(mod => mod.CardElement), { ssr: false })
     
   if (!cardElement) {
     setPaymentError('Card element not found')
