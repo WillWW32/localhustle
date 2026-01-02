@@ -258,31 +258,34 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
   }
 
   const handleAddDebitCard = async () => {
+  
   if (!stripe || !elements) {
     setPaymentError('Stripe not loaded')
     return
   }
 
   if (!cardReady) {
-    setPaymentError('Card field loading — wait a second')
+    setPaymentError('Card field still loading — please wait a second')
     return
   }
 
   setPaymentError(null)
   setPaymentSuccess(false)
   setPaymentLoading(true)
-    
-  const CardElement = dynamic(() => import('@stripe/react-stripe-js').then(mod => mod.CardElement), { ssr: false })
-    
-  if (!CardElement) {
+
+  // Get the actual mounted element instance
+  const cardElement = elements.getElement(CardElement)
+
+  if (!cardElement) {
     setPaymentError('Card element not found')
     setPaymentLoading(false)
     return
   }
 
+  // Correct — pass the element instance, not the component
   const { error: stripeError, paymentMethod } = await stripe.createPaymentMethod({
     type: 'card',
-    card: CardElement,
+    card: cardElement,  // ← This is the instance, not CardElement component
   })
 
   if (stripeError) {
