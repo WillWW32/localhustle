@@ -273,8 +273,6 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
   setPaymentSuccess(false)
   setPaymentLoading(true)
 
- const cardElement = elements.getElement(CardElement)
-
   if (!cardElement) {
     setPaymentError('Card element not found')
     setPaymentLoading(false)
