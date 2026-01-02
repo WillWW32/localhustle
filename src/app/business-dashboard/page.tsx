@@ -46,6 +46,7 @@ function BusinessDashboardContent() {
   const [standaloneScholarshipAmount, setStandaloneScholarshipAmount] = useState('')
   const [standaloneScholarshipMessage, setStandaloneScholarshipMessage] = useState('')
   const [scholarshipLoading, setScholarshipLoading] = useState(false)
+  const [selectedMethodId, setSelectedMethodId] = useState(savedMethods[0]?.id || '')
 
   const router = useRouter()
   const pathname = usePathname()
@@ -105,10 +106,6 @@ function BusinessDashboardContent() {
     fetchData()
   }, [router])
 
-  // Auto-scroll to top when tab changes
-  useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-  }, [activeTab])
 
   const handleGigSelect = (gig: any) => {
     setSelectedGig(gig)
@@ -198,9 +195,9 @@ function BusinessDashboardContent() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         amount,
-        payment_method_id: savedMethods[0].id,
+        payment_method_id: selectedMethodId,
         business_id: business.id,
-      }),
+        }),
     })
 
     const data = await response.json()
@@ -214,59 +211,64 @@ function BusinessDashboardContent() {
   }
 
   const handleAddCard = async () => {
-    if (!stripe || !elements) {
-      setPaymentError('Stripe not loaded')
-      return
-    }
-
-    if (!cardReady) {
-      setPaymentError('Card field still loading — please wait a second')
-      return
-    }
-
-    setPaymentError(null)
-    setPaymentSuccess(false)
-    setPaymentLoading(true)
-
-    const cardElement = elements.getElement(CardElement)
-    if (!cardElement) {
-      setPaymentError('Card element not found')
-      setPaymentLoading(false)
-      return
-    }
-
-    const { error: stripeError, paymentMethod } = await stripe.createPaymentMethod({
-      type: 'card',
-      card: cardElement,
-    })
-
-    if (stripeError) {
-      setPaymentError(stripeError.message || 'Payment error')
-      setPaymentLoading(false)
-      return
-    }
-
-    const response = await fetch('/api/attach-payment-method', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        payment_method_id: paymentMethod.id,
-        business_id: business.id,
-      }),
-    })
-
-    const data = await response.json()
-
-    if (data.error) {
-      setPaymentError(data.error)
-    } else {
-      setPaymentSuccess(true)
-      setSavedMethods([...savedMethods, data.method])
-      setTimeout(() => setPaymentSuccess(false), 5000)
-    }
-
-    setPaymentLoading(false)
+  if (!stripe || !elements) {
+    setPaymentError('Stripe not loaded — please refresh the page')
+    return
   }
+
+  if (!cardReady) {
+    setPaymentError('Card field still loading — please wait a second')
+    return
+  }
+
+  setPaymentError(null)
+  setPaymentSuccess(false)
+  setPaymentLoading(true)
+
+  // Add small timeout retry if element is null (rare edge case)
+  let cardElement = elements.getElement(CardElement)
+  if (!cardElement) {
+    await new Promise(resolve => setTimeout(resolve, 500)) // 0.5s retry
+    cardElement = elements.getElement(CardElement)
+    if (!cardElement) {
+      setPaymentError('Card element not found — please refresh and try again')
+      setPaymentLoading(false)
+      return
+    }
+  }
+
+  const { error: stripeError, paymentMethod } = await stripe.createPaymentMethod({
+    type: 'card',
+    card: cardElement,
+  })
+
+  if (stripeError) {
+    setPaymentError(stripeError.message || 'Payment error')
+    setPaymentLoading(false)
+    return
+  }
+
+  const response = await fetch('/api/attach-payment-method', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      payment_method_id: paymentMethod.id,
+      business_id: business.id,
+    }),
+  })
+
+  const data = await response.json()
+
+  if (data.error) {
+    setPaymentError(data.error)
+  } else {
+    setPaymentSuccess(true)
+    setSavedMethods([...savedMethods, data.method])
+    setTimeout(() => setPaymentSuccess(false), 5000)
+  }
+
+  setPaymentLoading(false)
+}
 
   const searchAthletes = async () => {
     if (!athleteSearch.trim()) {
@@ -342,6 +344,65 @@ function BusinessDashboardContent() {
           Become the hometown hero with Freedom Scholarships.
         </p>
       </div>
+      
+      {/* 4-Step Guidance — First thing */}
+            <div className="bg-black text-white p-16 border-4 border-black max-w-4xl mx-auto text-center">
+              <h2 className="text-4xl font-bold mb-12">Get Started in 4 Steps</h2>
+              <ol className="text-2xl space-y-8 max-w-2xl mx-auto text-left">
+                <li><strong>1.</strong> Complete your profile (name + phone)</li>
+                <li><strong>2.</strong> Add a card for funding</li>
+                <li><strong>3.</strong> Add funds to your wallet</li>
+                <li><strong>4.</strong> Post your first gig → start getting content</li>
+              </ol>
+            </div>
+            
+            {/* Profile Completion */}
+            {(!business?.name || !business?.phone) && (
+              <div className="max-w-2xl mx-auto p-12 bg-yellow-100 border-4 border-yellow-600">
+                <h3 className="text-3xl font-bold mb-8 text-center">
+                  Step 1: Complete Your Business Profile
+                </h3>
+                <p className="text-xl mb-12 text-center">
+                  Add your business name and contact info to post gigs and award scholarships.
+                </p>
+                <div className="space-y-8">
+                  <div>
+                    <label className="block text-lg mb-2">Business Name</label>
+                    <Input
+                      value={business?.name || ''}
+                      onChange={(e) => setBusiness({ ...business, name: e.target.value })}
+                      placeholder="e.g., Bridge Pizza"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-lg mb-2">Contact Phone</label>
+                    <Input
+                      value={business?.phone || ''}
+                      onChange={(e) => setBusiness({ ...business, phone: e.target.value })}
+                      placeholder="(555) 123-4567"
+                    />
+                  </div>
+                  <Button
+                    onClick={async () => {
+                      const { error } = await supabase
+                        .from('businesses')
+                        .update({ name: business.name, phone: business.phone })
+                        .eq('id', business.id)
+                      if (error) alert('Error saving profile')
+                      else {
+                        alert('Profile saved!')
+                        setBusiness({ ...business })
+                      }
+                    }}
+                    className="w-full h-16 text-xl bg-black text-white"
+                  >
+                    Save Profile
+                  </Button>
+                </div>
+              </div>
+            )}
+
+
 
       {/* Sticky Tabs with Counts */}
       <div className="sticky top-0 bg-white z-30 border-b-4 border-black py-4 shadow-lg">
@@ -404,63 +465,8 @@ function BusinessDashboardContent() {
         {/* Wallet Tab */}
         {activeTab === 'wallet' && (
           <div className="space-y-32 px-4">
-            {/* 4-Step Guidance — First thing */}
-            <div className="bg-black text-white p-16 border-4 border-black max-w-4xl mx-auto text-center">
-              <h2 className="text-4xl font-bold mb-12">Get Started in 4 Steps</h2>
-              <ol className="text-2xl space-y-8 max-w-2xl mx-auto text-left">
-                <li><strong>1.</strong> Complete your profile (name + phone)</li>
-                <li><strong>2.</strong> Add a card for funding</li>
-                <li><strong>3.</strong> Add funds to your wallet</li>
-                <li><strong>4.</strong> Post your first gig → start getting content</li>
-              </ol>
-            </div>
-
-            {/* Profile Completion */}
-            {(!business?.name || !business?.phone) && (
-              <div className="max-w-2xl mx-auto p-12 bg-yellow-100 border-4 border-yellow-600">
-                <h3 className="text-3xl font-bold mb-8 text-center">
-                  Step 1: Complete Your Business Profile
-                </h3>
-                <p className="text-xl mb-12 text-center">
-                  Add your business name and contact info to post gigs and award scholarships.
-                </p>
-                <div className="space-y-8">
-                  <div>
-                    <label className="block text-lg mb-2">Business Name</label>
-                    <Input
-                      value={business?.name || ''}
-                      onChange={(e) => setBusiness({ ...business, name: e.target.value })}
-                      placeholder="e.g., Bridge Pizza"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-lg mb-2">Contact Phone</label>
-                    <Input
-                      value={business?.phone || ''}
-                      onChange={(e) => setBusiness({ ...business, phone: e.target.value })}
-                      placeholder="(555) 123-4567"
-                    />
-                  </div>
-                  <Button
-                    onClick={async () => {
-                      const { error } = await supabase
-                        .from('businesses')
-                        .update({ name: business.name, phone: business.phone })
-                        .eq('id', business.id)
-                      if (error) alert('Error saving profile')
-                      else {
-                        alert('Profile saved!')
-                        setBusiness({ ...business })
-                      }
-                    }}
-                    className="w-full h-16 text-xl bg-black text-white"
-                  >
-                    Save Profile
-                  </Button>
-                </div>
-              </div>
-            )}
-
+            
+            
             {/* Card Entry */}
             <div className="max-w-3xl mx-auto py-24">
               <div className="bg-white p-20 border-4 border-black rounded-lg shadow-2xl">
@@ -469,35 +475,36 @@ function BusinessDashboardContent() {
                   Secure by Stripe — only used when you approve content.
                 </p>
                 <Elements stripe={stripePromise}>
-                  <div className="space-y-16">
-                    <div className="bg-gray-50 p-12 border-4 border-gray-300 rounded-lg">
-                      <CardElement
-                        onReady={() => setCardReady(true)}
-                        options={{
-                          style: {
-                            base: {
-                              fontSize: '22px',
-                              color: '#000',
-                              fontFamily: 'Courier New, monospace',
-                              '::placeholder': { color: '#666' },
-                              backgroundColor: '#fff',
-                              padding: '20px',
-                            },
-                          },
-                        }}
-                      />
-                    </div>
-                    {paymentError && <p className="text-red-600 text-center text-2xl">{paymentError}</p>}
-                    {paymentSuccess && <p className="text-green-600 text-center text-2xl">Card saved successfully!</p>}
-                    <Button
-                      onClick={handleAddCard}
-                      disabled={paymentLoading || !cardReady}
-                      className="w-full h-20 text-3xl bg-black text-white font-bold"
-                    >
-                      {paymentLoading ? 'Saving...' : 'Save Card'}
-                    </Button>
-                  </div>
-                </Elements>
+                  <div className="space-y-20">
+  <div className="bg-gray-50 p-12 border-4 border-gray-300 rounded-lg">
+    <CardElement
+      onReady={() => setCardReady(true)}
+      options={{
+        style: {
+          base: {
+            fontSize: '22px',
+            color: '#000',
+            fontFamily: 'Courier New, monospace',
+            '::placeholder': { color: '#666' },
+            backgroundColor: '#fff',
+            padding: '20px',
+          },
+        },
+      }}
+    />
+  </div>
+  {paymentError && <p className="text-red-600 text-center text-2xl">{paymentError}</p>}
+  {paymentSuccess && <p className="text-green-600 text-center text-2xl">Card saved!</p>}
+  <div className="pt-12">  {/* Extra space above button */}
+    <Button
+      onClick={handleAddCard}
+      disabled={paymentLoading || !cardReady}
+      className="w-full h-20 text-3xl bg-black text-white font-bold"
+    >
+      {paymentLoading ? 'Saving...' : 'Save Card'}
+    </Button>
+  </div>
+</div>                </Elements>
               </div>
             </div>
 
@@ -518,68 +525,85 @@ function BusinessDashboardContent() {
               </div>
             )}
 
-            {/* Add Funds */}
-            {(business?.name && business?.phone) && savedMethods.length > 0 && (
-              <div className="max-w-3xl mx-auto">
-                <h3 className="text-4xl font-bold mb-12 text-center">Step 3: Add Funds to Wallet</h3>
-                <p className="text-xl mb-12 text-center">
-                  Current balance: ${business?.wallet_balance?.toFixed(2) || '0.00'}
-                </p>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-                  <Button onClick={() => handleAddFunds(100)} className="h-20 text-2xl bg-black text-white">
-                    + $100
-                  </Button>
-                  <Button onClick={() => handleAddFunds(500)} className="h-20 text-2xl bg-black text-white">
-                    + $500
-                  </Button>
-                  <Button onClick={() => handleAddFunds(1000)} className="h-20 text-2xl bg-black text-white">
-                    + $1000
-                  </Button>
-                  <Button
-                    onClick={() => {
+                          {/* Add Funds */}
+              {savedMethods.length > 0 && (
+                <div className="max-w-3xl mx-auto">
+                  <h3 className="text-4xl font-bold mb-12 text-center">Step 3: Add Funds to Wallet</h3>
+                  <p className="text-xl mb-12 text-center">
+                    Current balance: ${business?.wallet_balance?.toFixed(2) || '0.00'}
+                  </p>
+                  <div className="mb-12">
+                    <label className="block text-xl mb-4 font-mono">Choose Card</label>
+                    <select
+                      value={selectedMethodId}
+                      onChange={(e) => setSelectedMethodId(e.target.value)}
+                      className="w-full p-5 text-xl border-4 border-black font-mono bg-white"
+                    >
+                      {savedMethods.map((method) => (
+                        <option key={method.id} value={method.id}>
+                          {method.brand.toUpperCase()} •••• {method.last4}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                    <Button onClick={() => handleAddFunds(100)} className="h-16 text-xl bg-black text-white">+ $100</Button>
+                    <Button onClick={() => handleAddFunds(500)} className="h-16 text-xl bg-black text-white">+ $500</Button>
+                    <Button onClick={() => handleAddFunds(1000)} className="h-16 text-xl bg-black text-white">+ $1000</Button>
+                    <Button onClick={() => {
                       const amt = prompt('Custom amount:')
                       if (amt && !isNaN(Number(amt))) handleAddFunds(Number(amt))
-                    }}
-                    className="h-20 text-2xl bg-green-400 text-black"
-                  >
-                    Custom
-                  </Button>
+                    }} className="h-16 text-xl bg-green-400 text-black">Custom</Button>
+                  </div>
                 </div>
-              </div>
-            )}
-          </div>
-        )}
+              )}
 
-                {/* Create Gigs Tab — Clean Vertical Cards + Share on Post */}
+                        {/* Create Gigs Tab — Clean Single-Column Vertical Cards */}
         {activeTab === 'gigs' && (
-          <div className="px-4">
+          <div className="px-4 py-12">
             <h2 className="text-4xl font-bold mb-12 text-center font-mono">Step 4: Create a Gig</h2>
-            <p className="text-xl mb-16 text-center max-w-3xl mx-auto font-mono">
-              Choose a gig type. Athletes create authentic content for you.<br />
+            <p className="text-xl mb-16 text-center max-w-3xl mx-auto font-mono leading-relaxed">
+              Choose a gig type below. Athletes create authentic content for you.<br />
               Review and approve — only pay for what you love.
             </p>
 
-            <div className="max-w-4xl mx-auto space-y-12">
+            <div className="max-w-3xl mx-auto space-y-12">
               {businessGigTypes.map((gig) => (
                 <div
                   key={gig.title}
-                  className={`border-4 border-black transition-all ${
-                    selectedGig?.title === gig.title ? 'bg-green-100' : 'bg-white hover:bg-gray-50'
-                  }`}
+                  style={{
+                    border: '4px solid black',
+                    backgroundColor: selectedGig?.title === gig.title ? '#d4edda' : '#ffffff',
+                    transition: 'all 0.3s',
+                    boxShadow: selectedGig?.title === gig.title ? '0 10px 30px rgba(0,0,0,0.2)' : 'none',
+                    transform: selectedGig?.title === gig.title ? 'scale(1.05)' : 'scale(1)',
+                  }}
                 >
-                  {/* Card Header — Click to Select */}
                   <button
                     onClick={() => handleGigSelect(gig)}
-                    className="w-full p-12 text-left"
+                    style={{
+                      width: '100%',
+                      padding: '64px',
+                      textAlign: 'center',
+                      background: 'transparent',
+                      border: 'none',
+                      cursor: 'pointer',
+                    }}
                   >
-                    <h3 className="text-4xl font-bold mb-6 font-mono">{gig.title}</h3>
-                    <p className="text-3xl font-bold mb-8 text-green-600">${gig.baseAmount}+</p>
-                    <p className="text-xl leading-relaxed font-mono">{gig.description}</p>
+                    <h3 style={{ fontSize: '48px', fontWeight: 'bold', marginBottom: '32px' }}>
+                      {gig.title}
+                    </h3>
+                    <p style={{ fontSize: '36px', fontWeight: 'bold', marginBottom: '40px', color: '#28a745' }}>
+                      ${gig.baseAmount}+
+                    </p>
+                    <p style={{ fontSize: '20px', lineHeight: '1.6', maxWidth: '600px', margin: '0 auto' }}>
+                      {gig.description}
+                    </p>
                   </button>
 
                   {/* Expanded Customize Panel */}
                   {selectedGig?.title === gig.title && (
-                    <div className="p-12 border-t-4 border-black bg-white space-y-10">
+                    <div style={{ padding: '48px', borderTop: '4px solid black', backgroundColor: '#ffffff' }}>
                       <h3 className="text-3xl font-bold text-center mb-10 font-mono">
                         Customize Your {gig.title}
                       </h3>
@@ -651,12 +675,10 @@ function BusinessDashboardContent() {
                         <div className="space-y-6">
                           <Button
                             onClick={async () => {
-                              // Placeholder for real post logic
                               await handlePost()
 
-                              // Native Share after post
                               const shareText = `Hey! I just posted a $${amount || gig.baseAmount} ${gig.title} gig on LocalHustle. Complete it and get paid instantly!`
-                              const shareUrl = `https://app.localhustle.org/athlete-dashboard` // Replace with real gig link when available
+                              const shareUrl = `https://app.localhustle.org/athlete-dashboard`
 
                               const shareData = {
                                 title: 'LocalHustle Gig Opportunity',
@@ -664,17 +686,16 @@ function BusinessDashboardContent() {
                                 url: shareUrl,
                               }
 
-                              if (navigator.share && navigator.canShare(shareData)) {
+                              if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
                                 try {
                                   await navigator.share(shareData)
                                 } catch (err) {
-                                  // Fallback to clipboard
                                   navigator.clipboard.writeText(`${shareText}\n\n${shareUrl}`)
-                                  alert('Gig posted! Share link copied to clipboard.')
+                                  alert('Gig posted! Share link copied.')
                                 }
                               } else {
                                 navigator.clipboard.writeText(`${shareText}\n\n${shareUrl}`)
-                                alert('Gig posted! Share link copied to clipboard.')
+                                alert('Gig posted! Share link copied.')
                               }
                             }}
                             className="w-full h-20 text-3xl bg-green-400 text-black font-bold font-mono hover:bg-green-500"
@@ -698,6 +719,8 @@ function BusinessDashboardContent() {
             </div>
           </div>
         )}
+        
+        
         {/* Pending Clips Tab */}
         {activeTab === 'clips' && (
           <div className="px-4">
@@ -874,44 +897,27 @@ function BusinessDashboardContent() {
         </Button>
       </div>
 
-      {/* Role Switcher */}
-      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
-        <div className="bg-white border-4 border-black rounded-full shadow-2xl overflow-hidden w-[150px] h-16 flex items-center">
-          <div
-            className={`absolute inset-0 w-1/2 bg-black transition-transform duration-300 ease-in-out ${
-              currentRole === 'parent' ? 'translate-x-0' : 'translate-x-full'
-            }`}
-          />
-          <button
-            onClick={() => router.push('/parent-dashboard')}
-            className="relative z-10 flex-1 h-full flex items-center justify-center"
-            disabled={currentRole === 'parent'}
-          >
-            <span
-              className={`text-lg font-bold font-mono transition-colors ${
-                currentRole === 'parent' ? 'text-white' : 'text-black'
-              }`}
-            >
-              Parent
-            </span>
-          </button>
-          <button
-            onClick={() => router.push('/business-dashboard')}
-            className="relative z-10 flex-1 h-full flex items-center justify-center"
-            disabled={currentRole === 'business'}
-          >
-            <span
-              className={`text-lg font-bold font-mono transition-colors ${
-                currentRole === 'business' ? 'text-white' : 'text-black'
-              }`}
-            >
-              Business
-            </span>
-          </button>
+            {/* Role Switcher — Small Compact Toggle at Bottom */}
+      <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50">
+        <div className="bg-white border-4 border-black rounded-full shadow-xl px-6 py-3 flex items-center gap-6">
+          <span className="text-sm font-mono text-gray-600">Role:</span>
+          <div className="relative inline-flex items-center">
+            <span className="text-sm font-bold font-mono mr-3">Parent</span>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                className="sr-only peer"
+                checked={currentRole === 'business'}
+                onChange={() => {
+                  router.push(currentRole === 'business' ? '/parent-dashboard' : '/business-dashboard')
+                }}
+              />
+              <div className="w-12 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:bg-black after:content-[''] after:absolute after:top-1 after:left-1 after:bg-white after:border after:border-gray-300 after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-6"></div>
+            </label>
+            <span className="text-sm font-bold font-mono ml-3">Business</span>
+          </div>
         </div>
-        <p className="text-center text-xs font-mono mt-2 text-gray-600">Switch role</p>
       </div>
-    </div>
   )
 }
 
