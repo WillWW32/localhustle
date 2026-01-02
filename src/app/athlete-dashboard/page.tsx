@@ -679,8 +679,7 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
         </div>
       </div>
     )}
-  </div>
-</div>
+ 
 
         {/* Your Earnings + Freedom Scholarships */}
 <div className="max-w-2xl mx-auto bg-gray-100 p-8 border-4 border-black rounded-lg">
