@@ -917,7 +917,7 @@ function BusinessDashboardContent() {
           </div>
         </div>
       </div>
-    </div> {/* <-- Closes the main container div */}
+    </div>
   )
 }
 
