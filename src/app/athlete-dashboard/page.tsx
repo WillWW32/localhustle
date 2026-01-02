@@ -272,8 +272,7 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
   setPaymentSuccess(false)
   setPaymentLoading(true)
 
-  // Get the actual mounted element instance
-  const cardElement = elements.getElement(CardElement)
+  const cardElement = (elements as any).getElement(CardElement) || (elements as any).getElement('card')
 
   if (!cardElement) {
     setPaymentError('Card element not found — please refresh and try again')
