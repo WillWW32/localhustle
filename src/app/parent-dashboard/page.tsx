@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, Suspense } from 'react'
-import { useRouter, usePathname } from 'next/navigation'
+import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import { signOut } from '@/lib/auth'
 import { Button } from '@/components/ui/button'
@@ -10,11 +10,9 @@ import { loadStripe } from '@stripe/stripe-js'
 import { useStripe, useElements } from '@stripe/react-stripe-js'
 import dynamic from 'next/dynamic'
 
-// Dynamic import for Stripe React components (client-only)
 const Elements = dynamic(() => import('@stripe/react-stripe-js').then((mod) => mod.Elements), { ssr: false })
 const CardElement = dynamic(() => import('@stripe/react-stripe-js').then((mod) => mod.CardElement), { ssr: false })
 
-// Static loadStripe (safe)
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
 
 function ParentDashboardContent() {
@@ -31,7 +29,9 @@ function ParentDashboardContent() {
   const [paymentLoading, setPaymentLoading] = useState(false)
   const [paymentError, setPaymentError] = useState<string | null>(null)
   const [paymentSuccess, setPaymentSuccess] = useState(false)
+  const [cardReady, setCardReady] = useState(false)
   const [activeTab, setActiveTab] = useState<'wallet' | 'clips' | 'kids' | 'scholarships'>('wallet')
+
   const router = useRouter()
   const searchParams = useSearchParams()
   const pathname = usePathname()
@@ -45,17 +45,6 @@ function ParentDashboardContent() {
       : 'business'
 
   useEffect(() => {
-  window.scrollTo({ top: 0, behavior: 'smooth' })
-    }, [activeTab])
-    
-  useEffect(() => {
-  const tab = searchParams.get('tab')
-  if (tab === 'clips' || tab === 'kids' || tab === 'wallet') {
-    setActiveTab(tab as any)
-  }
-    }, [searchParams])
-
-  useEffect(() => {
     const fetchData = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
@@ -63,10 +52,11 @@ function ParentDashboardContent() {
         return
       }
 
+      // Parents are stored in the `businesses` table (same as businesses)
       const { data: parentRecord } = await supabase
-        .from('parents')
+        .from('businesses')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('owner_id', user.id)
         .single()
 
       setParent(parentRecord)
@@ -97,7 +87,7 @@ function ParentDashboardContent() {
         const response = await fetch('/api/list-payment-methods', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ parent_id: parentRecord.id }),
+          body: JSON.stringify({ business_id: parentRecord.id }), // Use business_id for parent
         })
         const data = await response.json()
         setSavedMethods(data.methods || [])
@@ -137,7 +127,7 @@ function ParentDashboardContent() {
         friend_name: friendName,
         challenge_description: friendChallenge,
         amount: parseFloat(friendAmount),
-        parent_id: parent.id,
+        parent_id: parent.id, // parent.id = businesses.id
       }),
     })
 
@@ -156,61 +146,61 @@ function ParentDashboardContent() {
   }
 
   const handleAddCard = async () => {
-  if (!stripe || !elements) {
-    setPaymentError('Stripe not loaded — please refresh')
-    return
-  }
+    if (!stripe || !elements) {
+      setPaymentError('Stripe not loaded — please refresh')
+      return
+    }
 
-  if (!cardReady) {
-    setPaymentError('Card field still loading — please wait a second')
-    return
-  }
+    if (!cardReady) {
+      setPaymentError('Card field still loading — please wait a second')
+      return
+    }
 
-  setPaymentError(null)
-  setPaymentSuccess(false)
-  setPaymentLoading(true)
+    setPaymentError(null)
+    setPaymentSuccess(false)
+    setPaymentLoading(true)
 
-  // Critical bypass for dynamic import + TypeScript strict mode
-  const cardElement = (elements as any).getElement('card') || elements.getElement(CardElement as any)
+    // Critical bypass for dynamic import + TypeScript strict mode
+    const cardElement = (elements as any).getElement('card') || elements.getElement(CardElement as any)
 
-  if (!cardElement) {
-    setPaymentError('Card element not found — please refresh and try again')
+    if (!cardElement) {
+      setPaymentError('Card element not found — please refresh and try again')
+      setPaymentLoading(false)
+      return
+    }
+
+    const { error: stripeError, paymentMethod } = await stripe.createPaymentMethod({
+      type: 'card',
+      card: cardElement,
+    })
+
+    if (stripeError) {
+      setPaymentError(stripeError.message || 'Payment error')
+      setPaymentLoading(false)
+      return
+    }
+
+    const response = await fetch('/api/attach-payment-method', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        payment_method_id: paymentMethod.id,
+        business_id: parent.id,  // Parents use business_id (same table)
+      }),
+    })
+
+    const data = await response.json()
+
+    if (data.error) {
+      setPaymentError(data.error)
+    } else {
+      setPaymentSuccess(true)
+      setSavedMethods([...savedMethods, data.method])
+      setTimeout(() => setPaymentSuccess(false), 5000)
+    }
+
     setPaymentLoading(false)
-    return
   }
-
-  const { error: stripeError, paymentMethod } = await stripe.createPaymentMethod({
-    type: 'card',
-    card: cardElement,
-  })
-
-  if (stripeError) {
-    setPaymentError(stripeError.message || 'Payment error')
-    setPaymentLoading(false)
-    return
-  }
-
-  const response = await fetch('/api/attach-payment-method', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      payment_method_id: paymentMethod.id,
-      business_id: business.id,
-    }),
-  })
-
-  const data = await response.json()
-
-  if (data.error) {
-    setPaymentError(data.error)
-  } else {
-    setPaymentSuccess(true)
-    setSavedMethods([...savedMethods, data.method])
-    setTimeout(() => setPaymentSuccess(false), 5000)
-  }
-
-  setPaymentLoading(false)
-}
 
   const handleAddFunds = async (amount: number) => {
     if (savedMethods.length === 0) {
@@ -224,7 +214,7 @@ function ParentDashboardContent() {
       body: JSON.stringify({
         amount,
         payment_method_id: savedMethods[0].id,
-        parent_id: parent.id,
+        business_id: parent.id,  // Parents use business_id
       }),
     })
 
@@ -242,7 +232,43 @@ function ParentDashboardContent() {
     <div className="container py-8">
       <p className="text-center mb-12 text-xl font-mono">Welcome, Parent!</p>
 
-    
+      {/* Role Switcher — Bold 150px Slide Switch (Parent ↔ Business) */}
+      <div className="fixed bottom-6 right-6 z-50">
+        <div className="bg-white border-4 border-black rounded-full shadow-2xl overflow-hidden w-[150px] h-16 flex items-center">
+          <div 
+            className={`absolute inset-0 w-1/2 bg-black transition-transform duration-300 ease-in-out ${
+              currentRole === 'parent' ? 'translate-x-0' : 'translate-x-full'
+            }`}
+          />
+
+          <button
+            onClick={() => router.push('/parent-dashboard')}
+            className="relative z-10 flex-1 h-full flex items-center justify-center"
+            disabled={currentRole === 'parent'}
+          >
+            <span className={`text-lg font-bold font-mono transition-colors ${
+              currentRole === 'parent' ? 'text-white' : 'text-black'
+            }`}>
+              Parent
+            </span>
+          </button>
+
+          <button
+            onClick={() => router.push('/business-dashboard')}
+            className="relative z-10 flex-1 h-full flex items-center justify-center"
+            disabled={currentRole === 'business'}
+          >
+            <span className={`text-lg font-bold font-mono transition-colors ${
+              currentRole === 'business' ? 'text-white' : 'text-black'
+            }`}>
+              Business
+            </span>
+          </button>
+        </div>
+        <p className="text-center text-xs font-mono mt-2 text-gray-600">
+          Switch role
+        </p>
+      </div>
 
       <div className="bg-black text-white p-8 mb-12">
         <h1 className="text-3xl font-bold text-center">
@@ -341,27 +367,27 @@ function ParentDashboardContent() {
         </div>
       )}
 
-      {/* Tabs — Sticky, with counts where useful */}
+      {/* Sticky Tabs with Counts */}
       <div className="sticky top-0 bg-white z-30 border-b-4 border-black py-4 shadow-lg">
         <div className="flex justify-center gap-3 flex-wrap px-4">
           <Button
             onClick={() => setActiveTab('wallet')}
             variant={activeTab === 'wallet' ? 'default' : 'outline'}
-            className="px-6 py-4 text-lg font-mono font-bold min-w-[100px]"
+            className="px-6 py-4 text-lg font-bold min-w-[100px]"
           >
             Wallet
           </Button>
           <Button
             onClick={() => setActiveTab('clips')}
             variant={activeTab === 'clips' ? 'default' : 'outline'}
-            className="px-6 py-4 text-lg font-mono font-bold min-w-[100px]"
+            className="px-6 py-4 text-lg font-bold min-w-[100px]"
           >
             Pending Clips ({pendingClips.length})
           </Button>
           <Button
             onClick={() => setActiveTab('kids')}
             variant={activeTab === 'kids' ? 'default' : 'outline'}
-            className="px-6 py-4 text-lg font-mono font-bold min-w-[100px]"
+            className="px-6 py-4 text-lg font-bold min-w-[100px]"
           >
             My Kids ({kids.length})
           </Button>
@@ -374,8 +400,8 @@ function ParentDashboardContent() {
         </div>
       </div>
 
-      {/* ACTIVE TAB CONTENT ONLY — appears directly below tabs */}
-      <div className="pt-8 pb-32 min-h-screen">
+      {/* ACTIVE TAB CONTENT ONLY */}
+      <div className="pt-8 pb-32">
 
         {/* Wallet Tab */}
         {activeTab === 'wallet' && (
@@ -425,6 +451,7 @@ function ParentDashboardContent() {
                   <div className="space-y-12">
                     <div className="bg-gray-50 p-8 border-4 border-gray-300 rounded-lg">
                       <CardElement 
+                        onReady={() => setCardReady(true)}
                         options={{
                           style: {
                             base: {
@@ -443,7 +470,7 @@ function ParentDashboardContent() {
                     {paymentSuccess && <p className="text-green-600 text-center text-xl">Card saved!</p>}
                     <Button 
                       onClick={handleAddCard}
-                      disabled={paymentLoading}
+                      disabled={paymentLoading || !cardReady}
                       className="w-full h-20 text-2xl bg-black text-white font-bold font-mono"
                     >
                       {paymentLoading ? 'Saving...' : 'Save Card'}
@@ -567,50 +594,6 @@ function ParentDashboardContent() {
           Log Out
         </Button>
       </div>
-      
-      {/* Role Switcher — Bold 150px Slide Switch (Parent ↔ Business) */}
-<div className="fixed bottom-6 right-6 z-50">
-  <div className="bg-white border-4 border-black rounded-full shadow-2xl overflow-hidden w-[150px] h-16 flex items-center">
-    {/* Background sliding indicator */}
-    <div 
-      className={`absolute inset-0 w-1/2 bg-black transition-transform duration-300 ease-in-out ${
-        currentRole === 'parent' ? 'translate-x-0' : 'translate-x-full'
-      }`}
-    />
-
-    {/* Parent Label */}
-    <button
-      onClick={() => router.push('/parent-dashboard')}
-      className="relative z-10 flex-1 h-full flex items-center justify-center"
-      disabled={currentRole === 'parent'}
-    >
-      <span className={`text-lg font-bold font-mono transition-colors ${
-        currentRole === 'parent' ? 'text-white' : 'text-black'
-      }`}>
-        Parent
-      </span>
-    </button>
-
-    {/* Business Label */}
-    <button
-      onClick={() => router.push('/business-dashboard')}
-      className="relative z-10 flex-1 h-full flex items-center justify-center"
-      disabled={currentRole === 'business'}
-    >
-      <span className={`text-lg font-bold font-mono transition-colors ${
-        currentRole === 'business' ? 'text-white' : 'text-black'
-      }`}>
-        Business
-      </span>
-    </button>
-  </div>
-
-  {/* Optional: Small hint text below */}
-  <p className="text-center text-xs font-mono mt-2 text-gray-600">
-    Switch role
-  </p>
-</div>
-
     </div>
   )
 }
