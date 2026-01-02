@@ -228,7 +228,7 @@ function BusinessDashboardContent() {
     setPaymentSuccess(false)
     setPaymentLoading(true)
 
-    const cardElement = elements.getElement(CardElement)
+    const cardElement = (elements as any).getElement('card') || elements.getElement(CardElement as any)
     if (!cardElement) {
       setPaymentError('Card element not found')
       return
