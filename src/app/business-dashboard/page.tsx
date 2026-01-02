@@ -917,7 +917,6 @@ function BusinessDashboardContent() {
           </div>
         </div>
       </div>
-    </div>
   )
 }
 
