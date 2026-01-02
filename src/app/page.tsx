@@ -15,25 +15,21 @@ export default function Home() {
   const [loading, setLoading] = useState(false)
   const router = useRouter()
 
-  const sendMagicLink = async () => {
+  const paths = {
+  athlete: '/get-started',
+  parent: '/parent-onboard',
+  business: '/business-onboard',
+}
+
+const sendMagicLink = async (selectedRole: Role) => {
   if (!email.trim()) {
     alert('Please enter your email')
-    return
-  }
-  if (!role) {
-    alert('Please select your role')
     return
   }
 
   setLoading(true)
 
-  const paths = {
-    athlete: '/athlete-dashboard',
-    parent: '/parent-dashboard',
-    business: '/business-dashboard',
-  }
-
-  const redirectPath = paths[role]
+  const redirectPath = paths[selectedRole]
 
   const { error } = await supabase.auth.signInWithOtp({
     email,
@@ -50,7 +46,6 @@ export default function Home() {
 
   setLoading(false)
 }
-
   return (
     <>
       <Head>
@@ -188,13 +183,12 @@ export default function Home() {
           </p>
         </section>
 
-        {/* Bottom CTA */}
-                {/* Bottom CTA — Polished */}
+               {/* Bottom CTA — Role Button = Submit with Onboard Paths */}
         <section className="py-32 px-6 sm:px-12 lg:px-32 text-center bg-white">
           <div className="max-w-lg mx-auto space-y-16">
 
             <div>
-              <p className="text-2xl mb-4 text-gray-600">Enter your email</p>
+              <p className="text-2xl mb-4 text-gray-600 font-mono">Enter your email</p>
               <Input
                 type="email"
                 placeholder="your@email.com"
@@ -205,54 +199,76 @@ export default function Home() {
             </div>
 
             <div>
-              <p className="text-2xl mb-8 text-gray-600">Choose your role</p>
+              <p className="text-2xl mb-8 text-gray-600 font-mono">Choose your role</p>
               <div className="grid grid-cols-1 gap-8">
                 <button
-                  onClick={() => setRole('athlete')}
-                  className={`w-full h-24 text-3xl font-bold border-4 border-black transition-all duration-300 shadow-lg ${
-                    role === 'athlete'
-                      ? 'bg-green-400 text-black scale-105 shadow-2xl'
-                      : 'bg-white text-black hover:bg-gray-100'
-                  }`}
+                  onClick={() => {
+                    if (!email.trim()) {
+                      alert('Please enter your email')
+                      return
+                    }
+                    setRole('athlete')
+                    sendMagicLink('athlete')
+                  }}
+                  disabled={loading}
+                  style={{
+                    backgroundColor: role === 'athlete' ? '#d4edda' : '#ffffff',
+                    transform: role === 'athlete' ? 'scale(1.05)' : 'scale(1)',
+                    boxShadow: role === 'athlete' ? '0 10px 30px rgba(0,0,0,0.2)' : 'none',
+                    transition: 'all 0.3s ease',
+                  }}
+                  className="w-full h-24 text-3xl font-bold border-4 border-black"
                 >
-                  Student Athlete
+                  {loading && role === 'athlete' ? 'Sending...' : 'Student Athlete'}
                 </button>
 
                 <button
-                  onClick={() => setRole('parent')}
-                  className={`w-full h-24 text-3xl font-bold border-4 border-black transition-all duration-300 shadow-lg ${
-                    role === 'parent'
-                      ? 'bg-green-400 text-black scale-105 shadow-2xl'
-                      : 'bg-white text-black hover:bg-gray-100'
-                  }`}
+                  onClick={() => {
+                    if (!email.trim()) {
+                      alert('Please enter your email')
+                      return
+                    }
+                    setRole('parent')
+                    sendMagicLink('parent')
+                  }}
+                  disabled={loading}
+                  style={{
+                    backgroundColor: role === 'parent' ? '#d4edda' : '#ffffff',
+                    transform: role === 'parent' ? 'scale(1.05)' : 'scale(1)',
+                    boxShadow: role === 'parent' ? '0 10px 30px rgba(0,0,0,0.2)' : 'none',
+                    transition: 'all 0.3s ease',
+                  }}
+                  className="w-full h-24 text-3xl font-bold border-4 border-black"
                 >
-                  Parent
+                  {loading && role === 'parent' ? 'Sending...' : 'Parent'}
                 </button>
 
                 <button
-                  onClick={() => setRole('business')}
-                  className={`w-full h-24 text-3xl font-bold border-4 border-black transition-all duration-300 shadow-lg ${
-                    role === 'business'
-                      ? 'bg-green-400 text-black scale-105 shadow-2xl'
-                      : 'bg-white text-black hover:bg-gray-100'
-                  }`}
+                  onClick={() => {
+                    if (!email.trim()) {
+                      alert('Please enter your email')
+                      return
+                    }
+                    setRole('business')
+                    sendMagicLink('business')
+                  }}
+                  disabled={loading}
+                  style={{
+                    backgroundColor: role === 'business' ? '#d4edda' : '#ffffff',
+                    transform: role === 'business' ? 'scale(1.05)' : 'scale(1)',
+                    boxShadow: role === 'business' ? '0 10px 30px rgba(0,0,0,0.2)' : 'none',
+                    transition: 'all 0.3s ease',
+                  }}
+                  className="w-full h-24 text-3xl font-bold border-4 border-black"
                 >
-                  Business
+                  {loading && role === 'business' ? 'Sending...' : 'Business'}
                 </button>
               </div>
             </div>
 
-            <Button
-              onClick={sendMagicLink}
-              disabled={loading || !email.trim() || !role}
-              className="w-full h-24 text-4xl bg-black text-white font-bold hover:bg-gray-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? 'Sending Magic Link...' : 'Send Magic Link'}
-            </Button>
-
             {loading && (
-              <p className="text-xl text-gray-600 animate-pulse">
-                Check your inbox (and spam) in a few seconds...
+              <p className="text-xl text-gray-600 animate-pulse font-mono">
+                Sending magic link...
               </p>
             )}
           </div>
