@@ -282,15 +282,18 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
     return
   }
 
-  const response = await fetch('/api/attach-payment-method', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      payment_method_id: paymentMethod.id,
-      business_id: business.id,
-    }),
-  })
+  // Assuming you have an athlete state — if not, fetch from supabase.auth or profiles table
+const { data: { user } } = await supabase.auth.getUser()
+const athleteId = user?.id  // or from your athlete profile state
 
+const response = await fetch('/api/attach-payment-method', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    payment_method_id: paymentMethod.id,
+    athlete_id: athleteId,  // ← Correct for athlete
+  }),
+})
   const data = await response.json()
 
   if (data.error) {
