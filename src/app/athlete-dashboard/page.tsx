@@ -63,27 +63,38 @@ function AthleteDashboardContent() {
       : 'business'
 
   useEffect(() => {
-    const fetchData = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-        router.replace('/')
-        return
+  const fetchData = async () => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      router.replace('/')
+      return
+    }
+
+    const { data: prof } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', user.id)
+      .single()
+
+    if (prof) {
+      setProfile(prof)
+      if (prof.selected_gigs) setSelectedGigs(prof.selected_gigs)
+      setProfilePic(prof.profile_pic || '')
+      setHighlightLink(prof.highlight_link || '')
+      setSocialFollowers(prof.social_followers || '')
+      setBio(prof.bio || '')
+      setGigCount(prof.gig_count || 0)
+
+elements.getElement(CardElement)
+      if (prof.debit_card_token) {
+        setSavedMethods([{
+          id: prof.debit_card_token,
+          brand: prof.card_brand || 'Card',
+          last4: prof.card_last4 || '••••',
+          exp_month: prof.card_exp_month,
+          exp_year: prof.card_exp_year,
+        }])
       }
-
-      const { data: prof } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single()
-
-      if (prof) {
-        setProfile(prof)
-        if (prof.selected_gigs) setSelectedGigs(prof.selected_gigs)
-        setProfilePic(prof.profile_pic || '')
-        setHighlightLink(prof.highlight_link || '')
-        setSocialFollowers(prof.social_followers || '')
-        setBio(prof.bio || '')
-        setGigCount(prof.gig_count || 0)
 
         const { data: squadMembers } = await supabase
           .from('profiles')
@@ -248,14 +259,13 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
   }
 
   const handleAddDebitCard = async () => {
-    
   if (!stripe || !elements) {
     setPaymentError('Stripe not loaded')
     return
   }
 
   if (!cardReady) {
-    setPaymentError('Card loading — wait a second')
+    setPaymentError('Card field loading — wait a second')
     return
   }
 
@@ -263,7 +273,7 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
   setPaymentSuccess(false)
   setPaymentLoading(true)
 
-  const cardElement = (elements as any).getElement('card') || elements.getElement(CardElement as any)
+ const cardElement = elements.getElement(CardElement)
 
   if (!cardElement) {
     setPaymentError('Card element not found')
@@ -277,7 +287,7 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
   })
 
   if (stripeError) {
-    setPaymentError(stripeError.message || 'Error')
+    setPaymentError(stripeError.message || 'Payment error')
     setPaymentLoading(false)
     return
   }
@@ -285,33 +295,34 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
   // Get current user
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) {
-    setPaymentError('Not logged in')
+    setPaymentError('Not authenticated')
     setPaymentLoading(false)
     return
   }
 
-  // Save token directly to DB
-  const table = 'profiles'
+  // Save token directly to athlete profile
   const { error: dbError } = await supabase
-    .from(table)
+    .from('profiles')
     .update({ debit_card_token: paymentMethod.id })
-    .eq('owner_id', user.id)  // or 'id' if using user.id directly
+    .eq('id', user.id)  // or 'owner_id' if different
 
   if (dbError) {
-    setPaymentError('Failed to save card')
-  } else {
-    setPaymentSuccess(true)
-    // Update local savedMethods for display
-    setSavedMethods([...savedMethods, {
-      id: paymentMethod.id,
-      brand: paymentMethod.card?.brand,
-      last4: paymentMethod.card?.last4,
-      exp_month: paymentMethod.card?.exp_month,
-      exp_year: paymentMethod.card?.exp_year,
-    }])
-    setTimeout(() => setPaymentSuccess(false), 5000)
+    console.error('DB Error:', dbError)
+    setPaymentError('Failed to save card — try again')
+    setPaymentLoading(false)
+    return
   }
 
+  // Success — update local state to show saved card
+  setPaymentSuccess(true)
+  setSavedMethods([{
+    id: paymentMethod.id,
+    brand: paymentMethod.card?.brand,
+    last4: paymentMethod.card?.last4,
+    exp_month: paymentMethod.card?.exp_month,
+    exp_year: paymentMethod.card?.exp_year,
+  }])
+  setTimeout(() => setPaymentSuccess(false), 5000)
   setPaymentLoading(false)
 }
 
@@ -608,76 +619,49 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
           )}
         </div>
 
-        {/* Payouts — Debit Card Setup */}
-<div className="max-w-3xl mx-auto mb-16">
-  <div className="bg-gray-100 p-16 border-4 border-black rounded-lg shadow-lg">
-    <h2 className="text-3xl font-bold mb-8 text-center">
-      Payouts — Add Debit Card
-    </h2>
-    <p className="text-xl mb-12 text-center">
-      Add your debit card to receive earnings instantly upon approval.
-    </p>
-    <p className="text-center text-lg mb-12 text-gray-600 font-bold">
-      Secure by Stripe — your card details are safe and encrypted.
-    </p>
+                    {/* Debit Card Entry — Spacious, Clean, Thin Border on Card Field */}
+            <div className="max-w-2xl mx-auto py-20">
+              <div className="bg-white p-16 border-4 border-black rounded-lg shadow-2xl">
+                <h3 className="text-4xl font-bold mb-12 text-center font-mono">Add Your Debit Card</h3>
+                <p className="text-xl mb-20 text-center text-gray-600 font-mono">
+                  For instant payouts when you complete gigs.<br />
+                  Secure by Stripe — your card details are safe and encrypted.
+                </p>
 
-    <Elements stripe={stripePromise}>
-      <div className="space-y-12">
-        {/* Cardholder Name — Editable */}
-<div className="mb-6">
-  <label className="block text-lg mb-2 text-center">Cardholder Name</label>
-  <Input
-    placeholder="Your Name"
-    value={cardholderName}
-    onChange={(e) => setCardholderName(e.target.value)}
-    className="text-center max-w-md mx-auto h-12"  // shorter height
-  />
-</div>
+                <Elements stripe={stripePromise}>
+                  <div className="space-y-20">
+                    {/* Card Number Field — Full Width, Thin Border, Spacious */}
+                    <div className="bg-gray-50 p-10 border-2 border-gray-400 rounded-lg"> {/* Thin border */}
+                      <CardElement
+                        onReady={() => setCardReady(true)}
+                        options={{
+                          style: {
+                            base: {
+                              fontSize: '22px',
+                              color: '#000',
+                              fontFamily: 'Courier New, monospace',
+                              '::placeholder': { color: '#666' },
+                              backgroundColor: '#fff',
+                            },
+                          },
+                        }}
+                      />
+                    </div>
 
-{/* Card Element — Bordered & Spacious */}
-<div className="bg-white p-16 border-4 border-black rounded-lg max-w-2xl mx-auto mb-16">
-  <CardElement 
-  onReady={() => setCardReady(true)}
-    options={{
-  style: {
-    base: {
-      fontSize: '16px',
-      color: '#000',
-      fontFamily: 'Courier New, monospace',
-      '::placeholder': { color: '#666' },
-      backgroundColor: '#fff',
-      lineHeight: '1.8',
-    },
-    invalid: {
-      color: '#fa755a',
-      iconColor: '#fa755a',
-    },
-  },
-  hidePostalCode: true,  // Most US users don't need it — cleaner form
-  disabled: false,
-}}  
-/>
-</div>
+                    {paymentError && <p className="text-red-600 text-center text-2xl font-mono">{paymentError}</p>}
+                    {paymentSuccess && <p className="text-green-600 text-center text-2xl font-mono">Card saved!</p>}
 
-<p className="text-center p-16 text-lg mb-12 text-gray-600 font-bold">
-  Secure by Stripe — your card details are safe and encrypted.
-</p>
-
-        {paymentError && <p className="text-red-600 text-center text-xl">{paymentError}</p>}
-        {paymentSuccess && <p className="text-green-600 text-center text-xl">Debit card saved — payouts ready!</p>}
-
-        {/* Save Button — Extra Padding Above */}
-        <div className="mt-12">
-            <Button 
-                onClick={handleAddDebitCard}
-                disabled={paymentLoading}
-                className="w-full max-w-md mx-auto h-20 text-2xl bg-black text-white font-bold"
-            >
-                {paymentLoading ? 'Saving...' : 'Save Debit Card'}
-            </Button>
-        </div>
-      </div>
-    </Elements>
+                    <Button
+                      onClick={handleAddDebitCard}
+                      disabled={paymentLoading || !cardReady}
+                      className="w-full h-20 text-3xl bg-black text-white font-bold font-mono"
+                    >
+                      {paymentLoading ? 'Saving...' : 'Save Debit Card'}
+                    </Button>
+                  </div>
+                </Elements>
+              </div>
+            </div>
 
     {/* Saved Cards */}
     {savedMethods.length > 0 && (
