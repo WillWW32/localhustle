@@ -48,35 +48,41 @@ export default function RootLayout({
 
   return (
     <html lang="en">
-      <head />
+      <head>
+        {/* PWA Manifest & Icons */}
+        <link rel="manifest" href="/manifest.json" />
+        <link rel="apple-touch-icon" href="/icon-192.png" />
+        <meta name="theme-color" content="#000000" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+      </head>
       <body>
         {/* Header */}
-        
-<header className="bg-white border-b-4 border-black py-8">
-  <div className="max-w-6xl mx-auto px-6 flex flex-col items-center gap-8">
-    <Link href="/">
-      <Image
-        src="/logo.png"
-        alt="LocalHustle Logo"
-        width={0}
-        height={0}
-        sizes="100vw"
-        style={{ width: 'auto', height: '120px' }}
-        priority
-      />
-    </Link>
+        <header className="bg-white border-b-4 border-black py-8">
+          <div className="max-w-6xl mx-auto px-6 flex flex-col items-center gap-8">
+            <Link href="/">
+              <Image
+                src="/logo.png"
+                alt="LocalHustle Logo"
+                width={0}
+                height={0}
+                sizes="100vw"
+                style={{ width: 'auto', height: '120px' }}
+                priority
+              />
+            </Link>
 
-    {/* Slogan — Now Matches Subhead Size */}
-    <div className="subhead-white-black">
-      {displayedSlogan}
-    </div>
+            {/* Slogan — Now Matches Subhead Size */}
+            <div className="subhead-white-black">
+              {displayedSlogan}
+            </div>
 
-    {/* Downward Triangle — Fixed & Visible */}
-    <div className="w-0 h-0 border-l-[40px] border-l-transparent border-r-[40px] border-r-transparent border-t-[60px] border-t-black" />
-  </div>
-</header>
+            {/* Downward Triangle — Fixed & Visible */}
+            <div className="w-0 h-0 border-l-[40px] border-l-transparent border-r-[40px] border-r-transparent border-t-[60px] border-t-black" />
+          </div>
+        </header>
 
-       {children}
+        {children}
 
         {/* Share with Teammates Banner — Only on non-business pages */}
         {!isBusinessPage && (
@@ -95,38 +101,38 @@ export default function RootLayout({
 
         {/* Footer */}
         <footer className="bg-white border-t-4 border-black py-16 mt-auto">
-  <div className="max-w-6xl mx-auto px-6">
-    {/* Footer Links — Horizontal, Spaced, Gray */}
-    <nav className="flex flex-wrap justify-center gap-x-12 gap-y-6 mb-12">
-      
-      <a href="/" className="text-gray-600 hover:text-black text-lg no-underline">
-        How It Works
-      </a>
-      <a href="/get-started" className="text-gray-600 hover:text-black text-lg no-underline">
-        Athletes
-      </a>
-      <a href="/parent-onboard" className="text-gray-600 hover:text-black text-lg no-underline">
-        Parents
-      </a>
-      <a href="/business-onboard" className="text-gray-600 hover:text-black text-lg no-underline">
-        Businesses
-      </a>
-      <a href="/ambassador" className="text-gray-600 hover:text-black text-lg no-underline">
-        Ambassador Program
-      </a>
-      <a href="/privacy" className="text-gray-600 hover:text-black text-lg no-underline">
-        Privacy
-      </a>
-      <a href="/terms" className="text-gray-600 hover:text-black text-lg no-underline">
-        Terms
-      </a>
-    </nav>
+          <div className="max-w-6xl mx-auto px-6">
+            {/* Footer Links — Horizontal, Spaced, Gray */}
+            <nav className="flex flex-wrap justify-center gap-x-12 gap-y-6 mb-12">
+              <a href="/" className="text-gray-600 hover:text-black text-lg no-underline">
+                How It Works
+              </a>
+              <a href="/get-started" className="text-gray-600 hover:text-black text-lg no-underline">
+                Athletes
+              </a>
+              <a href="/parent-onboard" className="text-gray-600 hover:text-black text-lg no-underline">
+                Parents
+              </a>
+              <a href="/business-onboard" className="text-gray-600 hover:text-black text-lg no-underline">
+                Businesses
+              </a>
+              <a href="/ambassador" className="text-gray-600 hover:text-black text-lg no-underline">
+                Ambassador Program
+              </a>
+              <a href="/privacy" className="text-gray-600 hover:text-black text-lg no-underline">
+                Privacy
+              </a>
+              <a href="/terms" className="text-gray-600 hover:text-black text-lg no-underline">
+                Terms
+              </a>
+            </nav>
 
-    <p className="text-gray-500 text-sm text-center">
-      © 2025 LocalHustle — Community Driven Support for Student Athletes
-    </p>
-  </div>
-</footer>      </body>
+            <p className="text-gray-500 text-sm text-center">
+              © 2025 LocalHustle — Community Driven Support for Student Athletes
+            </p>
+          </div>
+        </footer>
+      </body>
     </html>
   )
 }

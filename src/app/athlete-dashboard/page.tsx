@@ -52,6 +52,14 @@ function AthleteDashboardContent() {
   const [paymentSuccess, setPaymentSuccess] = useState(false)
   const [cardholderName, setCardholderName] = useState(profile?.full_name || '')
   const [cardElementReady, setCardElementReady] = useState(false)
+  const [showVideoRecorder, setShowVideoRecorder] = useState(false)
+  const [selectedOffer, setSelectedOffer] = useState<any>(null)
+  const [recording, setRecording] = useState(false)
+  const [videoBlob, setVideoBlob] = useState<Blob | null>(null)
+  const [videoUrl, setVideoUrl] = useState('')
+  const [mediaStream, setMediaStream] = useState<MediaStream | null>(null)
+  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null)
+  const [showPWAInstall, setShowPWAInstall] = useState(false)
   const router = useRouter()
   const pathname = usePathname()
   const stripe = useStripe()
@@ -142,6 +150,7 @@ function AthleteDashboardContent() {
 
     if (error) alert('Error saving profile')
     else alert('Profile saved!')
+    setShowPWAInstall(true)
   }
 
   const toggleGigSelection = async (title: string) => {
@@ -332,7 +341,117 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
   setPaymentLoading(false)
 }
 
-  if (!profile) return <p className="container text-center py-32">Loading...</p>
+const selectGig = (gig: string) => {
+    const newSelected = [...selectedGigs, gig]
+    setSelectedGigs(newSelected)
+    supabase
+      .from('profiles')
+      .update({ selected_gigs: newSelected })
+      .eq('id', profile.id)
+  }
+
+  const searchGigs = async () => {
+    const { data } = await supabase
+      .from('offers')
+      .select('*')
+      .ilike('description', `%${gigSearch}%`)
+      .limit(10)
+
+    setSearchedOffers(data || [])
+  }
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+      setMediaStream(stream)
+      const recorder = new MediaRecorder(stream)
+      setMediaRecorder(recorder)
+      const chunks: Blob[] = []
+
+      recorder.ondataavailable = (e) => chunks.push(e.data)
+      recorder.onstop = () => {
+        const blob = new Blob(chunks, { type: 'video/webm' })
+        setVideoBlob(blob)
+        setVideoUrl(URL.createObjectURL(blob))
+      }
+
+      recorder.start()
+      setRecording(true)
+    } catch (err) {
+      alert('Camera access denied')
+    }
+  }
+
+  const stopRecording = () => {
+    if (mediaRecorder) {
+      mediaRecorder.stop()
+      setRecording(false)
+      mediaStream?.getTracks().forEach(track => track.stop())
+    }
+  }
+
+  const submitClip = async () => {
+    if (!videoBlob || !selectedOffer) return
+
+    setPaymentLoading(true)
+
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from('clips')
+      .upload(`public/${profile.id}-${Date.now()}.webm`, videoBlob)
+
+    if (uploadError) {
+      alert('Upload error: ' + uploadError.message)
+      setPaymentLoading(false)
+      return
+    }
+
+    const { data: publicUrl } = supabase.storage
+      .from('clips')
+      .getPublicUrl(uploadData.path)
+
+    const { error: insertError } = await supabase
+      .from('clips')
+      .insert({
+        athlete_id: profile.id,
+        offer_id: selectedOffer.id,
+        video_url: publicUrl.publicUrl,
+        status: 'pending',
+      })
+
+    if (insertError) {
+      alert('Submit error: ' + insertError.message)
+      setPaymentLoading(false)
+      return
+    }
+
+    alert('Clip submitted! Waiting for approval.')
+
+    // Notification to funder
+    const { data: offer } = await supabase
+      .from('offers')
+      .select('business_id')
+      .eq('id', selectedOffer.id)
+      .single()
+
+    if (offer?.business_id) {
+      const { data: funder } = await supabase
+        .from('businesses')
+        .select('email')
+        .eq('id', offer.business_id)
+        .single()
+
+      if (funder?.email) {
+        console.log(`Notify ${funder.email}: New clip from ${profile.full_name}`)
+        // Replace with Resend when ready
+      }
+    }
+
+    setShowVideoRecorder(false)
+    setVideoUrl('')
+    setVideoBlob(null)
+    setSelectedOffer(null)
+    setPaymentLoading(false)
+  }
 
   return (
     <div className="container py-8 relative">
@@ -499,6 +618,23 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
             >
               Save Profile & Continue
             </Button>
+            {showPWAInstall && (
+            <div className="mt-12 p-8 bg-black text-white border-4 border-white rounded-lg text-center">
+                <p className="text-2xl mb-6 font-mono">
+                Great! Now add LocalHustle to your Home Screen for quick access.
+                </p>
+                <p className="text-lg mb-8 text-gray-300 font-mono">
+                iOS: Tap Share → Add to Home Screen<br />
+                Android: Tap Menu → Add to Home Screen
+                </p>
+                    <Button 
+                onClick={() => setShowPWAInstall(false)}
+                className="w-full max-w-xs h-16 text-xl bg-white text-black font-bold font-mono"
+                >
+                Got it!
+                </Button>
+            </div>
+            )}
           </div>
         )}
       </div>
@@ -613,42 +749,32 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
           )}
         </div>
 
-        {/* Available Gigs */}
-        <div>
-          <h2 className="text-3xl font-bold mb-12">Available Gigs</h2>
-          <div className="mb-12">
-            <h3 className="text-2xl mb-8 font-bold">Find Gigs</h3>
-            <div className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
-              <Input 
-                placeholder="Search gigs (type, location, school)"
-                value={gigSearch}
-                onChange={(e) => setGigSearch(e.target.value)}
-                className="text-center"
-              />
-              <Button onClick={searchGigs} className="h-14 text-lg bg-black text-white">
-                Search
-              </Button>
-            </div>
+        {/* Available Gigs — Highlight First */}
+      <div className="mb-20">
+        <h2 className="text-4xl font-bold mb-12 text-center font-mono">Available Gigs</h2>
+        {availableGigs.length === 0 ? (
+          <p className="text-xl text-center text-gray-600 font-mono mb-12">
+            No gigs available yet — check back soon or invite a parent/business!
+          </p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+            {availableGigs.map((offer) => (
+              <div key={offer.id} className="bg-white p-12 border-4 border-black rounded-lg shadow-2xl hover:shadow-3xl transition-all">
+                <h3 className="text-3xl font-bold mb-6 font-mono">{offer.type}</h3>
+                <p className="text-4xl font-bold mb-8 text-green-600">${offer.amount}</p>
+                <p className="text-xl mb-8 font-mono">{offer.description}</p>
+                <p className="text-lg mb-8 font-mono text-gray-600">From: {offer.businesses?.name || 'Local Sponsor'}</p>
+                <Button
+                  onClick={() => claimGig(offer)}
+                  className="w-full h-20 text-2xl bg-black text-white font-bold font-mono"
+                >
+                  Claim This Gig
+                </Button>
+              </div>
+            ))}
           </div>
-          {searchedOffers.length === 0 ? (
-            <p className="text-gray-600 mb-12 text-xl">No gigs matching search — try different terms!</p>
-          ) : (
-            <div className="space-y-16">
-              {searchedOffers.map((offer) => (
-                <div key={offer.id} className="border-4 border-black p-8 bg-gray-100 max-w-lg mx-auto">
-                  <p className="font-bold text-2xl mb-6">{offer.type.toUpperCase()} — ${offer.amount}</p>
-                  <p className="mb-8">{offer.description}</p>
-                  <Button 
-                    onClick={() => router.push(`/claim/${offer.id}`)}
-                    className="w-full h-16 text-xl bg-black text-white"
-                  >
-                    Claim Gig
-                  </Button>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+        )}
+      </div>
 
                     {/* Debit Card Entry — Spacious, Clean, Thin Border on Card Field */}
             <div className="max-w-2xl mx-auto py-20">
@@ -796,6 +922,67 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
           </Button>
         </div>
       </div>
+      
+      {/* Video Recorder Modal */}
+      {showVideoRecorder && selectedOffer && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-12 border-4 border-black rounded-lg max-w-3xl w-full">
+            <h3 className="text-3xl font-bold mb-8 text-center font-mono">
+              Record Clip for {selectedOffer.type}
+            </h3>
+            <p className="text-xl mb-8 text-center font-mono">
+              ${selectedOffer.amount} gig from {selectedOffer.businesses?.name || 'Sponsor'}
+            </p>
+
+            <div className="mb-8">
+              {recording ? (
+                <video 
+                  autoPlay 
+                  muted 
+                  playsInline 
+                  ref={(video) => {
+                    if (video && mediaStream) video.srcObject = mediaStream
+                  }}
+                  className="w-full border-4 border-black rounded-lg"
+                />
+              ) : videoUrl ? (
+                <video controls src={videoUrl} className="w-full border-4 border-black rounded-lg" />
+              ) : (
+                <div className="bg-gray-200 border-4 border-dashed border-gray-400 rounded-lg h-64 flex items-center justify-center">
+                  <p className="text-xl font-mono text-gray-600">Camera preview</p>
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-6">
+              {!recording && !videoUrl && (
+                <Button onClick={startRecording} className="w-full h-20 text-3xl bg-black text-white font-bold font-mono">
+                  Start Recording
+                </Button>
+              )}
+              {recording && (
+                <Button onClick={stopRecording} className="w-full h-20 text-3xl bg-red-600 text-white font-bold font-mono">
+                  Stop Recording
+                </Button>
+              )}
+              {videoUrl && !recording && (
+                <>
+                  <Button onClick={submitClip} className="w-full h-20 text-3xl bg-green-600 text-white font-bold font-mono">
+                    Submit Clip
+                  </Button>
+                  <Button onClick={() => {
+                    setVideoUrl('')
+                    setVideoBlob(null)
+                    setShowVideoRecorder(false)
+                  }} variant="outline" className="w-full h-16 text-xl border-4 border-black font-mono">
+                    Cancel
+                  </Button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Log Out */}
       <div className="text-center mt-32">

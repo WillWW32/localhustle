@@ -140,25 +140,54 @@ function ParentDashboardContent() {
     }
 
     // Quick $50 challenge — create pre-funded gig
-    const { error } = await supabase
-      .from('offers')
-      .insert({
-        business_id: parent.id,
-        type: 'Challenge',
-        amount: 50,
-        description: 'First challenge from your parent — complete and earn $50!',
-        target_athlete_id: quickSponsorKid.id,
-        status: 'open',
-      })
+   const { data: gig, error } = await supabase
+    .from('offers')
+    .insert({
+      business_id: parent.id,
+      type: 'Challenge',
+      amount: 50,
+      description: 'First challenge from your parent — complete and earn $50!',
+      target_athlete_email: quickSponsorKid.email,  // use email from kid profile
+      status: 'active',
+    })
+    .select()
+    .single()
 
-    if (error) {
-      alert('Error creating challenge: ' + error.message)
-    } else {
-      alert(`$50 challenge sent to ${quickSponsorKid.full_name.split(' ')[0]}!`)
-      setShowQuickSponsor(false)
-    }
+  if (error) {
+    alert('Error creating challenge: ' + error.message)
+    return
   }
 
+  // Send notification to athlete
+  try {
+    await resend.emails.send({
+      from: 'LocalHustle <notifications@localhustle.org>',
+      to: quickSponsorKid.email,
+      subject: 'Your Parent Funded a $50 Challenge!',
+      text: `Hey ${quickSponsorKid.full_name.split(' ')[0]}!
+
+Your parent just funded a $50 challenge for you on LocalHustle.
+
+Complete it and get paid instantly!
+
+https://app.localhustle.org/athlete-dashboard
+
+Let's go!
+— LocalHustle Team`,
+      html: `<p>Hey ${quickSponsorKid.full_name.split(' ')[0]}!</p>
+<p>Your parent just funded a <strong>$50 challenge</strong> for you on LocalHustle.</p>
+<p>Complete it and get paid instantly!</p>
+<p><a href="https://app.localhustle.org/athlete-dashboard" style="background:#000;color:#fff;padding:1rem 2rem;text-decoration:none;font-weight:bold;">Claim Your Challenge</a></p>
+<p>Let's go!<br/>— LocalHustle Team</p>`,
+    })
+  } catch (emailError) {
+    console.error('Quick sponsor email error:', emailError)
+    // Don't block success
+  }
+
+  alert(`$50 challenge sent to ${quickSponsorKid.full_name.split(' ')[0]}!`)
+  setShowQuickSponsor(false)
+}
   const handleAddCard = async () => {
     if (!stripe || !elements) {
       setPaymentError('Stripe not loaded — please refresh')
@@ -295,45 +324,6 @@ function ParentDashboardContent() {
   return (
     <div className="container py-8">
       <p className="text-center mb-12 text-xl font-mono">Welcome, Parent!</p>
-
-      {/* Role Switcher — Bold 150px Slide Switch (Parent ↔ Business) */}
-      <div className="fixed bottom-6 right-6 z-50">
-        <div className="bg-white border-4 border-black rounded-full shadow-2xl overflow-hidden w-[150px] h-16 flex items-center">
-          <div 
-            className={`absolute inset-0 w-1/2 bg-black transition-transform duration-300 ease-in-out ${
-              currentRole === 'parent' ? 'translate-x-0' : 'translate-x-full'
-            }`}
-          />
-
-          <button
-            onClick={() => router.push('/parent-dashboard')}
-            className="relative z-10 flex-1 h-full flex items-center justify-center"
-            disabled={currentRole === 'parent'}
-          >
-            <span className={`text-lg font-bold font-mono transition-colors ${
-              currentRole === 'parent' ? 'text-white' : 'text-black'
-            }`}>
-              Parent
-            </span>
-          </button>
-
-          <button
-            onClick={() => router.push('/business-dashboard')}
-            className="relative z-10 flex-1 h-full flex items-center justify-center"
-            disabled={currentRole === 'business'}
-          >
-            <span className={`text-lg font-bold font-mono transition-colors ${
-              currentRole === 'business' ? 'text-white' : 'text-black'
-            }`}>
-              Business
-            </span>
-          </button>
-        </div>
-
-        <p className="text-center text-xs font-mono mt-2 text-gray-600">
-          Switch role
-        </p>
-      </div>
 
       <div className="bg-black text-white p-8 mb-12">
         <h1 className="text-3xl font-bold text-center">
@@ -637,6 +627,44 @@ function ParentDashboardContent() {
         }} variant="outline" className="w-64 h-14 text-lg border-4 border-black font-mono">
           Log Out
         </Button>
+      </div>
+      {/* Role Switcher — Bold 150px Slide Switch (Parent ↔ Business) */}
+      <div className="fixed bottom-6 right-6 z-50">
+        <div className="bg-white border-4 border-black rounded-full shadow-2xl overflow-hidden w-[150px] h-16 flex items-center">
+          <div 
+            className={`absolute inset-0 w-1/2 bg-black transition-transform duration-300 ease-in-out ${
+              currentRole === 'parent' ? 'translate-x-0' : 'translate-x-full'
+            }`}
+          />
+
+          <button
+            onClick={() => router.push('/parent-dashboard')}
+            className="relative z-10 flex-1 h-full flex items-center justify-center"
+            disabled={currentRole === 'parent'}
+          >
+            <span className={`text-lg font-bold font-mono transition-colors ${
+              currentRole === 'parent' ? 'text-white' : 'text-black'
+            }`}>
+              Parent
+            </span>
+          </button>
+
+          <button
+            onClick={() => router.push('/business-dashboard')}
+            className="relative z-10 flex-1 h-full flex items-center justify-center"
+            disabled={currentRole === 'business'}
+          >
+            <span className={`text-lg font-bold font-mono transition-colors ${
+              currentRole === 'business' ? 'text-white' : 'text-black'
+            }`}>
+              Business
+            </span>
+          </button>
+        </div>
+
+        <p className="text-center text-xs font-mono mt-2 text-gray-600">
+          Switch role
+        </p>
       </div>
     </div>
   )

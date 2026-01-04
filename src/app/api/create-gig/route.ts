@@ -1,7 +1,6 @@
-
 import { NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabaseClient'
-import { resend } from '@/lib/resend'  // your existing Resend instance
+import { resend } from '@/lib/resend'  // your Resend instance
 
 export async function POST(request: Request) {
   const { business_id, type, amount, description, target_athlete_email, is_repeat } = await request.json()
@@ -10,7 +9,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
   }
 
-  // Fetch business name for email
+  // Fetch business name
   const { data: business } = await supabase
     .from('businesses')
     .select('name')
@@ -39,7 +38,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  // Send notification to targeted athlete (if any)
+  // Send notification if targeted
   if (target_athlete_email) {
     try {
       await resend.emails.send({
@@ -48,7 +47,7 @@ export async function POST(request: Request) {
         subject: `New $${amount} ${type} Gig from ${businessName}!`,
         text: `Hey!
 
-${businessName} just posted a $${amount} ${type} gig for you on LocalHustle.
+${businessName} just posted a $${amount} ${type} gig just for you on LocalHustle.
 
 ${description ? description + '\n\n' : ''}Log in to complete it and get paid instantly!
 
@@ -57,10 +56,10 @@ https://app.localhustle.org/athlete-dashboard
 Let's go!
 — LocalHustle Team`,
         html: `<p>Hey!</p>
-<p><strong>${businessName}</strong> just posted a <strong>$${amount} ${type}</strong> gig for you on LocalHustle.</p>
+<p><strong>${businessName}</strong> just posted a <strong>$${amount} ${type}</strong> gig just for you on LocalHustle.</p>
 ${description ? `<p>${description}</p>` : ''}
 <p>Log in to complete it and get paid instantly!</p>
-<p><a href="https://app.localhustle.org/athlete-dashboard" style="background:#000;color:#fff;padding:1rem 2rem;text-decoration:none;font-weight:bold;">Claim Gig Now</a></p>
+<p><a href="https://app.localhustle.org/athlete-dashboard" style="background:#000;color:#fff;padding:1rem 2rem;text-decoration:none;font-weight:bold;">Claim Your Gig Now</a></p>
 <p>Let's go!<br/>— LocalHustle Team</p>`,
       })
     } catch (emailError) {
