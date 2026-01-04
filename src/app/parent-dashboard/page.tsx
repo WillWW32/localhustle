@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, Suspense } from 'react'
-import { useRouter, usePathname, useSearchParams } from 'next/navigation'
+import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import { signOut } from '@/lib/auth'
 import { Button } from '@/components/ui/button'
@@ -31,6 +31,9 @@ function ParentDashboardContent() {
   const [paymentSuccess, setPaymentSuccess] = useState(false)
   const [cardReady, setCardReady] = useState(false)
   const [activeTab, setActiveTab] = useState<'wallet' | 'clips' | 'kids' | 'scholarships'>('wallet')
+  const [showQuickSponsor, setShowQuickSponsor] = useState(false)
+  const [quickSponsorKid, setQuickSponsorKid] = useState<any>(null)
+  const [showCardModal, setShowCardModal] = useState(false)
 
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -52,27 +55,61 @@ function ParentDashboardContent() {
         return
       }
 
-      // Parents are stored in the `businesses` table (same as businesses)
-      const { data: parentRecord } = await supabase
+      // Parents are stored in the `businesses` table
+      let { data: parentRecord } = await supabase
         .from('businesses')
         .select('*')
         .eq('owner_id', user.id)
         .single()
 
+      // If no record exists, create one (first login)
+      if (!parentRecord) {
+        const { data: newParent, error } = await supabase
+          .from('businesses')
+          .insert({ owner_id: user.id, name: '', phone: '', wallet_balance: 0 })
+          .select()
+          .single()
+
+        if (error) {
+          console.error('Error creating parent record:', error)
+          return
+        }
+        parentRecord = newParent
+      }
+
       setParent(parentRecord)
 
+      const kidId = searchParams.get('kid_id')
+
+      // Auto-link kid if invited
+      if (kidId) {
+        const { error: linkError } = await supabase
+          .from('profiles')
+          .update({ parent_id: parentRecord.id })
+          .eq('id', kidId)
+
+        if (!linkError) {
+          // Fetch kid name for quick sponsor banner
+          const { data: kidData } = await supabase
+            .from('profiles')
+            .select('full_name')
+            .eq('id', kidId)
+            .single()
+
+          if (kidData) {
+            setQuickSponsorKid(kidData)
+            setShowQuickSponsor(true)
+          }
+        }
+      }
+
+      // Load kids
       const { data: kidsData } = await supabase
         .from('profiles')
         .select('id, full_name, email, school, gig_count, profile_pic')
-        .eq('parent_id', parentRecord?.id || '')
+        .eq('parent_id', parentRecord.id)
 
       setKids(kidsData || [])
-
-      const kidId = searchParams.get('kid_id')
-      if (kidId && kidsData) {
-        const kid = kidsData.find(k => k.id === kidId)
-        if (kid) setSelectedKid(kid)
-      }
 
       if (kidsData && kidsData.length > 0) {
         const { data: clips } = await supabase
@@ -83,19 +120,103 @@ function ParentDashboardContent() {
         setPendingClips(clips || [])
       }
 
-      if (parentRecord?.id) {
-        const response = await fetch('/api/list-payment-methods', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ business_id: parentRecord.id }), // Use business_id for parent
-        })
-        const data = await response.json()
-        setSavedMethods(data.methods || [])
-      }
+      // Load saved cards
+      const response = await fetch('/api/list-payment-methods', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ business_id: parentRecord.id }),
+      })
+      const data = await response.json()
+      setSavedMethods(data.methods || [])
     }
 
     fetchData()
   }, [router, searchParams])
+
+  const handleQuickSponsor = async () => {
+    if (savedMethods.length === 0) {
+      setShowCardModal(true)
+      return
+    }
+
+    // Quick $50 challenge — create pre-funded gig
+    const { error } = await supabase
+      .from('offers')
+      .insert({
+        business_id: parent.id,
+        type: 'Challenge',
+        amount: 50,
+        description: 'First challenge from your parent — complete and earn $50!',
+        target_athlete_id: quickSponsorKid.id,
+        status: 'open',
+      })
+
+    if (error) {
+      alert('Error creating challenge: ' + error.message)
+    } else {
+      alert(`$50 challenge sent to ${quickSponsorKid.full_name.split(' ')[0]}!`)
+      setShowQuickSponsor(false)
+    }
+  }
+
+  const handleAddCard = async () => {
+    if (!stripe || !elements) {
+      setPaymentError('Stripe not loaded — please refresh')
+      return
+    }
+
+    if (!cardReady) {
+      setPaymentError('Card field still loading — please wait a second')
+      return
+    }
+
+    setPaymentError(null)
+    setPaymentSuccess(false)
+    setPaymentLoading(true)
+
+    const cardElement = (elements as any).getElement('card') || elements.getElement(CardElement as any)
+
+    if (!cardElement) {
+      setPaymentError('Card element not found — please refresh and try again')
+      setPaymentLoading(false)
+      return
+    }
+
+    const { error: stripeError, paymentMethod } = await stripe.createPaymentMethod({
+      type: 'card',
+      card: cardElement,
+    })
+
+    if (stripeError) {
+      setPaymentError(stripeError.message || 'Payment error')
+      setPaymentLoading(false)
+      return
+    }
+
+    // Save token directly to parent record (in businesses table)
+    const { error: dbError } = await supabase
+      .from('businesses')
+      .update({ debit_card_token: paymentMethod.id })
+      .eq('id', parent.id)
+
+    if (dbError) {
+      setPaymentError('Failed to save card — try again')
+      setPaymentLoading(false)
+      return
+    }
+
+    setPaymentSuccess(true)
+    setSavedMethods([...savedMethods, {
+      id: paymentMethod.id,
+      brand: paymentMethod.card?.brand,
+      last4: paymentMethod.card?.last4,
+      exp_month: paymentMethod.card?.exp_month,
+      exp_year: paymentMethod.card?.exp_year,
+    }])
+    setShowCardModal(false)
+    setTimeout(() => setPaymentSuccess(false), 5000)
+    setPaymentLoading(false)
+  }
 
   const approveClip = async (clip: any) => {
     const { error } = await supabase
@@ -127,7 +248,7 @@ function ParentDashboardContent() {
         friend_name: friendName,
         challenge_description: friendChallenge,
         amount: parseFloat(friendAmount),
-        parent_id: parent.id, // parent.id = businesses.id
+        parent_id: parent.id,
       }),
     })
 
@@ -145,73 +266,6 @@ function ParentDashboardContent() {
     }
   }
 
-  const handleAddCard = async () => {  // or handleAddDebitCard for athlete
-  if (!stripe || !elements) {
-    setPaymentError('Stripe not loaded')
-    return
-  }
-
-  if (!cardReady) {
-    setPaymentError('Card loading — wait a second')
-    return
-  }
-
-  setPaymentError(null)
-  setPaymentSuccess(false)
-  setPaymentLoading(true)
-
-  const cardElement = (elements as any).getElement('card') || elements.getElement(CardElement as any)
-
-  if (!cardElement) {
-    setPaymentError('Card element not found')
-    setPaymentLoading(false)
-    return
-  }
-
-  const { error: stripeError, paymentMethod } = await stripe.createPaymentMethod({
-    type: 'card',
-    card: cardElement,
-  })
-
-  if (stripeError) {
-    setPaymentError(stripeError.message || 'Error')
-    setPaymentLoading(false)
-    return
-  }
-
-  // Get current user
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
-    setPaymentError('Not logged in')
-    setPaymentLoading(false)
-    return
-  }
-
-  // Save token directly to DB
-  const table = 'businesses'
-    const { error: dbError } = await supabase
-    .from(table)
-    .update({ debit_card_token: paymentMethod.id })
-    .eq('owner_id', user.id)  // or 'id' if using user.id directly
-
-  if (dbError) {
-    setPaymentError('Failed to save card')
-  } else {
-    setPaymentSuccess(true)
-    // Update local savedMethods for display
-    setSavedMethods([...savedMethods, {
-      id: paymentMethod.id,
-      brand: paymentMethod.card?.brand,
-      last4: paymentMethod.card?.last4,
-      exp_month: paymentMethod.card?.exp_month,
-      exp_year: paymentMethod.card?.exp_year,
-    }])
-    setTimeout(() => setPaymentSuccess(false), 5000)
-  }
-
-  setPaymentLoading(false)
-}
-
   const handleAddFunds = async (amount: number) => {
     if (savedMethods.length === 0) {
       alert('Add a card first')
@@ -224,7 +278,7 @@ function ParentDashboardContent() {
       body: JSON.stringify({
         amount,
         payment_method_id: savedMethods[0].id,
-        business_id: parent.id,  // Parents use business_id
+        business_id: parent.id,
       }),
     })
 
@@ -275,6 +329,7 @@ function ParentDashboardContent() {
             </span>
           </button>
         </div>
+
         <p className="text-center text-xs font-mono mt-2 text-gray-600">
           Switch role
         </p>
@@ -294,85 +349,64 @@ function ParentDashboardContent() {
         </p>
       </div>
 
-      {/* No Kid Yet Banner — Enhanced with Native Share */}
-      {kids.length === 0 && (
-        <div className="bg-yellow-100 p-12 border-4 border-yellow-600 mb-16 text-center max-w-3xl mx-auto rounded-lg">
-          <h2 className="text-3xl font-bold mb-4 font-mono">
-            No Kids Linked Yet
+      {/* Quick Sponsor Banner — When Invited with kid_id */}
+      {showQuickSponsor && quickSponsorKid && (
+        <div className="max-w-3xl mx-auto mb-16 p-12 bg-green-100 border-4 border-green-600 rounded-lg">
+          <h2 className="text-4xl font-bold mb-8 text-center font-mono">
+            Quick Sponsor {quickSponsorKid.full_name.split(' ')[0]}'s First Gig!
           </h2>
-          <p className="text-xl mb-10 font-mono leading-relaxed">
-            Send your kid their personal invite link.<br />
-            Once they sign up, you’ll see their progress and approve earnings.
+          <p className="text-xl mb-12 text-center font-mono">
+            Fund a $50 challenge — they complete it, you approve, they get paid instantly.<br />
+            Help them get started today.
           </p>
-
           <Button
-            onClick={async () => {
-              const inviteLink = `https://app.localhustle.org/athlete-onboard?parent_id=${parent?.id || ''}`
-              const shareText = "Hey! I set up LocalHustle for you — earn real money this off-season with simple gigs from local businesses. Use this link to get started and link to my parent account:"
-              
-              const shareData = {
-                title: "Join me on LocalHustle",
-                text: shareText,
-                url: inviteLink,
-              }
-
-              if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
-                try {
-                  await navigator.share(shareData)
-                  return
-                } catch (err: any) {
-                  if (err.name !== 'AbortError') {
-                    console.warn('Share failed:', err)
-                  }
-                }
-              }
-
-              try {
-                await navigator.clipboard.writeText(`${shareText}\n\n${inviteLink}`)
-                alert('✅ Invite link + message copied!\n\nPaste it into a text, email, or AirDrop to your kid.')
-              } catch (err) {
-                prompt('Copy this link and message manually:', `${shareText}\n\n${inviteLink}`)
-              }
-            }}
-            className="w-full max-w-md h-20 text-2xl bg-black text-white font-bold hover:bg-gray-800 transition"
+            onClick={handleQuickSponsor}
+            className="w-full max-w-md h-20 text-3xl bg-green-600 text-white font-bold font-mono"
           >
-            Send Invite to My Kid
+            {savedMethods.length === 0 ? 'Add Card & Fund $50' : 'Fund $50 Challenge Now'}
           </Button>
-
-          <p className="text-sm text-gray-600 mt-6 font-mono">
-            Works with Text, Email, AirDrop, WhatsApp, and more
-          </p>
         </div>
       )}
 
-      {/* Kid Profile & Progress Meter */}
-      {selectedKid && (
-        <div className="max-w-3xl mx-auto mb-16 p-12 bg-green-100 border-4 border-green-600">
-          <div className="flex items-center gap-8 mb-8">
-            <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-black">
-              <img src={selectedKid.profile_pic || '/default-avatar.png'} alt={selectedKid.full_name} className="w-full h-full object-cover" />
-            </div>
-            <div>
-              <h2 className="text-3xl font-bold">{selectedKid.full_name}</h2>
-              <p className="text-xl">{selectedKid.school}</p>
-            </div>
-          </div>
-
-          <div className="mb-8">
-            <p className="text-xl mb-4 text-center">Progress to Big Rewards</p>
-            <div className="bg-gray-200 h-12 border-4 border-black relative">
-              <div 
-                className="bg-green-500 h-full transition-all"
-                style={{ width: `${(selectedKid.gig_count / 8) * 100}%` }}
-              />
-              <div className="absolute inset-0 flex items-center justify-center text-2xl font-bold">
-                {selectedKid.gig_count} / 8 Gigs
+      {/* Card Modal — When No Card and Quick Sponsor Clicked */}
+      {showCardModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-16 border-4 border-black rounded-lg max-w-md w-full">
+            <h3 className="text-3xl font-bold mb-8 text-center font-mono">Add Card to Sponsor</h3>
+            <Elements stripe={stripePromise}>
+              <div className="space-y-12">
+                <div className="bg-gray-50 p-12 border-4 border-gray-300 rounded-lg">
+                  <CardElement
+                    onReady={() => setCardReady(true)}
+                    options={{
+                      style: {
+                        base: {
+                          fontSize: '22px',
+                          color: '#000',
+                          fontFamily: 'Courier New, monospace',
+                          '::placeholder': { color: '#666' },
+                        },
+                      },
+                    }}
+                  />
+                </div>
+                {paymentError && <p className="text-red-600 text-center text-xl">{paymentError}</p>}
+                <Button
+                  onClick={handleAddCard}
+                  disabled={paymentLoading || !cardReady}
+                  className="w-full h-20 text-3xl bg-black text-white font-bold font-mono"
+                >
+                  {paymentLoading ? 'Saving...' : 'Save Card & Fund $50'}
+                </Button>
+                <Button
+                  onClick={() => setShowCardModal(false)}
+                  variant="outline"
+                  className="w-full h-16 text-xl border-4 border-black font-mono"
+                >
+                  Cancel
+                </Button>
               </div>
-            </div>
-            <div className="flex justify-between mt-4 text-lg">
-              <span>4 gigs → Freedom Scholarship</span>
-              <span>8 gigs → Brand Deals</span>
-            </div>
+            </Elements>
           </div>
         </div>
       )}
