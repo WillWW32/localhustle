@@ -147,7 +147,7 @@ function ParentDashboardContent() {
 })
 
 if (response.ok) {
-  alert('$50 challenge sent!')
+  alert(`$50 challenge sent to ${quickSponsorKid.full_name.split(' ')[0]}!`)
   setShowQuickSponsor(false)
 }
 
