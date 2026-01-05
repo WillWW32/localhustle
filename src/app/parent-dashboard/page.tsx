@@ -632,6 +632,7 @@ const handleAddCard = async () => {
     </div>
   )
 }
+</div>
 
 export default function ParentDashboard() {
   return (
