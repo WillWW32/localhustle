@@ -174,116 +174,129 @@ function ParentDashboardContent() {
   }
 
   const handleAddCard = async () => {
-    if (!stripe || !elements) {
-      setPaymentError('Stripe not loaded — please refresh')
-      return
-    }
-
-    if (!cardReady) {
-      setPaymentError('Card field still loading — please wait a second')
-      return
-    }
-
-    setPaymentError(null)
-    setPaymentSuccess(false)
-    setPaymentLoading(true)
-
-    const cardElement = (elements as any).getElement('card') || elements.getElement(CardElement as any)
-
-    if (!cardElement) {
-      setPaymentError('Card element not found — please refresh and try again')
-      setPaymentLoading(false)
-      return
-    }
-
-    const { error: stripeError, paymentMethod } = await stripe.createPaymentMethod({
-      type: 'card',
-      card: cardElement,
-    })
-
-    if (stripeError) {
-      setPaymentError(stripeError.message || 'Payment error')
-      setPaymentLoading(false)
-      return
-    }
-
-    const response = await fetch('/api/attach-payment-method', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        payment_method_id: paymentMethod.id,
-        business_id: parent.id,
-      }),
-    })
-
-    const data = await response.json()
-
-    if (data.error) {
-      setPaymentError(data.error)
-    } else {
-      setPaymentSuccess(true)
-      setSavedMethods([...savedMethods, data.method])
-      setTimeout(() => setPaymentSuccess(false), 5000)
-    }
-
-    setPaymentLoading(false)
+  if (!stripe || !elements) {
+    setPaymentError('Stripe not loaded — please refresh')
+    return
   }
+
+  if (!cardReady) {
+    setPaymentError('Card field still loading — please wait a second')
+    return
+  }
+
+  setPaymentError(null)
+  setPaymentSuccess(false)
+  setPaymentLoading(true)
+
+  const cardElement = elements.getElement(CardElement)
+
+  if (!cardElement) {
+    setPaymentError('Card element not ready — please wait a moment and try again')
+    setPaymentLoading(false)
+    return
+  }
+
+  const { error: stripeError, paymentMethod } = await stripe.createPaymentMethod({
+    type: 'card',
+    card: cardElement,
+  })
+
+  if (stripeError) {
+    setPaymentError(stripeError.message || 'Payment error')
+    setPaymentLoading(false)
+    return
+  }
+
+  // Save token to businesses table
+  const { error: dbError } = await supabase
+    .from('businesses')
+    .update({ debit_card_token: paymentMethod.id })
+    .eq('id', parent.id)
+
+  if (dbError) {
+    setPaymentError('Failed to save card — try again')
+    setPaymentLoading(false)
+    return
+  }
+
+  setPaymentSuccess(true)
+  setSavedMethods([...savedMethods, {
+    id: paymentMethod.id,
+    brand: paymentMethod.card?.brand,
+    last4: paymentMethod.card?.last4,
+    exp_month: paymentMethod.card?.exp_month,
+    exp_year: paymentMethod.card?.exp_year,
+  }])
+  setTimeout(() => setPaymentSuccess(false), 5000)
+  setPaymentLoading(false)
+}
 
   return (
     <div className="container py-8">
       <p className="text-center mb-12 text-xl font-mono">Welcome, Parent!</p>
-
-      {/* Role Switcher — Bold 150px Slide Switch (Parent ↔ Business) */}
-      <div className="fixed bottom-6 right-6 z-50">
-        <div className="bg-white border-4 border-black rounded-full shadow-2xl overflow-hidden w-[150px] h-16 flex items-center">
-          <div 
-            className={`absolute inset-0 w-1/2 bg-black transition-transform duration-300 ease-in-out ${
-              currentRole === 'parent' ? 'translate-x-0' : 'translate-x-full'
-            }`}
-          />
-
-          <button
-            onClick={() => router.push('/parent-dashboard')}
-            className="relative z-10 flex-1 h-full flex items-center justify-center"
-            disabled={currentRole === 'parent'}
-          >
-            <span className={`text-lg font-bold font-mono transition-colors ${
-              currentRole === 'parent' ? 'text-white' : 'text-black'
-            }`}>
-              Parent
-            </span>
-          </button>
-
-          <button
-            onClick={() => router.push('/business-dashboard')}
-            className="relative z-10 flex-1 h-full flex items-center justify-center"
-            disabled={currentRole === 'business'}
-          >
-            <span className={`text-lg font-bold font-mono transition-colors ${
-              currentRole === 'business' ? 'text-white' : 'text-black'
-            }`}>
-              Business
-            </span>
-          </button>
+      
+            {/* Step-by-Step Setup Guidance for Parents */}
+      <div className="bg-black text-white p-12 mb-16">
+        <h2 className="text-4xl font-bold mb-12 text-center font-mono">
+          Get Started in 3 Simple Steps
+        </h2>
+        <div className="max-w-4xl mx-auto space-y-12 text-xl leading-relaxed font-mono">
+          <div>
+            <p className="text-2xl font-bold mb-4">Step 1: Add Your Card</p>
+            <p>
+              Securely add a credit or debit card — you'll only be charged when you approve completed gigs.<br />
+              No upfront fees, full control.
+            </p>
+          </div>
+          <div>
+            <p className="text-2xl font-bold mb-4">Step 2: Fund Your Kid's First Gig</p>
+            <p>
+              Use the "Quick Sponsor" button or post a challenge — $50 is perfect to start.<br />
+              They complete it, you approve the clip, they get paid instantly.
+            </p>
+          </div>
+          <div>
+            <p className="text-2xl font-bold mb-4">Step 3: Watch Them Grow</p>
+            <p>
+              Every approved gig builds their earnings and progress toward Freedom Scholarships (4 gigs) and brand deals (8 gigs).<br />
+              You're helping them earn real money — thank you!
+            </p>
+          </div>
         </div>
-
-        <p className="text-center text-xs font-mono mt-2 text-gray-600">
-          Switch role
+        <p className="text-xl mt-12 text-center text-gray-300">
+          Questions? We're here to help — just reply to any email.
         </p>
       </div>
 
-      <div className="bg-black text-white p-8 mb-12">
-        <h1 className="text-3xl font-bold text-center">
-          Your Parent Console
-        </h1>
-      </div>
-
-      <div className="bg-black text-white p-8 mb-12">
-        <p className="text-lg leading-relaxed text-center max-w-3xl mx-auto">
-          Fund your kid's challenges and scholarships.<br />
-          They complete — you approve — they earn instantly.<br />
-          Help them get from first gig to Freedom Scholarship (4 gigs) to brand deals (8 gigs).
+            {/* Progress Meter with Message to Parents */}
+      <div className="max-w-3xl mx-auto mb-16 p-12 bg-green-100 border-4 border-green-600 rounded-lg">
+        <h3 className="text-4xl font-bold mb-12 text-center font-mono">
+          Your Kid's Progress to Freedom
+        </h3>
+        <p className="text-xl mb-12 text-center font-mono max-w-2xl mx-auto">
+          Every gig you fund helps them build real earnings and qualify for Freedom Scholarships.<br />
+          4 gigs = unrestricted cash scholarship. 8 gigs = brand deals unlocked.<br />
+          You're making their hustle possible — thank you!
         </p>
+
+        <div className="mb-8">
+          <p className="text-2xl text-center mb-4 font-mono">
+            Gigs Completed: {gigCount} / 8
+          </p>
+          <div className="relative h-20 bg-gray-300 border-4 border-black">
+            <div 
+              className="absolute top-0 left-0 h-full bg-green-400 transition-all duration-1000"
+              style={{ width: `${(gigCount / 8) * 100}%` }}
+            />
+            <p className="absolute inset-0 flex items-center justify-center text-3xl font-bold font-mono">
+              {gigCount < 4 ? 'Keep Going!' : gigCount < 8 ? 'Almost There!' : 'Brand Deals Unlocked!'}
+            </p>
+          </div>
+          <div className="flex justify-between mt-4 text-lg font-mono">
+            <span>4 gigs → Freedom Scholarship → </span>
+            <span>8 gigs → Brand Deals</span>
+          </div>
+        </div>
       </div>
 
       {/* Quick Sponsor Banner */}
@@ -347,6 +360,76 @@ function ParentDashboardContent() {
           </div>
         </div>
       )}
+      
+            {/* Compact Sponsor a Gig Section */}
+      <div className="max-w-3xl mx-auto mb-16 p-12 bg-white border-4 border-black rounded-lg">
+        <h2 className="text-4xl font-bold mb-12 text-center font-mono">Sponsor a Gig</h2>
+        <p className="text-xl mb-12 text-center font-mono text-gray-600">
+          Choose a gig to fund — add a short note and send it to your kid instantly.
+        </p>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {/* ShoutOut */}
+          <div className="bg-gray-100 p-8 border-4 border-black rounded-lg">
+            <h3 className="text-2xl font-bold mb-4 font-mono">ShoutOut</h3>
+            <p className="text-3xl font-bold mb-4 text-green-600">$50</p>
+            <Input
+              placeholder="e.g., Visit Bridge Pizza and shoutout your favorite order"
+              className="mb-6 h-14 text-lg font-mono"
+            />
+            <Button className="w-full h-16 text-xl bg-black text-white font-bold font-mono">
+              Fund ShoutOut
+            </Button>
+          </div>
+
+          {/* Challenge */}
+          <div className="bg-gray-100 p-8 border-4 border-black rounded-lg">
+            <h3 className="text-2xl font-bold mb-4 font-mono">Challenge</h3>
+            <p className="text-3xl font-bold mb-4 text-green-600">$75</p>
+            <Input
+              placeholder="e.g., 80/100 free throws or 50 pushups"
+              className="mb-6 h-14 text-lg font-mono"
+            />
+            <Button className="w-full h-16 text-xl bg-black text-white font-bold font-mono">
+              Fund Challenge
+            </Button>
+          </div>
+
+          {/* Cameo */}
+          <div className="bg-gray-100 p-8 border-4 border-black rounded-lg">
+            <h3 className="text-2xl font-bold mb-4 font-mono">Cameo</h3>
+            <p className="text-3xl font-bold mb-4 text-green-600">$50</p>
+            <Input
+              placeholder="e.g., Birthday message for little brother"
+              className="mb-6 h-14 text-lg font-mono"
+            />
+            <Button className="w-full h-16 text-xl bg-black text-white font-bold font-mono">
+              Fund Cameo
+            </Button>
+          </div>
+        </div>
+
+        {/* Custom Gig */}
+        <div className="mt-12 max-w-xl mx-auto">
+          <h3 className="text-2xl font-bold mb-6 text-center font-mono">Or Create a Custom Gig</h3>
+          <Input
+            placeholder="Gig title (e.g., Youth Clinic)"
+            className="mb-6 h-14 text-lg font-mono"
+          />
+          <Input
+            type="number"
+            placeholder="Amount (e.g., 200)"
+            className="mb-6 h-14 text-lg font-mono"
+          />
+          <Input
+            placeholder="Description (e.g., Run a 1-hour clinic for younger players)"
+            className="mb-8 h-14 text-lg font-mono"
+          />
+          <Button className="w-full h-16 text-xl bg-green-600 text-white font-bold font-mono">
+            Fund Custom Gig
+          </Button>
+        </div>
+      </div>
 
       {/* Sticky Tabs with Counts */}
       <div className="sticky top-0 bg-white z-30 border-b-4 border-black py-4 shadow-lg">
@@ -446,6 +529,23 @@ function ParentDashboardContent() {
             </div>
           </div>
         )}
+        
+                    {/* Saved Cards */}
+            {savedMethods.length > 0 && (
+              <div className="max-w-2xl mx-auto">
+                <h4 className="text-2xl font-bold mb-8 text-center font-mono">Saved Cards</h4>
+                <div className="space-y-6">
+                  {savedMethods.map((method) => (
+                    <div key={method.id} className="bg-gray-100 p-8 border-4 border-black">
+                      <p className="text-xl font-mono">
+                        {method.brand.toUpperCase()} •••• {method.last4}<br />
+                        Expires {method.exp_month}/{method.exp_year}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
         {/* Pending Clips Tab */}
         {activeTab === 'clips' && (
@@ -532,6 +632,59 @@ function ParentDashboardContent() {
         </div>
       )}
 
+{/* Role Switcher — Bold 150px Slide Switch (Parent ↔ Business) */}
+      <div className="fixed bottom-6 right-6 z-50">
+        <div className="bg-white border-4 border-black rounded-full shadow-2xl overflow-hidden w-[150px] h-16 flex items-center">
+          <div 
+            className={`absolute inset-0 w-1/2 bg-black transition-transform duration-300 ease-in-out ${
+              currentRole === 'parent' ? 'translate-x-0' : 'translate-x-full'
+            }`}
+          />
+
+          <button
+            onClick={() => router.push('/parent-dashboard')}
+            className="relative z-10 flex-1 h-full flex items-center justify-center"
+            disabled={currentRole === 'parent'}
+          >
+            <span className={`text-lg font-bold font-mono transition-colors ${
+              currentRole === 'parent' ? 'text-white' : 'text-black'
+            }`}>
+              Parent
+            </span>
+          </button>
+
+          <button
+            onClick={() => router.push('/business-dashboard')}
+            className="relative z-10 flex-1 h-full flex items-center justify-center"
+            disabled={currentRole === 'business'}
+          >
+            <span className={`text-lg font-bold font-mono transition-colors ${
+              currentRole === 'business' ? 'text-white' : 'text-black'
+            }`}>
+              Business
+            </span>
+          </button>
+        </div>
+
+        <p className="text-center text-xs font-mono mt-2 text-gray-600">
+          Switch role
+        </p>
+      </div>
+
+      <div className="bg-black text-white p-8 mb-12">
+        <h1 className="text-3xl font-bold text-center">
+          Your Parent Console
+        </h1>
+      </div>
+
+      <div className="bg-black text-white p-8 mb-12">
+        <p className="text-lg leading-relaxed text-center max-w-3xl mx-auto">
+          Fund your kid's challenges and scholarships.<br />
+          They complete — you approve — they earn instantly.<br />
+          Help them get from first gig to Freedom Scholarship (4 gigs) to brand deals (8 gigs).
+        </p>
+      </div>
+      
       {/* Log Out */}
       <div className="text-center mt-32 pb-32">
         <Button onClick={async () => {
