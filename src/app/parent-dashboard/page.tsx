@@ -140,55 +140,18 @@ function ParentDashboardContent() {
     }
 
     // Quick $50 challenge — create pre-funded gig
-   const { data: gig, error } = await supabase
-    .from('offers')
-    .insert({
-      business_id: parent.id,
-      type: 'Challenge',
-      amount: 50,
-      description: 'First challenge from your parent — complete and earn $50!',
-      target_athlete_email: quickSponsorKid.email,  // use email from kid profile
-      status: 'active',
-    })
-    .select()
-    .single()
+   const response = await fetch('/api/quick-sponsor', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ kidId: quickSponsorKid.id }),
+})
 
-  if (error) {
-    alert('Error creating challenge: ' + error.message)
-    return
-  }
-
-  // Send notification to athlete
-  try {
-    await resend.emails.send({
-      from: 'LocalHustle <notifications@localhustle.org>',
-      to: quickSponsorKid.email,
-      subject: 'Your Parent Funded a $50 Challenge!',
-      text: `Hey ${quickSponsorKid.full_name.split(' ')[0]}!
-
-Your parent just funded a $50 challenge for you on LocalHustle.
-
-Complete it and get paid instantly!
-
-https://app.localhustle.org/athlete-dashboard
-
-Let's go!
-— LocalHustle Team`,
-      html: `<p>Hey ${quickSponsorKid.full_name.split(' ')[0]}!</p>
-<p>Your parent just funded a <strong>$50 challenge</strong> for you on LocalHustle.</p>
-<p>Complete it and get paid instantly!</p>
-<p><a href="https://app.localhustle.org/athlete-dashboard" style="background:#000;color:#fff;padding:1rem 2rem;text-decoration:none;font-weight:bold;">Claim Your Challenge</a></p>
-<p>Let's go!<br/>— LocalHustle Team</p>`,
-    })
-  } catch (emailError) {
-    console.error('Quick sponsor email error:', emailError)
-    // Don't block success
-  }
-
-  alert(`$50 challenge sent to ${quickSponsorKid.full_name.split(' ')[0]}!`)
+if (response.ok) {
+  alert('$50 challenge sent!')
   setShowQuickSponsor(false)
 }
-  const handleAddCard = async () => {
+
+const handleAddCard = async () => {
     if (!stripe || !elements) {
       setPaymentError('Stripe not loaded — please refresh')
       return
