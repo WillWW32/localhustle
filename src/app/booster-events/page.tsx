@@ -7,15 +7,17 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { loadStripe } from '@stripe/stripe-js'
 
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
+
+
 export default function FundEvent() {
   const { slug } = useParams()
   const [event, setEvent] = useState<any>(null)
   const [amount, setAmount] = useState('')
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
-  const stripe = await loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
-
-  useEffect(() => {
+    
+useEffect(() => {
     const fetchEvent = async () => {
       if (!slug) return
 
