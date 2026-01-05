@@ -367,12 +367,14 @@ const claimGig = (offer: any) => {
 }
 
 // Load available gigs
-const { data: openOffers } = await supabase
-  .from('offers')
-  .select('*, businesses(name)')
-  .eq('status', 'active')
+const loadAvailableGigs = async () => {
+  const { data: openOffers } = await supabase
+    .from('offers')
+    .select('*, businesses(name)')
+    .eq('status', 'active')
 
-setAvailableGigs(openOffers || [])
+  setAvailableGigs(openOffers || [])
+}
   
   const startRecording = async () => {
     try {
