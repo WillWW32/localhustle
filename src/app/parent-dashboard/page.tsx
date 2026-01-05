@@ -55,61 +55,26 @@ function ParentDashboardContent() {
         return
       }
 
-      // Parents are stored in the `businesses` table
-      let { data: parentRecord } = await supabase
+      const { data: parentRecord } = await supabase
         .from('businesses')
         .select('*')
         .eq('owner_id', user.id)
         .single()
 
-      // If no record exists, create one (first login)
-      if (!parentRecord) {
-        const { data: newParent, error } = await supabase
-          .from('businesses')
-          .insert({ owner_id: user.id, name: '', phone: '', wallet_balance: 0 })
-          .select()
-          .single()
-
-        if (error) {
-          console.error('Error creating parent record:', error)
-          return
-        }
-        parentRecord = newParent
-      }
-
       setParent(parentRecord)
 
-      const kidId = searchParams.get('kid_id')
-
-      // Auto-link kid if invited
-      if (kidId) {
-        const { error: linkError } = await supabase
-          .from('profiles')
-          .update({ parent_id: parentRecord.id })
-          .eq('id', kidId)
-
-        if (!linkError) {
-          // Fetch kid name for quick sponsor banner
-          const { data: kidData } = await supabase
-            .from('profiles')
-            .select('full_name')
-            .eq('id', kidId)
-            .single()
-
-          if (kidData) {
-            setQuickSponsorKid(kidData)
-            setShowQuickSponsor(true)
-          }
-        }
-      }
-
-      // Load kids
       const { data: kidsData } = await supabase
         .from('profiles')
         .select('id, full_name, email, school, gig_count, profile_pic')
-        .eq('parent_id', parentRecord.id)
+        .eq('parent_id', parentRecord?.id || '')
 
       setKids(kidsData || [])
+
+      const kidId = searchParams.get('kid_id')
+      if (kidId && kidsData) {
+        const kid = kidsData.find(k => k.id === kidId)
+        if (kid) setSelectedKid(kid)
+      }
 
       if (kidsData && kidsData.length > 0) {
         const { data: clips } = await supabase
@@ -120,95 +85,19 @@ function ParentDashboardContent() {
         setPendingClips(clips || [])
       }
 
-      // Load saved cards
-      const response = await fetch('/api/list-payment-methods', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ business_id: parentRecord.id }),
-      })
-      const data = await response.json()
-      setSavedMethods(data.methods || [])
+      if (parentRecord?.id) {
+        const response = await fetch('/api/list-payment-methods', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ business_id: parentRecord.id }),
+        })
+        const data = await response.json()
+        setSavedMethods(data.methods || [])
+      }
     }
 
     fetchData()
   }, [router, searchParams])
-
-  const handleQuickSponsor = async () => {
-    if (savedMethods.length === 0) {
-      setShowCardModal(true)
-      return
-    }
-
-    // Quick $50 challenge — create pre-funded gig
-   const response = await fetch('/api/quick-sponsor', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ kidId: quickSponsorKid.id }),
-})
-
-if (response.ok) {
-  alert(`$50 challenge sent to ${quickSponsorKid.full_name.split(' ')[0]}!`)
-  setShowQuickSponsor(false)
-}
-
-const handleAddCard = async () => {
-    if (!stripe || !elements) {
-      setPaymentError('Stripe not loaded — please refresh')
-      return
-    }
-
-    if (!cardReady) {
-      setPaymentError('Card field still loading — please wait a second')
-      return
-    }
-
-    setPaymentError(null)
-    setPaymentSuccess(false)
-    setPaymentLoading(true)
-
-    const cardElement = (elements as any).getElement('card') || elements.getElement(CardElement as any)
-
-    if (!cardElement) {
-      setPaymentError('Card element not found — please refresh and try again')
-      setPaymentLoading(false)
-      return
-    }
-
-    const { error: stripeError, paymentMethod } = await stripe.createPaymentMethod({
-      type: 'card',
-      card: cardElement,
-    })
-
-    if (stripeError) {
-      setPaymentError(stripeError.message || 'Payment error')
-      setPaymentLoading(false)
-      return
-    }
-
-    // Save token directly to parent record (in businesses table)
-    const { error: dbError } = await supabase
-      .from('businesses')
-      .update({ debit_card_token: paymentMethod.id })
-      .eq('id', parent.id)
-
-    if (dbError) {
-      setPaymentError('Failed to save card — try again')
-      setPaymentLoading(false)
-      return
-    }
-
-    setPaymentSuccess(true)
-    setSavedMethods([...savedMethods, {
-      id: paymentMethod.id,
-      brand: paymentMethod.card?.brand,
-      last4: paymentMethod.card?.last4,
-      exp_month: paymentMethod.card?.exp_month,
-      exp_year: paymentMethod.card?.exp_year,
-    }])
-    setShowCardModal(false)
-    setTimeout(() => setPaymentSuccess(false), 5000)
-    setPaymentLoading(false)
-  }
 
   const approveClip = async (clip: any) => {
     const { error } = await supabase
@@ -284,9 +173,104 @@ const handleAddCard = async () => {
     }
   }
 
+  const handleAddCard = async () => {
+    if (!stripe || !elements) {
+      setPaymentError('Stripe not loaded — please refresh')
+      return
+    }
+
+    if (!cardReady) {
+      setPaymentError('Card field still loading — please wait a second')
+      return
+    }
+
+    setPaymentError(null)
+    setPaymentSuccess(false)
+    setPaymentLoading(true)
+
+    const cardElement = (elements as any).getElement('card') || elements.getElement(CardElement as any)
+
+    if (!cardElement) {
+      setPaymentError('Card element not found — please refresh and try again')
+      setPaymentLoading(false)
+      return
+    }
+
+    const { error: stripeError, paymentMethod } = await stripe.createPaymentMethod({
+      type: 'card',
+      card: cardElement,
+    })
+
+    if (stripeError) {
+      setPaymentError(stripeError.message || 'Payment error')
+      setPaymentLoading(false)
+      return
+    }
+
+    const response = await fetch('/api/attach-payment-method', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        payment_method_id: paymentMethod.id,
+        business_id: parent.id,
+      }),
+    })
+
+    const data = await response.json()
+
+    if (data.error) {
+      setPaymentError(data.error)
+    } else {
+      setPaymentSuccess(true)
+      setSavedMethods([...savedMethods, data.method])
+      setTimeout(() => setPaymentSuccess(false), 5000)
+    }
+
+    setPaymentLoading(false)
+  }
+
   return (
     <div className="container py-8">
       <p className="text-center mb-12 text-xl font-mono">Welcome, Parent!</p>
+
+      {/* Role Switcher — Bold 150px Slide Switch (Parent ↔ Business) */}
+      <div className="fixed bottom-6 right-6 z-50">
+        <div className="bg-white border-4 border-black rounded-full shadow-2xl overflow-hidden w-[150px] h-16 flex items-center">
+          <div 
+            className={`absolute inset-0 w-1/2 bg-black transition-transform duration-300 ease-in-out ${
+              currentRole === 'parent' ? 'translate-x-0' : 'translate-x-full'
+            }`}
+          />
+
+          <button
+            onClick={() => router.push('/parent-dashboard')}
+            className="relative z-10 flex-1 h-full flex items-center justify-center"
+            disabled={currentRole === 'parent'}
+          >
+            <span className={`text-lg font-bold font-mono transition-colors ${
+              currentRole === 'parent' ? 'text-white' : 'text-black'
+            }`}>
+              Parent
+            </span>
+          </button>
+
+          <button
+            onClick={() => router.push('/business-dashboard')}
+            className="relative z-10 flex-1 h-full flex items-center justify-center"
+            disabled={currentRole === 'business'}
+          >
+            <span className={`text-lg font-bold font-mono transition-colors ${
+              currentRole === 'business' ? 'text-white' : 'text-black'
+            }`}>
+              Business
+            </span>
+          </button>
+        </div>
+
+        <p className="text-center text-xs font-mono mt-2 text-gray-600">
+          Switch role
+        </p>
+      </div>
 
       <div className="bg-black text-white p-8 mb-12">
         <h1 className="text-3xl font-bold text-center">
@@ -302,7 +286,7 @@ const handleAddCard = async () => {
         </p>
       </div>
 
-      {/* Quick Sponsor Banner — When Invited with kid_id */}
+      {/* Quick Sponsor Banner */}
       {showQuickSponsor && quickSponsorKid && (
         <div className="max-w-3xl mx-auto mb-16 p-12 bg-green-100 border-4 border-green-600 rounded-lg">
           <h2 className="text-4xl font-bold mb-8 text-center font-mono">
@@ -313,7 +297,7 @@ const handleAddCard = async () => {
             Help them get started today.
           </p>
           <Button
-            onClick={handleQuickSponsor}
+            onClick={() => setShowCardModal(true)}
             className="w-full max-w-md h-20 text-3xl bg-green-600 text-white font-bold font-mono"
           >
             {savedMethods.length === 0 ? 'Add Card & Fund $50' : 'Fund $50 Challenge Now'}
@@ -321,7 +305,7 @@ const handleAddCard = async () => {
         </div>
       )}
 
-      {/* Card Modal — When No Card and Quick Sponsor Clicked */}
+      {/* Card Modal */}
       {showCardModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-16 border-4 border-black rounded-lg max-w-md w-full">
@@ -366,7 +350,7 @@ const handleAddCard = async () => {
 
       {/* Sticky Tabs with Counts */}
       <div className="sticky top-0 bg-white z-30 border-b-4 border-black py-4 shadow-lg">
-        <div className="flex justify-center gap-3 flex-wrap px-4">
+        <div className="flex justify-center gap-3 flex-wrap px-4 items-center">
           <Button
             onClick={() => setActiveTab('wallet')}
             variant={activeTab === 'wallet' ? 'default' : 'outline'}
@@ -398,125 +382,92 @@ const handleAddCard = async () => {
       </div>
 
       {/* ACTIVE TAB CONTENT ONLY */}
-      <div className="pt-8 pb-32">
+      <div className="pt-8 pb-40">
 
         {/* Wallet Tab */}
         {activeTab === 'wallet' && (
-          <div className="space-y-16 px-4">
-            <h2 className="text-4xl font-bold mb-8 text-center font-mono">Wallet</h2>
-            <p className="text-3xl mb-12 text-center font-mono">
-              Balance: ${parent?.wallet_balance?.toFixed(2) || '0.00'}
-            </p>
-
-            <p className="text-lg mb-12 text-center max-w-3xl mx-auto font-mono">
-              Add funds to sponsor challenges and scholarships.<br />
-              You only pay when your kid completes and you approve.
-            </p>
+          <div className="space-y-32 px-4">
+            {/* Card Entry — Sleek, Modern, Spacious */}
+            <div className="max-w-md mx-auto py-8 bg-white p-12 border-4 border-black rounded-lg shadow-2xl">
+              <h3 className="text-3xl font-bold mb-8 text-center">Add Card for Funding</h3>
+              <p className="text-xl mb-12 text-center text-gray-600">
+                Secure by Stripe — safe and encrypted.
+              </p>
+              <Elements stripe={stripePromise}>
+                <div className="space-y-12">
+                  <div className="bg-gray-50 p-8 border-4 border-gray-300 rounded-lg">
+                    <CardElement
+                      onReady={() => setCardReady(true)}
+                      options={{
+                        style: {
+                          base: {
+                            fontSize: '20px',
+                            color: '#000000',
+                            fontFamily: 'Courier New, monospace',
+                            '::placeholder': { color: '#666666' },
+                          },
+                        },
+                      }}
+                    />
+                  </div>
+                  {paymentError && <p className="text-red-600 text-center text-xl">{paymentError}</p>}
+                  {paymentSuccess && <p className="text-green-600 text-center text-xl">Card saved!</p>}
+                  <Button
+                    onClick={handleAddCard}
+                    disabled={paymentLoading}
+                    className="w-full h-16 text-xl bg-black text-white font-bold"
+                  >
+                    {paymentLoading ? 'Saving...' : 'Save Card'}
+                  </Button>
+                </div>
+              </Elements>
+            </div>
 
             {/* Add Funds */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-16">
-              <Button onClick={() => handleAddFunds(100)} className="h-16 text-xl bg-black text-white font-mono">
-                + $100
-              </Button>
-              <Button onClick={() => handleAddFunds(500)} className="h-16 text-xl bg-black text-white font-mono">
-                + $500
-              </Button>
-              <Button onClick={() => handleAddFunds(1000)} className="h-16 text-xl bg-black text-white font-mono">
-                + $1000
-              </Button>
-              <Button 
-                onClick={() => {
-                  const amt = prompt('Custom amount:')
-                  if (amt && !isNaN(Number(amt))) handleAddFunds(Number(amt))
-                }}
-                className="h-16 text-xl bg-green-400 text-black font-mono"
-              >
-                Custom
-              </Button>
-            </div>
-
-            {/* Card Entry — Spacious Shopping Cart Style */}
-            <div className="max-w-3xl mx-auto mb-16">
-              <div className="bg-white p-16 border-4 border-black rounded-lg shadow-lg">
-                <h4 className="text-3xl font-bold mb-8 text-center font-mono">
-                  Add Card for Funding
-                </h4>
-                <p className="text-xl mb-12 text-center text-gray-600 font-mono">
-                  Secure by Stripe — your card details are safe and encrypted.
-                </p>
-                <Elements stripe={stripePromise}>
-                  <div className="space-y-12">
-                    <div className="bg-gray-50 p-8 border-4 border-gray-300 rounded-lg">
-                      <CardElement 
-                        onReady={() => setCardReady(true)}
-                        options={{
-                          style: {
-                            base: {
-                              fontSize: '22px',
-                              color: '#000',
-                              fontFamily: 'Courier New, monospace',
-                              '::placeholder': { color: '#666' },
-                              backgroundColor: '#fff',
-                              padding: '20px',
-                            },
-                          },
-                        }}
-                      />
-                    </div>
-                    {paymentError && <p className="text-red-600 text-center text-xl">{paymentError}</p>}
-                    {paymentSuccess && <p className="text-green-600 text-center text-xl">Card saved!</p>}
-                    <Button 
-                      onClick={handleAddCard}
-                      disabled={paymentLoading || !cardReady}
-                      className="w-full h-20 text-2xl bg-black text-white font-bold font-mono"
-                    >
-                      {paymentLoading ? 'Saving...' : 'Save Card'}
-                    </Button>
-                  </div>
-                </Elements>
+            <div className="max-w-3xl mx-auto">
+              <h3 className="text-3xl font-bold mb-8 text-center">Add Funds to Wallet</h3>
+              <p className="text-xl mb-12 text-center">
+                Balance: ${parent?.wallet_balance?.toFixed(2) || '0.00'}
+              </p>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                <Button onClick={() => handleAddFunds(100)} className="h-16 text-xl bg-black text-white">+ $100</Button>
+                <Button onClick={() => handleAddFunds(500)} className="h-16 text-xl bg-black text-white">+ $500</Button>
+                <Button onClick={() => handleAddFunds(1000)} className="h-16 text-xl bg-black text-white">+ $1000</Button>
+                <Button
+                  onClick={() => {
+                    const amt = prompt('Custom amount:')
+                    if (amt && !isNaN(Number(amt))) handleAddFunds(Number(amt))
+                  }}
+                  className="h-16 text-xl bg-green-400 text-black"
+                >
+                  Custom
+                </Button>
               </div>
             </div>
-
-            {/* Saved Cards */}
-            {savedMethods.length > 0 && (
-              <div className="max-w-2xl mx-auto">
-                <h4 className="text-2xl font-bold mb-8 text-center font-mono">Saved Cards</h4>
-                <div className="space-y-6">
-                  {savedMethods.map((method) => (
-                    <div key={method.id} className="bg-gray-100 p-8 border-4 border-black">
-                      <p className="text-xl font-mono">
-                        {method.brand.toUpperCase()} •••• {method.last4}<br />
-                        Expires {method.exp_month}/{method.exp_year}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
         )}
 
         {/* Pending Clips Tab */}
         {activeTab === 'clips' && (
           <div className="px-4">
-            <h3 className="text-3xl mb-8 font-bold text-center font-mono">Pending Clips to Approve</h3>
+            <h3 className="text-3xl mb-8 font-bold text-center">Pending Clips</h3>
             {pendingClips.length === 0 ? (
-              <p className="text-xl text-center text-gray-600 font-mono mb-12">No pending clips — post offers to get started!</p>
+              <p className="text-gray-600 mb-12 text-center text-xl">No pending clips — post offers to get started!</p>
             ) : (
               <div className="space-y-16">
                 {pendingClips.map((clip) => (
                   <div key={clip.id} className="border-4 border-black p-8 bg-white max-w-2xl mx-auto">
-                    <p className="font-bold mb-4 text-left font-mono">From: {clip.profiles.full_name}</p>
-                    <p className="mb-6 text-left font-mono">Offer: {clip.offers.type} — ${clip.offers.amount}</p>
+                    <p className="font-bold mb-4 text-left">From: {clip.profiles.full_name}</p>
+                    <p className="mb-6 text-left">Offer: {clip.offers.type} — ${clip.offers.amount}</p>
                     <video controls className="w-full mb-8 rounded">
                       <source src={clip.video_url} type="video/mp4" />
                     </video>
-                    <p className="text-sm text-gray-600 mb-4 font-mono">
+                    <p className="text-sm text-gray-600 mb-4">
                       Prove it with timelapse or witness video — easy!
                     </p>
-                    <Button 
+                    <Button
                       onClick={() => approveClip(clip)}
-                      className="w-full h-16 text-xl bg-black text-white font-mono"
+                      className="w-full h-16 text-xl bg-black text-white"
                     >
                       Approve & Pay
                     </Button>
@@ -530,10 +481,10 @@ const handleAddCard = async () => {
         {/* My Kids Tab */}
         {activeTab === 'kids' && (
           <div className="px-4">
-            <h3 className="text-3xl mb-8 font-bold text-center font-mono">My Kids</h3>
+            <h3 className="text-3xl mb-8 font-bold text-center">My Kids</h3>
             <div className="space-y-12 max-w-3xl mx-auto">
               {kids.length === 0 ? (
-                <p className="text-xl text-center text-gray-600 font-mono">No kids linked yet — wait for invite.</p>
+                <p className="text-xl text-center text-gray-600">No kids linked yet — wait for invite.</p>
               ) : (
                 kids.map((kid) => (
                   <div key={kid.id} className="bg-gray-100 p-8 border-4 border-black">
@@ -591,45 +542,9 @@ const handleAddCard = async () => {
           Log Out
         </Button>
       </div>
-            {/* Role Switcher — Bold 150px Slide Switch (Parent ↔ Business) */}
-      <div className="fixed bottom-6 right-6 z-50">
-        <div className="bg-white border-4 border-black rounded-full shadow-2xl overflow-hidden w-[150px] h-16 flex items-center">
-          <div
-            className={`absolute inset-0 w-1/2 bg-black transition-transform duration-300 ease-in-out ${
-              currentRole === 'parent' ? 'translate-x-0' : 'translate-x-full'
-            }`}
-          />
-          <button
-            onClick={() => router.push('/parent-dashboard')}
-            className="relative z-10 flex-1 h-full flex items-center justify-center"
-            disabled={currentRole === 'parent'}
-          >
-            <span className={`text-lg font-bold font-mono transition-colors ${
-              currentRole === 'parent' ? 'text-white' : 'text-black'
-            }`}>
-              Parent
-            </span>
-          </button>
-          <button
-            onClick={() => router.push('/business-dashboard')}
-            className="relative z-10 flex-1 h-full flex items-center justify-center"
-            disabled={currentRole === 'business'}
-          >
-            <span className={`text-lg font-bold font-mono transition-colors ${
-              currentRole === 'business' ? 'text-white' : 'text-black'
-            }`}>
-              Business
-            </span>
-          </button>
-        </div>
-        <p className="text-center text-xs font-mono mt-2 text-gray-600">
-          Switch role
-        </p>
-      </div>
     </div>
   )
 }
-
 
 export default function ParentDashboard() {
   return (
