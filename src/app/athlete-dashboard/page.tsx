@@ -41,6 +41,7 @@ function AthleteDashboardContent() {
   const [gigSearch, setGigSearch] = useState('')
   const [searchedOffers, setSearchedOffers] = useState<any[]>([])
   const [gigCount, setGigCount] = useState(0)
+  const [myGigs, setMyGigs] = useState<any[]>([])
   const [showFundFriend, setShowFundFriend] = useState(false)
   const [friendEmail, setFriendEmail] = useState('')
   const [friendName, setFriendName] = useState('')
@@ -350,15 +351,14 @@ const selectGig = (gig: string) => {
       .eq('id', profile.id)
   }
 
-  const searchGigs = async () => {
-    const { data } = await supabase
-      .from('offers')
-      .select('*')
-      .ilike('description', `%${gigSearch}%`)
-      .limit(10)
-
-    setSearchedOffers(data || [])
-  }
+const loadMyGigs = async () => {
+  const { data } = await supabase
+    .from('offers')
+    .select('*, businesses(name)')
+    .eq('status', 'active')
+    .eq('target_athlete_email', profile.email)  // ← Targeted to this athlete
+  setOffers(data || [])
+}
 
   const startRecording = async () => {
     try {
@@ -491,6 +491,33 @@ const selectGig = (gig: string) => {
       </div>
 
       <div className="max-w-4xl mx-auto space-y-32 font-mono text-center text-lg">
+      
+            {/* My Gigs — Targeted Gigs for This Athlete (Above Profile) */}
+      <div className="mb-20">
+        <h2 className="text-4xl font-bold mb-12 text-center font-mono">Gigs for You</h2>
+        {myGigs.length === 0 ? (
+          <p className="text-xl text-center text-gray-600 font-mono mb-12">
+            No personal gigs yet — invite a parent or business to fund one for you!
+          </p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+            {myGigs.map((offer) => (
+              <div key={offer.id} className="bg-white p-12 border-4 border-black rounded-lg shadow-2xl hover:shadow-3xl transition-all">
+                <h3 className="text-3xl font-bold mb-6 font-mono">{offer.type}</h3>
+                <p className="text-4xl font-bold mb-8 text-green-600">${offer.amount}</p>
+                <p className="text-xl mb-8 font-mono">{offer.description}</p>
+                <p className="text-lg mb-8 font-mono text-gray-600">From: {offer.businesses?.name || 'Your Sponsor'}</p>
+                <Button
+                  onClick={() => claimGig(offer)}
+                  className="w-full h-20 text-2xl bg-black text-white font-bold font-mono"
+                >
+                  Claim This Gig
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
         
               {/* Step 1: Complete Your Profile */}
       <div className="max-w-2xl mx-auto mb-32 p-12 bg-white border-4 border-black rounded-lg">
