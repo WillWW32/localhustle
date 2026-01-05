@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { loadStripe } from '@stripe/stripe-js'
 
 export default function FundEvent() {
   const { slug } = useParams()
@@ -12,6 +13,7 @@ export default function FundEvent() {
   const [amount, setAmount] = useState('')
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
+  const stripe = await loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
 
   useEffect(() => {
     const fetchEvent = async () => {
