@@ -20,6 +20,8 @@ function ParentDashboardContent() {
   const [kids, setKids] = useState<any[]>([])
   const [selectedKid, setSelectedKid] = useState<any>(null)
   const [pendingClips, setPendingClips] = useState<any[]>([])
+  const [gigCount, setGigCount] = useState(0)
+  const [offers, setOffers] = useState<any[]>([])
   const [showFundFriend, setShowFundFriend] = useState(false)
   const [friendEmail, setFriendEmail] = useState('')
   const [friendName, setFriendName] = useState('')
@@ -84,6 +86,20 @@ function ParentDashboardContent() {
           .in('athlete_id', kidsData.map(k => k.id))
         setPendingClips(clips || [])
       }
+      
+      if (kidsData && kidsData.length > 0) {
+        if (selectedKid) {
+            setGigCount(selectedKid.gig_count || 0)
+         } else if (kidId) {
+          // If coming from invite, use the invited kid
+            const invitedKid = kidsData.find(k => k.id === kidId)
+         setGigCount(invitedKid?.gig_count || 0)
+        } else {
+         // Default: total gigs across all kids
+            const total = kidsData.reduce((sum, kid) => sum + (kid.gig_count || 0), 0)
+            setGigCount(total)
+        }
+       }
 
       if (parentRecord?.id) {
         const response = await fetch('/api/list-payment-methods', {
