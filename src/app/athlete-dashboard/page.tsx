@@ -360,6 +360,11 @@ const loadMyGigs = async () => {
   setOffers(data || [])
 }
 
+const claimGig = (offer: any) => {
+  setSelectedOffer(offer)
+  setShowVideoRecorder(true)
+}
+  
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true })
