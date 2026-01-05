@@ -591,15 +591,14 @@ const handleAddCard = async () => {
           Log Out
         </Button>
       </div>
-      {/* Role Switcher — Bold 150px Slide Switch (Parent ↔ Business) */}
+            {/* Role Switcher — Bold 150px Slide Switch (Parent ↔ Business) */}
       <div className="fixed bottom-6 right-6 z-50">
         <div className="bg-white border-4 border-black rounded-full shadow-2xl overflow-hidden w-[150px] h-16 flex items-center">
-          <div 
+          <div
             className={`absolute inset-0 w-1/2 bg-black transition-transform duration-300 ease-in-out ${
               currentRole === 'parent' ? 'translate-x-0' : 'translate-x-full'
             }`}
           />
-
           <button
             onClick={() => router.push('/parent-dashboard')}
             className="relative z-10 flex-1 h-full flex items-center justify-center"
@@ -611,7 +610,6 @@ const handleAddCard = async () => {
               Parent
             </span>
           </button>
-
           <button
             onClick={() => router.push('/business-dashboard')}
             className="relative z-10 flex-1 h-full flex items-center justify-center"
@@ -624,13 +622,11 @@ const handleAddCard = async () => {
             </span>
           </button>
         </div>
-
         <p className="text-center text-xs font-mono mt-2 text-gray-600">
           Switch role
         </p>
       </div>
     </div>
-   </div>
   )
 }
 
