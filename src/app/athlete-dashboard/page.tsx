@@ -39,6 +39,7 @@ function AthleteDashboardContent() {
   const [bio, setBio] = useState('')
   const [showPitchLetter, setShowPitchLetter] = useState(false)
   const [gigSearch, setGigSearch] = useState('')
+  const [availableGigs, setAvailableGigs] = useState<any[]>([])
   const [searchedOffers, setSearchedOffers] = useState<any[]>([])
   const [gigCount, setGigCount] = useState(0)
   const [myGigs, setMyGigs] = useState<any[]>([])
@@ -364,6 +365,14 @@ const claimGig = (offer: any) => {
   setSelectedOffer(offer)
   setShowVideoRecorder(true)
 }
+
+// Load available gigs
+const { data: openOffers } = await supabase
+  .from('offers')
+  .select('*, businesses(name)')
+  .eq('status', 'active')
+
+setAvailableGigs(openOffers || [])
   
   const startRecording = async () => {
     try {
