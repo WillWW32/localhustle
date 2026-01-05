@@ -46,6 +46,7 @@ function BusinessDashboardContent() {
   const [activeTab, setActiveTab] = useState<'profile' | 'wallet' | 'gigs' | 'clips' | 'kids' | 'favorites' | 'scholarships' | 'booster'>('profile')
   const [athleteSearch, setAthleteSearch] = useState('')
   const [searchResults, setSearchResults] = useState<any[]>([])
+  const [selectedKid, setSelectedKid] = useState<any>(null)
   const [selectedAthlete, setSelectedAthlete] = useState<any>(null)
   const [standaloneScholarshipAmount, setStandaloneScholarshipAmount] = useState('')
   const [standaloneScholarshipMessage, setStandaloneScholarshipMessage] = useState('')
