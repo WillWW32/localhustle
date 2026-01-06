@@ -73,10 +73,18 @@ function ParentDashboardContent() {
       setKids(kidsData || [])
 
       const kidId = searchParams.get('kid_id')
-      if (kidId && kidsData) {
-        const kid = kidsData.find(k => k.id === kidId)
-        if (kid) setSelectedKid(kid)
-      }
+      if (kidId) {
+      const { data: kidData } = await supabase
+        .from('profiles')
+        .select('full_name, email')
+        .eq('id', kidId)
+        .single()
+
+      if (kidData) {
+      setQuickSponsorKid(kidData)
+      setShowQuickSponsor(true)
+    }
+    }
 
       if (kidsData && kidsData.length > 0) {
         const { data: clips } = await supabase
@@ -204,7 +212,7 @@ function ParentDashboardContent() {
   setPaymentSuccess(false)
   setPaymentLoading(true)
 
-  const cardElement = (elements as any).getElement(CardElement) || (elements as any).getElement('card')
+  const cardElement = (elements as any).getElement('card')
 
   if (!cardElement) {
     setPaymentError('Card element not ready — please wait a moment and try again')
@@ -267,23 +275,26 @@ function ParentDashboardContent() {
           <div>
             <p className="text-2xl font-bold mb-4">Step 2: Fund Your Kid's First Gig</p>
             <p>
-              Use the "Quick Sponsor" button or post a challenge — $50 is perfect to start.<br />
               They complete it, you approve the clip, they get paid instantly.
             </p>
           </div>
           <div>
             <p className="text-2xl font-bold mb-4">Step 3: Watch Them Grow</p>
             <p>
-              Every approved gig builds their earnings and progress toward Freedom Scholarships (4 gigs) and brand deals (8 gigs).<br />
+              Every approved gig builds their earnings and progress toward Scholarships (4 gigs) and Brand Deals (8 gigs).<br />
               You're helping them earn real money — thank you!
             </p>
           </div>
         </div>
-        <p className="text-xl mt-12 text-center text-gray-300">
-          Questions? We're here to help — just reply to any email.
-        </p>
       </div>
 
+            <div className="bg-black text-white p-8 mb-12">
+        <h1 className="text-3xl font-bold text-center">
+          Your Parent Console
+        </h1>
+      </div>
+
+            
             {/* Progress Meter with Message to Parents */}
       <div className="max-w-3xl mx-auto mb-16 p-12 bg-green-100 border-4 border-green-600 rounded-lg">
         <h3 className="text-4xl font-bold mb-12 text-center font-mono">
@@ -648,58 +659,9 @@ function ParentDashboardContent() {
         </div>
       )}
 
-{/* Role Switcher — Bold 150px Slide Switch (Parent ↔ Business) */}
-      <div className="fixed bottom-6 right-6 z-50">
-        <div className="bg-white border-4 border-black rounded-full shadow-2xl overflow-hidden w-[150px] h-16 flex items-center">
-          <div 
-            className={`absolute inset-0 w-1/2 bg-black transition-transform duration-300 ease-in-out ${
-              currentRole === 'parent' ? 'translate-x-0' : 'translate-x-full'
-            }`}
-          />
 
-          <button
-            onClick={() => router.push('/parent-dashboard')}
-            className="relative z-10 flex-1 h-full flex items-center justify-center"
-            disabled={currentRole === 'parent'}
-          >
-            <span className={`text-lg font-bold font-mono transition-colors ${
-              currentRole === 'parent' ? 'text-white' : 'text-black'
-            }`}>
-              Parent
-            </span>
-          </button>
 
-          <button
-            onClick={() => router.push('/business-dashboard')}
-            className="relative z-10 flex-1 h-full flex items-center justify-center"
-            disabled={currentRole === 'business'}
-          >
-            <span className={`text-lg font-bold font-mono transition-colors ${
-              currentRole === 'business' ? 'text-white' : 'text-black'
-            }`}>
-              Business
-            </span>
-          </button>
-        </div>
-
-        <p className="text-center text-xs font-mono mt-2 text-gray-600">
-          Switch role
-        </p>
-      </div>
-
-      <div className="bg-black text-white p-8 mb-12">
-        <h1 className="text-3xl font-bold text-center">
-          Your Parent Console
-        </h1>
-      </div>
-
-      <div className="bg-black text-white p-8 mb-12">
-        <p className="text-lg leading-relaxed text-center max-w-3xl mx-auto">
-          Fund your kid's challenges and scholarships.<br />
-          They complete — you approve — they earn instantly.<br />
-          Help them get from first gig to Freedom Scholarship (4 gigs) to brand deals (8 gigs).
-        </p>
-      </div>
+      
       
       {/* Log Out */}
       <div className="text-center mt-32 pb-32">
@@ -710,6 +672,42 @@ function ParentDashboardContent() {
         }} variant="outline" className="w-64 h-14 text-lg border-4 border-black font-mono">
           Log Out
         </Button>
+        
+        {/* Role Switcher */}
+            
+      <div className="fixed bottom-6 right-6 z-50">
+        <div className="bg-white border-4 border-black rounded-full shadow-2xl overflow-hidden w-40 h-12 flex items-center">
+          <div 
+            className={`absolute inset-0 w-1/2 bg-black transition-transform duration-300 ease-in-out ${
+              currentRole === 'parent' ? 'translate-x-0' : 'translate-x-full'
+            }`}
+          />
+
+          <button
+            onClick={() => router.push('/parent-dashboard')}
+            className="relative z-10 flex-1 h-full flex items-center justify-center text-sm font-bold font-mono disabled:opacity-100"
+            disabled={currentRole === 'parent'}
+          >
+            <span className={currentRole === 'parent' ? 'text-white' : 'text-black'}>
+              Parent
+            </span>
+          </button>
+
+          <button
+            onClick={() => router.push('/business-dashboard')}
+            className="relative z-10 flex-1 h-full flex items-center justify-center text-sm font-bold font-mono disabled:opacity-100"
+            disabled={currentRole === 'business'}
+          >
+            <span className={currentRole === 'business' ? 'text-white' : 'text-black'}>
+              Business
+            </span>
+          </button>
+        </div>
+
+        <p className="text-center text-xs font-mono mt-2 text-gray-600">
+          Switch role
+        </p>
+      </div>
       </div>
     </div>
   )

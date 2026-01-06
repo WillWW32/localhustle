@@ -19,45 +19,28 @@ export default function FreedomScholarship() {
   const router = useRouter()
 
   useEffect(() => {
-    const determineRole = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-        router.replace('/')
-        return
-      }
-
-      // Check if user is a business owner
-      const { data: biz } = await supabase
-        .from('businesses')
-        .select('id')
-        .eq('owner_id', user.id)
-        .single()
-
-      if (biz) {
-        setBusiness(biz)
-        setRole('business')
-        return
-      }
-
-      // Check if user is a parent
-      const { data: par } = await supabase
-        .from('parents')
-        .select('id')
-        .eq('user_id', user.id)
-        .single()
-
-      if (par) {
-        setParent(par)
-        setRole('parent')
-        return
-      }
-
-      // Fallback — shouldn't happen
+  const determineRole = async () => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
       router.replace('/')
+      return
     }
 
-    determineRole()
-  }, [router])
+    // Parents and businesses both use 'businesses' table
+    const { data: funder } = await supabase
+      .from('businesses')
+      .select('id')
+      .eq('owner_id', user.id)
+      .single()
+
+    if (funder) {
+      setBusiness(funder)  // Reuse business state for both
+      setRole('business')  // Or create a 'funder' role if you want
+      return
+    }
+
+  determineRole()
+}, [router])
 
   const searchAthletes = async () => {
     if (!athleteSearch.trim()) {
