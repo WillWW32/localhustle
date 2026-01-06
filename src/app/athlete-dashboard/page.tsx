@@ -538,9 +538,10 @@ const loadAvailableGigs = async () => {
         </p>
       </div>
       </div>
-      </div>
+      
 
       {/* Progress Meter */}
+      
       <div className="max-w-3xl mx-auto mb-16 p-12 bg-gray-100 border-4 border-black">
         <h2 className="text-3xl font-bold mb-8 text-center">
           Your Progress to Big Rewards
