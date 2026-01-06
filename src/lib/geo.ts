@@ -1,16 +1,30 @@
+import { supabase } from '@/lib/supabaseClient'
+
 export const getGigsInRadius = async (userLat: number, userLng: number, radiusMiles = 60) => {
-  // Fetch all active gigs (or limit to reasonable number)
-  const { data: allGigs } = await supabase
+  // Rough bounding box to reduce data fetched (approx ±60 miles)
+  const latDelta = 1.0
+  const lngDelta = 1.5
+
+  const { data: allGigs, error } = await supabase
     .from('offers')
     .select('*, businesses(name)')
     .eq('status', 'active')
+    .gte('lat', userLat - latDelta)
+    .lte('lat', userLat + latDelta)
+    .gte('lng', userLng - lngDelta)
+    .lte('lng', userLng + lngDelta)
 
-  if (!allGigs) return []
+  if (error) {
+    console.error('Error fetching gigs for radius:', error)
+    return []
+  }
 
-  // Haversine formula (distance in miles)
+  if (!allGigs || allGigs.length === 0) return []
+
+  // Haversine formula...
   const distance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
     const toRad = (value: number) => (value * Math.PI) / 180
-    const R = 3959 // Earth's radius in miles
+    const R = 3959
     const dLat = toRad(lat2 - lat1)
     const dLon = toRad(lon2 - lon1)
     const a = 
@@ -21,12 +35,10 @@ export const getGigsInRadius = async (userLat: number, userLng: number, radiusMi
     return R * c
   }
 
-  // Filter gigs within radius
   const localGigs = allGigs.filter((gig: any) => 
     gig.lat && gig.lng && distance(userLat, userLng, gig.lat, gig.lng) <= radiusMiles
   )
 
-  // Sort by distance
   localGigs.sort((a: any, b: any) => 
     distance(userLat, userLng, a.lat, a.lng) - distance(userLat, userLng, b.lat, b.lng)
   )
