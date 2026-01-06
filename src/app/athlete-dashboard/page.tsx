@@ -117,24 +117,6 @@ if (profile.lat && profile.lng) {
   setLocalGigs(localGigs)
 }
 
-if (prof.lat && prof.lng) {
-  const { data: allGigs } = await supabase
-    .from('offers')
-    .select('*, businesses(name)')
-    .eq('status', 'active')
-
-  if (allGigs) {
-    const filtered = allGigs.filter((gig: any) => 
-      gig.lat && gig.lng && haversineDistance(prof.lat, prof.lng, gig.lat, gig.lng) <= 60
-    )
-    // Sort by distance
-    filtered.sort((a: any, b: any) => 
-      haversineDistance(prof.lat, prof.lng, a.lat, a.lng) - 
-      haversineDistance(prof.lat, prof.lng, b.lat, b.lng)
-    )
-    setLocalGigs(filtered)
-  }
-}
 
         const { data: squadMembers } = await supabase
           .from('profiles')
