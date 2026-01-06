@@ -26,21 +26,35 @@ export default function FreedomScholarship() {
       return
     }
 
-    // Parents and businesses both use 'businesses' table
-    const { data: funder } = await supabase
+    const { data: biz } = await supabase
       .from('businesses')
       .select('id')
       .eq('owner_id', user.id)
       .single()
 
-    if (funder) {
-      setBusiness(funder)  // Reuse business state for both
-      setRole('business')  // Or create a 'funder' role if you want
+    if (biz) {
+      setBusiness(biz)
+      setRole('business')
       return
     }
 
+    const { data: par } = await supabase
+      .from('parents')
+      .select('id')
+      .eq('user_id', user.id)
+      .single()
+
+    if (par) {
+      setParent(par)
+      setRole('parent')
+      return
+    }
+
+    router.replace('/')
+  }
+
   determineRole()
-}, [router])
+}, [router])  
 
   const searchAthletes = async () => {
     if (!athleteSearch.trim()) {
