@@ -530,26 +530,7 @@ const loadAvailableGigs = async () => {
         <h1 className="text-3xl font-bold text-center">
           Your Athlete Dashboard
         </h1>
-              {/* Quick Sponsor Banner — When Invited by Parent/Business */}
-      {searchParams.get('invited_by') && quickSponsorKid && (
-        <div className="max-w-3xl mx-auto mb-16 p-12 bg-green-100 border-4 border-green-600 rounded-lg">
-          <h2 className="text-4xl font-bold mb-8 text-center font-mono">
-            Quick Sponsor {quickSponsorKid.full_name.split(' ')[0]}'s First Gig!
-          </h2>
-          <p className="text-xl mb-12 text-center font-mono">
-            Fund a $50 challenge — they complete it, you approve, they get paid instantly.<br />
-            Help them get started today.
-          </p>
-          <Button
-            onClick={() => setShowCardModal(true)}
-            className="w-full max-w-md h-20 text-3xl bg-green-600 text-white font-bold font-mono"
-          >
-            {savedMethods.length === 0 ? 'Add Card & Fund $50' : 'Fund $50 Challenge Now'}
-          </Button>
-        </div>
-      )}
-      </div>
-
+              
       <div className="bg-black text-white p-8 mb-12">
         <p className="text-lg leading-relaxed text-center max-w-3xl mx-auto">
           Businesses struggle with social media — you are the answer.<br />
