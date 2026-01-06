@@ -537,6 +537,8 @@ const loadAvailableGigs = async () => {
           Pitch businesses, claim gigs, build your squad and earn together.
         </p>
       </div>
+      </div>
+      </div>
 
       {/* Progress Meter */}
       <div className="max-w-3xl mx-auto mb-16 p-12 bg-gray-100 border-4 border-black">
