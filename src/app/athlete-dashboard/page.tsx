@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import { loadStripe } from '@stripe/stripe-js'
 import { useStripe, useElements } from '@stripe/react-stripe-js'
 import dynamic from 'next/dynamic'
+import { getGigsInRadius } from '@/lib/geo'
 
 // Dynamic import for Stripe React components (client-only)
 const Elements = dynamic(() => import('@stripe/react-stripe-js').then((mod) => mod.Elements), { ssr: false })
@@ -62,10 +63,14 @@ function AthleteDashboardContent() {
   const [mediaStream, setMediaStream] = useState<MediaStream | null>(null)
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null)
   const [showPWAInstall, setShowPWAInstall] = useState(false)
+  const [localGigs, setLocalGigs] = useState<any[]>([])
+  const [quickSponsorKid, setQuickSponsorKid] = useState<any>(null)
+  const searchParams = useSearchParams()
   const router = useRouter()
   const pathname = usePathname()
   const stripe = useStripe()
   const elements = useElements()
+  
 
   const currentRole = pathname.includes('athlete-dashboard') 
     ? 'athlete' 
@@ -105,6 +110,31 @@ function AthleteDashboardContent() {
           exp_year: prof.card_exp_year,
         }])
       }
+      
+      // After setting profile
+if (profile.lat && profile.lng) {
+  const localGigs = await getGigsInRadius(profile.lat, profile.lng, 60)
+  setLocalGigs(localGigs)
+}
+
+if (prof.lat && prof.lng) {
+  const { data: allGigs } = await supabase
+    .from('offers')
+    .select('*, businesses(name)')
+    .eq('status', 'active')
+
+  if (allGigs) {
+    const filtered = allGigs.filter((gig: any) => 
+      gig.lat && gig.lng && haversineDistance(prof.lat, prof.lng, gig.lat, gig.lng) <= 60
+    )
+    // Sort by distance
+    filtered.sort((a: any, b: any) => 
+      haversineDistance(prof.lat, prof.lng, a.lat, a.lng) - 
+      haversineDistance(prof.lat, prof.lng, b.lat, b.lng)
+    )
+    setLocalGigs(filtered)
+  }
+}
 
         const { data: squadMembers } = await supabase
           .from('profiles')
@@ -140,21 +170,62 @@ function AthleteDashboardContent() {
     }, [profile])
 
   const handleSaveProfile = async () => {
-    const { error } = await supabase
-      .from('profiles')
-      .update({
-        profile_pic: profilePic,
-        highlight_link: highlightLink,
-        social_followers: socialFollowers,
-        bio: bio,
-      })
-      .eq('id', profile.id)
-
-    if (error) alert('Error saving profile')
-    else alert('Profile saved!')
-    setShowPWAInstall(true)
+  if (!profile.school) {
+    alert('School is required for local gigs')
+    return
   }
 
+  setPaymentLoading(true)  // reuse loading state or add new
+  
+  const invitedBy = searchParams.get('invited_by')
+if (invitedBy) {
+  const { data } = await supabase
+    .from('profiles')
+    .select('full_name')
+    .eq('id', invitedBy)
+    .single()
+
+  if (data) setQuickSponsorKid(data)
+}
+
+  // Geocode school name (add state if you have it for better accuracy)
+  const address = profile.school  // 
+
+  const geoResponse = await fetch('/api/geocode', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ address }),
+  })
+  const address = `${profile.school}, ${profile.state}`
+  let geoData = null
+  if (geoResponse.ok) {
+    geoData = await geoResponse.json()
+  } else {
+    console.error('Geocode failed')
+    // Optional: fallback or alert
+  }
+
+  const { error } = await supabase
+    .from('profiles')
+    .update({
+      profile_pic: profilePic,
+      highlight_link: highlightLink,
+      social_followers: socialFollowers,
+      bio: bio,
+      lat: geoData?.lat || null,
+      lng: geoData?.lng || null,
+      zip_code: geoData?.zip || null,
+    })
+    .eq('id', profile.id)
+
+  if (error) {
+    alert('Error saving profile: ' + error.message)
+  } else {
+    alert('Profile saved with location!')
+  }
+
+  setPaymentLoading(false)
+}
   const toggleGigSelection = async (title: string) => {
     const newSelected = selectedGigs.includes(title)
       ? selectedGigs.filter(g => g !== title)
@@ -477,6 +548,24 @@ const loadAvailableGigs = async () => {
         <h1 className="text-3xl font-bold text-center">
           Your Athlete Dashboard
         </h1>
+              {/* Quick Sponsor Banner — When Invited by Parent/Business */}
+      {searchParams.get('invited_by') && quickSponsorKid && (
+        <div className="max-w-3xl mx-auto mb-16 p-12 bg-green-100 border-4 border-green-600 rounded-lg">
+          <h2 className="text-4xl font-bold mb-8 text-center font-mono">
+            Quick Sponsor {quickSponsorKid.full_name.split(' ')[0]}'s First Gig!
+          </h2>
+          <p className="text-xl mb-12 text-center font-mono">
+            Fund a $50 challenge — they complete it, you approve, they get paid instantly.<br />
+            Help them get started today.
+          </p>
+          <Button
+            onClick={() => setShowCardModal(true)}
+            className="w-full max-w-md h-20 text-3xl bg-green-600 text-white font-bold font-mono"
+          >
+            {savedMethods.length === 0 ? 'Add Card & Fund $50' : 'Fund $50 Challenge Now'}
+          </Button>
+        </div>
+      )}
       </div>
 
       <div className="bg-black text-white p-8 mb-12">
@@ -592,6 +681,16 @@ const loadAvailableGigs = async () => {
                 className="h-16 text-xl font-mono"
               />
             </div>
+            <div>
+  <label className="block text-xl mb-4 font-mono">State</label>
+  <Input
+    value={profile?.state || ''}
+    onChange={(e) => setProfile({ ...profile, state: e.target.value.toUpperCase() })}
+    placeholder="CA"
+    className="h-16 text-xl font-mono text-center"
+    maxLength={2}
+  />
+</div>
             <div>
               <label className="block text-xl mb-4 font-mono">Profile Pic (tap to upload)</label>
               {profilePic ? (
@@ -818,11 +917,39 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
           </div>
         )}
       </div>
+            {/* Local Gigs — 60-Mile Radius */}
+      <div className="mb-20">
+        <h2 className="text-4xl font-bold mb-12 text-center font-mono">Local Gigs (60 Miles)</h2>
+        {localGigs.length === 0 ? (
+          <p className="text-xl text-center text-gray-600 font-mono mb-12">
+            No local gigs yet — invite businesses in your area!
+          </p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+            {localGigs.map((offer) => (
+              <div key={offer.id} className="bg-white p-12 border-4 border-black rounded-lg shadow-2xl">
+                <h3 className="text-3xl font-bold mb-6 font-mono">{offer.type}</h3>
+                <p className="text-4xl font-bold mb-8 text-green-600">${offer.amount}</p>
+                <p className="text-xl mb-8 font-mono">{offer.description}</p>
+                <p className="text-lg mb-8 font-mono text-gray-600">
+                  From: {offer.businesses?.name || 'Local Sponsor'}
+                </p>
+                <Button
+                  onClick={() => claimGig(offer)}
+                  className="w-full h-20 text-2xl bg-black text-white font-bold font-mono"
+                >
+                  Claim This Gig
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
                     {/* Debit Card Entry — Spacious, Clean, Thin Border on Card Field */}
             <div className="max-w-2xl mx-auto py-20">
               <div className="bg-white p-16 border-4 border-black rounded-lg shadow-2xl">
-                <h3 className="text-4xl font-bold mb-12 text-center font-mono">Add Your Debit Card</h3>
+                <h3 className="text-4xl font-bold mb-12 text-center font-mono">Add Your Debit Card - This is for you to receive payments - No charges will be made</h3>
                 <p className="text-xl mb-20 text-center text-gray-600 font-mono">
                   For instant payouts when you complete gigs.<br />
                   Secure by Stripe — your card details are safe and encrypted.
