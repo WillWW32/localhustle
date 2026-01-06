@@ -37,31 +37,33 @@ function ParentOnboardContent() {
     fetchKid()
   }, [kidId])
 
-  const sendMagicLink = async () => {
-    if (!email.trim()) {
-      alert('Please enter your email')
-      return
-    }
-
-    setLoading(true)
-
-    const redirectUrl = `https://app.localhustle.org/parent-dashboard${kidId ? `?kid_id=${kidId}` : ''}`
-
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        emailRedirectTo: redirectUrl,
-      },
-    })
-
-    if (error) {
-      alert('Error: ' + error.message)
-    } else {
-      alert('Magic link sent! Check your email.')
-    }
-
-    setLoading(false)
+  const handleContinue = async () => {
+  if (!email.trim()) {
+    alert('Please enter your email')
+    return
   }
+
+  setLoading(true)
+
+  // Sign in with OTP (magic link) — Supabase handles auth
+  const { error } = await supabase.auth.signInWithOtp({
+    email,
+    options: {
+      emailRedirectTo: `${window.location.origin}/parent-dashboard${kidId ? `?kid_id=${kidId}` : ''}`,
+    },
+  })
+
+  if (error) {
+    alert('Error: ' + error.message)
+    setLoading(false)
+    return
+  }
+
+  // Success message
+  alert('Magic link sent! Check your email and click it to go to your dashboard.')
+
+  setLoading(false)
+}
 
   return (
     <div className="min-h-screen bg-white text-black font-mono py-20 px-6 text-center">
@@ -88,7 +90,7 @@ function ParentOnboardContent() {
           When the athlete completes it → you approve → they get paid instantly.
         </p>
         <p className="text-xl">
-          No obligation after that — just help them get started toward local business sponsorships, scholarships and brand deals.
+          Help them get started toward local business sponsorships, scholarships and brand deals.
         </p>
       </div>
 
@@ -102,12 +104,12 @@ function ParentOnboardContent() {
         />
 
         <Button
-          onClick={sendMagicLink}
-          disabled={loading}
-          className="w-full max-w-md h-20 text-2xl bg-green-600 text-white font-bold font-mono"
-        >
-          {loading ? 'Sending...' : 'Sponsor Now'}
-        </Button>
+  onClick={handleContinue}
+  disabled={loading}
+  className="w-full max-w-md h-20 text-2xl bg-green-600 text-white font-bold font-mono"
+>
+  {loading ? 'Sending...' : 'Continue to Dashboard'}
+</Button>
       </div>
 
       <p className="text-lg mt-12 text-gray-600 font-mono">

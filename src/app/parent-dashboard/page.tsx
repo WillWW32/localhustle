@@ -212,7 +212,7 @@ function ParentDashboardContent() {
   setPaymentSuccess(false)
   setPaymentLoading(true)
 
-  const cardElement = (elements as any).getElement('card')
+  const cardElement = (elements as any).getElement(CardElement) || (elements as any).getElement('card')
 
   if (!cardElement) {
     setPaymentError('Card element not ready — please wait a moment and try again')
