@@ -189,14 +189,14 @@ if (invitedBy) {
 }
 
   // Geocode school name (add state if you have it for better accuracy)
-  const address = profile.school  // 
+  const address = `${profile.school}, ${profile.state}`
 
   const geoResponse = await fetch('/api/geocode', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ address }),
   })
-  const address = `${profile.school}, ${profile.state}`
+  
   let geoData = null
   if (geoResponse.ok) {
     geoData = await geoResponse.json()
