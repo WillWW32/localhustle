@@ -65,19 +65,28 @@ function ParentDashboardContent() {
       setParent(parentRecord);
 
       if (parentRecord?.id) {
+      
       const { data: kidsData } = await supabase
-        .from('profiles')
-        .select('id, full_name, email, school, gig_count, profile_pic')
-        .eq('parent_id', parentRecord?.id || '')
+  .from('profiles')
+  .select('id, full_name, email, school, gig_count, profile_pic')
+  .eq('parent_id', parentRecord?.id || '')
+
 setKids(kidsData || [])
+
+const kidId = searchParams.get('kid_id')
+if (kidId && kidsData) {
+  const kid = kidsData.find(k => k.id === kidId)
+  if (kid) setSelectedKid(kid)
 }
-      const kidId = searchParams.get('kid_id')
-      if (kidId) {
-      const { data: kidData } = await supabase
-        .from('profiles')
-        .select('full_name, email')
-        .eq('id', kidId)
-        .single()
+
+if (kidsData && kidsData.length > 0) {
+  const { data: clips } = await supabase
+    .from('clips')
+    .select('*, offers(*), profiles(full_name)')
+    .eq('status', 'pending')
+    .in('athlete_id', kidsData.map(k => k.id))
+  setPendingClips(clips || [])
+}
 
       if (kidData) {
       setQuickSponsorKid(kidData)
@@ -85,14 +94,7 @@ setKids(kidsData || [])
     }
     }
 
-      if (kidsData && kidsData.length > 0) {
-        const { data: clips } = await supabase
-          .from('clips')
-          .select('*, offers(*), profiles(full_name)')
-          .eq('status', 'pending')
-          .in('athlete_id', kidsData.map(k => k.id))
-        setPendingClips(clips || [])
-      }
+      
       
       if (kidsData && kidsData.length > 0) {
         if (selectedKid) {
