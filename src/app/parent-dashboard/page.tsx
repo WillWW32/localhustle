@@ -88,8 +88,8 @@ if (kidsData && kidsData.length > 0) {
   setPendingClips(clips || [])
 }
 
-      if (kidData) {
-      setQuickSponsorKid(kidData)
+      if (kidsData) {
+      setQuickSponsorKid(kidsData)
       setShowQuickSponsor(true)
     }
     }
