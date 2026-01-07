@@ -65,6 +65,8 @@ function AthleteDashboardContent() {
   const [showPWAInstall, setShowPWAInstall] = useState(false)
   const [localGigs, setLocalGigs] = useState<any[]>([])
   const [quickSponsorKid, setQuickSponsorKid] = useState<any>(null)
+  const [featuredAthletes, setFeaturedAthletes] = useState<any[]>([])
+  const [featuredBusinesses, setFeaturedBusinesses] = useState<any[]>([])
   const searchParams = useSearchParams()
   const router = useRouter()
   const pathname = usePathname()
@@ -112,8 +114,8 @@ function AthleteDashboardContent() {
       }
       
       // After setting profile
-if (profile.lat && profile.lng) {
-  const localGigs = await getGigsInRadius(profile.lat, profile.lng, 60)
+if (prof.lat && prof.lng) {
+  const localGigs = await getGigsInRadius(prof.lat, prof.lng, 60)
   setLocalGigs(localGigs)
 }
 
@@ -337,7 +339,7 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
   setPaymentSuccess(false)
   setPaymentLoading(true)
 
-  const cardElement = (elements as any).getElement(CardElement) || (elements as any).getElement('card')
+  const cardElement = elements.getElement('card');
 
   if (!cardElement) {
     setPaymentError('Card element not found — please refresh and try again')
@@ -921,7 +923,7 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
                   Secure by Stripe — your card details are safe and encrypted.
                 </p>
 
-                <Elements stripe={stripePromise}>
+                
                   <div className="space-y-20">
                     {/* Card Number Field — Full Width, Thin Border, Spacious */}
                     <div className="bg-gray-50 p-10 border-2 border-gray-400 rounded-lg"> {/* Thin border */}
@@ -1120,13 +1122,78 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
         </div>
       )}
 
+            {/* Local Hustle Leaders — Featured Section Above Log Out */}
+      <div className="max-w-6xl mx-auto mb-20 px-4">
+        <h2 className="text-4xl font-bold text-center mb-16 font-mono">Local Hustle Leaders</h2>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
+          {/* Featured Athletes */}
+          <div>
+            <h3 className="text-3xl font-bold mb-8 text-center font-mono">Top Athletes</h3>
+            {featuredAthletes.length === 0 ? (
+              <p className="text-xl text-center text-gray-600 font-mono">
+                No active athletes yet — be the first to shine!
+              </p>
+            ) : (
+              <div className="space-y-8">
+                {featuredAthletes.map((athlete, index) => (
+                  <div key={athlete.id} className="bg-white p-8 border-4 border-black rounded-lg flex items-center gap-8 shadow-xl">
+                    <div className="text-5xl font-bold text-gray-300 w-16 text-right">
+                      #{index + 1}
+                    </div>
+                    <img 
+                      src={athlete.profile_pic || '/default-avatar.png'} 
+                      alt={athlete.full_name}
+                      className="w-24 h-24 rounded-full object-cover border-4 border-black"
+                    />
+                    <div className="flex-1">
+                      <h4 className="text-2xl font-bold font-mono">{athlete.full_name}</h4>
+                      <p className="text-lg text-gray-600 font-mono">{athlete.school}</p>
+                      <p className="text-2xl font-bold text-green-600 mt-2">
+                        {athlete.gig_count} Gigs Completed
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Featured Sponsors */}
+          <div>
+            <h3 className="text-3xl font-bold mb-8 text-center font-mono">Top Sponsors</h3>
+            {featuredBusinesses.length === 0 ? (
+              <p className="text-xl text-center text-gray-600 font-mono">
+                No sponsors yet — be the first to support!
+              </p>
+            ) : (
+              <div className="space-y-8">
+                {featuredBusinesses.map((business, index) => (
+                  <div key={business.id} className="bg-gray-100 p-8 border-4 border-black rounded-lg flex items-center gap-8 shadow-xl">
+                    <div className="text-5xl font-bold text-gray-300 w-16 text-right">
+                      #{index + 1}
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="text-2xl font-bold font-mono">{business.name}</h4>
+                      <p className="text-lg text-gray-600 font-mono mt-2">
+                        {business.description || 'Supporting local athletes'}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
       {/* Log Out */}
-      <div className="text-center mt-32">
+      <div className="text-center mt-32 pb-32">
         <Button onClick={async () => {
           await signOut()
           router.push('/')
           alert('Logged out successfully')
-        }} variant="outline" className="w-64 h-14 text-lg border-4 border-black">
+        }} variant="outline" className="w-64 h-14 text-lg border-4 border-black font-mono">
           Log Out
         </Button>
       </div>

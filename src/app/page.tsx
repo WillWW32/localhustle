@@ -71,7 +71,7 @@ const sendMagicLink = async (selectedRole: Role) => {
           </div>
 
           <p className="text-xl sm:text-2xl mb-24 max-w-4xl mx-auto leading-relaxed">
-            Earn money instantly. Get Freedom Scholarships — unrestricted cash paid today.<br />
+            Earn money instantly. Get real scholarships.<br />
             Parents fund improvement. Businesses become hometown heroes.
           </p>
         </section>
@@ -84,8 +84,8 @@ const sendMagicLink = async (selectedRole: Role) => {
                 <h2 className="text-2xl font-bold">Student Athletes</h2>
               </div>
               <p className="text-lg leading-relaxed px-4">
-                Earn money instantly + Freedom Scholarships.<br />
-                Complete 4 gigs → qualify for national brand deals.
+                Earn money + Scholarships.<br />
+                Complete 8 gigs → qualify for national brand deals.
               </p>
             </div>
 
@@ -94,7 +94,7 @@ const sendMagicLink = async (selectedRole: Role) => {
                 <h2 className="text-2xl font-bold">Parents</h2>
               </div>
               <p className="text-lg leading-relaxed px-4">
-                Less financial stress.<br />
+                Ease financial stress.<br />
                 Help your kid earn real money & scholarships.
               </p>
             </div>
@@ -104,8 +104,7 @@ const sendMagicLink = async (selectedRole: Role) => {
                 <h2 className="text-2xl font-bold">Businesses</h2>
               </div>
               <p className="text-lg leading-relaxed px-4">
-                Best local advertising + become the hometown hero.<br />
-                Award Freedom Scholarships — real impact.
+                Best local advertising + real community impact.
               </p>
             </div>
           </div>
@@ -145,7 +144,7 @@ const sendMagicLink = async (selectedRole: Role) => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12 max-w-6xl mx-auto">
             <div className="bg-green-100 p-12 border-4 border-green-600 text-center">
               <p className="text-2xl font-bold mb-4">Athletes Stay in Sport</p>
-              <p className="text-lg">Earn money early → less likely to quit due to costs</p>
+              <p className="text-lg">Athletic pursuit earns → less likely to quit due to costs</p>
             </div>
 
             <div className="bg-green-100 p-12 border-4 border-green-600 text-center">
@@ -169,7 +168,7 @@ const sendMagicLink = async (selectedRole: Role) => {
             </div>
 
             <div className="bg-green-100 p-12 border-4 border-green-600 text-center">
-              <p className="text-2xl font-bold mb-4">Stronger Towns</p>
+              <p className="text-2xl font-bold mb-4">Stronger Community</p>
               <p className="text-lg">Local support loops back into youth sports</p>
             </div>
           </div>
@@ -180,6 +179,7 @@ const sendMagicLink = async (selectedRole: Role) => {
           <p className="text-2xl sm:text-3xl max-w-4xl mx-auto leading-relaxed">
             Real money. Real scholarships.<br />
             Keep kids in sports longer. Build stronger communities.
+            The only fully compliant NIL platform for high-school and college athletes.
           </p>
         </section>
 

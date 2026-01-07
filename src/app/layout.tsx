@@ -127,9 +127,9 @@ export default function RootLayout({
               </a>
             </nav>
 
-            <p className="text-gray-500 text-sm text-center">
-              © 2025 LocalHustle — Community Driven Support for Student Athletes
-            </p>
+            <p className="text-gray-500 text-xs text-center w-full mt-8">
+  © 2025 LocalHustle — Community Driven Support for Student Athletes
+</p>
           </div>
         </footer>
       </body>

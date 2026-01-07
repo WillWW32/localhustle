@@ -61,17 +61,16 @@ function ParentDashboardContent() {
         .from('businesses')
         .select('*')
         .eq('owner_id', user.id)
-        .single()
+        .single();
+      setParent(parentRecord);
 
-      setParent(parentRecord)
-
+      if (parentRecord?.id) {
       const { data: kidsData } = await supabase
         .from('profiles')
         .select('id, full_name, email, school, gig_count, profile_pic')
         .eq('parent_id', parentRecord?.id || '')
-
-      setKids(kidsData || [])
-
+setKids(kidsData || [])
+}
       const kidId = searchParams.get('kid_id')
       if (kidId) {
       const { data: kidData } = await supabase
@@ -198,33 +197,21 @@ function ParentDashboardContent() {
   }
 
   const handleAddCard = async () => {
-  if (!stripe || !elements) {
-    setPaymentError('Stripe not loaded — please refresh')
-    return
-  }
+  if (!stripe || !elements) return;
 
-  if (!cardReady) {
-    setPaymentError('Card field still loading — please wait a second')
-    return
-  }
-
-  setPaymentError(null)
-  setPaymentSuccess(false)
-  setPaymentLoading(true)
-
-  const cardElement = (elements as any).getElement(CardElement) || (elements as any).getElement('card')
+  // Use the string 'card', not the component CardElement
+  const cardElement = elements.getElement('card');
 
   if (!cardElement) {
-    setPaymentError('Card element not ready — please wait a moment and try again')
-    setPaymentLoading(false)
-    return
+    setPaymentError('Card element not found');
+    return;
   }
 
   const { error: stripeError, paymentMethod } = await stripe.createPaymentMethod({
     type: 'card',
     card: cardElement,
-  })
-
+  });
+  
   if (stripeError) {
     setPaymentError(stripeError.message || 'Payment error')
     setPaymentLoading(false)
@@ -350,7 +337,7 @@ function ParentDashboardContent() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-16 border-4 border-black rounded-lg max-w-md w-full">
             <h3 className="text-3xl font-bold mb-8 text-center font-mono">Add Card to Sponsor</h3>
-            <Elements stripe={stripePromise}>
+            
               <div className="space-y-12">
                 <div className="bg-gray-50 p-12 border-4 border-gray-300 rounded-lg">
                   <CardElement
@@ -503,7 +490,7 @@ function ParentDashboardContent() {
               <p className="text-xl mb-12 text-center text-gray-600">
                 Secure by Stripe — safe and encrypted.
               </p>
-              <Elements stripe={stripePromise}>
+              
                 <div className="space-y-12">
                   <div className="bg-gray-50 p-8 border-4 border-gray-300 rounded-lg">
                     <CardElement

@@ -18,7 +18,7 @@ const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!
 const businessGigTypes = [
   { title: 'ShoutOut', baseAmount: 50, description: 'Visit a favorite business and make a quick shoutout 15-sec reel about what you like or your favorite order.' },
   { title: 'Youth Clinic', baseAmount: 500, description: 'Run 30–60 min sessions for younger athletes (with teammates).' },
-  { title: 'Team Sponsor', baseAmount: 1000, description: 'Business sponsors team meals/gear — money split equally.' },
+  { title: 'Team Sponsor', baseAmount: 1000, description: 'Business sponsors team meals/gear — money split bually.' },
   { title: 'Cameo', baseAmount: 50, description: 'Custom 15-Sec Video for Younger Athletes (birthdays, pre-game pep talks).' },
   { title: 'Player Training', baseAmount: 100, description: 'Varsity athlete 40-minute training with young player.' },
   { title: 'Challenge', baseAmount: 75, description: 'Fun competitions — HORSE, PIG, free throws, accuracy toss. Base pay for clip, bonus if you win.' },
@@ -200,8 +200,8 @@ function BusinessDashboardContent() {
     setPaymentSuccess(false)
     setPaymentLoading(true)
 
-    const cardElement = (elements as any).getElement('card') || elements.getElement(CardElement as any)
-
+    const cardElement = elements.getElement('card');
+    
     if (!cardElement) {
       setPaymentError('Card element not found — please refresh and try again')
       setPaymentLoading(false)
@@ -407,7 +407,7 @@ function BusinessDashboardContent() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-16 border-4 border-black rounded-lg max-w-md w-full">
             <h3 className="text-3xl font-bold mb-8 text-center font-mono">Add Card to Sponsor</h3>
-            <Elements stripe={stripePromise}>
+            
               <div className="space-y-12">
                 <div className="bg-gray-50 p-12 border-4 border-gray-300 rounded-lg">
                   <CardElement
@@ -625,7 +625,7 @@ function BusinessDashboardContent() {
                 <p className="text-xl mb-20 text-center text-gray-600 font-mono">
                   Secure by Stripe — your card details are safe and encrypted.
                 </p>
-                <Elements stripe={stripePromise}>
+               
                   <div className="space-y-20">
                     <div className="bg-gray-50 p-12 border-2 border-gray-400 rounded-lg">
                       <CardElement
@@ -943,17 +943,78 @@ function BusinessDashboardContent() {
 
       </div>
 
+            {/* Local Hustle Leaders — Featured Section Above Log Out */}
+      <div className="max-w-6xl mx-auto mb-20 px-4">
+        <h2 className="text-4xl font-bold text-center mb-16 font-mono">Local Hustle Leaders</h2>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
+          {/* Featured Athletes */}
+          <div>
+            <h3 className="text-3xl font-bold mb-8 text-center font-mono">Top Athletes</h3>
+            {featuredAthletes.length === 0 ? (
+              <p className="text-xl text-center text-gray-600 font-mono">
+                No active athletes yet — be the first to shine!
+              </p>
+            ) : (
+              <div className="space-y-8">
+                {featuredAthletes.map((athlete, index) => (
+                  <div key={athlete.id} className="bg-white p-8 border-4 border-black rounded-lg flex items-center gap-8 shadow-xl">
+                    <div className="text-5xl font-bold text-gray-300 w-16 text-right">
+                      #{index + 1}
+                    </div>
+                    <img 
+                      src={athlete.profile_pic || '/default-avatar.png'} 
+                      alt={athlete.full_name}
+                      className="w-24 h-24 rounded-full object-cover border-4 border-black"
+                    />
+                    <div className="flex-1">
+                      <h4 className="text-2xl font-bold font-mono">{athlete.full_name}</h4>
+                      <p className="text-lg text-gray-600 font-mono">{athlete.school}</p>
+                      <p className="text-2xl font-bold text-green-600 mt-2">
+                        {athlete.gig_count} Gigs Completed
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Featured Sponsors */}
+          <div>
+            <h3 className="text-3xl font-bold mb-8 text-center font-mono">Top Sponsors</h3>
+            {featuredBusinesses.length === 0 ? (
+              <p className="text-xl text-center text-gray-600 font-mono">
+                No sponsors yet — be the first to support!
+              </p>
+            ) : (
+              <div className="space-y-8">
+                {featuredBusinesses.map((business, index) => (
+                  <div key={business.id} className="bg-gray-100 p-8 border-4 border-black rounded-lg flex items-center gap-8 shadow-xl">
+                    <div className="text-5xl font-bold text-gray-300 w-16 text-right">
+                      #{index + 1}
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="text-2xl font-bold font-mono">{business.name}</h4>
+                      <p className="text-lg text-gray-600 font-mono mt-2">
+                        {business.description || 'Supporting local athletes'}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
       {/* Log Out */}
-      <div className="text-center py-20">
-        <Button
-          onClick={async () => {
-            await signOut()
-            router.push('/')
-            alert('Logged out successfully')
-          }}
-          variant="outline"
-          className="w-32 h-14 text-lg border-4 border-black"
-        >
+      <div className="text-center mt-32 pb-32">
+        <Button onClick={async () => {
+          await signOut()
+          router.push('/')
+          alert('Logged out successfully')
+        }} variant="outline" className="w-64 h-14 text-lg border-4 border-black font-mono">
           Log Out
         </Button>
       </div>
