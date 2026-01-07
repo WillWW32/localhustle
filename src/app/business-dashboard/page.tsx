@@ -55,6 +55,8 @@ function BusinessDashboardContent() {
   const [showDropdown, setShowDropdown] = useState(false)
   const [selectedOffers, setSelectedOffers] = useState<string[]>([])
   const [favorites, setFavorites] = useState<any[]>([])
+  const [featuredAthletes, setFeaturedAthletes] = useState<any[]>([])
+  const [featuredBusinesses, setFeaturedBusinesses] = useState<any[]>([])
   const [invitedAthleteId, setInvitedAthleteId] = useState<string | null>(null)
   const [showQuickSponsor, setShowQuickSponsor] = useState(false)
   const [quickSponsorKid, setQuickSponsorKid] = useState<any>(null)
