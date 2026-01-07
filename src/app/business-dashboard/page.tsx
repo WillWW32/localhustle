@@ -440,7 +440,7 @@ function BusinessDashboardContent() {
                   Cancel
                 </Button>
               </div>
-            </Elements>
+            
           </div>
         </div>
       )}
@@ -652,7 +652,7 @@ function BusinessDashboardContent() {
                       {paymentLoading ? 'Saving...' : 'Save Card'}
                     </Button>
                   </div>
-                </Elements>
+                
               </div>
             </div>
 

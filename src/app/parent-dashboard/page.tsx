@@ -370,7 +370,7 @@ setKids(kidsData || [])
                   Cancel
                 </Button>
               </div>
-            </Elements>
+            
           </div>
         </div>
       )}
@@ -517,7 +517,7 @@ setKids(kidsData || [])
                     {paymentLoading ? 'Saving...' : 'Save Card'}
                   </Button>
                 </div>
-              </Elements>
+              
             </div>
 
             {/* Add Funds */}

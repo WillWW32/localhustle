@@ -954,7 +954,7 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
                       {paymentLoading ? 'Saving...' : 'Save Debit Card'}
                     </Button>
                   </div>
-                </Elements>
+                
               </div>
             </div>
 
