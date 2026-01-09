@@ -109,7 +109,7 @@ let kidsData = null
       setGigCount(total)
     }
   }
-  }
+  
       if (parentRecord?.id) {
         const response = await fetch('/api/list-payment-methods', {
           method: 'POST',
