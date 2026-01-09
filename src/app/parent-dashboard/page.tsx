@@ -62,39 +62,42 @@ function ParentDashboardContent() {
         .select('*')
         .eq('owner_id', user.id)
         .single();
+      
       setParent(parentRecord);
 
-if (parentRecord?.id) {
-  const { data: kidsData } = await supabase
-    .from('profiles')
-    .select('id, full_name, email, school, gig_count, profile_pic')
-    .eq('parent_id', parentRecord.id)
+let kidsData = null
+  if (parentRecord?.id) {
+    const { data } = await supabase
+      .from('profiles')
+      .select('id, full_name, email, school, gig_count, profile_pic')
+      .eq('parent_id', parentRecord.id)
+
+    kidsData = data || []
+  }
 
   setKids(kidsData || [])
 
-  // Handle invited kid from URL (quick sponsor flow)
   const kidId = searchParams.get('kid_id')
   if (kidId && kidsData) {
-    const invitedKid = kidsData.find(k => k.id === kidId)
-    if (invitedKid) {
-      setSelectedKid(invitedKid)
-      setQuickSponsorKid(invitedKid)
+    const kid = kidsData.find(k => k.id === kidId)
+    if (kid) {
+      setSelectedKid(kid)
+      setQuickSponsorKid(kid)
       setShowQuickSponsor(true)
     }
   }
 
-  // Load pending clips for all kids
+  // Pending clips
   if (kidsData && kidsData.length > 0) {
     const { data: clips } = await supabase
       .from('clips')
       .select('*, offers(*), profiles(full_name)')
       .eq('status', 'pending')
       .in('athlete_id', kidsData.map(k => k.id))
-
     setPendingClips(clips || [])
   }
 
-  // Set gigCount (for progress meter)
+  // Gig count logic
   if (kidsData && kidsData.length > 0) {
     if (selectedKid) {
       setGigCount(selectedKid.gig_count || 0)
@@ -102,12 +105,11 @@ if (parentRecord?.id) {
       const invitedKid = kidsData.find(k => k.id === kidId)
       setGigCount(invitedKid?.gig_count || 0)
     } else {
-      // Total across all kids
       const total = kidsData.reduce((sum, kid) => sum + (kid.gig_count || 0), 0)
       setGigCount(total)
     }
   }
-}
+  }
       if (parentRecord?.id) {
         const response = await fetch('/api/list-payment-methods', {
           method: 'POST',
