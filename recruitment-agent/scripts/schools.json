@@ -1,0 +1,420 @@
+{
+  "schools": [
+    {
+      "id": "montana_d1_1",
+      "name": "University of Montana",
+      "division": "D1",
+      "conference": "Big Sky Conference",
+      "state": "MT",
+      "athleticsUrl": "https://montanagriz.com/sports/mens-basketball/roster"
+    },
+    {
+      "id": "montana_d1_2",
+      "name": "Montana State University",
+      "division": "D1",
+      "conference": "Big Sky Conference",
+      "state": "MT",
+      "athleticsUrl": "https://www.msucats.com/sports/m-baskbl/msu-cats-m-baskbl-body.html"
+    },
+    {
+      "id": "bsu_d1",
+      "name": "Boise State University",
+      "division": "D1",
+      "conference": "Mountain West Conference",
+      "state": "ID",
+      "athleticsUrl": "https://www.boisestateroncos.com/sports/mens-basketball/roster"
+    },
+    {
+      "id": "ecu_d1",
+      "name": "Eastern Washington University",
+      "division": "D1",
+      "conference": "Big Sky Conference",
+      "state": "WA",
+      "athleticsUrl": "https://ewueagles.com/sports/mens-basketball/roster"
+    },
+    {
+      "id": "wsu_d1",
+      "name": "Washington State University",
+      "division": "D1",
+      "conference": "Pac-12 Conference",
+      "state": "WA",
+      "athleticsUrl": "https://wsucougars.com/sports/mens-basketball/roster"
+    },
+    {
+      "id": "idaho_d1",
+      "name": "University of Idaho",
+      "division": "D1",
+      "conference": "Big Sky Conference",
+      "state": "ID",
+      "athleticsUrl": "https://www.uidaho.com/vandals/m-basketball/roster"
+    },
+    {
+      "id": "portland_d1",
+      "name": "University of Portland",
+      "division": "D1",
+      "conference": "West Coast Conference",
+      "state": "OR",
+      "athleticsUrl": "https://uofportland.com/sports/mens-basketball/roster"
+    },
+    {
+      "id": "gonzaga_d1",
+      "name": "Gonzaga University",
+      "division": "D1",
+      "conference": "West Coast Conference",
+      "state": "WA",
+      "athleticsUrl": "https://www.gozags.com/sports/m-basketball/roster/"
+    },
+    {
+      "id": "denver_d1",
+      "name": "University of Denver",
+      "division": "D1",
+      "conference": "The Summit League",
+      "state": "CO",
+      "athleticsUrl": "https://www.denverpioneers.com/sports/mens-basketball/roster"
+    },
+    {
+      "id": "wyoming_d1",
+      "name": "University of Wyoming",
+      "division": "D1",
+      "conference": "Mountain West Conference",
+      "state": "WY",
+      "athleticsUrl": "https://www.wyomingathletics.com/sports/m-basketball/roster"
+    },
+    {
+      "id": "weber_d1",
+      "name": "Weber State University",
+      "division": "D1",
+      "conference": "Big Sky Conference",
+      "state": "UT",
+      "athleticsUrl": "https://weberathletics.com/sports/m-basketball/roster"
+    },
+    {
+      "id": "utah_d1",
+      "name": "Southern Utah University",
+      "division": "D1",
+      "conference": "Big Sky Conference",
+      "state": "UT",
+      "athleticsUrl": "https://suuathletics.com/sports/m-basketball/roster"
+    },
+    {
+      "id": "portland_state_d1",
+      "name": "Portland State University",
+      "division": "D1",
+      "conference": "Big Sky Conference",
+      "state": "OR",
+      "athleticsUrl": "https://www.govikings.com/sports/m-basketball/roster"
+    },
+    {
+      "id": "northern_colorado_d1",
+      "name": "University of Northern Colorado",
+      "division": "D1",
+      "conference": "Big Sky Conference",
+      "state": "CO",
+      "athleticsUrl": "https://www.uncbears.com/sports/m-basketball/roster"
+    },
+    {
+      "id": "sac_state_d1",
+      "name": "Sacramento State University",
+      "division": "D1",
+      "conference": "Big Sky Conference",
+      "state": "CA",
+      "athleticsUrl": "https://www.hornetsports.com/sports/m-basketball/roster"
+    },
+    {
+      "id": "montana_tech_d2",
+      "name": "Montana Tech",
+      "division": "D2",
+      "conference": "Frontier Conference",
+      "state": "MT",
+      "athleticsUrl": "https://orejacketsports.com/sports/mens-basketball/roster"
+    },
+    {
+      "id": "carroll_college_d2",
+      "name": "Carroll College",
+      "division": "D2",
+      "conference": "Frontier Conference",
+      "state": "MT",
+      "athleticsUrl": "https://carrollathletics.com/sports/m-basketball/roster"
+    },
+    {
+      "id": "rocky_mountain_college_d2",
+      "name": "Rocky Mountain College",
+      "division": "D2",
+      "conference": "Frontier Conference",
+      "state": "MT",
+      "athleticsUrl": "https://rmcbears.com/sports/m-basketball/roster"
+    },
+    {
+      "id": "providence_college_d2",
+      "name": "Providence College",
+      "division": "D2",
+      "conference": "Frontier Conference",
+      "state": "MT",
+      "athleticsUrl": "https://providenceathletics.com/sports/m-basketball/roster"
+    },
+    {
+      "id": "msunorthern_d2",
+      "name": "Montana State University-Northern",
+      "division": "D2",
+      "conference": "Frontier Conference",
+      "state": "MT",
+      "athleticsUrl": "https://www.msun.edu/athletics/m-basketball/"
+    },
+    {
+      "id": "umwestern_d2",
+      "name": "University of Montana-Western",
+      "division": "D2",
+      "conference": "Frontier Conference",
+      "state": "MT",
+      "athleticsUrl": "https://bullhound.umwestern.edu/sports/m-basketball/roster"
+    },
+    {
+      "id": "cheyenne_business_d2",
+      "name": "Cheyenne Business College",
+      "division": "D2",
+      "conference": "Frontier Conference",
+      "state": "WY",
+      "athleticsUrl": "https://cheyennebusinesscollege.edu/athletics/basketball/"
+    },
+    {
+      "id": "university_of_providence_d2",
+      "name": "University of Providence",
+      "division": "D2",
+      "conference": "Frontier Conference",
+      "state": "MT",
+      "athleticsUrl": "https://providenceathletics.com/sports/m-basketball/roster"
+    },
+    {
+      "id": "northern_state_d2",
+      "name": "Northern State University",
+      "division": "D2",
+      "conference": "Northern Sun Intercollegiate Conference",
+      "state": "SD",
+      "athleticsUrl": "https://www.nsu.edu/athletics/mens-basketball/"
+    },
+    {
+      "id": "south_dakota_mines_d2",
+      "name": "South Dakota School of Mines & Technology",
+      "division": "D2",
+      "conference": "Rocky Mountain Athletic Conference",
+      "state": "SD",
+      "athleticsUrl": "https://www.sdsmt.edu/athletics/sports/mens-basketball/"
+    },
+    {
+      "id": "western_state_d2",
+      "name": "Western State Colorado University",
+      "division": "D2",
+      "conference": "Rocky Mountain Athletic Conference",
+      "state": "CO",
+      "athleticsUrl": "https://www.western.edu/athletics/m-basketball/"
+    },
+    {
+      "id": "adams_state_d2",
+      "name": "Adams State University",
+      "division": "D2",
+      "conference": "Rocky Mountain Athletic Conference",
+      "state": "CO",
+      "athleticsUrl": "https://adams.edu/athletics/mens-basketball/"
+    },
+    {
+      "id": "central_washington_d2",
+      "name": "Central Washington University",
+      "division": "D2",
+      "conference": "Great Northwest Athletic Conference",
+      "state": "WA",
+      "athleticsUrl": "https://cwuwildcats.com/sports/m-basketball/roster"
+    },
+    {
+      "id": "saint_martins_d2",
+      "name": "Saint Martin's University",
+      "division": "D2",
+      "conference": "Great Northwest Athletic Conference",
+      "state": "WA",
+      "athleticsUrl": "https://saintsathletics.com/sports/m-basketball/roster"
+    },
+    {
+      "id": "western_washington_d2",
+      "name": "Western Washington University",
+      "division": "D2",
+      "conference": "Great Northwest Athletic Conference",
+      "state": "WA",
+      "athleticsUrl": "https://www.wwu.edu/athletics/sports/mens-basketball"
+    },
+    {
+      "id": "seattle_pacific_d2",
+      "name": "Seattle Pacific University",
+      "division": "D2",
+      "conference": "Great Northwest Athletic Conference",
+      "state": "WA",
+      "athleticsUrl": "https://spufalcons.com/sports/m-basketball/roster"
+    },
+    {
+      "id": "simon_fraser_d2",
+      "name": "Simon Fraser University",
+      "division": "D2",
+      "conference": "Great Northwest Athletic Conference",
+      "state": "BC",
+      "athleticsUrl": "https://simonfraserclans.ca/sports/m-basketball/roster"
+    },
+    {
+      "id": "alaska_fairbanks_d2",
+      "name": "University of Alaska Fairbanks",
+      "division": "D2",
+      "conference": "Great Northwest Athletic Conference",
+      "state": "AK",
+      "athleticsUrl": "https://www.uafnanooks.com/sports/m-basketball/"
+    },
+    {
+      "id": "alaska_anchorage_d2",
+      "name": "University of Alaska Anchorage",
+      "division": "D2",
+      "conference": "Great Northwest Athletic Conference",
+      "state": "AK",
+      "athleticsUrl": "https://www.uaaSeawolves.com/sports/m-basketball/"
+    },
+    {
+      "id": "fort_lewis_d2",
+      "name": "Fort Lewis College",
+      "division": "D2",
+      "conference": "Rocky Mountain Athletic Conference",
+      "state": "CO",
+      "athleticsUrl": "https://www.fortlewis.edu/athletics/sports/mens-basketball/"
+    },
+    {
+      "id": "colorado_mines_d2",
+      "name": "Colorado School of Mines",
+      "division": "D2",
+      "conference": "Rocky Mountain Athletic Conference",
+      "state": "CO",
+      "athleticsUrl": "https://mines.edu/athletics/sports/mens-basketball/"
+    },
+    {
+      "id": "carroll_naia",
+      "name": "Carroll University (Wis.)",
+      "division": "NAIA",
+      "conference": "Cascade Collegiate Conference",
+      "state": "WI",
+      "athleticsUrl": "https://www.carrollpioneerss.com/sports/m-basketball/roster"
+    },
+    {
+      "id": "northwest_naia",
+      "name": "Northwest University",
+      "division": "NAIA",
+      "conference": "Cascade Collegiate Conference",
+      "state": "WA",
+      "athleticsUrl": "https://nwuchargers.com/sports/m-basketball/roster"
+    },
+    {
+      "id": "pacific_naia",
+      "name": "Pacific University",
+      "division": "NAIA",
+      "conference": "Cascade Collegiate Conference",
+      "state": "OR",
+      "athleticsUrl": "https://www.pacificboxers.com/sports/m-basketball/"
+    },
+    {
+      "id": "oregontech_naia",
+      "name": "Oregon Institute of Technology",
+      "division": "NAIA",
+      "conference": "Cascade Collegiate Conference",
+      "state": "OR",
+      "athleticsUrl": "https://oitowls.com/sports/m-basketball/"
+    },
+    {
+      "id": "corban_naia",
+      "name": "Corban University",
+      "division": "NAIA",
+      "conference": "Cascade Collegiate Conference",
+      "state": "OR",
+      "athleticsUrl": "https://www.corbanwarriors.com/sports/m-basketball/"
+    },
+    {
+      "id": "warner_pacific_naia",
+      "name": "Warner Pacific University",
+      "division": "NAIA",
+      "conference": "Cascade Collegiate Conference",
+      "state": "OR",
+      "athleticsUrl": "https://www.warnerpacific.edu/athletics/basketball/"
+    },
+    {
+      "id": "southern_oregon_naia",
+      "name": "Southern Oregon University",
+      "division": "NAIA",
+      "conference": "Cascade Collegiate Conference",
+      "state": "OR",
+      "athleticsUrl": "https://www.sou.edu/athletics/sports/mens-basketball/"
+    },
+    {
+      "id": "multnomah_juco",
+      "name": "Multnomah University",
+      "division": "JUCO",
+      "conference": "NWAACC",
+      "state": "OR",
+      "athleticsUrl": "https://www.multnomah.edu/athletics/m-basketball"
+    },
+    {
+      "id": "clark_juco",
+      "name": "Clark College",
+      "division": "JUCO",
+      "conference": "NWAACC",
+      "state": "WA",
+      "athleticsUrl": "https://www.clark.edu/student-life/athletics/basketball/"
+    },
+    {
+      "id": "skagit_juco",
+      "name": "Skagit Valley College",
+      "division": "JUCO",
+      "conference": "NWAACC",
+      "state": "WA",
+      "athleticsUrl": "https://www.skagitvalley.edu/athletics/"
+    },
+    {
+      "id": "wenatchee_juco",
+      "name": "Wenatchee Valley College",
+      "division": "JUCO",
+      "conference": "NWAACC",
+      "state": "WA",
+      "athleticsUrl": "https://www.wvc.edu/athletics/"
+    },
+    {
+      "id": "columbia_gorge_juco",
+      "name": "Columbia Gorge Community College",
+      "division": "JUCO",
+      "conference": "NWAACC",
+      "state": "OR",
+      "athleticsUrl": "https://www.cgcc.edu/athletics/basketball"
+    },
+    {
+      "id": "lane_juco",
+      "name": "Lane Community College",
+      "division": "JUCO",
+      "conference": "NWAACC",
+      "state": "OR",
+      "athleticsUrl": "https://www.lanecc.edu/athletics"
+    },
+    {
+      "id": "chemeketa_juco",
+      "name": "Chemeketa Community College",
+      "division": "JUCO",
+      "conference": "NWAACC",
+      "state": "OR",
+      "athleticsUrl": "https://www.chemeketa.edu/athletics/"
+    },
+    {
+      "id": "seattle_central_juco",
+      "name": "Seattle Central College",
+      "division": "JUCO",
+      "conference": "NWAACC",
+      "state": "WA",
+      "athleticsUrl": "https://www.seattlecentral.edu/athletics/"
+    },
+    {
+      "id": "green_river_juco",
+      "name": "Green River College",
+      "division": "JUCO",
+      "conference": "NWAACC",
+      "state": "WA",
+      "athleticsUrl": "https://www.greenriver.edu/athletics/"
+    }
+  ]
+}

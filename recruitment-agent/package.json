@@ -1,0 +1,23 @@
+{
+  "name": "recruitment-agent",
+  "version": "1.0.0",
+  "description": "Coach recruitment database scraper and management system",
+  "type": "module",
+  "main": "api/index.ts",
+  "scripts": {
+    "scrape:coaches": "tsx scripts/scrape-coaches.ts",
+    "scrape:coaches:quick": "tsx scripts/scrape-coaches.ts | head -50",
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "cheerio": "^1.0.0-rc.12",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.6",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.3"
+  }
+}
