@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
 
     const expiresAt = new Date(Date.now() + tokenResponse.expires_in * 1000).toISOString()
 
-    await supabaseAdmin
+    await (supabaseAdmin as any)
       .from('x_oauth_tokens')
       .upsert({
         athlete_id: state,
@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
         updated_at: new Date().toISOString(),
       }, { onConflict: 'athlete_id' })
 
-    await supabaseAdmin
+    await (supabaseAdmin as any)
       .from('athletes')
       .update({
         x_handle: userProfile.data.username,
