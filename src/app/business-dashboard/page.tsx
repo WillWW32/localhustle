@@ -23,7 +23,7 @@ const businessGigTypes = [
   { title: 'Custom Gig', baseAmount: 200, description: 'Create a custom gig and offer it.' },
 ]
 
-type TabId = 'profile' | 'wallet' | 'gigs' | 'clips' | 'kids' | 'favorites' | 'scholarships' | 'booster'
+type TabId = 'profile' | 'wallet' | 'gigs' | 'clips' | 'kids' | 'favorites' | 'scholarships' | 'booster' | 'mentorship'
 
 const tabs: { id: TabId; label: string }[] = [
   { id: 'profile', label: 'Profile' },
@@ -34,6 +34,7 @@ const tabs: { id: TabId; label: string }[] = [
   { id: 'favorites', label: 'Favorites' },
   { id: 'scholarships', label: 'Scholarships' },
   { id: 'booster', label: 'Booster' },
+  { id: 'mentorship', label: 'Mentors' },
 ]
 
 function BusinessDashboardContent() {
@@ -330,7 +331,7 @@ function BusinessDashboardContent() {
             <button
               key={tab.id}
               className={`dash-tab ${activeTab === tab.id ? 'active' : ''}`}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => tab.id === 'mentorship' ? router.push('/mentorship/dashboard') : setActiveTab(tab.id)}
             >
               {tab.label}
               {tab.id === 'clips' && pendingClips.length > 0 && (

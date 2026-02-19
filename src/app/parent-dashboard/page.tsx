@@ -361,6 +361,24 @@ function ParentDashboardContent() {
       {/* Tab Content */}
       <div className="dash-panel">
 
+        {/* Recruitment Banner */}
+        <a href="/recruit/dashboard" className="dash-card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', textDecoration: 'none', color: 'inherit', background: '#f0fff0', borderColor: 'green' }}>
+          <div>
+            <p style={{ fontWeight: 'bold', marginBottom: '0.125rem', fontSize: '0.9rem' }}>College Recruitment</p>
+            <p style={{ color: '#666', fontSize: '0.75rem', marginBottom: 0 }}>Automated coach outreach for your athlete</p>
+          </div>
+          <span style={{ fontSize: '1.25rem' }}>&rarr;</span>
+        </a>
+
+        {/* Mentorship Banner */}
+        <a href="/mentorship/dashboard" className="dash-card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', textDecoration: 'none', color: 'inherit' }}>
+          <div>
+            <p style={{ fontWeight: 'bold', marginBottom: '0.125rem', fontSize: '0.9rem' }}>Mentorship</p>
+            <p style={{ color: '#666', fontSize: '0.75rem', marginBottom: 0 }}>Connect your athlete with college mentors</p>
+          </div>
+          <span style={{ fontSize: '1.25rem' }}>&rarr;</span>
+        </a>
+
         {/* ===== WALLET TAB ===== */}
         {activeTab === 'wallet' && (
           <div>

@@ -15,7 +15,7 @@ export default function RootLayout({
   const slogan = "Community Driven Support for Student Athletes"
   const pathname = usePathname()
 
-  const isDashboard = pathname?.includes('-dashboard') || pathname?.startsWith('/admin')
+  const isDashboard = pathname?.includes('-dashboard') || pathname?.startsWith('/admin') || pathname?.startsWith('/recruit/dashboard') || pathname?.startsWith('/mentorship/dashboard')
 
   const handleShare = () => {
     if (navigator.share) {
@@ -114,6 +114,8 @@ export default function RootLayout({
                 <a href="/parent-onboard" style={{ color: '#666', textDecoration: 'none', fontSize: '0.8rem' }}>Parents</a>
                 <a href="/business-onboard" style={{ color: '#666', textDecoration: 'none', fontSize: '0.8rem' }}>Businesses</a>
                 <a href="/ambassador" style={{ color: '#666', textDecoration: 'none', fontSize: '0.8rem' }}>Ambassador</a>
+                <a href="/recruit" style={{ color: '#666', textDecoration: 'none', fontSize: '0.8rem' }}>Recruit</a>
+                <a href="/mentorship" style={{ color: '#666', textDecoration: 'none', fontSize: '0.8rem' }}>Mentorship</a>
                 <a href="/privacy" style={{ color: '#666', textDecoration: 'none', fontSize: '0.8rem' }}>Privacy</a>
                 <a href="/terms" style={{ color: '#666', textDecoration: 'none', fontSize: '0.8rem' }}>Terms</a>
               </nav>
