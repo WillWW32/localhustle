@@ -174,6 +174,64 @@ const sendMagicLink = async (selectedRole: Role) => {
           </div>
         </section>
 
+        {/* College Recruitment CTA */}
+        <section className="py-24 px-6 sm:px-12 lg:px-32 text-center">
+          <div className="bg-black text-white p-16 mb-12">
+            <h2 className="text-3xl sm:text-5xl font-bold leading-tight">
+              College Recruitment
+            </h2>
+          </div>
+          <p className="text-xl sm:text-2xl mb-12 max-w-3xl mx-auto leading-relaxed">
+            Let our recruitment agents handle outreach to college coaches —
+            emails, DMs, and follow-ups on autopilot.
+          </p>
+          <a
+            href="/recruit"
+            style={{
+              display: 'inline-block',
+              padding: '1rem 3rem',
+              background: 'black',
+              color: 'white',
+              fontFamily: 'Courier New, Courier, monospace',
+              fontWeight: 'bold',
+              fontSize: '1.125rem',
+              border: '3px solid black',
+              textDecoration: 'none',
+            }}
+          >
+            Get Recruited
+          </a>
+        </section>
+
+        {/* Mentorship CTA */}
+        <section className="py-24 px-6 sm:px-12 lg:px-32 text-center bg-gray-50">
+          <div style={{ border: '4px solid black', padding: '3rem', display: 'inline-block', marginBottom: '2rem' }}>
+            <h2 className="text-3xl sm:text-5xl font-bold leading-tight">
+              Mentorship
+            </h2>
+          </div>
+          <p className="text-xl sm:text-2xl mb-12 max-w-3xl mx-auto leading-relaxed">
+            Connect with college athletes who&apos;ve been where you are.
+            Get guidance on recruitment, training, and the college experience.
+          </p>
+          <a
+            href="/mentorship"
+            style={{
+              display: 'inline-block',
+              padding: '1rem 3rem',
+              background: 'black',
+              color: 'white',
+              fontFamily: 'Courier New, Courier, monospace',
+              fontWeight: 'bold',
+              fontSize: '1.125rem',
+              border: '3px solid black',
+              textDecoration: 'none',
+            }}
+          >
+            Find a Mentor
+          </a>
+        </section>
+
         {/* Emotional Close */}
         <section className="py-24 px-6 sm:px-12 lg:px-32 text-center bg-gray-50">
           <p className="text-2xl sm:text-3xl max-w-4xl mx-auto leading-relaxed">

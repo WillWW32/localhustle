@@ -23,7 +23,7 @@ const athleteGigTypes = [
   { title: 'Custom Gig', description: 'Create a gig and offer it.' },
 ]
 
-type TabId = 'home' | 'gigs' | 'profile' | 'pitch' | 'earnings' | 'squad' | 'payout'
+type TabId = 'home' | 'gigs' | 'profile' | 'pitch' | 'earnings' | 'squad' | 'payout' | 'recruit' | 'mentorship'
 
 const tabs: { id: TabId; label: string }[] = [
   { id: 'home', label: 'Home' },
@@ -33,6 +33,8 @@ const tabs: { id: TabId; label: string }[] = [
   { id: 'earnings', label: 'Earnings' },
   { id: 'squad', label: 'Squad' },
   { id: 'payout', label: 'Payout' },
+  { id: 'recruit', label: 'Recruit' },
+  { id: 'mentorship', label: 'Mentors' },
 ]
 
 function AthleteDashboardContent() {
@@ -344,7 +346,7 @@ function AthleteDashboardContent() {
             <button
               key={tab.id}
               className={`dash-tab ${activeTab === tab.id ? 'active' : ''}`}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => tab.id === 'recruit' ? router.push('/recruit/dashboard') : tab.id === 'mentorship' ? router.push('/mentorship/dashboard') : setActiveTab(tab.id)}
             >
               {tab.label}
             </button>
