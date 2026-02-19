@@ -104,7 +104,7 @@ function PaymentMethodsContent() {
   if (!business) return <p className="text-center py-32 text-2xl">Loading...</p>
 
   return (
-    <div className="min-h-screen bg-white text-black font-mono py-16 px-6">
+    <div className="min-h-screen bg-white text-black font-mono py-16 px-6 form-page">
       <div className="max-w-4xl mx-auto">
         <h1 className="text-4xl font-bold text-center mb-12">
           Payment Methods

@@ -1,6 +1,6 @@
-/* Beautiful Style — hard-coded, no Tailwind overrides */
+/* LocalHustle — Clean Mobile-First Design */
 
-/* Base */
+/* Base Reset */
 * {
   margin: 0;
   padding: 0;
@@ -11,129 +11,134 @@ html, body {
   font-family: 'Courier New', Courier, monospace;
   background-color: white;
   color: black;
-  line-height: 1.8;
-  text-align: center;
+  line-height: 1.6;
   min-height: 100vh;
 }
 
 /* Headings */
 h1 {
-  font-size: 2.5rem;
+  font-size: 1.75rem;
   font-weight: bold;
-  margin-bottom: 3rem;
+  margin-bottom: 1rem;
 }
-
 h2 {
-  font-size: 2rem;
-  font-weight: bold;
-  margin-bottom: 2rem;
-}
-
-h3 {
   font-size: 1.5rem;
   font-weight: bold;
-  margin-bottom: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+h3 {
+  font-size: 1.25rem;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+
+@media (min-width: 640px) {
+  h1 { font-size: 2.25rem; }
+  h2 { font-size: 1.75rem; }
+  h3 { font-size: 1.5rem; }
 }
 
 /* Body text */
 p, li {
-  font-size: 1.25rem;
-  max-width: 600px;
-  margin-left: auto;
-  margin-right: auto;
-  margin-bottom: 1.5rem;
+  font-size: 1rem;
+  margin-bottom: 0.75rem;
 }
 
-/* No bullets */
 ul {
   list-style: none;
 }
 
-/* Container */
+/* Container — wider for dashboards */
 .container {
   max-width: 600px;
   margin-left: auto;
   margin-right: auto;
-  padding: 6rem 2rem;
+  padding: 2rem 1rem;
 }
 
-/* Inputs & Buttons — updated */
-input, textarea {
+/* Dashboard container override — full width on mobile */
+.dashboard-container {
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 0;
+}
+
+@media (min-width: 768px) {
+  .dashboard-container {
+    max-width: 768px;
+    padding: 0 1rem;
+  }
+}
+
+/*
+ * IMPORTANT: Scoped form styles — only target inputs/textareas in .form-page contexts.
+ * Dashboard buttons and tab controls are NOT affected.
+ */
+.form-page input,
+.form-page textarea {
   width: 100%;
   max-width: 500px;
-  margin: 1rem auto;
-  padding: 2rem;
-  font-size: 1.5rem;
-  border: 4px solid black;
+  margin: 0.75rem auto;
+  padding: 1rem;
+  font-size: 1.125rem;
+  border: 3px solid black;
   background-color: white;
   text-align: center;
   display: block;
-  font-family: 'Courier New', Courier, monospace !important;
+  font-family: 'Courier New', Courier, monospace;
   box-sizing: border-box;
 }
 
-button, [role="button"], .ui-button {
+.form-page button {
   width: 100%;
   max-width: 500px;
-  margin: 1rem auto;
-  padding: 2rem;
-  font-size: 1.5rem;
-  border: 4px solid black;
+  margin: 0.75rem auto;
+  padding: 1rem;
+  font-size: 1.125rem;
+  border: 3px solid black;
   background-color: black;
   color: white;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: 'Courier New', Courier, monospace !important;
-  box-sizing: border-box;
+  font-family: 'Courier New', Courier, monospace;
 }
 
-button:hover, [role="button"]:hover {
+.form-page button:hover {
   background-color: #333;
-  transform: scale(1.05);
 }
 
 /* Pre (letter) */
 pre {
   background-color: #f5f5f5;
-  padding: 3rem;
-  border: 4px solid black;
+  padding: 1.5rem;
+  border: 3px solid black;
   text-align: left;
   white-space: pre-wrap;
-  font-size: 1rem;
-  max-width: 500px;
-  margin: 3rem auto;
+  font-size: 0.875rem;
+  max-width: 100%;
+  margin: 1rem auto;
 }
 
 /* Video */
 video {
   width: 100%;
   max-width: 500px;
-  border: 4px solid black;
-  margin: 3rem auto;
+  border: 3px solid black;
+  margin: 1rem auto;
   display: block;
 }
 
-/* Fade-in animation */
+/* Animations */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(20px); }
+  from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
 .fade-in {
-  animation: fadeIn 0.8s ease-out forwards;
-}
-
-/* Card lift */
-.card-lift {
-  transition: all 0.3s ease;
-}
-
-.card-lift:hover {
-  transform: translateY(-10px);
-  box-shadow: 0 20px 30px rgba(0,0,0,0.1);
+  animation: fadeIn 0.4s ease-out forwards;
 }
 
 @keyframes blink {
@@ -141,73 +146,36 @@ video {
   50% { opacity: 0; }
 }
 
-/* Global button style — courier + vertical center */
-button, [class*="btn"], .ui-button {
-  font-family: 'Courier New', Courier, monospace !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
+/* Card lift */
+.card-lift {
+  transition: all 0.2s ease;
 }
-
-/* Fixed Width Buttons — 200px, Cool Selected/Hover */
-.btn-fixed-200 {
-  width: 200px !important;
-  max-width: 200px !important;
-  padding: 1.5rem 1rem;
-  font-size: 1.5rem;
-  font-weight: bold;
-  background-color: #000000;
-  color: #ffffff;
-  border: 4px solid black;
-  transition: all 0.3s ease;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.15);
-}
-
-.btn-fixed-200:hover {
-  background-color: #e0e0e0; /* light gray */
-  color: #000000;
+.card-lift:hover {
   transform: translateY(-4px);
-  box-shadow: 0 12px 30px rgba(0,0,0,0.2);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.1);
 }
 
-.btn-fixed-200.selected {
-  background-color: #32cd32 !important; /* lime green */
-  color: #000000 !important;
-  transform: translateY(-6px) scale(1.05);
-  box-shadow: 0 16px 40px rgba(50,205,50,0.4);
-}
-
-/* Optional variant: softer green */
-.btn-fixed-200.selected-soft {
-  background-color: #d4edda;
-  color: #000000;
-}
-
-/* Footer — Super Small, Gray Hover Links */
+/* Footer */
 footer {
-  font-size: 6px !important;
+  font-size: 0.75rem;
   line-height: 1.4;
-  color: #000000;
+  color: #000;
   padding: 2rem 1rem;
 }
-
 footer a {
-  color: #000000;
+  color: #666;
   text-decoration: none;
-  transition: color 0.3s ease;
+  transition: color 0.2s ease;
 }
-
 footer a:hover {
-  color: #666666; /* gray on hover */
+  color: #000;
 }
-
 footer nav {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
   margin-bottom: 1rem;
 }
-
 @media (min-width: 640px) {
   footer nav {
     flex-direction: row;
@@ -215,82 +183,455 @@ footer nav {
     gap: 2rem;
   }
 }
-
 footer p {
   margin: 0;
   opacity: 0.8;
 }
 
-/* Mobile Heading Size Fix */
-@media (max-width: 640px) {
-  h1 { font-size: 2.5rem !important; }
-  h2 { font-size: 2rem !important; }
-  h3 { font-size: 1.75rem !important; }
-}
-
-/* Black Block White Text Headings */
+/* Black Block Headings */
 .black-block-heading {
-  background-color: black !important;
-  color: white !important;
-  padding: 4rem 2rem;
-  margin-bottom: 5rem;
+  background-color: black;
+  color: white;
+  padding: 2rem 1rem;
+  margin-bottom: 2rem;
   text-align: center;
 }
-
 .black-block-heading h1,
 .black-block-heading h2,
 .black-block-heading h3 {
-  color: white !important;
+  color: white;
   margin: 0;
 }
 
+/* Slogan */
 .slogan-large {
-  font-size: 3rem !important;
+  font-size: 1.75rem;
 }
 @media (min-width: 640px) {
-  .slogan-large {
-    font-size: 4rem !important;
-  }
+  .slogan-large { font-size: 2.5rem; }
 }
 @media (min-width: 1024px) {
-  .slogan-large {
-    font-size: 5rem !important;
-  }
+  .slogan-large { font-size: 3.5rem; }
 }
 
 .heading-large-light {
-  font-size: 2rem; /* H2 size */
+  font-size: 1.5rem;
   font-weight: normal;
   line-height: 1.2;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
+}
+@media (min-width: 640px) {
+  .heading-large-light { font-size: 2rem; }
 }
 
-@media (min-width: 640px) {
-  .heading-large-light {
-    font-size: 3rem;
-  }
-}
-/* White on Black Inline Block Subheading — Medium, Not Bold */
+/* Subhead */
 .subhead-white-black {
   display: inline-block;
   background-color: black;
   color: white;
   font-weight: normal;
-  font-size: 2.5rem;
-  padding: 1.5rem 3rem;
-  margin: 2rem 0;
+  font-size: 1.25rem;
+  padding: 0.75rem 1.5rem;
+  margin: 1rem 0;
+}
+@media (min-width: 640px) {
+  .subhead-white-black {
+    font-size: 1.75rem;
+    padding: 1rem 2rem;
+  }
+}
+@media (min-width: 1024px) {
+  .subhead-white-black {
+    font-size: 2.25rem;
+    padding: 1.25rem 2.5rem;
+  }
+}
+
+/* ============================================
+   DASHBOARD TAB SYSTEM
+   ============================================ */
+
+.dash-tabs {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: white;
+  border-bottom: 3px solid black;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.dash-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.dash-tabs-inner {
+  display: flex;
+  min-width: max-content;
+  padding: 0;
+}
+
+.dash-tab {
+  flex: none;
+  padding: 0.75rem 1rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  font-family: 'Courier New', Courier, monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: white;
+  color: #666;
+  border: none;
+  border-bottom: 3px solid transparent;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  max-width: none;
+  margin: 0;
+}
+
+.dash-tab:hover {
+  color: black;
+  background: #f5f5f5;
+  transform: none;
+}
+
+.dash-tab.active {
+  color: black;
+  border-bottom-color: black;
+  background: white;
 }
 
 @media (min-width: 640px) {
-  .subhead-white-black {
-    font-size: 3.5rem;
-    padding: 2rem 4rem;
+  .dash-tab {
+    padding: 0.875rem 1.25rem;
+    font-size: 0.85rem;
   }
 }
 
-@media (min-width: 1024px) {
-  .subhead-white-black {
-    font-size: 4.5rem;
-    padding: 2.5rem 5rem;
+/* Tab content panel */
+.dash-panel {
+  padding: 1.25rem 1rem;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@media (min-width: 640px) {
+  .dash-panel {
+    padding: 1.5rem;
   }
+}
+
+/* ============================================
+   DASHBOARD CARDS
+   ============================================ */
+
+.dash-card {
+  background: white;
+  border: 2px solid #e5e5e5;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 0.75rem;
+  transition: border-color 0.15s ease;
+}
+
+.dash-card:hover {
+  border-color: black;
+}
+
+.dash-card-highlight {
+  background: #f0fdf4;
+  border-color: #22c55e;
+}
+
+/* Stats row */
+.dash-stat {
+  text-align: center;
+  padding: 0.75rem 0.5rem;
+}
+.dash-stat-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1;
+}
+.dash-stat-label {
+  font-size: 0.7rem;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 0.25rem;
+}
+
+/* Action button inside dashboard */
+.dash-btn {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  font-family: 'Courier New', Courier, monospace;
+  background: black;
+  color: white;
+  border: 2px solid black;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  max-width: none;
+}
+
+.dash-btn:hover {
+  background: #333;
+  transform: none;
+}
+
+.dash-btn-outline {
+  background: white;
+  color: black;
+}
+.dash-btn-outline:hover {
+  background: #f5f5f5;
+}
+
+.dash-btn-green {
+  background: #22c55e;
+  border-color: #22c55e;
+}
+.dash-btn-green:hover {
+  background: #16a34a;
+}
+
+.dash-btn-sm {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.75rem;
+}
+
+/* Section headers inside dashboard */
+.dash-section-title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+  font-family: 'Courier New', Courier, monospace;
+}
+
+.dash-section-subtitle {
+  font-size: 0.8rem;
+  color: #666;
+  margin-bottom: 1rem;
+  line-height: 1.4;
+}
+
+/* Gig type card for selection */
+.gig-type-card {
+  border: 2px solid #e5e5e5;
+  border-radius: 8px;
+  padding: 0.875rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  background: white;
+}
+.gig-type-card:hover {
+  border-color: #999;
+}
+.gig-type-card.selected {
+  border-color: #22c55e;
+  background: #f0fdf4;
+}
+.gig-type-card .gig-title {
+  font-weight: 700;
+  font-size: 0.95rem;
+  margin-bottom: 0.25rem;
+}
+.gig-type-card .gig-price {
+  color: #22c55e;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+.gig-type-card .gig-desc {
+  font-size: 0.75rem;
+  color: #666;
+  margin-top: 0.25rem;
+  line-height: 1.3;
+}
+
+/* Empty state */
+.dash-empty {
+  text-align: center;
+  padding: 2rem 1rem;
+  color: #999;
+  font-size: 0.875rem;
+}
+
+/* Welcome banner */
+.dash-welcome {
+  background: black;
+  color: white;
+  padding: 1rem;
+  text-align: center;
+}
+.dash-welcome h1 {
+  font-size: 1.125rem;
+  margin: 0;
+  font-weight: 700;
+}
+.dash-welcome p {
+  font-size: 0.8rem;
+  margin: 0.25rem 0 0;
+  opacity: 0.8;
+}
+
+/* Progress bar */
+.progress-bar-track {
+  background: #e5e5e5;
+  border-radius: 999px;
+  height: 8px;
+  overflow: hidden;
+}
+.progress-bar-fill {
+  background: #22c55e;
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
+
+/* Role switcher pill */
+.role-switcher {
+  position: fixed;
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 50;
+  background: white;
+  border: 2px solid black;
+  border-radius: 999px;
+  padding: 0.375rem 0.75rem;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.7rem;
+  font-family: 'Courier New', Courier, monospace;
+}
+
+/* Toggle switch */
+.toggle-switch {
+  position: relative;
+  width: 36px;
+  height: 20px;
+  background: #ddd;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.toggle-switch.active {
+  background: black;
+}
+.toggle-switch::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  background: white;
+  border-radius: 50%;
+  transition: transform 0.2s;
+}
+.toggle-switch.active::after {
+  transform: translateX(16px);
+}
+
+/* Modal overlay */
+.dash-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 50;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+@media (min-width: 640px) {
+  .dash-modal-overlay {
+    align-items: center;
+  }
+}
+
+.dash-modal {
+  background: white;
+  width: 100%;
+  max-width: 480px;
+  max-height: 90vh;
+  overflow-y: auto;
+  border-radius: 12px 12px 0 0;
+  padding: 1.5rem;
+}
+@media (min-width: 640px) {
+  .dash-modal {
+    border-radius: 12px;
+  }
+}
+
+/* Input inside dashboard */
+.dash-input {
+  width: 100%;
+  padding: 0.625rem 0.75rem;
+  font-size: 0.875rem;
+  font-family: 'Courier New', Courier, monospace;
+  border: 2px solid #ddd;
+  border-radius: 6px;
+  background: white;
+  transition: border-color 0.15s;
+  max-width: none;
+  margin: 0;
+  text-align: left;
+  display: block;
+}
+.dash-input:focus {
+  outline: none;
+  border-color: black;
+}
+
+.dash-textarea {
+  width: 100%;
+  padding: 0.625rem 0.75rem;
+  font-size: 0.875rem;
+  font-family: 'Courier New', Courier, monospace;
+  border: 2px solid #ddd;
+  border-radius: 6px;
+  background: white;
+  resize: vertical;
+  min-height: 80px;
+  max-width: none;
+  margin: 0;
+  text-align: left;
+}
+.dash-textarea:focus {
+  outline: none;
+  border-color: black;
+}
+
+/* Badge */
+.dash-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.125rem 0.5rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  border-radius: 999px;
+  background: #f5f5f5;
+  color: #666;
+}
+.dash-badge-green {
+  background: #dcfce7;
+  color: #166534;
+}
+.dash-badge-yellow {
+  background: #fef9c3;
+  color: #854d0e;
 }

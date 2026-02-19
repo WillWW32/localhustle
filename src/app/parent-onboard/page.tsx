@@ -66,7 +66,7 @@ function ParentOnboardContent() {
 }
 
   return (
-    <div className="min-h-screen bg-white text-black font-mono py-20 px-6 text-center">
+    <div className="min-h-screen bg-white text-black font-mono py-20 px-6 text-center form-page">
       <h1 className="text-4xl sm:text-6xl font-bold mb-12">
         Hey {kidName ? `${kidName}'s ` : ''}Parent!
       </h1>

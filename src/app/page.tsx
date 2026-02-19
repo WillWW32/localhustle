@@ -60,7 +60,7 @@ const sendMagicLink = async (selectedRole: Role) => {
         <meta property="og:type" content="website" />
       </Head>
 
-      <div className="min-h-screen bg-white text-black font-mono">
+      <div className="min-h-screen bg-white text-black font-mono form-page">
         {/* Hero */}
         <section className="py-20 px-6 sm:px-12 lg:px-32 text-center">
           <div className="bg-black text-white p-16 mb-16">

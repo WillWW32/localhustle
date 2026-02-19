@@ -77,7 +77,7 @@ export default function Ambassador() {
   }
 
   return (
-    <div className="min-h-screen bg-white text-black font-mono py-16 px-4">
+    <div className="min-h-screen bg-white text-black font-mono py-16 px-4 form-page">
       <div className="max-w-4xl mx-auto">
         {/* Job Header */}
         <h1 className="text-4xl sm:text-5xl font-bold text-center mb-8">

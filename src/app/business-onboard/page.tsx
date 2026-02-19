@@ -44,7 +44,7 @@ export default function BusinessOnboard() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-white text-black font-mono py-16 px-4">
+    <div className="min-h-screen bg-white text-black font-mono py-16 px-4 form-page">
       <div className="max-w-5xl mx-auto">
         {/* Hero — White on Black Block */}
         <div className="bg-black text-white p-16 mb-16 text-center">

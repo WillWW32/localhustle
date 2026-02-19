@@ -53,7 +53,7 @@ export default function Profile() {
   if (!profile) return <p className="container text-center">Loading...</p>
 
   return (
-    <div className="container">
+    <div className="container form-page">
       <h1 className="text-center text-5xl mb-12">Edit Profile</h1>
 
       <div className="max-w-md mx-auto space-y-12">

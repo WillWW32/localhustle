@@ -174,7 +174,7 @@ export default function FreedomScholarship() {
   // Business View — Award Form (your original, slightly polished)
   if (role === 'business') {
     return (
-      <div className="min-h-screen bg-white text-black font-mono py-20 px-6">
+      <div className="min-h-screen bg-white text-black font-mono py-20 px-6 form-page">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-4xl sm:text-6xl font-bold text-center mb-16">
             Award a Freedom Scholarship

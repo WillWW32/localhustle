@@ -58,7 +58,7 @@ Thanks! Love you.
   if (!profile) return <p className="text-center py-32 text-2xl">Loading...</p>
 
   return (
-    <div className="min-h-screen bg-white text-black font-mono py-20 px-6 text-center">
+    <div className="min-h-screen bg-white text-black font-mono py-20 px-6 text-center form-page">
       {/* Hero Block */}
       <div className="bg-black text-white p-16 mb-20">
         <h1 className="text-5xl sm:text-7xl font-bold">

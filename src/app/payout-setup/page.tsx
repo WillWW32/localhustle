@@ -120,7 +120,7 @@ function PayoutSetupContent() {
   }
 
   return (
-    <div className="min-h-screen bg-white text-black font-mono py-16 px-6">
+    <div className="min-h-screen bg-white text-black font-mono py-16 px-6 form-page">
       <div className="max-w-2xl mx-auto">
         <h1 className="text-4xl font-bold text-center mb-12">
           Add Your Debit Card
