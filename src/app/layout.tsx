@@ -91,12 +91,12 @@ export default function RootLayout({
 
         {/* Share banner — hide on dashboards */}
         {!isBusinessPage && !isDashboard && (
-          <div style={{ background: '#f9fafb', padding: '0.5rem', borderTop: '1px solid #eee', borderBottom: '1px solid #eee' }}>
-            <p style={{ fontSize: '0.7rem', textAlign: 'center', color: '#666', margin: 0 }}>
+          <div style={{ background: 'black', padding: '0.75rem 1rem', textAlign: 'center' }}>
+            <p style={{ fontSize: '0.8rem', color: 'white', margin: 0 }}>
               Share with teammates — earn together!{' '}
               <button
                 onClick={handleShare}
-                style={{ textDecoration: 'underline', cursor: 'pointer', background: 'none', border: 'none', color: '#666', fontSize: '0.7rem', padding: 0, margin: 0, width: 'auto', maxWidth: 'none', display: 'inline' }}
+                style={{ textDecoration: 'underline', cursor: 'pointer', background: 'none', border: 'none', color: '#22c55e', fontSize: '0.8rem', fontWeight: 'bold', padding: 0, margin: 0, width: 'auto', maxWidth: 'none', display: 'inline' }}
               >
                 Tap to share
               </button>
@@ -120,14 +120,14 @@ export default function RootLayout({
                 <a href="/terms" style={{ color: '#666', textDecoration: 'none', fontSize: '0.8rem' }}>Terms</a>
               </nav>
               <p style={{ color: '#999', fontSize: '0.65rem', textAlign: 'center', margin: 0 }}>
-                © 2025 LocalHustle — Community Driven Support for Student Athletes
+                © {new Date().getFullYear()} LocalHustle — Community Driven Support for Student Athletes
               </p>
             </div>
           </footer>
         ) : (
           <footer style={{ borderTop: '1px solid #eee', padding: '0.75rem', background: 'white', marginBottom: '3rem' }}>
             <p style={{ color: '#ccc', fontSize: '0.6rem', textAlign: 'center', margin: 0 }}>
-              © 2025 LocalHustle
+              © {new Date().getFullYear()} LocalHustle
             </p>
           </footer>
         )}

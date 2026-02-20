@@ -10,9 +10,29 @@ function ParentOnboardContent() {
   const [kidName, setKidName] = useState('')
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [checkingAuth, setCheckingAuth] = useState(true)
   const router = useRouter()
   const searchParams = useSearchParams()
   const kidId = searchParams.get('kid_id')
+
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        setIsAuthenticated(true)
+        setEmail(session.user.email || '')
+      }
+      setCheckingAuth(false)
+    })
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) {
+        setIsAuthenticated(true)
+        setEmail(user.email || '')
+      }
+      setCheckingAuth(false)
+    })
+    return () => subscription.unsubscribe()
+  }, [])
 
   useEffect(() => {
     const fetchKid = async () => {
@@ -94,27 +114,43 @@ function ParentOnboardContent() {
         </p>
       </div>
 
-      <div className="max-w-md mx-auto space-y-8">
-        <Input
-          type="email"
-          placeholder="your@email.com"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="h-20 text-2xl text-center border-4 border-black font-mono"
-        />
+      {checkingAuth ? (
+        <p className="text-xl font-mono">Checking your session...</p>
+      ) : isAuthenticated ? (
+        <div className="max-w-md mx-auto space-y-8">
+          <p className="text-xl font-mono" style={{ color: '#22c55e' }}>You&apos;re signed in as {email}</p>
+          <Button
+            onClick={() => router.push(`/parent-dashboard${kidId ? `?kid_id=${kidId}` : ''}`)}
+            className="w-full max-w-md h-20 text-2xl bg-green-600 text-white font-bold font-mono"
+          >
+            Continue to Dashboard
+          </Button>
+        </div>
+      ) : (
+        <>
+          <div className="max-w-md mx-auto space-y-8">
+            <Input
+              type="email"
+              placeholder="your@email.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="h-20 text-2xl text-center border-4 border-black font-mono"
+            />
 
-        <Button
-  onClick={handleContinue}
-  disabled={loading}
-  className="w-full max-w-md h-20 text-2xl bg-green-600 text-white font-bold font-mono"
->
-  {loading ? 'Sending...' : 'Continue to Dashboard'}
-</Button>
-      </div>
+            <Button
+              onClick={handleContinue}
+              disabled={loading}
+              className="w-full max-w-md h-20 text-2xl bg-green-600 text-white font-bold font-mono"
+            >
+              {loading ? 'Sending...' : 'Continue to Dashboard'}
+            </Button>
+          </div>
 
-      <p className="text-lg mt-12 text-gray-600 font-mono">
-        You'll get a magic link — click it to set up your parent dashboard.
-      </p>
+          <p className="text-lg mt-12 text-gray-600 font-mono">
+            You&apos;ll get a magic link — click it to set up your parent dashboard.
+          </p>
+        </>
+      )}
     </div>
   )
 }

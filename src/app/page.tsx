@@ -62,188 +62,151 @@ const sendMagicLink = async (selectedRole: Role) => {
 
       <div className="min-h-screen bg-white text-black font-mono form-page">
         {/* Hero */}
-        <section className="py-20 px-6 sm:px-12 lg:px-32 text-center">
-          <div className="bg-black text-white p-16 mb-16">
+        <section className="py-12 px-6 sm:px-12 lg:px-32 text-center">
+          <div className="bg-black text-white p-10 sm:p-14 mb-10">
             <h2 className="text-3xl sm:text-5xl font-bold leading-tight">
               We Connect Local Businesses with Student Athletes<br />
-              for Scholarships & NIL Deals
+              for Scholarships &amp; NIL Deals
             </h2>
           </div>
 
-          <p className="text-xl sm:text-2xl mb-24 max-w-4xl mx-auto leading-relaxed">
-            Earn money instantly. Get real scholarships.<br />
+          <p className="text-xl sm:text-2xl max-w-4xl mx-auto leading-relaxed">
+            Earn money instantly. Get real scholarships.
             Parents fund improvement. Businesses become hometown heroes.
           </p>
         </section>
 
         {/* Benefits Grid */}
-        <section className="px-6 sm:px-12 lg:px-32 pb-24">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-16 max-w-6xl mx-auto">
+        <section className="px-6 sm:px-12 lg:px-32 pb-12">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
             <div className="text-center">
-              <div className="bg-black text-white p-8 mb-6">
+              <div className="bg-black text-white p-6 mb-3">
                 <h2 className="text-2xl font-bold">Student Athletes</h2>
               </div>
               <p className="text-lg leading-relaxed px-4">
-                Earn money + Scholarships.<br />
-                Complete 8 gigs → qualify for national brand deals.
+                Earn money + scholarships. Complete 8 gigs to qualify for national brand deals. Stay in sport longer.
               </p>
             </div>
 
             <div className="text-center">
-              <div className="bg-black text-white p-8 mb-6">
+              <div className="bg-black text-white p-6 mb-3">
                 <h2 className="text-2xl font-bold">Parents</h2>
               </div>
               <p className="text-lg leading-relaxed px-4">
-                Ease financial stress.<br />
-                Help your kid earn real money & scholarships.
+                Ease financial stress. Help your kid earn real money &amp; scholarships. Less pressure on the family.
               </p>
             </div>
 
             <div className="text-center">
-              <div className="bg-black text-white p-8 mb-6">
+              <div className="bg-black text-white p-6 mb-3">
                 <h2 className="text-2xl font-bold">Businesses</h2>
               </div>
               <p className="text-lg leading-relaxed px-4">
-                Best local advertising + real community impact.
+                Authentic local advertising. Real community impact. Hometown hero status.
               </p>
             </div>
           </div>
         </section>
 
         {/* How It Works */}
-        <section className="py-24 px-6 sm:px-12 lg:px-32 bg-gray-50">
-          <h2 className="text-3xl sm:text-4xl font-bold text-center mb-16">
+        <section className="py-16 px-6 sm:px-12 lg:px-32 bg-gray-50">
+          <h2 className="text-3xl sm:text-4xl font-bold text-center mb-10">
             How It Works
           </h2>
 
-          <div className="max-w-4xl mx-auto space-y-16">
-            <div className="bg-white p-12 border-4 border-black">
-              <h3 className="text-2xl font-bold mb-6">What is a Gig?</h3>
+          <div className="max-w-4xl mx-auto space-y-8">
+            <div className="bg-white p-8 border-4 border-black">
+              <h3 className="text-2xl font-bold mb-4">What is a Gig?</h3>
               <p className="text-lg leading-relaxed">
-                A gig is a simple task funded by a local business — like making a 15-second shoutout video, running a youth clinic, or competing in a challenge.<br />
-                Athletes complete the gig → business approves → athlete gets paid instantly.
+                A simple task funded by a local business — like a 15-second shoutout video, a youth clinic, or a challenge.
+                Athlete completes it, business approves, athlete gets paid instantly.
               </p>
             </div>
 
-            <div className="bg-white p-12 border-4 border-black">
-              <h3 className="text-2xl font-bold mb-6">What is a Freedom Scholarship?</h3>
+            <div className="bg-white p-8 border-4 border-black">
+              <h3 className="text-2xl font-bold mb-4">What is a Freedom Scholarship?</h3>
               <p className="text-lg leading-relaxed">
-                Unrestricted cash awarded by businesses or the platform paid instantly to the athlete.<br />
-                No strings attached — use for books, food, rent — whatever they need to succeed.
+                Unrestricted cash awarded by businesses, paid instantly to the athlete.
+                No strings — use for books, food, rent, whatever they need.
               </p>
             </div>
           </div>
         </section>
-        
-                {/* Key Outcomes Grid — Ties Directly to Top 12 */}
-        <section className="py-24 px-6 sm:px-12 lg:px-32">
-          <h2 className="text-3xl sm:text-4xl font-bold text-center mb-16">
-            Real Impact for Everyone
-          </h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12 max-w-6xl mx-auto">
-            <div className="bg-green-100 p-12 border-4 border-green-600 text-center">
-              <p className="text-2xl font-bold mb-4">Athletes Stay in Sport</p>
-              <p className="text-lg">Athletic pursuit earns → less likely to quit due to costs</p>
+        {/* College Recruitment */}
+        <section className="py-16 px-6 sm:px-12 lg:px-32">
+          <div className="max-w-5xl mx-auto">
+            <div className="bg-black text-white p-10 sm:p-14 text-center mb-10">
+              <h2 className="text-3xl sm:text-4xl font-bold">Get Recruited. Automatically.</h2>
+              <p className="text-lg mt-4 opacity-80">
+                We handle outreach to college coaches — emails, DMs, follow-ups on autopilot.
+              </p>
             </div>
 
-            <div className="bg-green-100 p-12 border-4 border-green-600 text-center">
-              <p className="text-2xl font-bold mb-4">Freedom Scholarships</p>
-              <p className="text-lg">Complete 4 gigs → unlock unrestricted cash for college</p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-10">
+              <div className="border-4 border-black p-6">
+                <p className="text-2xl font-bold mb-2">01</p>
+                <h3 className="font-bold mb-1">Create Profile</h3>
+                <p className="text-sm" style={{ color: '#666' }}>Stats, highlights, achievements.</p>
+              </div>
+              <div className="border-4 border-black p-6">
+                <p className="text-2xl font-bold mb-2">02</p>
+                <h3 className="font-bold mb-1">Connect X Account</h3>
+                <p className="text-sm" style={{ color: '#666' }}>Amplify visibility to coaches.</p>
+              </div>
+              <div className="border-4 border-black p-6">
+                <p className="text-2xl font-bold mb-2">03</p>
+                <h3 className="font-bold mb-1">We Handle Outreach</h3>
+                <p className="text-sm" style={{ color: '#666' }}>Coaches in all 50 states. Real-time tracking.</p>
+              </div>
             </div>
 
-            <div className="bg-green-100 p-12 border-4 border-green-600 text-center">
-              <p className="text-2xl font-bold mb-4">Parents Relieved</p>
-              <p className="text-lg">Kid earns their way → less financial pressure on family</p>
-            </div>
-
-            <div className="bg-green-100 p-12 border-4 border-green-600 text-center">
-              <p className="text-2xl font-bold mb-4">Businesses Win Big</p>
-              <p className="text-lg">Authentic content + hero status in community</p>
-            </div>
-
-            <div className="bg-green-100 p-12 border-4 border-green-600 text-center">
-              <p className="text-2xl font-bold mb-4">Kids Learn Hustle</p>
-              <p className="text-lg">Real work → entrepreneurship → financial literacy</p>
-            </div>
-
-            <div className="bg-green-100 p-12 border-4 border-green-600 text-center">
-              <p className="text-2xl font-bold mb-4">Stronger Community</p>
-              <p className="text-lg">Local support loops back into youth sports</p>
+            <div className="text-center">
+              <a href="/recruit" className="btn-fixed-200">Get Recruited</a>
             </div>
           </div>
         </section>
 
-        {/* College Recruitment CTA */}
-        <section className="py-24 px-6 sm:px-12 lg:px-32 text-center">
-          <div className="bg-black text-white p-16 mb-12">
-            <h2 className="text-3xl sm:text-5xl font-bold leading-tight">
-              College Recruitment
-            </h2>
+        {/* Mentorship */}
+        <section className="py-16 px-6 sm:px-12 lg:px-32 bg-gray-50">
+          <div className="max-w-5xl mx-auto">
+            <h2 className="text-3xl sm:text-4xl font-bold text-center mb-4">Mentorship</h2>
+            <p className="text-lg text-center mb-10 max-w-2xl mx-auto" style={{ color: '#666' }}>
+              Connect with college athletes who&apos;ve been where you are.
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-10">
+              <div className="border-4 border-black p-6">
+                <p className="text-2xl font-bold mb-2" style={{ color: '#22c55e' }}>01</p>
+                <h3 className="font-bold mb-1">For Athletes</h3>
+                <p className="text-sm" style={{ color: '#666' }}>Get paired with a college athlete in your sport.</p>
+              </div>
+              <div className="border-4 border-black p-6">
+                <p className="text-2xl font-bold mb-2" style={{ color: '#22c55e' }}>02</p>
+                <h3 className="font-bold mb-1">For Mentors</h3>
+                <p className="text-sm" style={{ color: '#666' }}>Share your experience. Earn $35/session.</p>
+              </div>
+              <div className="border-4 border-black p-6">
+                <p className="text-2xl font-bold mb-2" style={{ color: '#22c55e' }}>03</p>
+                <h3 className="font-bold mb-1">For Businesses</h3>
+                <p className="text-sm" style={{ color: '#666' }}>Sponsor sessions. Fund youth development.</p>
+              </div>
+            </div>
+
+            <div className="bg-black text-white p-8 text-center mb-10">
+              <p className="text-3xl font-bold" style={{ color: '#22c55e' }}>$35</p>
+              <p className="text-sm opacity-80">per 30-minute session</p>
+            </div>
+
+            <div className="text-center">
+              <a href="/mentorship" className="btn-fixed-200">Find a Mentor</a>
+            </div>
           </div>
-          <p className="text-xl sm:text-2xl mb-12 max-w-3xl mx-auto leading-relaxed">
-            Let our recruitment agents handle outreach to college coaches —
-            emails, DMs, and follow-ups on autopilot.
-          </p>
-          <a
-            href="/recruit"
-            style={{
-              display: 'inline-block',
-              padding: '1rem 3rem',
-              background: 'black',
-              color: 'white',
-              fontFamily: 'Courier New, Courier, monospace',
-              fontWeight: 'bold',
-              fontSize: '1.125rem',
-              border: '3px solid black',
-              textDecoration: 'none',
-            }}
-          >
-            Get Recruited
-          </a>
         </section>
 
-        {/* Mentorship CTA */}
-        <section className="py-24 px-6 sm:px-12 lg:px-32 text-center bg-gray-50">
-          <div style={{ border: '4px solid black', padding: '3rem', display: 'inline-block', marginBottom: '2rem' }}>
-            <h2 className="text-3xl sm:text-5xl font-bold leading-tight">
-              Mentorship
-            </h2>
-          </div>
-          <p className="text-xl sm:text-2xl mb-12 max-w-3xl mx-auto leading-relaxed">
-            Connect with college athletes who&apos;ve been where you are.
-            Get guidance on recruitment, training, and the college experience.
-          </p>
-          <a
-            href="/mentorship"
-            style={{
-              display: 'inline-block',
-              padding: '1rem 3rem',
-              background: 'black',
-              color: 'white',
-              fontFamily: 'Courier New, Courier, monospace',
-              fontWeight: 'bold',
-              fontSize: '1.125rem',
-              border: '3px solid black',
-              textDecoration: 'none',
-            }}
-          >
-            Find a Mentor
-          </a>
-        </section>
-
-        {/* Emotional Close */}
-        <section className="py-24 px-6 sm:px-12 lg:px-32 text-center bg-gray-50">
-          <p className="text-2xl sm:text-3xl max-w-4xl mx-auto leading-relaxed">
-            Real money. Real scholarships.<br />
-            Keep kids in sports longer. Build stronger communities.
-            The only fully compliant NIL platform for high-school and college athletes.
-          </p>
-        </section>
-
-               {/* Bottom CTA — Role Button = Submit with Onboard Paths */}
-        <section className="py-32 px-6 sm:px-12 lg:px-32 text-center bg-white">
-          <div className="max-w-lg mx-auto space-y-16">
+        {/* Bottom CTA */}
+        <section className="py-16 px-6 sm:px-12 lg:px-32 text-center bg-white">
+          <div className="max-w-lg mx-auto space-y-10">
 
             <div>
               <p className="text-2xl mb-4 text-gray-600 font-mono">Enter your email</p>
@@ -258,7 +221,7 @@ const sendMagicLink = async (selectedRole: Role) => {
 
             <div>
               <p className="text-2xl mb-8 text-gray-600 font-mono">Choose your role</p>
-              <div className="grid grid-cols-1 gap-8 max-w-xs mx-auto">
+              <div className="grid grid-cols-1 gap-6 max-w-xs mx-auto">
                 <button
                   onClick={() => {
                     if (!email.trim()) {
