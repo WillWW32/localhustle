@@ -1,93 +1,103 @@
 'use client'
 
+import { useEffect } from 'react'
 import Link from 'next/link'
 
 export default function RecruitLandingPage() {
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => entries.forEach((e) => {
+        if (e.isIntersecting) {
+          e.target.classList.add('fade-in-visible')
+          observer.unobserve(e.target)
+        }
+      }),
+      { threshold: 0.15 }
+    )
+    document.querySelectorAll('.fade-in-scroll').forEach((el) => observer.observe(el))
+    return () => observer.disconnect()
+  }, [])
+
   return (
-    <div className="min-h-screen bg-white text-black font-mono form-page">
+    <div style={{ minHeight: '100vh', background: 'white', fontFamily: "'Courier New', Courier, monospace" }}>
+
       {/* Hero */}
-      <section className="py-20 px-6 sm:px-12 lg:px-32 text-center">
-        <div className="bg-black text-white p-16 mb-12">
-          <h2 className="text-3xl sm:text-5xl font-bold leading-tight">
-            Get Recruited. Automatically.
-          </h2>
-        </div>
-
-        <p className="text-xl sm:text-2xl mb-12 max-w-3xl mx-auto leading-relaxed">
-          Let LocalHustle handle the outreach. We connect your athlete with college coaches
-          across the country — emails, DMs, and follow-ups on autopilot.
-        </p>
-
-        <Link
-          href="/recruit/signup"
-          className="btn-fixed-200"
-        >
-          Sign Up Your Athlete
-        </Link>
-
-        <div className="mt-12 flex flex-wrap items-center justify-center gap-8 text-sm" style={{ color: '#666' }}>
-          <span>Coaches in all 50 states</span>
-          <span>100% automated outreach</span>
-          <span>Real-time response tracking</span>
+      <section style={{ padding: '4rem 2rem', textAlign: 'center' }}>
+        <div className="fade-in-scroll" style={{ maxWidth: '560px', margin: '0 auto' }}>
+          <h1 style={{ fontSize: '1.75rem', fontWeight: 'bold', lineHeight: 1.3, marginBottom: '1.5rem' }}>
+            Get Recruited
+          </h1>
+          <p style={{ fontSize: '0.95rem', fontWeight: 'normal', color: '#666', lineHeight: 1.7, marginBottom: '2.5rem' }}>
+            We handle outreach to college coaches — emails, DMs, follow-ups on autopilot. You focus on your game.
+          </p>
+          <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+            <Link href="/recruit/signup" className="btn-fixed-200">
+              Start Now
+            </Link>
+          </div>
         </div>
       </section>
+
 
       {/* How It Works */}
-      <section className="py-24 px-6 sm:px-12 lg:px-32 bg-gray-50">
-        <h2 className="text-3xl sm:text-4xl font-bold text-center mb-16">
-          How It Works
-        </h2>
-
-        <div className="max-w-4xl mx-auto space-y-12">
-          {[
-            { step: '1', title: 'Create Profile', desc: "Enter your athlete's information: stats, highlights, and achievements." },
-            { step: '2', title: 'Connect X Account', desc: 'Link their X (Twitter) account so we can amplify their visibility.' },
-            { step: '3', title: 'We Handle Outreach', desc: 'Our agents automatically reach out to coaches and track all responses.' },
-          ].map((item) => (
-            <div key={item.step} className="bg-white p-8 border-4 border-black flex gap-6 items-start">
-              <div className="bg-black text-white w-12 h-12 flex items-center justify-center font-bold text-xl flex-shrink-0">
-                {item.step}
+      <section style={{ padding: '4rem 2rem', background: '#fafafa' }}>
+        <div style={{ maxWidth: '560px', margin: '0 auto' }}>
+          <h2 className="fade-in-scroll" style={{ fontSize: '1.5rem', fontWeight: 'bold', textAlign: 'center', marginBottom: '2.5rem' }}>
+            How It Works
+          </h2>
+          <div className="fade-in-scroll" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            {[
+              { step: '01', title: 'Create Your Profile', desc: 'Add your stats, highlights, GPA, and achievements.' },
+              { step: '02', title: 'Connect Your X Account', desc: 'We amplify your visibility to coaches across the country.' },
+              { step: '03', title: 'We Handle Outreach', desc: 'Automated emails and DMs to coaches in all 50 states with real-time tracking.' },
+            ].map((item) => (
+              <div key={item.step} style={{ background: 'white', borderRadius: '16px', padding: '1.75rem' }}>
+                <p style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>{item.step}</p>
+                <h3 style={{ fontSize: '0.95rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>{item.title}</h3>
+                <p style={{ fontSize: '0.8rem', fontWeight: 'normal', color: '#666', lineHeight: 1.7, margin: 0 }}>{item.desc}</p>
               </div>
-              <div>
-                <h3 className="text-xl font-bold mb-2">{item.title}</h3>
-                <p className="text-lg" style={{ color: '#666' }}>{item.desc}</p>
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </section>
 
-      {/* Features */}
-      <section className="py-24 px-6 sm:px-12 lg:px-32">
-        <h2 className="text-3xl sm:text-4xl font-bold text-center mb-16">
-          Why Choose LocalHustle?
-        </h2>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 max-w-4xl mx-auto">
-          {[
-            { title: 'Smart Targeting', desc: 'Our system identifies coaches looking for athletes in your position and level.' },
-            { title: 'Always On', desc: 'Your profile works 24/7, reaching coaches while you sleep.' },
-            { title: 'Response Tracking', desc: 'See every response, track sentiment, and manage conversations.' },
-            { title: 'Real Connections', desc: 'No spam. We connect athletes with coaches who are genuinely interested.' },
-          ].map((feature, idx) => (
-            <div key={idx} className="bg-green-100 p-8 border-4 border-green-600">
-              <h3 className="text-lg font-bold mb-2">{feature.title}</h3>
-              <p style={{ color: '#333' }}>{feature.desc}</p>
-            </div>
-          ))}
+      {/* What Coaches See */}
+      <section style={{ padding: '4rem 2rem' }}>
+        <div style={{ maxWidth: '560px', margin: '0 auto' }}>
+          <h2 className="fade-in-scroll" style={{ fontSize: '1.5rem', fontWeight: 'bold', textAlign: 'center', marginBottom: '2.5rem' }}>
+            What Coaches See
+          </h2>
+          <div className="fade-in-scroll" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            {[
+              'Full athletic profile with stats and highlights',
+              'GPA and academic standing',
+              'Video clips and game footage',
+              'Social media presence and engagement',
+              'Endorsements from local businesses',
+            ].map((item, i) => (
+              <div key={i} style={{ background: '#f5f5f5', borderRadius: '12px', padding: '1.25rem 1.5rem', display: 'flex', gap: '0.75rem', alignItems: 'flex-start' }}>
+                <span style={{ fontWeight: 'bold', color: '#22c55e', flexShrink: 0 }}>&#10003;</span>
+                <p style={{ fontSize: '0.85rem', fontWeight: 'normal', color: '#666', margin: 0, lineHeight: 1.6 }}>{item}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
+
 
       {/* CTA */}
-      <section className="py-24 px-6 sm:px-12 lg:px-32 text-center bg-gray-50">
-        <h2 className="text-3xl font-bold mb-6">Ready to get your athlete recruited?</h2>
-        <p className="text-lg mb-8" style={{ color: '#666' }}>
-          Join athletes already getting responses from coaches across D1, D2, NAIA, and JUCO.
-        </p>
-        <Link href="/recruit/signup" className="btn-fixed-200">
-          Get Started Now
-        </Link>
+      <section style={{ padding: '4rem 2rem 5rem', textAlign: 'center' }}>
+        <div className="fade-in-scroll" style={{ maxWidth: '400px', margin: '0 auto' }}>
+          <p style={{ fontSize: '0.9rem', fontWeight: 'normal', color: '#666', lineHeight: 1.7, marginBottom: '2rem' }}>
+            Coaches in all 50 states. Real-time tracking. We do the work — you play your game.
+          </p>
+          <Link href="/recruit/signup" className="btn-fixed-200">
+            Get Started
+          </Link>
+        </div>
       </section>
+
     </div>
   )
 }

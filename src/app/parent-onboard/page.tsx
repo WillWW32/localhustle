@@ -3,8 +3,6 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 
 function ParentOnboardContent() {
   const [kidName, setKidName] = useState('')
@@ -58,106 +56,110 @@ function ParentOnboardContent() {
   }, [kidId])
 
   const handleContinue = async () => {
-  if (!email.trim()) {
-    alert('Please enter your email')
-    return
-  }
+    if (!email.trim()) {
+      alert('Please enter your email')
+      return
+    }
 
-  setLoading(true)
+    setLoading(true)
 
-  // Sign in with OTP (magic link) — Supabase handles auth
-  const { error } = await supabase.auth.signInWithOtp({
-    email,
-    options: {
-      emailRedirectTo: `${window.location.origin}/parent-dashboard${kidId ? `?kid_id=${kidId}` : ''}`,
-    },
-  })
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        emailRedirectTo: `${window.location.origin}/parent-dashboard${kidId ? `?kid_id=${kidId}` : ''}`,
+      },
+    })
 
-  if (error) {
-    alert('Error: ' + error.message)
+    if (error) {
+      alert('Error: ' + error.message)
+      setLoading(false)
+      return
+    }
+
+    alert('Magic link sent! Check your email and click it to go to your dashboard.')
     setLoading(false)
-    return
   }
-
-  // Success message
-  alert('Magic link sent! Check your email and click it to go to your dashboard.')
-
-  setLoading(false)
-}
 
   return (
-    <div className="min-h-screen bg-white text-black font-mono py-20 px-6 text-center form-page">
-      <h1 className="text-4xl sm:text-6xl font-bold mb-12">
-        Hey {kidName ? `${kidName}'s ` : ''}Parent!
-      </h1>
+    <div style={{ minHeight: '100vh', background: 'white', fontFamily: "'Courier New', Courier, monospace", padding: '4rem 2rem', textAlign: 'center' }}>
+      <div style={{ maxWidth: '500px', margin: '0 auto' }}>
 
-      {/* NEW EXCITING SUB-HEADLINE */}
-      <div className="bg-black text-white p-12 mb-16">
-        <h2 className="text-3xl sm:text-5xl font-bold leading-tight">
-          NIL Deals Are Here for Your Student Athlete!<br />
-          Help them get started on the only fully compliant student athlete platform
-        </h2>
-      </div>
+        <h1 style={{ fontSize: '1.75rem', fontWeight: 'bold', lineHeight: 1.3, marginBottom: '1.5rem' }}>
+          Hey {kidName ? `${kidName}'s ` : ''}Parent!
+        </h1>
 
-      <p className="text-xl sm:text-3xl mb-16 max-w-3xl mx-auto">
-        {kidName ? `${kidName} wants you to be their first sponsor on LocalHustle.` : 'You\'ve been invited to sponsor a local athlete on LocalHustle.'}<br />
-        It's easy — fund a challenge, they complete it, they earn real money instantly.
-      </p>
-
-      <div className="bg-green-100 p-12 border-4 border-green-600 mb-16 max-w-3xl mx-auto">
-        <p className="text-2xl mb-8">
-          You'll fund a simple challenge (like "80/100 free throws").<br />
-          When the athlete completes it → you approve → they get paid instantly.
+        <p style={{ fontSize: '0.95rem', fontWeight: 'normal', color: '#666', lineHeight: 1.7, marginBottom: '3rem' }}>
+          NIL deals are here for your student athlete. Help them get started on the only fully compliant platform.
         </p>
-        <p className="text-xl">
-          Help them get started toward local business sponsorships, scholarships and brand deals.
-        </p>
-      </div>
 
-      {checkingAuth ? (
-        <p className="text-xl font-mono">Checking your session...</p>
-      ) : isAuthenticated ? (
-        <div className="max-w-md mx-auto space-y-8">
-          <p className="text-xl font-mono" style={{ color: '#22c55e' }}>You&apos;re signed in as {email}</p>
-          <Button
-            onClick={() => router.push(`/parent-dashboard${kidId ? `?kid_id=${kidId}` : ''}`)}
-            className="w-full max-w-md h-20 text-2xl bg-green-600 text-white font-bold font-mono"
-          >
-            Continue to Dashboard
-          </Button>
+        <p style={{ fontSize: '0.85rem', fontWeight: 'normal', color: '#666', lineHeight: 1.7, marginBottom: '2.5rem' }}>
+          {kidName ? `${kidName} wants you to be their first sponsor on LocalHustle.` : 'You\'ve been invited to sponsor a local athlete on LocalHustle.'}{' '}
+          It&apos;s easy — fund a challenge, they complete it, they earn real money instantly.
+        </p>
+
+        <div style={{ background: '#fafafa', borderRadius: '16px', padding: '2rem', marginBottom: '3rem', textAlign: 'left' }}>
+          <p style={{ fontSize: '0.85rem', fontWeight: 'normal', color: '#666', lineHeight: 1.7, marginBottom: '1rem' }}>
+            You&apos;ll fund a simple challenge (like &quot;80/100 free throws&quot;). When the athlete completes it, you approve, and they get paid instantly.
+          </p>
+          <p style={{ fontSize: '0.8rem', fontWeight: 'normal', color: '#aaa', margin: 0, lineHeight: 1.6 }}>
+            Help them get started toward local business sponsorships, scholarships and brand deals.
+          </p>
         </div>
-      ) : (
-        <>
-          <div className="max-w-md mx-auto space-y-8">
-            <Input
+
+        {checkingAuth ? (
+          <p style={{ fontSize: '0.8rem', fontWeight: 'normal', color: '#aaa' }}>Checking your session...</p>
+        ) : isAuthenticated ? (
+          <div style={{ maxWidth: '320px', margin: '0 auto' }}>
+            <p style={{ fontSize: '0.8rem', fontWeight: 'normal', color: '#22c55e', marginBottom: '1.5rem' }}>Signed in as {email}</p>
+            <button
+              onClick={() => router.push(`/parent-dashboard${kidId ? `?kid_id=${kidId}` : ''}`)}
+              className="btn-fixed-200"
+            >
+              Continue to Dashboard
+            </button>
+          </div>
+        ) : (
+          <div style={{ maxWidth: '320px', margin: '0 auto' }}>
+            <input
               type="email"
               placeholder="your@email.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="h-20 text-2xl text-center border-4 border-black font-mono"
+              style={{
+                width: '100%',
+                padding: '0.875rem 1rem',
+                fontSize: '0.95rem',
+                fontFamily: "'Courier New', Courier, monospace",
+                border: '1px solid #ddd',
+                borderRadius: '8px',
+                textAlign: 'center',
+                outline: 'none',
+                marginBottom: '1.5rem',
+              }}
             />
 
-            <Button
+            <button
               onClick={handleContinue}
               disabled={loading}
-              className="w-full max-w-md h-20 text-2xl bg-green-600 text-white font-bold font-mono"
+              className="btn-fixed-200"
             >
               {loading ? 'Sending...' : 'Continue to Dashboard'}
-            </Button>
-          </div>
+            </button>
 
-          <p className="text-lg mt-12 text-gray-600 font-mono">
-            You&apos;ll get a magic link — click it to set up your parent dashboard.
-          </p>
-        </>
-      )}
+            <p style={{ fontSize: '0.8rem', fontWeight: 'normal', color: '#aaa', marginTop: '1.5rem' }}>
+              You&apos;ll get a magic link — click it to set up your dashboard.
+            </p>
+          </div>
+        )}
+
+      </div>
     </div>
   )
 }
 
 export default function ParentOnboard() {
   return (
-    <Suspense fallback={<p className="text-center py-32 text-2xl font-mono">Loading...</p>}>
+    <Suspense fallback={<p style={{ textAlign: 'center', padding: '8rem 0', fontSize: '1rem', color: '#aaa' }}>Loading...</p>}>
       <ParentOnboardContent />
     </Suspense>
   )

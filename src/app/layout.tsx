@@ -48,21 +48,30 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        <title>LocalHustle — NIL Money &amp; Scholarships for Student Athletes</title>
+        <meta name="description" content="LocalHustle helps high school and college athletes earn instant cash, Freedom Scholarships, and NIL deals from local businesses. All sports welcome." />
+        <meta name="keywords" content="high school athlete NIL, college athlete NIL, basketball NIL, football NIL, student athlete earnings, local business sponsorship, Freedom Scholarships" />
+        <meta name="robots" content="index, follow" />
+        <meta property="og:title" content="LocalHustle — NIL Money &amp; Scholarships for Student Athletes" />
+        <meta property="og:description" content="Earn instant cash and Freedom Scholarships from local businesses. All sports. Parents and businesses join the movement." />
+        <meta property="og:image" content="https://app.localhustle.org/og-image.jpg" />
+        <meta property="og:url" content="https://app.localhustle.org" />
+        <meta property="og:type" content="website" />
         <link rel="manifest" href="/manifest.json" />
         <link rel="apple-touch-icon" href="/icon-192.png" />
         <meta name="theme-color" content="#000000" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black" />
-        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
       </head>
       <body>
         {/* Header — compact on dashboards */}
         <header style={{
-          borderBottom: isDashboard ? '2px solid black' : '3px solid black',
-          padding: isDashboard ? '0.5rem 0' : '1.5rem 0',
+          borderBottom: isDashboard ? '2px solid black' : 'none',
+          padding: isDashboard ? '0.5rem 0' : '2rem 0 1.5rem',
           background: 'white',
         }}>
-          <div style={{ maxWidth: '768px', margin: '0 auto', padding: '0 1rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: isDashboard ? '0' : '0.75rem' }}>
+          <div style={{ maxWidth: '768px', margin: '0 auto', padding: '0 2rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: isDashboard ? '0' : '0.5rem' }}>
             <Link href="/">
               <Image
                 src="/logo.png"
@@ -70,19 +79,23 @@ export default function RootLayout({
                 width={0}
                 height={0}
                 sizes="100vw"
-                style={{ width: 'auto', height: isDashboard ? '40px' : '80px' }}
+                style={{ width: 'auto', height: isDashboard ? '40px' : '70px' }}
                 priority
               />
             </Link>
 
             {/* Slogan — hide on dashboards */}
             {!isDashboard && (
-              <>
-                <div className="subhead-white-black">
-                  {displayedSlogan}
-                </div>
-                <div style={{ width: 0, height: 0, borderLeft: '20px solid transparent', borderRight: '20px solid transparent', borderTop: '30px solid black' }} />
-              </>
+              <p style={{
+                fontSize: '0.75rem',
+                color: '#999',
+                fontFamily: "'Courier New', Courier, monospace",
+                fontWeight: 'normal',
+                margin: 0,
+                letterSpacing: '0.02em',
+              }}>
+                {displayedSlogan}
+              </p>
             )}
           </div>
         </header>
@@ -106,9 +119,9 @@ export default function RootLayout({
 
         {/* Footer — minimal on dashboards */}
         {!isDashboard ? (
-          <footer style={{ borderTop: '3px solid black', padding: '2rem 1rem', background: 'white' }}>
+          <footer style={{ borderTop: 'none', padding: '3rem 2rem', background: 'white' }}>
             <div style={{ maxWidth: '768px', margin: '0 auto' }}>
-              <nav style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '0.75rem 1.5rem', marginBottom: '1rem' }}>
+              <nav style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'flex-start', gap: '0.5rem 1.25rem', marginBottom: '1.5rem' }}>
                 <a href="/" style={{ color: '#666', textDecoration: 'none', fontSize: '0.8rem' }}>How It Works</a>
                 <a href="/get-started" style={{ color: '#666', textDecoration: 'none', fontSize: '0.8rem' }}>Athletes</a>
                 <a href="/parent-onboard" style={{ color: '#666', textDecoration: 'none', fontSize: '0.8rem' }}>Parents</a>

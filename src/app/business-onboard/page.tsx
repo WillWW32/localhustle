@@ -1,24 +1,36 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
-import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 
 const gigTypes = [
-  { title: 'ShoutOut', description: 'Visit a favorite business and make a quick shoutout 15-sec reel about what you like or your favorite order.' },
-  { title: 'Youth Clinic', description: 'Run 30–60 min sessions for younger athletes (with teammates).' },
-  { title: 'Cameo', description: 'Custom 15-Sec Video for Younger Athletes (birthdays, pre-game pep talks).' },
-  { title: 'Player Training', description: 'Varsity athlete 40-minute training with young player.' },
-  { title: 'Challenge', description: 'Fun competitions — HORSE, PIG, free throws, accuracy toss. Base pay for clip, bonus if you win.' },
+  { title: 'ShoutOut', description: 'Visit a favorite business and make a quick 15-sec shoutout reel.' },
+  { title: 'Youth Clinic', description: '30-60 min sessions for younger athletes with teammates.' },
+  { title: 'Cameo', description: 'Custom 15-sec video for younger athletes — birthdays, pep talks.' },
+  { title: 'Player Training', description: 'Varsity athlete 40-minute training with a young player.' },
+  { title: 'Challenge', description: 'Fun competitions — HORSE, free throws, accuracy toss.' },
   { title: 'Custom Gig', description: 'Create a gig and offer it.' },
 ]
 
 export default function BusinessOnboard() {
   const router = useRouter()
 
-  // Force role = 'business' for any user landing here
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => entries.forEach((e) => {
+        if (e.isIntersecting) {
+          e.target.classList.add('fade-in-visible')
+          observer.unobserve(e.target)
+        }
+      }),
+      { threshold: 0.15 }
+    )
+    document.querySelectorAll('.fade-in-scroll').forEach((el) => observer.observe(el))
+    return () => observer.disconnect()
+  }, [])
+
   useEffect(() => {
     const setBusinessRole = async () => {
       const { data: { user } } = await supabase.auth.getUser()
@@ -33,10 +45,7 @@ export default function BusinessOnboard() {
       if (!prof || prof.role !== 'business') {
         await supabase
           .from('profiles')
-          .upsert({ 
-            id: user.id, 
-            role: 'business' 
-          })
+          .upsert({ id: user.id, role: 'business' })
       }
     }
 
@@ -44,92 +53,107 @@ export default function BusinessOnboard() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-white text-black font-mono py-16 px-4 form-page">
-      <div className="max-w-5xl mx-auto">
-        {/* Hero — White on Black Block */}
-        <div className="bg-black text-white p-16 mb-16 text-center">
-          <h1 className="text-4xl sm:text-6xl font-bold">
+    <div style={{ minHeight: '100vh', background: 'white', fontFamily: "'Courier New', Courier, monospace" }}>
+
+      {/* Hero */}
+      <section style={{ padding: '4rem 2rem', textAlign: 'center' }}>
+        <div className="fade-in-scroll" style={{ maxWidth: '560px', margin: '0 auto' }}>
+          <h1 style={{ fontSize: '1.75rem', fontWeight: 'bold', lineHeight: 1.3, marginBottom: '1.5rem' }}>
             Become the Hometown Hero
           </h1>
+          <p style={{ fontSize: '0.95rem', fontWeight: 'normal', color: '#666', lineHeight: 1.7, margin: 0 }}>
+            Fund local athletes with gigs and Freedom Scholarships — unrestricted cash paid instantly. Get authentic content. Build goodwill.
+          </p>
         </div>
+      </section>
 
-        <p className="text-xl sm:text-3xl text-center mb-16 max-w-4xl mx-auto">
-          Fund local athletes with gigs & Freedom Scholarships — unrestricted cash paid instantly.<br />
-          Get authentic content. Build goodwill. Discover motivated kids.
-        </p>
 
-        {/* NIL Stat Callout */}
-        <div className="bg-black text-white p-12 mb-16 text-center">
-          <p className="text-3xl font-bold">
+      {/* Stat */}
+      <section style={{ padding: '0 2rem 4rem' }}>
+        <div className="fade-in-scroll" style={{ maxWidth: '560px', margin: '0 auto', background: '#fafafa', borderRadius: '16px', padding: '2rem', textAlign: 'center' }}>
+          <p style={{ fontSize: '1rem', fontWeight: 'bold', marginBottom: '0.75rem' }}>
             NIL deal advertising performs 4x better than traditional ads
           </p>
-          <p className="text-xl mt-4">
-            Authentic word-of-mouth from kids parents trust — real results.
+          <p style={{ fontSize: '0.8rem', fontWeight: 'normal', color: '#666', margin: 0 }}>
+            Authentic word-of-mouth from kids parents trust.
           </p>
         </div>
+      </section>
 
-        {/* How It Works */}
-        <div className="bg-black text-white p-12 mb-16 text-center">
-          <h2 className="text-3xl font-bold mb-8">
-            How It Works — 3 Simple Steps
+
+      {/* How It Works */}
+      <section style={{ padding: '4rem 2rem', background: '#fafafa' }}>
+        <div style={{ maxWidth: '560px', margin: '0 auto' }}>
+          <h2 className="fade-in-scroll" style={{ fontSize: '1.5rem', fontWeight: 'bold', textAlign: 'center', marginBottom: '2.5rem' }}>
+            How It Works
           </h2>
-          <ol className="text-xl space-y-6 max-w-3xl mx-auto text-left">
-            <li>1. Add funds to your wallet (instant).</li>
-            <li>2. Post a gig or award a Freedom Scholarship.</li>
-            <li>3. Athletes complete → you approve → they get paid instantly.</li>
-          </ol>
+          <div className="fade-in-scroll" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            {[
+              '1. Add funds to your wallet (instant).',
+              '2. Post a gig or award a Freedom Scholarship.',
+              '3. Athletes complete, you approve, they get paid.',
+            ].map((step, i) => (
+              <div key={i} style={{ background: 'white', borderRadius: '12px', padding: '1.25rem 1.5rem' }}>
+                <p style={{ fontSize: '0.85rem', fontWeight: 'normal', color: '#666', margin: 0 }}>{step}</p>
+              </div>
+            ))}
+          </div>
         </div>
+      </section>
 
-        {/* Popular Gig Types — In Containers */}
-        <h2 className="text-3xl font-bold text-center mb-12">
-          Popular Gig Types
-        </h2>
-        <p className="text-xl text-center mb-12 max-w-4xl mx-auto">
-          These are the gigs and challenges you can offer student athletes.<br />
-          Add a Freedom Scholarship to any gig for extra impact.
-        </p>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-24">
-          {gigTypes.map((gig) => (
-            <div key={gig.title} className="border-4 border-black p-12 bg-gray-100">
-              <h3 className="text-2xl font-bold mb-6">{gig.title}</h3>
-              <p className="text-lg leading-relaxed">{gig.description}</p>
-            </div>
-          ))}
-        </div>
-
-        {/* Freedom Scholarships Callout */}
-        <div className="bg-green-100 p-12 border-4 border-green-600 mb-24">
-          <h2 className="text-3xl font-bold text-center mb-8">
-            Freedom Scholarships
+      {/* Gig Types */}
+      <section style={{ padding: '4rem 2rem' }}>
+        <div style={{ maxWidth: '560px', margin: '0 auto' }}>
+          <h2 className="fade-in-scroll" style={{ fontSize: '1.5rem', fontWeight: 'bold', textAlign: 'center', marginBottom: '1rem' }}>
+            Popular Gig Types
           </h2>
-          <p className="text-xl text-center max-w-3xl mx-auto">
-            Add a scholarship to any gig or award standalone — paid instantly to the athlete.<br />
-            No restrictions — they use it for books, food, rent — whatever they need.<br />
-            You become the hero who made college more possible.
+          <p className="fade-in-scroll" style={{ fontSize: '0.85rem', fontWeight: 'normal', color: '#666', textAlign: 'center', marginBottom: '2.5rem', lineHeight: 1.7 }}>
+            These are the gigs you can offer student athletes.
+          </p>
+          <div className="fade-in-scroll" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            {gigTypes.map((gig) => (
+              <div key={gig.title} style={{ background: '#f5f5f5', borderRadius: '16px', padding: '1.75rem' }}>
+                <h3 style={{ fontSize: '0.95rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>{gig.title}</h3>
+                <p style={{ fontSize: '0.8rem', fontWeight: 'normal', color: '#666', margin: 0, lineHeight: 1.6 }}>{gig.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+
+      {/* Freedom Scholarships */}
+      <section style={{ padding: '4rem 2rem', background: '#fafafa' }}>
+        <div className="fade-in-scroll" style={{ maxWidth: '560px', margin: '0 auto', textAlign: 'center' }}>
+          <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '1.5rem' }}>Freedom Scholarships</h2>
+          <p style={{ fontSize: '0.85rem', fontWeight: 'normal', color: '#666', lineHeight: 1.7, margin: 0 }}>
+            Add a scholarship to any gig or award standalone — paid instantly. No restrictions. You become the hero who made college more possible.
           </p>
         </div>
+      </section>
 
-        {/* Booster Events Mention */}
-        <div className="bg-gray-100 p-12 border-4 border-black mb-24 text-center">
-          <h2 className="text-3xl font-bold mb-8">
-            Better Fundraising with Booster Events
-          </h2>
-          <p className="text-xl max-w-3xl mx-auto">
-            In your dashboard, you can support or create booster events — crowd-fund team meals, gear, travel, or clinics.<br />
-            Share the link — local businesses donate — money goes directly to team needs.
+
+      {/* Booster Events */}
+      <section style={{ padding: '4rem 2rem' }}>
+        <div className="fade-in-scroll" style={{ maxWidth: '560px', margin: '0 auto', textAlign: 'center' }}>
+          <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '1.5rem' }}>Better Fundraising</h2>
+          <p style={{ fontSize: '0.85rem', fontWeight: 'normal', color: '#666', lineHeight: 1.7, margin: 0 }}>
+            Support or create booster events — crowd-fund team meals, gear, travel, or clinics. Share the link, businesses donate, money goes directly to team needs.
           </p>
         </div>
+      </section>
 
-        {/* Main CTA */}
-        <div className="text-center">
-          <Link href="/business-dashboard" className="block">
-  <Button className="w-full max-w-2xl h-24 text-3xl bg-black text-white font-bold">
-    Go to Admin Console — Start Funding Gigs & Scholarships
-  </Button>
-</Link>
+
+      {/* CTA */}
+      <section style={{ padding: '3rem 2rem 5rem', textAlign: 'center' }}>
+        <div className="fade-in-scroll">
+          <Link href="/business-dashboard" className="btn-fixed-200">
+            Go to Dashboard
+          </Link>
         </div>
-      </div>
+      </section>
+
     </div>
   )
 }

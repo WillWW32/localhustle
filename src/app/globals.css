@@ -83,7 +83,8 @@ ul {
   margin: 0.75rem auto;
   padding: 1rem;
   font-size: 1.125rem;
-  border: 3px solid black;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
   background-color: white;
   text-align: center;
   display: block;
@@ -97,7 +98,8 @@ ul {
   margin: 0.75rem auto;
   padding: 1rem;
   font-size: 1.125rem;
-  border: 3px solid black;
+  border: none;
+  border-radius: 9999px;
   background-color: black;
   color: white;
   cursor: pointer;
@@ -115,15 +117,14 @@ ul {
 /* CTA button — used on homepage, recruit, mentorship pages */
 .btn-fixed-200 {
   display: inline-block;
-  width: 100%;
-  max-width: 300px;
-  padding: 1rem 2rem;
-  font-size: 1.125rem;
+  padding: 0.875rem 2.5rem;
+  font-size: 1rem;
   font-weight: bold;
   font-family: 'Courier New', Courier, monospace;
   background-color: black;
   color: white;
-  border: 3px solid black;
+  border: none;
+  border-radius: 9999px;
   cursor: pointer;
   text-align: center;
   text-decoration: none;
@@ -134,14 +135,14 @@ ul {
 }
 .btn-fixed-200.selected {
   background-color: #22c55e;
-  border-color: #22c55e;
 }
 
 /* Pre (letter) */
 pre {
   background-color: #f5f5f5;
   padding: 1.5rem;
-  border: 3px solid black;
+  border: none;
+  border-radius: 12px;
   text-align: left;
   white-space: pre-wrap;
   font-size: 0.875rem;
@@ -153,7 +154,8 @@ pre {
 video {
   width: 100%;
   max-width: 500px;
-  border: 3px solid black;
+  border: none;
+  border-radius: 12px;
   margin: 1rem auto;
   display: block;
 }
@@ -171,6 +173,17 @@ video {
 @keyframes blink {
   0%, 100% { opacity: 1; }
   50% { opacity: 0; }
+}
+
+/* Scroll-triggered fade-in */
+.fade-in-scroll {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+.fade-in-scroll.fade-in-visible {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 /* Card lift */
