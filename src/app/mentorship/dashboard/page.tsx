@@ -70,7 +70,7 @@ export default function MentorshipDashboardPage() {
     cursor: 'pointer',
     background: 'none',
     border: 'none',
-    borderBottomWidth: '3px',
+    borderBottomWidth: '2px',
     borderBottomStyle: 'solid',
     borderBottomColor: activeView === tab ? 'black' : 'transparent',
     color: activeView === tab ? 'black' : '#999',
@@ -80,7 +80,7 @@ export default function MentorshipDashboardPage() {
   return (
     <div className="dashboard-container" style={{ padding: '0 1rem', paddingBottom: '4rem' }}>
       {/* Header */}
-      <div style={{ padding: '1.5rem 0', borderBottom: '3px solid black', marginBottom: '1.5rem' }}>
+      <div style={{ padding: '1.5rem 0', borderBottom: '1px solid #eee', marginBottom: '1.5rem' }}>
         <h1 style={{ fontSize: '1.5rem', marginBottom: '0.25rem' }}>Mentorship</h1>
         <p style={{ color: '#666', fontSize: '0.875rem', marginBottom: 0 }}>Connect with college athlete mentors</p>
       </div>
@@ -121,7 +121,7 @@ export default function MentorshipDashboardPage() {
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.25rem' }}>
-                        <div style={{ width: '40px', height: '40px', background: 'black', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', flexShrink: 0 }}>
+                        <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'black', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', flexShrink: 0, fontSize: '0.8rem' }}>
                           {mentor.name.split(' ').map(n => n[0]).join('')}
                         </div>
                         <div>

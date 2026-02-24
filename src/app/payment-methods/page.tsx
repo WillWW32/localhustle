@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
-import { Button } from '@/components/ui/button'
 import { CardElement, useStripe, useElements } from '@stripe/react-stripe-js'
 import { loadStripe } from '@stripe/stripe-js'
 import { Elements } from '@stripe/react-stripe-js'
@@ -37,7 +36,6 @@ function PaymentMethodsContent() {
       if (biz) {
         setBusiness(biz)
 
-        // Fetch saved payment methods
         const response = await fetch('/api/list-payment-methods', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -101,29 +99,34 @@ function PaymentMethodsContent() {
     setLoading(false)
   }
 
-  if (!business) return <p className="text-center py-32 text-2xl">Loading...</p>
+  if (!business) {
+    return (
+      <div style={{ minHeight: '100vh', background: 'white', fontFamily: "'Courier New', Courier, monospace", display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <p style={{ fontSize: '0.9rem', color: '#aaa' }}>Loading...</p>
+      </div>
+    )
+  }
 
   return (
-    <div className="min-h-screen bg-white text-black font-mono py-16 px-6 form-page">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-4xl font-bold text-center mb-12">
-          Payment Methods
-        </h1>
+    <div style={{ minHeight: '100vh', background: 'white', fontFamily: "'Courier New', Courier, monospace", padding: '4rem 2rem' }}>
+      <div style={{ maxWidth: '500px', margin: '0 auto' }}>
 
-        <p className="text-xl text-center mb-12">
-          Saved cards for wallet top-ups and auto-top-up.<br />
-          Add or manage cards below.
+        <h1 style={{ fontSize: '1.75rem', fontWeight: 'bold', marginBottom: '0.75rem' }}>Payment Methods</h1>
+        <p style={{ fontSize: '0.9rem', color: '#666', marginBottom: '2.5rem', lineHeight: 1.7 }}>
+          Saved cards for wallet top-ups and auto-top-up. Add or manage cards below.
         </p>
 
         {/* Saved Cards */}
         {savedMethods.length === 0 ? (
-          <p className="text-center text-xl mb-12">No saved cards yet.</p>
+          <p style={{ fontSize: '0.85rem', color: '#aaa', marginBottom: '2rem' }}>No saved cards yet.</p>
         ) : (
-          <div className="space-y-8 mb-16">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '2rem' }}>
             {savedMethods.map((method) => (
-              <div key={method.id} className="border-4 border-black p-8 bg-gray-100">
-                <p className="text-xl">
-                  •••• •••• •••• {method.last4}<br />
+              <div key={method.id} style={{ background: '#f5f5f5', borderRadius: '12px', padding: '1.25rem 1.5rem' }}>
+                <p style={{ fontSize: '0.9rem', fontWeight: 'bold', margin: 0, marginBottom: '0.25rem' }}>
+                  •••• •••• •••• {method.last4}
+                </p>
+                <p style={{ fontSize: '0.8rem', color: '#999', margin: 0 }}>
                   Expires {method.exp_month}/{method.exp_year}
                 </p>
               </div>
@@ -132,19 +135,17 @@ function PaymentMethodsContent() {
         )}
 
         {/* Add New Card */}
-        <div className="bg-gray-100 p-12 border-4 border-black mb-12">
-          <h2 className="text-2xl font-bold mb-6 text-center">
-            Add New Card
-          </h2>
-          <CardElement 
+        <div style={{ background: '#fafafa', borderRadius: '16px', padding: '2rem', marginBottom: '1.5rem' }}>
+          <h2 style={{ fontSize: '1rem', fontWeight: 'bold', marginBottom: '1.25rem' }}>Add New Card</h2>
+          <CardElement
             options={{
               style: {
                 base: {
-                  fontSize: '20px',
+                  fontSize: '16px',
                   color: '#000',
                   fontFamily: 'Courier New, monospace',
                   '::placeholder': {
-                    color: '#666',
+                    color: '#aaa',
                   },
                 },
               },
@@ -153,33 +154,39 @@ function PaymentMethodsContent() {
         </div>
 
         {error && (
-          <p className="text-red-600 text-center mb-8 text-xl">
+          <div style={{ padding: '0.75rem 1rem', background: '#fef2f2', borderRadius: '8px', color: '#dc2626', marginBottom: '1.5rem', fontWeight: 'bold', fontSize: '0.85rem' }}>
             {error}
-          </p>
+          </div>
         )}
         {success && (
-          <p className="text-green-600 text-center mb-8 text-xl">
+          <div style={{ padding: '0.75rem 1rem', background: '#f0fdf4', borderRadius: '8px', color: '#22c55e', marginBottom: '1.5rem', fontWeight: 'bold', fontSize: '0.85rem' }}>
             Card added!
-          </p>
+          </div>
         )}
 
-        <Button 
-          onClick={handleAddCard}
-          disabled={loading}
-          className="w-full h-20 text-2xl bg-black text-white font-bold"
-        >
+        <button onClick={handleAddCard} disabled={loading} className="btn-fixed-200"
+          style={{ width: '100%', opacity: loading ? 0.6 : 1, marginBottom: '1rem' }}>
           {loading ? 'Adding...' : 'Save Card'}
-        </Button>
+        </button>
 
-        <div className="mt-12 text-center">
-          <Button 
-            onClick={() => router.push('/dashboard')}
-            variant="outline"
-            className="h-16 text-xl border-4 border-black"
-          >
-            Back to Dashboard
-          </Button>
-        </div>
+        <button
+          onClick={() => router.push('/dashboard')}
+          style={{
+            width: '100%',
+            padding: '0.75rem',
+            fontSize: '0.9rem',
+            fontWeight: 'bold',
+            fontFamily: "'Courier New', Courier, monospace",
+            background: '#f0f0f0',
+            color: '#333',
+            border: 'none',
+            borderRadius: '9999px',
+            cursor: 'pointer',
+          }}
+        >
+          Back to Dashboard
+        </button>
+
       </div>
     </div>
   )

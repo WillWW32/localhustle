@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
-import { Button } from '@/components/ui/button'
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js'
 import { loadStripe } from '@stripe/stripe-js'
 
@@ -71,7 +70,6 @@ function PayoutSetupContent() {
       return
     }
 
-    // Attach to backend
     const response = await fetch('/api/attach-payment-method', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -97,50 +95,52 @@ function PayoutSetupContent() {
     setLoading(false)
   }
 
-  if (!profile) return <p className="container text-center py-32">Loading...</p>
+  if (!profile) {
+    return (
+      <div style={{ minHeight: '100vh', background: 'white', fontFamily: "'Courier New', Courier, monospace", display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <p style={{ fontSize: '0.9rem', color: '#aaa' }}>Loading...</p>
+      </div>
+    )
+  }
 
   if (success) {
     return (
-      <div className="min-h-screen bg-white text-black font-mono flex flex-col items-center justify-center px-6">
-        <h1 className="text-4xl font-bold mb-8 text-center text-green-600">
-          Payout Method Added!
-        </h1>
-        <p className="text-2xl text-center mb-12 max-w-2xl">
-          Your debit card is connected.<br />
-          Earnings will be paid instantly.
-        </p>
-        <Button 
-          onClick={() => router.push('/dashboard')}
-          className="w-full max-w-md h-20 text-2xl bg-black text-white"
-        >
-          Back to Dashboard
-        </Button>
+      <div style={{ minHeight: '100vh', background: 'white', fontFamily: "'Courier New', Courier, monospace", padding: '4rem 2rem', textAlign: 'center' }}>
+        <div style={{ maxWidth: '500px', margin: '0 auto' }}>
+          <div style={{ fontSize: '2.5rem', color: '#22c55e', marginBottom: '1.5rem' }}>&#10003;</div>
+          <h1 style={{ fontSize: '1.75rem', fontWeight: 'bold', marginBottom: '1rem' }}>
+            Payout Method Added!
+          </h1>
+          <p style={{ fontSize: '0.9rem', color: '#666', lineHeight: 1.7, marginBottom: '2.5rem' }}>
+            Your debit card is connected. Earnings will be paid instantly.
+          </p>
+          <button onClick={() => router.push('/dashboard')} className="btn-fixed-200">
+            Back to Dashboard
+          </button>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-white text-black font-mono py-16 px-6 form-page">
-      <div className="max-w-2xl mx-auto">
-        <h1 className="text-4xl font-bold text-center mb-12">
-          Add Your Debit Card
-        </h1>
+    <div style={{ minHeight: '100vh', background: 'white', fontFamily: "'Courier New', Courier, monospace", padding: '4rem 2rem' }}>
+      <div style={{ maxWidth: '500px', margin: '0 auto' }}>
 
-        <p className="text-xl text-center mb-12">
-          Connect your debit card to receive instant payouts.<br />
-          Any athlete can add a card.
+        <h1 style={{ fontSize: '1.75rem', fontWeight: 'bold', marginBottom: '0.75rem' }}>Add Your Debit Card</h1>
+        <p style={{ fontSize: '0.9rem', color: '#666', lineHeight: 1.7, marginBottom: '2.5rem' }}>
+          Connect your debit card to receive instant payouts. Any athlete can add a card.
         </p>
 
-        <div className="bg-gray-100 p-8 border-4 border-black mb-12">
-          <CardElement 
+        <div style={{ background: '#fafafa', borderRadius: '16px', padding: '2rem', marginBottom: '1.5rem' }}>
+          <CardElement
             options={{
               style: {
                 base: {
-                  fontSize: '20px',
+                  fontSize: '16px',
                   color: '#000',
                   fontFamily: 'Courier New, monospace',
                   '::placeholder': {
-                    color: '#666',
+                    color: '#aaa',
                   },
                 },
               },
@@ -149,22 +149,20 @@ function PayoutSetupContent() {
         </div>
 
         {error && (
-          <p className="text-red-600 text-center mb-8 text-xl">
+          <div style={{ padding: '0.75rem 1rem', background: '#fef2f2', borderRadius: '8px', color: '#dc2626', marginBottom: '1.5rem', fontWeight: 'bold', fontSize: '0.85rem' }}>
             {error}
-          </p>
+          </div>
         )}
 
-        <Button 
-          onClick={handleSubmit}
-          disabled={loading}
-          className="w-full h-20 text-2xl bg-black text-white font-bold"
-        >
+        <button onClick={handleSubmit} disabled={loading} className="btn-fixed-200"
+          style={{ width: '100%', opacity: loading ? 0.6 : 1 }}>
           {loading ? 'Processing...' : 'Connect Debit Card'}
-        </Button>
+        </button>
 
-        <p className="text-center mt-12 text-lg text-gray-600">
+        <p style={{ fontSize: '0.75rem', color: '#aaa', textAlign: 'center', marginTop: '1.5rem' }}>
           Secure via Stripe — we never store your card details.
         </p>
+
       </div>
     </div>
   )

@@ -2,9 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabaseClient'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 
 export default function Profile() {
   const [profile, setProfile] = useState<any>(null)
@@ -12,6 +9,7 @@ export default function Profile() {
   const [sport, setSport] = useState('')
   const [parentEmail, setParentEmail] = useState('')
   const [loading, setLoading] = useState(false)
+  const [saved, setSaved] = useState(false)
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -33,6 +31,7 @@ export default function Profile() {
 
   const handleSave = async () => {
     setLoading(true)
+    setSaved(false)
     const { data: { user } } = await supabase.auth.getUser()
     if (user) {
       const { error } = await supabase
@@ -45,61 +44,86 @@ export default function Profile() {
         .eq('id', user.id)
 
       if (error) alert(error.message)
-      else alert('Profile updated!')
+      else setSaved(true)
     }
     setLoading(false)
   }
 
-  if (!profile) return <p className="container text-center">Loading...</p>
+  const inputStyle: React.CSSProperties = {
+    width: '100%',
+    padding: '0.75rem 1rem',
+    fontSize: '0.9rem',
+    fontFamily: "'Courier New', Courier, monospace",
+    border: '1px solid #ddd',
+    borderRadius: '8px',
+    background: 'white',
+    outline: 'none',
+  }
+
+  const labelStyle: React.CSSProperties = {
+    display: 'block',
+    fontSize: '0.75rem',
+    fontWeight: 'bold',
+    marginBottom: '0.5rem',
+    textTransform: 'uppercase' as const,
+    letterSpacing: '0.05em',
+    color: '#666',
+  }
+
+  if (!profile) {
+    return (
+      <div style={{ minHeight: '100vh', background: 'white', fontFamily: "'Courier New', Courier, monospace", display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <p style={{ fontSize: '0.9rem', color: '#aaa' }}>Loading...</p>
+      </div>
+    )
+  }
 
   return (
-    <div className="container form-page">
-      <h1 className="text-center text-5xl mb-12">Edit Profile</h1>
+    <div style={{ minHeight: '100vh', background: 'white', fontFamily: "'Courier New', Courier, monospace", padding: '4rem 2rem' }}>
+      <div style={{ maxWidth: '500px', margin: '0 auto' }}>
 
-      <div className="max-w-md mx-auto space-y-12">
-        <div className="space-y-4">
-          <Label htmlFor="school" className="text-2xl">School</Label>
-          <Input
-            id="school"
-            value={school}
-            onChange={(e) => setSchool(e.target.value)}
-            placeholder="Lincoln High"
-            className="text-2xl py-8 border-2 border-black"
-          />
+        <h1 style={{ fontSize: '1.75rem', fontWeight: 'bold', marginBottom: '0.75rem' }}>Edit Profile</h1>
+        <p style={{ fontSize: '0.9rem', color: '#666', marginBottom: '2.5rem' }}>
+          Update your athlete info below.
+        </p>
+
+        {saved && (
+          <div style={{ padding: '0.75rem 1rem', background: '#f0fdf4', borderRadius: '8px', color: '#22c55e', marginBottom: '1.5rem', fontWeight: 'bold', fontSize: '0.85rem' }}>
+            Profile updated!
+          </div>
+        )}
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          <div>
+            <label style={labelStyle}>School</label>
+            <input type="text" value={school} onChange={(e) => setSchool(e.target.value)}
+              style={inputStyle} placeholder="Lincoln High" />
+          </div>
+
+          <div>
+            <label style={labelStyle}>Sport</label>
+            <input type="text" value={sport} onChange={(e) => setSport(e.target.value)}
+              style={inputStyle} placeholder="Basketball" />
+          </div>
+
+          <div>
+            <label style={labelStyle}>Parent/Guardian Email</label>
+            <input type="email" value={parentEmail} onChange={(e) => setParentEmail(e.target.value)}
+              style={inputStyle} placeholder="parent@example.com" />
+            <div style={{ marginTop: '0.75rem', background: '#fafafa', borderRadius: '8px', padding: '1rem' }}>
+              <p style={{ fontSize: '0.75rem', color: '#999', lineHeight: 1.6, margin: 0 }}>
+                Your earnings are sent to your parent for safety and compliance (required for minors).
+                Please ask them to forward the money to you promptly (e.g., to your Venmo Teen or cash).
+              </p>
+            </div>
+          </div>
+
+          <button onClick={handleSave} disabled={loading} className="btn-fixed-200"
+            style={{ width: '100%', opacity: loading ? 0.6 : 1 }}>
+            {loading ? 'Saving...' : 'Save Profile'}
+          </button>
         </div>
 
-        <div className="space-y-4">
-          <Label htmlFor="sport" className="text-2xl">Sport</Label>
-          <Input
-            id="sport"
-            value={sport}
-            onChange={(e) => setSport(e.target.value)}
-            placeholder="Basketball"
-            className="text-2xl py-8 border-2 border-black"
-          />
-        </div>
-
-        <div className="space-y-4">
-          <Label htmlFor="parent" className="text-2xl">Parent/Guardian Email (required for payouts)</Label>
-          <Input
-            id="parent"
-            type="email"
-            value={parentEmail}
-            onChange={(e) => setParentEmail(e.target.value)}
-            placeholder="parent@example.com"
-            required
-            className="text-2xl py-8 border-2 border-black"
-          />
-          <p className="text-sm text-gray-600 bg-gray-100 p-4 border border-black">
-            Your earnings are sent to your parent for safety and compliance (required for minors). 
-            Please ask them to forward the money to you promptly (e.g., to your Venmo Teen or cash). 
-            This keeps everything legal and parent-approved.
-          </p>
-        </div>
-
-        <Button onClick={handleSave} disabled={loading} className="w-full text-3xl py-12 border-4 border-black hover:bg-black hover:text-white">
-          {loading ? 'Saving...' : 'Save Profile'}
-        </Button>
       </div>
     </div>
   )

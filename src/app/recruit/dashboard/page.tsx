@@ -106,7 +106,7 @@ export default function DashboardPage() {
   return (
     <div className="dashboard-container" style={{ padding: '0 1rem', paddingBottom: '4rem' }}>
       {/* Header */}
-      <div style={{ padding: '1.5rem 0', borderBottom: '3px solid black', marginBottom: '1.5rem' }}>
+      <div style={{ padding: '1.5rem 0', borderBottom: '1px solid #eee', marginBottom: '1.5rem' }}>
         <h1 style={{ fontSize: '1.5rem', marginBottom: '0.25rem' }}>Recruitment Dashboard</h1>
         <p style={{ color: '#666', fontSize: '0.875rem', marginBottom: 0 }}>Manage your athlete recruitment campaigns</p>
       </div>

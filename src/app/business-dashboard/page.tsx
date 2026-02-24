@@ -295,7 +295,7 @@ function BusinessDashboardContent() {
 
       {/* Quick Sponsor Banner */}
       {showQuickSponsor && quickSponsorKid && (
-        <div style={{ background: '#f0fdf4', border: '2px solid #22c55e', padding: '1rem', margin: '0.75rem' , borderRadius: '8px' }}>
+        <div style={{ background: '#f0fdf4', padding: '1rem', margin: '0.75rem', borderRadius: '12px' }}>
           <p style={{ fontWeight: 700, fontSize: '0.95rem', marginBottom: '0.5rem', textAlign: 'center' }}>
             Sponsor {quickSponsorKid.full_name?.split(' ')[0]}'s First Gig!
           </p>

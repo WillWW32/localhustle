@@ -291,7 +291,7 @@ function ParentDashboardContent() {
 
       {/* Quick Sponsor Banner */}
       {showQuickSponsor && quickSponsorKid && (
-        <div style={{ background: '#f0fdf4', border: '2px solid #22c55e', padding: '1rem', margin: '0.75rem', borderRadius: '8px' }}>
+        <div style={{ background: '#f0fdf4', padding: '1rem', margin: '0.75rem', borderRadius: '12px' }}>
           <p style={{ fontWeight: 700, fontSize: '0.95rem', marginBottom: '0.5rem', textAlign: 'center' }}>
             Fund {quickSponsorKid.full_name?.split(' ')[0]}&apos;s First Gig!
           </p>
@@ -576,7 +576,7 @@ function ParentDashboardContent() {
                 {kids.map((kid) => (
                   <div key={kid.id} className="dash-card" onClick={() => setSelectedKid(selectedKid?.id === kid.id ? null : kid)} style={{ cursor: 'pointer' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                      <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: '#e5e5e5', flexShrink: 0, overflow: 'hidden', border: '2px solid #ddd' }}>
+                      <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: '#e5e5e5', flexShrink: 0, overflow: 'hidden' }}>
                         <img src={kid.profile_pic || '/default-avatar.png'} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>

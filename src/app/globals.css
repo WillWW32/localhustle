@@ -296,7 +296,7 @@ footer p {
   top: 0;
   z-index: 40;
   background: white;
-  border-bottom: 3px solid black;
+  border-bottom: 1px solid #eee;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
@@ -322,7 +322,7 @@ footer p {
   background: white;
   color: #666;
   border: none;
-  border-bottom: 3px solid transparent;
+  border-bottom: 2px solid transparent;
   cursor: pointer;
   white-space: nowrap;
   transition: all 0.15s ease;
@@ -370,21 +370,20 @@ footer p {
    ============================================ */
 
 .dash-card {
-  background: white;
-  border: 2px solid #e5e5e5;
-  border-radius: 8px;
+  background: #f9f9f9;
+  border: none;
+  border-radius: 12px;
   padding: 1rem;
   margin-bottom: 0.75rem;
-  transition: border-color 0.15s ease;
+  transition: box-shadow 0.15s ease;
 }
 
 .dash-card:hover {
-  border-color: black;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
 }
 
 .dash-card-highlight {
   background: #f0fdf4;
-  border-color: #22c55e;
 }
 
 /* Stats row */
@@ -414,8 +413,8 @@ footer p {
   font-family: 'Courier New', Courier, monospace;
   background: black;
   color: white;
-  border: 2px solid black;
-  border-radius: 6px;
+  border: none;
+  border-radius: 9999px;
   cursor: pointer;
   transition: all 0.15s ease;
   display: flex;
@@ -431,16 +430,15 @@ footer p {
 }
 
 .dash-btn-outline {
-  background: white;
+  background: #f0f0f0;
   color: black;
 }
 .dash-btn-outline:hover {
-  background: #f5f5f5;
+  background: #e5e5e5;
 }
 
 .dash-btn-green {
   background: #22c55e;
-  border-color: #22c55e;
 }
 .dash-btn-green:hover {
   background: #16a34a;
@@ -468,18 +466,17 @@ footer p {
 
 /* Gig type card for selection */
 .gig-type-card {
-  border: 2px solid #e5e5e5;
-  border-radius: 8px;
+  border: none;
+  border-radius: 12px;
   padding: 0.875rem;
   cursor: pointer;
   transition: all 0.15s ease;
-  background: white;
+  background: #f5f5f5;
 }
 .gig-type-card:hover {
-  border-color: #999;
+  background: #ebebeb;
 }
 .gig-type-card.selected {
-  border-color: #22c55e;
   background: #f0fdf4;
 }
 .gig-type-card .gig-title {
@@ -552,7 +549,7 @@ footer p {
   font-size: 0.75rem;
   text-transform: uppercase;
   color: #999;
-  border-bottom: 2px solid #eee;
+  border-bottom: 1px solid #eee;
 }
 .dash-table td {
   padding: 0.75rem 1rem;
@@ -570,10 +567,10 @@ footer p {
   transform: translateX(-50%);
   z-index: 50;
   background: white;
-  border: 2px solid black;
+  border: 1px solid #ddd;
   border-radius: 999px;
   padding: 0.375rem 0.75rem;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -631,12 +628,12 @@ footer p {
   max-width: 480px;
   max-height: 90vh;
   overflow-y: auto;
-  border-radius: 12px 12px 0 0;
+  border-radius: 16px 16px 0 0;
   padding: 1.5rem;
 }
 @media (min-width: 640px) {
   .dash-modal {
-    border-radius: 12px;
+    border-radius: 16px;
   }
 }
 
@@ -646,8 +643,8 @@ footer p {
   padding: 0.625rem 0.75rem;
   font-size: 0.875rem;
   font-family: 'Courier New', Courier, monospace;
-  border: 2px solid #ddd;
-  border-radius: 6px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
   background: white;
   transition: border-color 0.15s;
   max-width: none;
@@ -657,7 +654,7 @@ footer p {
 }
 .dash-input:focus {
   outline: none;
-  border-color: black;
+  border-color: #999;
 }
 
 .dash-textarea {
@@ -665,8 +662,8 @@ footer p {
   padding: 0.625rem 0.75rem;
   font-size: 0.875rem;
   font-family: 'Courier New', Courier, monospace;
-  border: 2px solid #ddd;
-  border-radius: 6px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
   background: white;
   resize: vertical;
   min-height: 80px;
@@ -676,7 +673,7 @@ footer p {
 }
 .dash-textarea:focus {
   outline: none;
-  border-color: black;
+  border-color: #999;
 }
 
 /* Badge */
