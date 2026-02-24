@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
       const { data: existingProfile } = await supabaseAdmin
         .from('profiles')
         .select('id')
-        .eq('parent_email', parent.email)
+        .eq('email', parent.email)
         .limit(1)
         .single()
 
