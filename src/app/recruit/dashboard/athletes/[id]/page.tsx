@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, use } from 'react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabaseClient'
+import ReelContainer from '@/components/ReelContainer'
 
 // ── Types ──
 interface AthleteProfile {
@@ -21,6 +22,7 @@ interface AthleteProfile {
   highlightUrl: string
   xConnected: boolean
   slug: string
+  instagramReels: string[]
 }
 
 interface RespondedCoach {
@@ -68,6 +70,7 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
   const [currentTab, setCurrentTab] = useState<Tab>('profile')
 
   const [athlete, setAthlete] = useState<AthleteProfile | null>(null)
+  const [instagramReels, setInstagramReels] = useState<string[]>([])
   const [campaignId, setCampaignId] = useState<string | null>(null)
   const [campaignStatus, setCampaignStatus] = useState<'active' | 'paused'>('active')
   const [sendCount, setSendCount] = useState({ total: 0, thisWeek: 0, today: 0 })
@@ -122,7 +125,9 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
           highlightUrl: athleteRow.highlight_url || '',
           xConnected: !!athleteRow.x_handle,
           slug: athleteRow.slug || '',
+          instagramReels: athleteRow.instagram_reels || [],
         })
+        setInstagramReels(athleteRow.instagram_reels || [])
 
         // Load campaign
         const { data: campaign } = await supabase
@@ -293,11 +298,11 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
     fontWeight: 'bold',
     fontSize: '0.875rem',
     cursor: 'pointer',
-    borderBottom: currentTab === tab ? '3px solid black' : '3px solid transparent',
+    borderBottom: currentTab === tab ? '2px solid black' : '2px solid transparent',
     color: currentTab === tab ? 'black' : '#999',
     background: 'none',
     border: 'none',
-    borderBottomWidth: '3px',
+    borderBottomWidth: '2px',
     borderBottomStyle: 'solid',
     borderBottomColor: currentTab === tab ? 'black' : 'transparent',
     whiteSpace: 'nowrap',
@@ -313,7 +318,7 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
   return (
     <div className="dashboard-container" style={{ padding: '0 1rem', paddingBottom: '4rem' }}>
       {/* Header */}
-      <div style={{ padding: '1.5rem 0', borderBottom: '3px solid black', marginBottom: '1.5rem' }}>
+      <div style={{ padding: '1.5rem 0', borderBottom: '1px solid #eee', marginBottom: '1.5rem' }}>
         <Link href="/recruit/dashboard" style={{ color: '#666', fontSize: '0.875rem', textDecoration: 'none' }}>
           &larr; Back to Dashboard
         </Link>
@@ -329,7 +334,7 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
       <div className="dash-card" style={{ marginBottom: '1.5rem' }}>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
           <div>
-            <div style={{ width: '80px', height: '80px', background: 'black', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '0.75rem' }}>
+            <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'black', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '0.75rem' }}>
               {athlete.firstName.charAt(0)}{athlete.lastName.charAt(0)}
             </div>
             <p style={{ fontWeight: 'bold', fontSize: '1.125rem', marginBottom: '0.25rem' }}>{athlete.firstName} {athlete.lastName}</p>
@@ -378,17 +383,33 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
           <div className="dash-card">
             <h3 style={{ fontSize: '1.125rem', marginBottom: '1rem' }}>Highlight Video</h3>
             {athlete.highlightUrl ? (
-              <div style={{ background: '#f5f5f5', padding: '2rem', textAlign: 'center', border: '2px solid #eee' }}>
+              <div style={{ background: '#f5f5f5', padding: '2rem', textAlign: 'center', borderRadius: '12px' }}>
                 <p style={{ color: '#666', marginBottom: '0.5rem' }}>Video from HUDL</p>
                 <a href={athlete.highlightUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'green', fontWeight: 'bold' }}>
                   Watch on HUDL &rarr;
                 </a>
               </div>
             ) : (
-              <div style={{ padding: '2rem', border: '3px dashed #ccc', textAlign: 'center', color: '#999' }}>
+              <div style={{ padding: '2rem', border: '2px dashed #ddd', borderRadius: '12px', textAlign: 'center', color: '#999' }}>
                 Upload Highlight Video
               </div>
             )}
+          </div>
+
+          {/* Instagram Reels */}
+          <div className="dash-card">
+            <h3 style={{ fontSize: '1.125rem', marginBottom: '1rem' }}>Instagram Reels</h3>
+            <ReelContainer
+              editable
+              reels={instagramReels}
+              onReelsChange={async (newReels) => {
+                setInstagramReels(newReels)
+                await supabase
+                  .from('athletes')
+                  .update({ instagram_reels: newReels })
+                  .eq('id', athlete.id)
+              }}
+            />
           </div>
           <div className="dash-card">
             <h3 style={{ fontSize: '1.125rem', marginBottom: '1rem' }}>Bio</h3>
@@ -399,7 +420,7 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
             <h3 style={{ fontSize: '1.125rem', marginBottom: '1rem' }}>Photos</h3>
             <div className="grid grid-cols-3 gap-3">
               {[1, 2, 3].map((i) => (
-                <div key={i} style={{ aspectRatio: '1', border: '3px dashed #ccc', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#999', cursor: 'pointer', fontSize: '1.5rem' }}>+</div>
+                <div key={i} style={{ aspectRatio: '1', border: '2px dashed #ddd', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#999', cursor: 'pointer', fontSize: '1.5rem' }}>+</div>
               ))}
             </div>
           </div>
@@ -624,7 +645,7 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
                         <p style={{ color: '#666', fontSize: '0.875rem', marginBottom: '0.5rem' }}>{coach.school}</p>
 
                         {/* Coach Response */}
-                        <div style={{ background: '#f5f5f5', padding: '0.75rem', border: '2px solid #eee', marginTop: '0.5rem' }}>
+                        <div style={{ background: '#f5f5f5', padding: '0.75rem', borderRadius: '8px', marginTop: '0.5rem' }}>
                           <p style={{ fontSize: '0.625rem', color: '#999', textTransform: 'uppercase', marginBottom: '0.25rem' }}>Their Response:</p>
                           <p style={{ fontSize: '0.875rem', color: '#333', marginBottom: 0 }}>{coach.responseBody}</p>
                         </div>

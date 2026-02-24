@@ -8,6 +8,7 @@ import { loadStripe } from '@stripe/stripe-js'
 import { useStripe, useElements } from '@stripe/react-stripe-js'
 import dynamic from 'next/dynamic'
 import { getGigsInRadius } from '@/lib/geo'
+import ReelContainer from '@/components/ReelContainer'
 
 const Elements = dynamic(() => import('@stripe/react-stripe-js').then((mod) => mod.Elements), { ssr: false })
 const CardElement = dynamic(() => import('@stripe/react-stripe-js').then((mod) => mod.CardElement), { ssr: false })
@@ -48,6 +49,7 @@ function AthleteDashboardContent() {
   const [highlightLink, setHighlightLink] = useState('')
   const [socialFollowers, setSocialFollowers] = useState('')
   const [bio, setBio] = useState('')
+  const [instagramReels, setInstagramReels] = useState<string[]>([])
   const [showPitchLetter, setShowPitchLetter] = useState(false)
   const [availableGigs, setAvailableGigs] = useState<any[]>([])
   const [gigCount, setGigCount] = useState(0)
@@ -90,6 +92,7 @@ function AthleteDashboardContent() {
         setHighlightLink(prof.highlight_link || '')
         setSocialFollowers(prof.social_followers || '')
         setBio(prof.bio || '')
+        setInstagramReels(prof.instagram_reels || [])
         setGigCount(prof.gig_count || 0)
 
         if (prof.debit_card_token) {
@@ -159,6 +162,7 @@ function AthleteDashboardContent() {
         highlight_link: highlightLink,
         social_followers: socialFollowers,
         bio: bio,
+        instagram_reels: instagramReels,
         lat: geoData?.lat || null,
         lng: geoData?.lng || null,
         zip_code: geoData?.zip || null,
@@ -511,6 +515,12 @@ function AthleteDashboardContent() {
                 {highlightLink && <p style={{ fontSize: '0.75rem', color: '#666', marginBottom: '0.25rem', wordBreak: 'break-all' }}>Highlights: {highlightLink}</p>}
                 {socialFollowers && <p style={{ fontSize: '0.75rem', color: '#666', marginBottom: '0.25rem' }}>Followers: {socialFollowers}</p>}
                 {bio && <p style={{ fontSize: '0.8rem', marginTop: '0.5rem', whiteSpace: 'pre-wrap' }}>{bio}</p>}
+                {instagramReels.length > 0 && (
+                  <div style={{ marginTop: '0.75rem' }}>
+                    <p style={{ fontSize: '0.75rem', color: '#666', marginBottom: '0.5rem', fontWeight: 700 }}>Instagram Reels</p>
+                    <ReelContainer reels={instagramReels} />
+                  </div>
+                )}
               </div>
             ) : (
               <div className="dash-card" style={{ background: '#fffbeb' }}>
@@ -563,6 +573,10 @@ function AthleteDashboardContent() {
                   <div>
                     <label style={{ fontSize: '0.75rem', fontWeight: 700, display: 'block', marginBottom: '0.25rem' }}>Bio</label>
                     <textarea className="dash-textarea" value={bio} onChange={(e) => setBio(e.target.value)} placeholder="Tell us about yourself..." />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '0.75rem', fontWeight: 700, display: 'block', marginBottom: '0.25rem' }}>Instagram Reels (up to 3)</label>
+                    <ReelContainer editable reels={instagramReels} onReelsChange={setInstagramReels} />
                   </div>
                   <button className="dash-btn" onClick={handleSaveProfile} disabled={paymentLoading}>
                     {paymentLoading ? 'Saving...' : 'Save Profile'}

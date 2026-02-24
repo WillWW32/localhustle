@@ -48,6 +48,25 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: athleteError.message || 'Failed to create athlete' }, { status: 500 })
     }
 
+    // Try to link to existing profiles row by matching parent_email
+    try {
+      const { data: existingProfile } = await supabaseAdmin
+        .from('profiles')
+        .select('id')
+        .eq('parent_email', parent.email)
+        .limit(1)
+        .single()
+
+      if (existingProfile) {
+        await supabaseAdmin
+          .from('athletes')
+          .update({ profile_id: existingProfile.id })
+          .eq('id', athleteRecord.id)
+      }
+    } catch {
+      // No matching profile found — that's fine, athlete just won't be linked
+    }
+
     // Auto-create campaign for this athlete
     const { data: campaign, error: campaignError } = await supabaseAdmin
       .from('campaigns')

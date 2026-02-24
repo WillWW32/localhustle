@@ -2,6 +2,7 @@
 
 import { useState, useEffect, use } from 'react'
 import { supabase } from '@/lib/supabaseClient'
+import ReelContainer from '@/components/ReelContainer'
 
 interface AthleteProfile {
   slug: string
@@ -22,6 +23,7 @@ interface AthleteProfile {
   viewCount: number
   isPrivate: boolean
   athleteId: string
+  instagramReels: string[]
 }
 
 interface ScoutingReportSummary {
@@ -72,6 +74,24 @@ export default function PublicAthleteProfilePage({ params }: { params: Promise<{
           .update({ views: (profile.views || 0) + 1 })
           .eq('id', profile.id)
 
+        // Gather reels from athlete table
+        let reels: string[] = athleteRow.instagram_reels || []
+
+        // Also try to get reels from linked profile if profile_id exists
+        if (athleteRow.profile_id) {
+          const { data: linkedProfile } = await supabase
+            .from('profiles')
+            .select('instagram_reels')
+            .eq('id', athleteRow.profile_id)
+            .single()
+
+          if (linkedProfile?.instagram_reels) {
+            // Merge and deduplicate
+            const merged = [...reels, ...linkedProfile.instagram_reels]
+            reels = [...new Set(merged)].slice(0, 3)
+          }
+        }
+
         setAthlete({
           slug,
           firstName: athleteRow.first_name,
@@ -91,6 +111,7 @@ export default function PublicAthleteProfilePage({ params }: { params: Promise<{
           viewCount: (profile.views || 0) + 1,
           isPrivate: profile.visibility === 'private',
           athleteId: athleteRow.id,
+          instagramReels: reels,
         })
 
         // Load scouting report summary if exists
@@ -135,17 +156,17 @@ export default function PublicAthleteProfilePage({ params }: { params: Promise<{
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-white text-black font-mono flex items-center justify-center">
-        <p>Loading profile...</p>
+      <div style={{ minHeight: '100vh', background: 'white', fontFamily: "'Courier New', Courier, monospace", display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <p style={{ color: '#999' }}>Loading profile...</p>
       </div>
     )
   }
 
   if (!athlete) {
     return (
-      <div className="min-h-screen bg-white text-black font-mono flex items-center justify-center px-4">
-        <div className="text-center">
-          <h1 style={{ fontSize: '2rem' }}>Profile Not Found</h1>
+      <div style={{ minHeight: '100vh', background: 'white', fontFamily: "'Courier New', Courier, monospace", display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 1rem' }}>
+        <div style={{ textAlign: 'center' }}>
+          <h1 style={{ fontSize: '1.75rem', marginBottom: '0.75rem' }}>Profile Not Found</h1>
           <p style={{ color: '#666', marginBottom: '1.5rem' }}>This athlete profile does not exist.</p>
           <a href="/recruit" style={{ color: 'green', fontWeight: 'bold' }}>Return to Recruit</a>
         </div>
@@ -155,9 +176,9 @@ export default function PublicAthleteProfilePage({ params }: { params: Promise<{
 
   if (athlete.isPrivate) {
     return (
-      <div className="min-h-screen bg-white text-black font-mono flex items-center justify-center px-4">
-        <div className="text-center">
-          <h1 style={{ fontSize: '2rem' }}>Profile Not Found</h1>
+      <div style={{ minHeight: '100vh', background: 'white', fontFamily: "'Courier New', Courier, monospace", display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 1rem' }}>
+        <div style={{ textAlign: 'center' }}>
+          <h1 style={{ fontSize: '1.75rem', marginBottom: '0.75rem' }}>Profile Private</h1>
           <p style={{ color: '#666', marginBottom: '1.5rem' }}>This athlete profile is private.</p>
           <a href="/recruit" style={{ color: 'green', fontWeight: 'bold' }}>Return to Recruit</a>
         </div>
@@ -196,30 +217,30 @@ export default function PublicAthleteProfilePage({ params }: { params: Promise<{
   }
 
   return (
-    <div className="min-h-screen bg-white text-black font-mono">
+    <div style={{ minHeight: '100vh', background: 'white', fontFamily: "'Courier New', Courier, monospace" }}>
       {/* Header */}
-      <header style={{ borderBottom: '3px solid black', padding: '1rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <a href="/recruit" style={{ fontWeight: 'bold', color: 'black', textDecoration: 'none', fontSize: '1.25rem' }}>
+      <header style={{ borderBottom: '1px solid #eee', padding: '1rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <a href="/recruit" style={{ fontWeight: 'bold', color: 'black', textDecoration: 'none', fontSize: '1.125rem' }}>
           LocalHustle
         </a>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <span style={{ color: '#999', fontSize: '0.875rem' }}>{athlete.viewCount} views</span>
+          <span style={{ color: '#999', fontSize: '0.75rem' }}>{athlete.viewCount} views</span>
           <div style={{ position: 'relative' }}>
             <button
               onClick={() => setShowShareMenu(!showShareMenu)}
-              style={{ background: 'black', color: 'white', border: 'none', padding: '0.5rem 1rem', fontWeight: 'bold', cursor: 'pointer', fontFamily: 'inherit' }}
+              style={{ background: 'black', color: 'white', border: 'none', borderRadius: '9999px', padding: '0.5rem 1rem', fontWeight: 'bold', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.8rem' }}
             >
               Share
             </button>
             {showShareMenu && (
-              <div style={{ position: 'absolute', right: 0, top: '100%', marginTop: '0.5rem', border: '3px solid black', background: 'white', zIndex: 10, minWidth: '180px' }}>
-                <button onClick={() => handleShare('twitter')} style={{ display: 'block', width: '100%', textAlign: 'left', padding: '0.75rem 1rem', border: 'none', borderBottom: '1px solid #eee', background: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>
+              <div style={{ position: 'absolute', right: 0, top: '100%', marginTop: '0.5rem', background: 'white', borderRadius: '12px', boxShadow: '0 4px 20px rgba(0,0,0,0.12)', zIndex: 10, minWidth: '180px', overflow: 'hidden' }}>
+                <button onClick={() => handleShare('twitter')} style={{ display: 'block', width: '100%', textAlign: 'left', padding: '0.75rem 1rem', border: 'none', borderBottom: '1px solid #f0f0f0', background: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.875rem' }}>
                   Share on X
                 </button>
-                <button onClick={() => handleShare('facebook')} style={{ display: 'block', width: '100%', textAlign: 'left', padding: '0.75rem 1rem', border: 'none', borderBottom: '1px solid #eee', background: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>
+                <button onClick={() => handleShare('facebook')} style={{ display: 'block', width: '100%', textAlign: 'left', padding: '0.75rem 1rem', border: 'none', borderBottom: '1px solid #f0f0f0', background: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.875rem' }}>
                   Share on Facebook
                 </button>
-                <button onClick={() => handleShare('copy')} style={{ display: 'block', width: '100%', textAlign: 'left', padding: '0.75rem 1rem', border: 'none', background: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>
+                <button onClick={() => handleShare('copy')} style={{ display: 'block', width: '100%', textAlign: 'left', padding: '0.75rem 1rem', border: 'none', background: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.875rem' }}>
                   Copy Link
                 </button>
               </div>
@@ -229,12 +250,12 @@ export default function PublicAthleteProfilePage({ params }: { params: Promise<{
       </header>
 
       <div style={{ maxWidth: '900px', margin: '0 auto', padding: '2rem 1.5rem' }}>
-        {/* Scouting Report Banner (if available) */}
+        {/* Scouting Report Banner */}
         {scoutingReport && (
-          <div style={{ border: '4px solid green', padding: '1rem 1.5rem', marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ background: '#f0fdf4', borderRadius: '12px', padding: '1.25rem 1.5rem', marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
             <div>
-              <p style={{ fontWeight: 'bold', color: 'green', fontSize: '0.75rem', textTransform: 'uppercase', marginBottom: '0.25rem' }}>AI Scouting Report</p>
-              <p style={{ fontWeight: 'bold', fontSize: '1.25rem', marginBottom: '0.25rem' }}>
+              <p style={{ fontWeight: 'bold', color: 'green', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>AI Scouting Report</p>
+              <p style={{ fontWeight: 'bold', fontSize: '1.125rem', marginBottom: '0.25rem' }}>
                 {getDivisionLabel(scoutingReport.division_projection)}
                 {scoutingReport.stars && ` ${'★'.repeat(scoutingReport.stars)}`}
               </p>
@@ -242,7 +263,7 @@ export default function PublicAthleteProfilePage({ params }: { params: Promise<{
             </div>
             <a
               href={`/recruit/dashboard/athletes/${athlete.athleteId}/scouting-report`}
-              style={{ background: 'green', color: 'white', padding: '0.5rem 1rem', fontWeight: 'bold', textDecoration: 'none', fontFamily: 'inherit' }}
+              style={{ background: 'green', color: 'white', padding: '0.5rem 1.25rem', fontWeight: 'bold', textDecoration: 'none', fontFamily: 'inherit', borderRadius: '9999px', fontSize: '0.8rem' }}
             >
               View Full Report
             </a>
@@ -250,10 +271,10 @@ export default function PublicAthleteProfilePage({ params }: { params: Promise<{
         )}
 
         {/* Hero Section */}
-        <div style={{ border: '4px solid black', padding: '2rem', marginBottom: '2rem' }}>
+        <div style={{ background: '#fafafa', borderRadius: '16px', padding: '2rem', marginBottom: '2rem' }}>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
             <div>
-              <div style={{ width: '120px', height: '120px', background: 'black', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2.5rem', fontWeight: 'bold', marginBottom: '1rem' }}>
+              <div style={{ width: '100px', height: '100px', borderRadius: '50%', background: 'black', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem', fontWeight: 'bold', marginBottom: '1rem' }}>
                 {athlete.firstName.charAt(0)}{athlete.lastName.charAt(0)}
               </div>
               <h1 style={{ fontSize: '1.75rem', marginBottom: '0.25rem' }}>{athlete.firstName} {athlete.lastName}</h1>
@@ -270,11 +291,11 @@ export default function PublicAthleteProfilePage({ params }: { params: Promise<{
 
             {/* Stats Grid */}
             <div className="sm:col-span-2">
-              <h3 style={{ fontSize: '1rem', fontWeight: 'bold', marginBottom: '1rem', textTransform: 'uppercase', color: '#999' }}>Season Stats</h3>
+              <h3 style={{ fontSize: '0.8rem', fontWeight: 'bold', marginBottom: '1rem', textTransform: 'uppercase', color: '#999', letterSpacing: '0.05em' }}>Season Stats</h3>
               {Object.keys(athlete.stats).length > 0 ? (
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   {Object.entries(athlete.stats).map(([key, value]) => (
-                    <div key={key} style={{ border: '3px solid black', padding: '0.75rem', textAlign: 'center' }}>
+                    <div key={key} style={{ background: '#f0f0f0', borderRadius: '8px', padding: '0.75rem', textAlign: 'center' }}>
                       <p style={{ color: '#999', fontSize: '0.625rem', textTransform: 'uppercase', marginBottom: '0.25rem' }}>{key}</p>
                       <p style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'green', marginBottom: 0 }}>{value}</p>
                     </div>
@@ -289,12 +310,13 @@ export default function PublicAthleteProfilePage({ params }: { params: Promise<{
 
         {/* Main Content */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8" style={{ marginBottom: '2rem' }}>
-          {/* Left — Video and Bio */}
+          {/* Left — Video, Reels, Bio */}
           <div className="lg:col-span-2" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
             {/* Highlight Video */}
             {athlete.highlightUrl && (
-              <div style={{ border: '4px solid black' }}>
-                <div style={{ background: '#f5f5f5', padding: '3rem', textAlign: 'center' }}>
+              <div>
+                <h2 style={{ fontSize: '1.125rem', marginBottom: '0.75rem' }}>Highlight Video</h2>
+                <div style={{ background: '#f5f5f5', borderRadius: '12px', padding: '3rem', textAlign: 'center' }}>
                   <p style={{ color: '#666', marginBottom: '0.75rem' }}>Game Highlights</p>
                   <a href={athlete.highlightUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'green', fontWeight: 'bold' }}>
                     Watch Full Video on HUDL &rarr;
@@ -303,21 +325,29 @@ export default function PublicAthleteProfilePage({ params }: { params: Promise<{
               </div>
             )}
 
+            {/* Instagram Reels */}
+            {athlete.instagramReels.length > 0 && (
+              <div>
+                <h2 style={{ fontSize: '1.125rem', marginBottom: '0.75rem' }}>Instagram Reels</h2>
+                <ReelContainer reels={athlete.instagramReels} />
+              </div>
+            )}
+
             {/* Bio */}
             {athlete.bio && (
-              <div style={{ border: '4px solid black', padding: '1.5rem' }}>
-                <h2 style={{ fontSize: '1.25rem', marginBottom: '0.75rem' }}>About</h2>
-                <p style={{ color: '#333', lineHeight: 1.7 }}>{athlete.bio}</p>
+              <div>
+                <h2 style={{ fontSize: '1.125rem', marginBottom: '0.75rem' }}>About</h2>
+                <p style={{ color: '#333', lineHeight: 1.7, fontSize: '0.9rem' }}>{athlete.bio}</p>
               </div>
             )}
 
             {/* Coach Letters */}
             {coachLetters.length > 0 && (
-              <div style={{ border: '4px solid black', padding: '1.5rem' }}>
-                <h2 style={{ fontSize: '1.25rem', marginBottom: '1rem' }}>Letters from Coaches</h2>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div>
+                <h2 style={{ fontSize: '1.125rem', marginBottom: '0.75rem' }}>Letters from Coaches</h2>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                   {coachLetters.map(letter => (
-                    <div key={letter.id} style={{ border: '2px solid #eee', padding: '1rem', background: '#fafafa' }}>
+                    <div key={letter.id} style={{ background: '#fafafa', borderRadius: '12px', padding: '1.25rem' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
                         <div>
                           <p style={{ fontWeight: 'bold', marginBottom: '0.125rem' }}>{letter.coachName}</p>
@@ -336,11 +366,11 @@ export default function PublicAthleteProfilePage({ params }: { params: Promise<{
           {/* Right — Achievements */}
           <div>
             {athlete.achievements.length > 0 && (
-              <div style={{ border: '4px solid black', padding: '1.5rem' }}>
-                <h2 style={{ fontSize: '1.25rem', marginBottom: '1rem' }}>Achievements</h2>
+              <div>
+                <h2 style={{ fontSize: '1.125rem', marginBottom: '0.75rem' }}>Achievements</h2>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                   {athlete.achievements.map((achievement, idx) => (
-                    <div key={idx} style={{ display: 'flex', gap: '0.5rem', padding: '0.5rem', background: '#f5f5f5', border: '2px solid #eee' }}>
+                    <div key={idx} style={{ display: 'flex', gap: '0.5rem', padding: '0.75rem', background: '#f5f5f5', borderRadius: '8px' }}>
                       <span style={{ color: 'green', fontWeight: 'bold', flexShrink: 0 }}>&#10003;</span>
                       <span style={{ fontSize: '0.875rem', color: '#333' }}>{achievement}</span>
                     </div>
@@ -352,27 +382,25 @@ export default function PublicAthleteProfilePage({ params }: { params: Promise<{
         </div>
 
         {/* For Coaches */}
-        <div style={{ border: '4px solid black', padding: '1.5rem', marginBottom: '2rem' }}>
-          <div className="bg-black text-white p-4 mb-4" style={{ marginLeft: '-1.5rem', marginRight: '-1.5rem', marginTop: '-1.5rem' }}>
-            <h2 style={{ fontSize: '1.25rem', marginBottom: 0 }}>For Coaches</h2>
-          </div>
+        <div style={{ background: '#fafafa', borderRadius: '16px', padding: '2rem', marginBottom: '2rem' }}>
+          <h2 style={{ fontSize: '1.125rem', marginBottom: '1.25rem' }}>For Coaches</h2>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
             <div>
-              <h3 style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>Position Fit</h3>
-              <p style={{ color: '#666', fontSize: '0.875rem' }}>
+              <h3 style={{ fontWeight: 'bold', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Position Fit</h3>
+              <p style={{ color: '#666', fontSize: '0.875rem', marginBottom: 0 }}>
                 {athlete.sport} {athlete.position} with proven ability.
                 {athlete.height && ` ${athlete.height}`}{athlete.weight && `, ${athlete.weight} lbs.`}
               </p>
             </div>
             <div>
-              <h3 style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>Recruitment Status</h3>
-              <p style={{ color: '#666', fontSize: '0.875rem' }}>
+              <h3 style={{ fontWeight: 'bold', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Recruitment Status</h3>
+              <p style={{ color: '#666', fontSize: '0.875rem', marginBottom: 0 }}>
                 Actively being recruited. Interested in schools with strong academic programs.
               </p>
             </div>
             <div>
-              <h3 style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>Contact</h3>
-              <p style={{ color: '#666', fontSize: '0.875rem' }}>
+              <h3 style={{ fontWeight: 'bold', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Contact</h3>
+              <p style={{ color: '#666', fontSize: '0.875rem', marginBottom: 0 }}>
                 Interested coaches can connect through the LocalHustle platform.
               </p>
             </div>
@@ -381,7 +409,7 @@ export default function PublicAthleteProfilePage({ params }: { params: Promise<{
       </div>
 
       {/* Footer */}
-      <footer style={{ borderTop: '3px solid black', padding: '2rem', textAlign: 'center', color: '#999', fontSize: '0.75rem' }}>
+      <footer style={{ borderTop: '1px solid #eee', padding: '1.5rem', textAlign: 'center', color: '#999', fontSize: '0.75rem' }}>
         &copy; {new Date().getFullYear()} LocalHustle. Connecting athletes with coaches.
       </footer>
     </div>
