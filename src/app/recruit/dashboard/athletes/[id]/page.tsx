@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback, use } from 'react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabaseClient'
 import ReelContainer from '@/components/ReelContainer'
+import PlayerCardCreator from '@/components/player-cards/PlayerCardCreator'
+import PlayerCardDisplay from '@/components/player-cards/PlayerCardDisplay'
 
 // ── Types ──
 interface AthleteProfile {
@@ -91,6 +93,9 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
   const [sentFollowUps, setSentFollowUps] = useState<Set<string>>(new Set())
   const [bulkSelected, setBulkSelected] = useState<Set<string>>(new Set())
   const [bulkSending, setBulkSending] = useState(false)
+  const [playerCards, setPlayerCards] = useState<any[]>([])
+  const [creatingCard, setCreatingCard] = useState(false)
+  const [editingCard, setEditingCard] = useState<any>(null)
 
   // Load athlete and campaign from Supabase
   useEffect(() => {
@@ -169,6 +174,11 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
           thisWeek: weekCount || 0,
           today: todayCount || 0,
         })
+
+        // Fetch player cards
+        const cardsRes = await fetch(`/api/player-cards?athleteId=${id}`)
+        const cardsData = await cardsRes.json()
+        setPlayerCards(cardsData.cards || [])
       } catch (err) {
         console.error('Failed to load athlete data:', err)
       } finally {
@@ -243,6 +253,18 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
       else next.add(coachId)
       return next
     })
+  }
+
+  const refetchCards = async () => {
+    const res = await fetch(`/api/player-cards?athleteId=${id}`)
+    const data = await res.json()
+    setPlayerCards(data.cards || [])
+  }
+
+  const deleteCard = async (cardId: string) => {
+    if (!confirm('Delete this card?')) return
+    await fetch(`/api/player-cards?id=${cardId}`, { method: 'DELETE' })
+    refetchCards()
   }
 
   const selectAllNonResponded = () => {
@@ -424,6 +446,58 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
               ))}
             </div>
           </div>
+          {/* Player Cards */}
+          <div className="dash-card">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <h3 style={{ fontSize: '1.125rem', marginBottom: 0 }}>Player Cards</h3>
+              {!creatingCard && !editingCard && (
+                <button className="dash-btn" style={{ padding: '0.5rem 1rem', fontSize: '0.75rem' }} onClick={() => setCreatingCard(true)}>
+                  Create Card
+                </button>
+              )}
+            </div>
+
+            {creatingCard || editingCard ? (
+              <PlayerCardCreator
+                profile={{
+                  id: athlete.id,
+                  full_name: `${athlete.firstName} ${athlete.lastName}`.toUpperCase(),
+                  school: athlete.highSchool?.toUpperCase(),
+                  sport: athlete.sport,
+                  state: athlete.state,
+                }}
+                athleteId={athlete.id}
+                existingCard={editingCard}
+                useApi
+                onSave={() => {
+                  setCreatingCard(false)
+                  setEditingCard(null)
+                  refetchCards()
+                }}
+                onCancel={() => {
+                  setCreatingCard(false)
+                  setEditingCard(null)
+                }}
+              />
+            ) : playerCards.length === 0 ? (
+              <p style={{ color: '#999', fontSize: '0.875rem', textAlign: 'center', padding: '1rem 0' }}>
+                No player cards yet — create a retro trading card to share with coaches.
+              </p>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                {playerCards.map((card: any) => (
+                  <PlayerCardDisplay
+                    key={card.id}
+                    card={card}
+                    compact
+                    onEdit={() => setEditingCard(card)}
+                    onDelete={() => deleteCard(card.id)}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+
           {/* Public Profile Link */}
           {athlete.slug && (
             <div className="dash-card">

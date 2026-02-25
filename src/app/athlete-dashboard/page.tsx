@@ -9,6 +9,8 @@ import { useStripe, useElements } from '@stripe/react-stripe-js'
 import dynamic from 'next/dynamic'
 import { getGigsInRadius } from '@/lib/geo'
 import ReelContainer from '@/components/ReelContainer'
+import PlayerCardCreator from '@/components/player-cards/PlayerCardCreator'
+import PlayerCardDisplay from '@/components/player-cards/PlayerCardDisplay'
 
 const Elements = dynamic(() => import('@stripe/react-stripe-js').then((mod) => mod.Elements), { ssr: false })
 const CardElement = dynamic(() => import('@stripe/react-stripe-js').then((mod) => mod.CardElement), { ssr: false })
@@ -24,7 +26,7 @@ const athleteGigTypes = [
   { title: 'Custom Gig', description: 'Create a gig and offer it.' },
 ]
 
-type TabId = 'home' | 'gigs' | 'profile' | 'pitch' | 'earnings' | 'squad' | 'payout' | 'recruit' | 'mentorship'
+type TabId = 'home' | 'gigs' | 'profile' | 'pitch' | 'earnings' | 'squad' | 'payout' | 'recruit' | 'mentorship' | 'cards'
 
 const tabs: { id: TabId; label: string }[] = [
   { id: 'home', label: 'Home' },
@@ -34,6 +36,7 @@ const tabs: { id: TabId; label: string }[] = [
   { id: 'earnings', label: 'Earnings' },
   { id: 'squad', label: 'Squad' },
   { id: 'payout', label: 'Payout' },
+  { id: 'cards', label: 'Cards' },
   { id: 'recruit', label: 'Recruit' },
   { id: 'mentorship', label: 'Mentors' },
 ]
@@ -67,6 +70,9 @@ function AthleteDashboardContent() {
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null)
   const [localGigs, setLocalGigs] = useState<any[]>([])
   const [activeTab, setActiveTab] = useState<TabId>('home')
+  const [playerCards, setPlayerCards] = useState<any[]>([])
+  const [creatingCard, setCreatingCard] = useState(false)
+  const [editingCard, setEditingCard] = useState<any>(null)
 
   const searchParams = useSearchParams()
   const router = useRouter()
@@ -131,12 +137,36 @@ function AthleteDashboardContent() {
         })
         const data = await response.json()
         if (data.methods?.length) setSavedMethods(data.methods)
+
+        // Fetch player cards
+        const { data: cards } = await supabase
+          .from('player_cards')
+          .select('*')
+          .eq('athlete_id', user.id)
+          .order('created_at', { ascending: false })
+        setPlayerCards(cards || [])
       }
     }
     fetchData()
   }, [router])
 
   // --- Handlers ---
+
+  const refetchCards = async () => {
+    if (!profile?.id) return
+    const { data: cards } = await supabase
+      .from('player_cards')
+      .select('*')
+      .eq('athlete_id', profile.id)
+      .order('created_at', { ascending: false })
+    setPlayerCards(cards || [])
+  }
+
+  const deleteCard = async (cardId: string) => {
+    if (!confirm('Delete this card?')) return
+    await supabase.from('player_cards').delete().eq('id', cardId)
+    refetchCards()
+  }
 
   const handleSaveProfile = async () => {
     if (!profile.school) { alert('School is required'); return }
@@ -435,6 +465,34 @@ function AthleteDashboardContent() {
                     </div>
                   )
                 })}
+              </div>
+            )}
+
+            {/* Player Cards showcase */}
+            {playerCards.length > 0 && (
+              <div style={{ marginBottom: '1.25rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                  <h2 className="dash-section-title" style={{ margin: 0 }}>Your Player Cards</h2>
+                  <button className="dash-btn dash-btn-sm dash-btn-outline" style={{ width: 'auto' }} onClick={() => setActiveTab('cards')}>View All</button>
+                </div>
+                <div style={{ display: 'flex', gap: '0.75rem', overflowX: 'auto', paddingBottom: '0.5rem' }}>
+                  {playerCards.slice(0, 3).map((card: any) => (
+                    <div key={card.id} style={{ flexShrink: 0 }}>
+                      <PlayerCardDisplay card={card} compact />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {playerCards.length === 0 && (
+              <div style={{ marginBottom: '1.25rem' }}>
+                <h2 className="dash-section-title">Player Cards</h2>
+                <div className="dash-card" style={{ textAlign: 'center', padding: '1.25rem' }}>
+                  <p style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: '0.35rem' }}>Create your retro trading card</p>
+                  <p style={{ fontSize: '0.75rem', color: '#888', marginBottom: '0.75rem' }}>Share with coaches and recruiters</p>
+                  <button className="dash-btn" onClick={() => setActiveTab('cards')}>Create Card</button>
+                </div>
               </div>
             )}
 
@@ -743,6 +801,52 @@ ${profile?.school || 'our local high school'} ${profile?.sport || 'varsity athle
                 {paymentLoading ? 'Saving...' : 'Save Debit Card'}
               </button>
             </div>
+          </div>
+        )}
+
+        {/* ===== CARDS TAB ===== */}
+        {activeTab === 'cards' && (
+          <div>
+            {creatingCard || editingCard ? (
+              <PlayerCardCreator
+                profile={profile}
+                existingCard={editingCard}
+                onSave={() => {
+                  setCreatingCard(false)
+                  setEditingCard(null)
+                  refetchCards()
+                }}
+                onCancel={() => {
+                  setCreatingCard(false)
+                  setEditingCard(null)
+                }}
+              />
+            ) : (
+              <>
+                <h2 className="dash-section-title">Your Player Cards</h2>
+                <p className="dash-section-subtitle">Create retro-style trading cards to share with coaches and recruiters.</p>
+
+                <button className="dash-btn dash-btn-green" style={{ marginBottom: '1rem' }} onClick={() => setCreatingCard(true)}>
+                  Create New Card
+                </button>
+
+                {playerCards.length === 0 ? (
+                  <div className="dash-empty">No cards yet — create your first player card above!</div>
+                ) : (
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                    {playerCards.map((card: any) => (
+                      <PlayerCardDisplay
+                        key={card.id}
+                        card={card}
+                        compact
+                        onEdit={() => setEditingCard(card)}
+                        onDelete={() => deleteCard(card.id)}
+                      />
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
           </div>
         )}
       </div>
