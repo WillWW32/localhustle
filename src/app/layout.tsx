@@ -12,7 +12,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   const [displayedSlogan, setDisplayedSlogan] = useState('')
-  const slogan = "Community Driven Support for Student Athletes"
+  const slogan = "Athletes earn. Parents support. Businesses sponsor. Everyone wins."
   const pathname = usePathname()
 
   const isDashboard = pathname?.includes('-dashboard') || pathname?.startsWith('/admin') || pathname?.startsWith('/recruit/dashboard') || pathname?.startsWith('/mentorship/dashboard')
@@ -49,11 +49,11 @@ export default function RootLayout({
     <html lang="en">
       <head>
         <title>LocalHustle — NIL Money &amp; Scholarships for Student Athletes</title>
-        <meta name="description" content="LocalHustle helps high school and college athletes earn instant cash, Freedom Scholarships, and NIL deals from local businesses. All sports welcome." />
+        <meta name="description" content="Turn local support into real money. Scholarships, gigs, and brand deals for student athletes. The NIL platform built for high school athletes." />
         <meta name="keywords" content="high school athlete NIL, college athlete NIL, basketball NIL, football NIL, student athlete earnings, local business sponsorship, Freedom Scholarships" />
         <meta name="robots" content="index, follow" />
         <meta property="og:title" content="LocalHustle — NIL Money &amp; Scholarships for Student Athletes" />
-        <meta property="og:description" content="Earn instant cash and Freedom Scholarships from local businesses. All sports. Parents and businesses join the movement." />
+        <meta property="og:description" content="Athletes earn. Parents support. Businesses sponsor. Everyone wins. The NIL platform built for high school athletes." />
         <meta property="og:image" content="https://app.localhustle.org/og-image.jpg" />
         <meta property="og:url" content="https://app.localhustle.org" />
         <meta property="og:type" content="website" />
@@ -133,7 +133,7 @@ export default function RootLayout({
                 <a href="/terms" style={{ color: '#666', textDecoration: 'none', fontSize: '0.8rem' }}>Terms</a>
               </nav>
               <p style={{ color: '#999', fontSize: '0.65rem', textAlign: 'center', margin: 0 }}>
-                © {new Date().getFullYear()} LocalHustle — Community Driven Support for Student Athletes
+                © {new Date().getFullYear()} LocalHustle — Athletes earn. Parents support. Businesses sponsor.
               </p>
             </div>
           </footer>

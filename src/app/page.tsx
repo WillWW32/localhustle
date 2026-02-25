@@ -81,7 +81,7 @@ export default function Home() {
             Connecting Local Businesses with Student Athletes
           </h1>
           <p style={{ fontSize: '0.95rem', fontWeight: 'normal', color: '#666', lineHeight: 1.7, marginBottom: '2rem' }}>
-            Earn money instantly. Get real scholarships. Parents fund improvement. Businesses become hometown heroes.
+            Local sponsors. Real earnings. The NIL platform built for high school athletes.
           </p>
           <a href="#get-started" className="btn-fixed-200">Get Started</a>
         </div>
@@ -266,7 +266,7 @@ export default function Home() {
             <div style={{ background: 'white', borderRadius: '16px', padding: '1.75rem' }}>
               <p style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '0.5rem', color: '#22c55e' }}>02</p>
               <h3 style={{ fontSize: '0.95rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>For Mentors</h3>
-              <p style={{ fontSize: '0.8rem', fontWeight: 'normal', color: '#666', margin: 0 }}>Share your experience. Earn $35/session.</p>
+              <p style={{ fontSize: '0.8rem', fontWeight: 'normal', color: '#666', margin: 0 }}>Share your experience. Get paid to mentor.</p>
             </div>
             <div style={{ background: 'white', borderRadius: '16px', padding: '1.75rem' }}>
               <p style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '0.5rem', color: '#22c55e' }}>03</p>
@@ -276,8 +276,9 @@ export default function Home() {
           </div>
 
           <div className="fade-in-scroll" style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
-            <p style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#22c55e', margin: 0 }}>$35</p>
-            <p style={{ fontSize: '0.8rem', fontWeight: 'normal', color: '#999', marginTop: '0.25rem' }}>per 30-minute session</p>
+            <p style={{ fontSize: '0.85rem', fontWeight: 'normal', color: '#666', lineHeight: 1.7, margin: 0 }}>
+              Real conversations with real athletes who made it. Get advice on recruiting, training, and life after high school.
+            </p>
           </div>
 
           <div className="fade-in-scroll" style={{ textAlign: 'center' }}>

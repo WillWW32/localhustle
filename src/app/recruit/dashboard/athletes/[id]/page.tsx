@@ -176,9 +176,13 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
         })
 
         // Fetch player cards
-        const cardsRes = await fetch(`/api/player-cards?athleteId=${id}`)
-        const cardsData = await cardsRes.json()
-        setPlayerCards(cardsData.cards || [])
+        try {
+          const cardsRes = await fetch(`/api/player-cards?athleteId=${id}`)
+          if (cardsRes.ok) {
+            const cardsData = await cardsRes.json()
+            setPlayerCards(cardsData.cards || [])
+          }
+        } catch { /* player cards fetch failed silently */ }
       } catch (err) {
         console.error('Failed to load athlete data:', err)
       } finally {

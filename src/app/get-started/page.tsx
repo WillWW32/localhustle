@@ -16,11 +16,21 @@ export default function GetStarted() {
         return
       }
 
-      const { data: prof } = await supabase
+      let { data: prof } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', user.id)
         .single()
+
+      if (!prof) {
+        // New user — create a minimal profile row
+        const { data: newProf } = await supabase
+          .from('profiles')
+          .insert({ id: user.id, email: user.email, role: 'athlete' })
+          .select()
+          .single()
+        prof = newProf
+      }
 
       if (prof) {
         setProfile(prof)
