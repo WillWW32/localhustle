@@ -35,7 +35,7 @@ export const TEMPLATE_INFO: Record<TemplateName, { name: string; year: string; d
   topps80bball: { name: "1980 Topps BBall", year: "1980", description: "Tri-panel scoring leaders" },
   donruss84: { name: "1984 Donruss", year: "1984", description: "Borderless with bold waves" },
   topps83: { name: "1983 Topps", year: "1983", description: "Dual-photo with circular inset" },
-  topps80baseball: { name: "1980 Topps BB", year: "1980", description: "Ribbon & pennant accents" },
+  topps80baseball: { name: "Fleer Jordan RC", year: "1986", description: "Striped borders, bold banner" },
   henderson80: { name: "1980 Henderson", year: "1980", description: "Bold banner & badge" },
 };
 
