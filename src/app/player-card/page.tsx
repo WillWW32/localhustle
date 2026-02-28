@@ -45,10 +45,38 @@ export default function PlayerCardGeneratorPage() {
   const [email, setEmail] = useState('')
   const [downloading, setDownloading] = useState(false)
   const cardRef = useRef<HTMLDivElement>(null)
+  const mainPhotoRef = useRef<HTMLInputElement>(null)
+  const logoRef = useRef<HTMLInputElement>(null)
 
   const update = useCallback((field: keyof CardData, value: string | null) => {
     setData(prev => ({ ...prev, [field]: value }))
   }, [])
+
+  const handleFileUpload = (file: File, field: 'mainPhoto' | 'logoImage') => {
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      update(field, e.target?.result as string)
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const handleCardTap = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (showBack) return
+    const rect = e.currentTarget.getBoundingClientRect()
+    const x = (e.clientX - rect.left) / rect.width
+    const y = (e.clientY - rect.top) / rect.height
+
+    // Logo area: top-left corner (roughly 0-20% x, 0-15% y)
+    if (x < 0.2 && y < 0.15) {
+      logoRef.current?.click()
+      return
+    }
+    // Main photo area: center of card (roughly 8-92% x, 12-85% y)
+    if (x > 0.08 && x < 0.92 && y > 0.12 && y < 0.85) {
+      mainPhotoRef.current?.click()
+      return
+    }
+  }
 
   const applySportPreset = (sport: string) => {
     const preset = SPORT_PRESETS[sport]
@@ -202,12 +230,32 @@ export default function PlayerCardGeneratorPage() {
             </button>
           </div>
 
-          <div ref={cardRef} style={{ width: '100%', maxWidth: '320px', margin: '0 auto', filter: 'drop-shadow(0 4px 16px rgba(0,0,0,0.15))' }}>
+          <div
+            ref={cardRef}
+            onClick={handleCardTap}
+            style={{ width: '100%', maxWidth: '320px', margin: '0 auto', filter: 'drop-shadow(0 4px 16px rgba(0,0,0,0.15))', cursor: showBack ? 'default' : 'pointer' }}
+          >
             {showBack ? renderBack(template, data) : renderFront(template, data)}
           </div>
           <p style={{ fontSize: '0.65rem', color: '#bbb', textAlign: 'center', marginTop: '0.5rem' }}>
-            {TEMPLATE_INFO[template].name} style
+            {TEMPLATE_INFO[template].name} style{!showBack && ' — tap card to add photo'}
           </p>
+
+          {/* Hidden file inputs for photo upload */}
+          <input
+            ref={mainPhotoRef}
+            type="file"
+            accept="image/*"
+            style={{ display: 'none' }}
+            onChange={e => { const f = e.target.files?.[0]; if (f) handleFileUpload(f, 'mainPhoto'); e.target.value = '' }}
+          />
+          <input
+            ref={logoRef}
+            type="file"
+            accept="image/*"
+            style={{ display: 'none' }}
+            onChange={e => { const f = e.target.files?.[0]; if (f) handleFileUpload(f, 'logoImage'); e.target.value = '' }}
+          />
         </div>
 
         {/* Download CTA */}
