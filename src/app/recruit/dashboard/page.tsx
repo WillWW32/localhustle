@@ -68,6 +68,14 @@ export default function DashboardPage() {
           responseCountMap.set(r.athlete_id, (responseCountMap.get(r.athlete_id) || 0) + 1)
         })
 
+        // Fetch slugs from athlete_profiles
+        const { data: profileSlugs } = await supabase
+          .from('athlete_profiles')
+          .select('athlete_id, slug')
+          .in('athlete_id', athleteIds)
+        const slugMap = new Map<string, string>()
+        profileSlugs?.forEach(p => slugMap.set(p.athlete_id, p.slug))
+
         const mapped: Athlete[] = athleteRows.map(a => ({
           id: a.id,
           firstName: a.first_name,
@@ -78,7 +86,7 @@ export default function DashboardPage() {
           gradYear: a.grad_year || '',
           campaignStatus: (campaignMap.get(a.id) as Athlete['campaignStatus']) || 'pending',
           responseCount: responseCountMap.get(a.id) || 0,
-          slug: a.slug || '',
+          slug: a.slug || slugMap.get(a.id) || '',
         }))
 
         setAthletes(mapped)

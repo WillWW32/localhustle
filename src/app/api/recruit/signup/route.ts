@@ -38,7 +38,6 @@ export async function POST(request: NextRequest) {
         high_school: athlete.highSchool || null,
         city: athlete.city || null,
         state: athlete.state || null,
-        slug,
       })
       .select()
       .single()
@@ -91,6 +90,7 @@ export async function POST(request: NextRequest) {
         .from('templates')
         .insert({
           campaign_id: campaign.id,
+          name: 'Initial Outreach',
           type: 'initial',
           subject: 'Interested in {{school}} - {{athleteName}} ({{gradYear}} {{position}})',
           body: `Dear {{coachName}},\n\nMy name is {{athleteName}} and I am a {{gradYear}} {{position}} at {{highSchool}} in {{city}}, {{state}}.\n\nI am very interested in {{school}} and would love the opportunity to discuss how I can contribute to your program.\n\nHere is a link to my highlight video: {{highlightUrl}}\n\nThank you for your time and consideration.\n\nRespectfully,\n{{athleteName}}`,

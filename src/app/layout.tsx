@@ -129,6 +129,7 @@ export default function RootLayout({
                 <a href="/ambassador" style={{ color: '#666', textDecoration: 'none', fontSize: '0.8rem' }}>Ambassador</a>
                 <a href="/recruit" style={{ color: '#666', textDecoration: 'none', fontSize: '0.8rem' }}>Recruit</a>
                 <a href="/mentorship" style={{ color: '#666', textDecoration: 'none', fontSize: '0.8rem' }}>Mentorship</a>
+                <a href="/player-card" style={{ color: '#666', textDecoration: 'none', fontSize: '0.8rem' }}>Player Card</a>
                 <a href="/privacy" style={{ color: '#666', textDecoration: 'none', fontSize: '0.8rem' }}>Privacy</a>
                 <a href="/terms" style={{ color: '#666', textDecoration: 'none', fontSize: '0.8rem' }}>Terms</a>
               </nav>

@@ -134,6 +134,21 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
         })
         setInstagramReels(athleteRow.instagram_reels || [])
 
+        // Fetch slug from athlete_profiles if not on athletes table
+        if (!athleteRow.slug) {
+          try {
+            const { data: ap } = await supabase
+              .from('athlete_profiles')
+              .select('slug')
+              .eq('athlete_id', id)
+              .limit(1)
+              .single()
+            if (ap?.slug) {
+              setAthlete(prev => prev ? { ...prev, slug: ap.slug } : prev)
+            }
+          } catch { /* no athlete_profiles row */ }
+        }
+
         // Load campaign
         const { data: campaign } = await supabase
           .from('campaigns')

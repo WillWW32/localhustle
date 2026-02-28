@@ -143,8 +143,42 @@ export default function Home() {
       </section>
 
 
+      {/* Player Card CTA */}
+      <section style={{ padding: '4rem 2rem', background: '#fafafa' }}>
+        <div className="fade-in-scroll" style={{ maxWidth: '560px', margin: '0 auto', textAlign: 'center' }}>
+          <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '1rem' }}>
+            Create Your Player Card
+          </h2>
+          <p style={{ fontSize: '0.9rem', fontWeight: 'normal', color: '#666', lineHeight: 1.7, marginBottom: '2rem' }}>
+            Build a retro trading card with your stats, school colors, and highlights. Free to create — download instantly.
+          </p>
+          <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap', marginBottom: '2rem' }}>
+            {['1986 Fleer', '1984 Donruss', '1983 Topps'].map((name) => (
+              <span key={name} style={{
+                padding: '0.5rem 1rem', fontSize: '0.75rem', fontWeight: 'bold',
+                background: 'white', borderRadius: '9999px', color: '#666',
+                fontFamily: "'Courier New', Courier, monospace",
+              }}>
+                {name}
+              </span>
+            ))}
+            <span style={{
+              padding: '0.5rem 1rem', fontSize: '0.75rem', fontWeight: 'bold',
+              background: 'white', borderRadius: '9999px', color: '#999',
+              fontFamily: "'Courier New', Courier, monospace",
+            }}>
+              +3 more
+            </span>
+          </div>
+          <a href="/player-card" className="btn-fixed-200" style={{ background: '#22c55e', borderColor: '#22c55e' }}>
+            Make My Card
+          </a>
+        </div>
+      </section>
+
+
       {/* Get Started */}
-      <section id="get-started" style={{ padding: '4rem 2rem', background: '#fafafa', textAlign: 'center' }}>
+      <section id="get-started" style={{ padding: '4rem 2rem', background: 'white', textAlign: 'center' }}>
         <div className="fade-in-scroll" style={{ maxWidth: '400px', margin: '0 auto' }}>
           <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '2.5rem' }}>Get Started</h2>
 
