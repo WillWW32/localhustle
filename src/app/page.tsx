@@ -3,6 +3,9 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
+import { Fleer86Front } from '@/components/player-cards/templates/Fleer86'
+import type { CardData } from '@/components/player-cards/types'
+import { DEFAULT_CARD_DATA } from '@/components/player-cards/types'
 
 type Role = 'athlete' | 'parent' | 'business'
 
@@ -152,24 +155,30 @@ export default function Home() {
           <p style={{ fontSize: '0.9rem', fontWeight: 'normal', color: '#666', lineHeight: 1.7, marginBottom: '2rem' }}>
             Build a retro trading card with your stats, school colors, and highlights. Free to create — download instantly.
           </p>
-          <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap', marginBottom: '2rem' }}>
-            {['1986 Fleer', '1984 Donruss', '1983 Topps'].map((name) => (
-              <span key={name} style={{
-                padding: '0.5rem 1rem', fontSize: '0.75rem', fontWeight: 'bold',
-                background: 'white', borderRadius: '9999px', color: '#666',
-                fontFamily: "'Courier New', Courier, monospace",
-              }}>
-                {name}
-              </span>
-            ))}
-            <span style={{
-              padding: '0.5rem 1rem', fontSize: '0.75rem', fontWeight: 'bold',
-              background: 'white', borderRadius: '9999px', color: '#999',
-              fontFamily: "'Courier New', Courier, monospace",
-            }}>
-              +3 more
-            </span>
+
+          {/* Jordan RC style preview card */}
+          <div style={{ width: '220px', margin: '0 auto 2rem', filter: 'drop-shadow(0 6px 20px rgba(0,0,0,0.2))', transform: 'rotate(-2deg)' }}>
+            <Fleer86Front data={{
+              ...DEFAULT_CARD_DATA,
+              playerName: 'YOUR NAME',
+              position: 'Guard',
+              jerseyNumber: '23',
+              school: 'YOUR SCHOOL',
+              primaryColor: '#ce1141',
+              secondaryColor: '#000000',
+              accentColor: '#ffffff',
+              textColor: '#ffffff',
+              sport: 'Basketball',
+              stat1Label: 'PPG', stat1Value: '28.2',
+              stat2Label: 'RPG', stat2Value: '6.2',
+              stat3Label: 'APG', stat3Value: '5.3',
+              stat4Label: 'FG%', stat4Value: '.497',
+            }} />
           </div>
+
+          <p style={{ fontSize: '0.75rem', color: '#999', marginBottom: '1.5rem' }}>
+            6 retro templates — customize colors, stats, and photos
+          </p>
           <a href="/player-card" className="btn-fixed-200" style={{ background: '#22c55e', borderColor: '#22c55e' }}>
             Make My Card
           </a>
