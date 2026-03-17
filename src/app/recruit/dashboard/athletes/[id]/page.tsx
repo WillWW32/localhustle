@@ -25,6 +25,7 @@ interface AthleteProfile {
   xConnected: boolean
   slug: string
   instagramReels: string[]
+  profileImageUrl: string
 }
 
 interface RespondedCoach {
@@ -338,6 +339,41 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
       {/* ══ PROFILE TAB ══ */}
       {currentTab === 'profile' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          {/* Profile Photo */}
+          <div className="dash-card" style={{ textAlign: 'center' }}>
+            <div style={{ position: 'relative', display: 'inline-block' }}>
+              {athlete.profileImageUrl ? (
+                <img src={athlete.profileImageUrl} alt="Profile" style={{ width: '120px', height: '120px', borderRadius: '50%', objectFit: 'cover' }} />
+              ) : (
+                <div style={{ width: '120px', height: '120px', borderRadius: '50%', background: 'black', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2.5rem', fontWeight: 'bold', margin: '0 auto' }}>
+                  {athlete.firstName.charAt(0)}{athlete.lastName.charAt(0)}
+                </div>
+              )}
+            </div>
+            <h2 style={{ fontSize: '1.25rem', marginTop: '0.75rem', marginBottom: '0.25rem' }}>{athlete.firstName} {athlete.lastName}</h2>
+            <p style={{ color: '#666', fontSize: '0.875rem', marginBottom: '1rem' }}>{athlete.sport} &bull; {athlete.position}</p>
+            <label style={{ display: 'inline-block', padding: '0.5rem 1.25rem', background: '#f0f0f0', borderRadius: '9999px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold', fontFamily: 'inherit' }}>
+              {athlete.profileImageUrl ? 'Change Photo' : 'Upload Photo'}
+              <input
+                type="file"
+                accept="image/*"
+                style={{ display: 'none' }}
+                onChange={async (e) => {
+                  const file = e.target.files?.[0]
+                  if (!file) return
+                  const path = `public/${id}-profile.jpg`
+                  const { error: uploadErr } = await supabase.storage.from('profile-pics').upload(path, file, { upsert: true })
+                  if (uploadErr) { console.error('Upload error:', uploadErr); return }
+                  const { data: urlData } = supabase.storage.from('profile-pics').getPublicUrl(path)
+                  if (urlData?.publicUrl) {
+                    await supabase.from('athletes').update({ profile_image_url: urlData.publicUrl }).eq('id', id)
+                    setAthlete(prev => prev ? { ...prev, profileImageUrl: urlData.publicUrl } : prev)
+                  }
+                }}
+              />
+            </label>
+          </div>
+
           {/* Scouting Report Link */}
           <Link
             href={`/recruit/dashboard/athletes/${id}/scouting-report`}

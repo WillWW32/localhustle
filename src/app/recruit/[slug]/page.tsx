@@ -23,6 +23,9 @@ interface AthleteProfile {
   isPrivate: boolean
   athleteId: string
   instagramReels: string[]
+  contactEmail: string
+  contactPhone: string
+  profileImageUrl: string
 }
 
 interface ScoutingReportSummary {
@@ -70,6 +73,9 @@ export default function PublicAthleteProfilePage({ params }: { params: Promise<{
           isPrivate: data.profile.isPrivate || false,
           athleteId: data.profile.athleteId,
           instagramReels: data.profile.instagramReels || [],
+          contactEmail: data.profile.contactEmail || '',
+          contactPhone: data.profile.contactPhone || '',
+          profileImageUrl: data.profile.profileImageUrl || '',
         })
 
         if (data.scoutingReport) {
@@ -208,9 +214,13 @@ export default function PublicAthleteProfilePage({ params }: { params: Promise<{
         <div style={{ background: '#fafafa', borderRadius: '16px', padding: '2rem', marginBottom: '2rem' }}>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
             <div>
-              <div style={{ width: '100px', height: '100px', borderRadius: '50%', background: 'black', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem', fontWeight: 'bold', marginBottom: '1rem' }}>
-                {athlete.firstName.charAt(0)}{athlete.lastName.charAt(0)}
-              </div>
+              {athlete.profileImageUrl ? (
+                <img src={athlete.profileImageUrl} alt={`${athlete.firstName} ${athlete.lastName}`} style={{ width: '100px', height: '100px', borderRadius: '50%', objectFit: 'cover', marginBottom: '1rem' }} />
+              ) : (
+                <div style={{ width: '100px', height: '100px', borderRadius: '50%', background: 'black', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem', fontWeight: 'bold', marginBottom: '1rem' }}>
+                  {athlete.firstName.charAt(0)}{athlete.lastName.charAt(0)}
+                </div>
+              )}
               <h1 style={{ fontSize: '1.75rem', marginBottom: '0.25rem' }}>{athlete.firstName} {athlete.lastName}</h1>
               <p style={{ color: 'green', fontWeight: 'bold', marginBottom: '0.5rem' }}>
                 {athlete.sport} &bull; {athlete.position}
@@ -334,9 +344,22 @@ export default function PublicAthleteProfilePage({ params }: { params: Promise<{
             </div>
             <div>
               <h3 style={{ fontWeight: 'bold', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Contact</h3>
-              <p style={{ color: '#666', fontSize: '0.875rem', marginBottom: 0 }}>
-                Interested coaches can connect through the LocalHustle platform.
-              </p>
+              {athlete.contactEmail ? (
+                <div>
+                  <p style={{ color: '#666', fontSize: '0.875rem', marginBottom: '0.25rem' }}>
+                    {athlete.contactEmail}
+                  </p>
+                  {athlete.contactPhone && (
+                    <p style={{ color: '#666', fontSize: '0.875rem', marginBottom: 0 }}>
+                      {athlete.contactPhone}
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <p style={{ color: '#666', fontSize: '0.875rem', marginBottom: 0 }}>
+                  Contact through LocalHustle platform.
+                </p>
+              )}
             </div>
           </div>
         </div>

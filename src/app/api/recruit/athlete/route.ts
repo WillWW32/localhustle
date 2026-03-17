@@ -78,6 +78,7 @@ export async function GET(request: NextRequest) {
       xConnected: !!athleteRow.x_handle,
       slug,
       instagramReels: athleteRow.instagram_reels || [],
+      profileImageUrl: athleteRow.profile_image_url || '',
     },
     campaign: campaign ? {
       id: campaign.id,

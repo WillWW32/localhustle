@@ -87,6 +87,9 @@ export async function GET(request: NextRequest) {
       isPrivate: profile.visibility === 'private',
       athleteId: athleteRow.id,
       instagramReels: reels,
+      contactEmail: athleteRow.parent_email || '',
+      contactPhone: athleteRow.parent_phone || '',
+      profileImageUrl: athleteRow.profile_image_url || '',
     },
     scoutingReport: scoutingRow || null,
     coachLetters: (letters || []).map((l: Record<string, unknown>) => ({
