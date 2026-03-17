@@ -34,6 +34,9 @@ export default function RecruitLandingPage() {
             <Link href="/recruit/signup" className="btn-fixed-200">
               Start Now
             </Link>
+            <Link href="/recruit/login" style={{ display: 'inline-block', padding: '0.75rem 2rem', fontSize: '0.85rem', fontWeight: 'bold', fontFamily: "'Courier New', Courier, monospace", border: '2px solid black', borderRadius: '9999px', color: 'black', textDecoration: 'none' }}>
+              Athlete Login
+            </Link>
           </div>
         </div>
       </section>

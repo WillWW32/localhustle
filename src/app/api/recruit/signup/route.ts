@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabaseClient'
+import { randomUUID } from 'crypto'
 
 function generateSlug(firstName: string, lastName: string): string {
   return `${firstName.toLowerCase()}-${lastName.toLowerCase()}-${Date.now()}`
@@ -18,15 +19,48 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing athlete information' }, { status: 400 })
     }
 
+    // Check if athlete already exists for this parent email + name
+    const { data: existing } = await supabaseAdmin
+      .from('athletes')
+      .select('id')
+      .eq('parent_email', parent.email)
+      .eq('first_name', athlete.firstName)
+      .eq('last_name', athlete.lastName)
+      .limit(1)
+      .maybeSingle()
+
+    if (existing) {
+      // Athlete already exists — get their slug and campaign
+      const { data: profile } = await supabaseAdmin
+        .from('athlete_profiles')
+        .select('slug')
+        .eq('athlete_id', existing.id)
+        .maybeSingle()
+
+      const { data: campaign } = await supabaseAdmin
+        .from('campaigns')
+        .select('id')
+        .eq('athlete_id', existing.id)
+        .maybeSingle()
+
+      return NextResponse.json({
+        success: true,
+        athleteId: existing.id,
+        campaignId: campaign?.id || null,
+        slug: profile?.slug || '',
+        message: 'Athlete already exists',
+      })
+    }
+
     const slug = generateSlug(athlete.firstName, athlete.lastName)
 
-    // Insert athlete record
+    // Insert athlete record — use UUID for unique email to avoid constraint violations
     const { data: athleteRecord, error: athleteError } = await supabaseAdmin
       .from('athletes')
       .insert({
         first_name: athlete.firstName,
         last_name: athlete.lastName,
-        email: `${athlete.firstName.toLowerCase()}.${athlete.lastName.toLowerCase()}.${Date.now()}@athlete.localhustle.org`,
+        email: `${randomUUID()}@athlete.localhustle.org`,
         parent_name: parent.name || null,
         parent_email: parent.email,
         parent_phone: parent.phone || null,

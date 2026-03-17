@@ -1,191 +1,124 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { supabase } from '@/lib/supabaseClient'
 
-interface Athlete {
+interface AthleteResult {
   id: string
-  firstName: string
-  lastName: string
+  name: string
   sport: string
-  position: string
-  highSchool: string
-  gradYear: string
-  campaignStatus: 'active' | 'paused' | 'pending'
-  responseCount: number
-  slug: string
 }
 
 export default function DashboardPage() {
-  const [athletes, setAthletes] = useState<Athlete[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const router = useRouter()
+  const [email, setEmail] = useState('')
+  const [athletes, setAthletes] = useState<AthleteResult[] | null>(null)
+  const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    const loadAthletes = async () => {
-      setIsLoading(true)
-      try {
-        const { data: { user } } = await supabase.auth.getUser()
-        if (!user) {
-          setError('Please sign in to view your dashboard')
-          setIsLoading(false)
-          return
-        }
-
-        // Fetch athletes where parent_email matches logged-in user
-        const { data: athleteRows, error: athleteErr } = await supabase
-          .from('athletes')
-          .select('*')
-          .eq('parent_email', user.email)
-          .order('created_at', { ascending: false })
-
-        if (athleteErr) throw athleteErr
-        if (!athleteRows || athleteRows.length === 0) {
-          setAthletes([])
-          setIsLoading(false)
-          return
-        }
-
-        // Fetch campaigns for these athletes
-        const athleteIds = athleteRows.map(a => a.id)
-        const { data: campaigns } = await supabase
-          .from('campaigns')
-          .select('id, athlete_id, status')
-          .in('athlete_id', athleteIds)
-
-        // Fetch response counts
-        const { data: responses } = await supabase
-          .from('responses')
-          .select('athlete_id')
-          .in('athlete_id', athleteIds)
-
-        const campaignMap = new Map<string, string>()
-        campaigns?.forEach(c => campaignMap.set(c.athlete_id, c.status))
-
-        const responseCountMap = new Map<string, number>()
-        responses?.forEach(r => {
-          responseCountMap.set(r.athlete_id, (responseCountMap.get(r.athlete_id) || 0) + 1)
-        })
-
-        // Fetch slugs from athlete_profiles
-        const { data: profileSlugs } = await supabase
-          .from('athlete_profiles')
-          .select('athlete_id, slug')
-          .in('athlete_id', athleteIds)
-        const slugMap = new Map<string, string>()
-        profileSlugs?.forEach(p => slugMap.set(p.athlete_id, p.slug))
-
-        const mapped: Athlete[] = athleteRows.map(a => ({
-          id: a.id,
-          firstName: a.first_name,
-          lastName: a.last_name,
-          sport: a.sport || '',
-          position: a.position || '',
-          highSchool: a.high_school || '',
-          gradYear: a.grad_year || '',
-          campaignStatus: (campaignMap.get(a.id) as Athlete['campaignStatus']) || 'pending',
-          responseCount: responseCountMap.get(a.id) || 0,
-          slug: a.slug || slugMap.get(a.id) || '',
-        }))
-
-        setAthletes(mapped)
-      } catch (err) {
-        console.error('Failed to load athletes:', err)
-        setError('Failed to load athletes')
-      } finally {
-        setIsLoading(false)
-      }
+  const handleLookup = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError(null)
+    if (!email.trim() || !email.includes('@')) {
+      setError('Please enter a valid email')
+      return
     }
-    loadAthletes()
-  }, [])
 
-  const getStatusBadge = (status: string) => {
-    if (status === 'active') return 'dash-badge-green'
-    if (status === 'paused') return 'dash-badge-yellow'
-    return 'dash-badge'
-  }
+    setLoading(true)
+    try {
+      const res = await fetch('/api/recruit/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      })
 
-  const getStatusLabel = (status: string) => {
-    const labels: Record<string, string> = { active: 'Active', paused: 'Paused', pending: 'Pending' }
-    return labels[status] || ''
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.error || 'No athletes found for this email')
+      }
+
+      const data = await res.json()
+
+      if (data.athletes.length === 1) {
+        router.push(`/recruit/dashboard/athletes/${data.athletes[0].id}`)
+      } else {
+        setAthletes(data.athletes)
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Lookup failed')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
     <div className="dashboard-container" style={{ padding: '0 1rem', paddingBottom: '4rem' }}>
-      {/* Header */}
       <div style={{ padding: '1.5rem 0', borderBottom: '1px solid #eee', marginBottom: '1.5rem' }}>
         <h1 style={{ fontSize: '1.5rem', marginBottom: '0.25rem' }}>Recruitment Dashboard</h1>
-        <p style={{ color: '#666', fontSize: '0.875rem', marginBottom: 0 }}>Manage your athlete recruitment campaigns</p>
+        <p style={{ color: '#666', fontSize: '0.875rem', marginBottom: 0 }}>Enter your email to access your athlete profiles</p>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-3 gap-3 mb-8">
-        <div className="dash-card" style={{ textAlign: 'center' }}>
-          <p className="dash-stat-value">{athletes.length}</p>
-          <p className="dash-stat-label">Athletes</p>
-        </div>
-        <div className="dash-card" style={{ textAlign: 'center' }}>
-          <p className="dash-stat-value">{athletes.filter((a) => a.campaignStatus === 'active').length}</p>
-          <p className="dash-stat-label">Active</p>
-        </div>
-        <div className="dash-card" style={{ textAlign: 'center' }}>
-          <p className="dash-stat-value">{athletes.reduce((sum, a) => sum + a.responseCount, 0)}</p>
-          <p className="dash-stat-label">Responses</p>
-        </div>
-      </div>
+      {!athletes ? (
+        <div style={{ maxWidth: '400px', margin: '2rem auto', textAlign: 'center' }}>
+          <form onSubmit={handleLookup}>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="your@email.com"
+              style={{
+                width: '100%',
+                padding: '0.875rem 1rem',
+                fontSize: '0.95rem',
+                fontFamily: "'Courier New', Courier, monospace",
+                border: '1px solid #ddd',
+                borderRadius: '8px',
+                background: 'white',
+                outline: 'none',
+                textAlign: 'center',
+              }}
+            />
 
-      {/* Heading with Add button */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-        <h2 style={{ fontSize: '1.25rem', marginBottom: 0 }}>Your Athletes</h2>
-        <Link href="/recruit/signup" className="dash-btn" style={{ padding: '0.5rem 1rem', fontSize: '0.875rem' }}>
-          + Add Athlete
-        </Link>
-      </div>
+            {error && (
+              <p style={{ color: '#dc2626', fontSize: '0.85rem', fontWeight: 'bold', marginTop: '1rem' }}>
+                {error}
+              </p>
+            )}
 
-      {/* Athletes List */}
-      {isLoading ? (
-        <div className="dash-empty">Loading athletes...</div>
-      ) : error ? (
-        <div className="dash-empty" style={{ color: 'red' }}>{error}</div>
-      ) : athletes.length === 0 ? (
-        <div className="dash-empty">
-          <p style={{ marginBottom: '1rem' }}>No athletes yet. Get started by adding your first athlete.</p>
-          <Link href="/recruit/signup" className="dash-btn">Add Your First Athlete</Link>
+            <button
+              type="submit"
+              disabled={loading}
+              className="dash-btn"
+              style={{ width: '100%', marginTop: '1.5rem', padding: '0.875rem', opacity: loading ? 0.6 : 1 }}
+            >
+              {loading ? 'Looking up...' : 'Continue'}
+            </button>
+          </form>
+
+          <p style={{ fontSize: '0.8rem', color: '#999', marginTop: '2rem' }}>
+            Don&apos;t have an account?{' '}
+            <Link href="/recruit/signup" style={{ color: 'black', fontWeight: 'bold' }}>Sign up</Link>
+          </p>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-          {athletes.map((athlete) => (
-            <Link
-              key={athlete.id}
-              href={`/recruit/dashboard/athletes/${athlete.id}`}
-              className="dash-card"
-              style={{ display: 'block', textDecoration: 'none', color: 'inherit' }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <div>
-                  <h3 style={{ fontSize: '1.125rem', marginBottom: '0.25rem' }}>
-                    {athlete.firstName} {athlete.lastName}
-                  </h3>
-                  <p style={{ color: '#666', fontSize: '0.875rem', marginBottom: '0.25rem' }}>
-                    {athlete.sport} &bull; {athlete.position}
-                  </p>
-                  <p style={{ color: '#999', fontSize: '0.75rem', marginBottom: 0 }}>
-                    {athlete.highSchool} &bull; Class of {athlete.gradYear}
-                  </p>
-                </div>
-                <div style={{ textAlign: 'right' }}>
-                  <span className={getStatusBadge(athlete.campaignStatus)}>
-                    {getStatusLabel(athlete.campaignStatus)}
-                  </span>
-                  <p style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'green', marginTop: '0.5rem', marginBottom: 0 }}>
-                    {athlete.responseCount}
-                  </p>
-                  <p style={{ fontSize: '0.625rem', color: '#999', marginBottom: 0 }}>responses</p>
-                </div>
-              </div>
-            </Link>
-          ))}
+        <div style={{ maxWidth: '500px', margin: '2rem auto' }}>
+          <p style={{ fontSize: '0.85rem', color: '#666', marginBottom: '1.5rem', textAlign: 'center' }}>
+            Select your athlete profile:
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            {athletes.map((a) => (
+              <button
+                key={a.id}
+                onClick={() => router.push(`/recruit/dashboard/athletes/${a.id}`)}
+                className="dash-card"
+                style={{ cursor: 'pointer', textAlign: 'left', border: '1px solid #eee' }}
+              >
+                <p style={{ fontWeight: 'bold', fontSize: '1rem', marginBottom: '0.25rem' }}>{a.name}</p>
+                <p style={{ color: '#666', fontSize: '0.85rem', margin: 0 }}>{a.sport}</p>
+              </button>
+            ))}
+          </div>
         </div>
       )}
     </div>

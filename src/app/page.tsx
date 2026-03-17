@@ -83,7 +83,23 @@ export default function Home() {
           <p style={{ fontSize: '0.95rem', fontWeight: 'normal', color: '#666', lineHeight: 1.7, marginBottom: '2rem' }}>
             Local sponsors. Real earnings. The NIL platform built for high school athletes.
           </p>
-          <a href="#get-started" className="btn-fixed-200">Get Started</a>
+          <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+            <a href="#get-started" className="btn-fixed-200">Get Started</a>
+            <a href="/recruit/signup" style={{
+              display: 'inline-block',
+              padding: '0.75rem 2rem',
+              fontSize: '0.85rem',
+              fontWeight: 'bold',
+              fontFamily: "'Courier New', Courier, monospace",
+              background: '#22c55e',
+              color: 'white',
+              border: 'none',
+              borderRadius: '9999px',
+              textDecoration: 'none',
+            }}>
+              Get Recruited
+            </a>
+          </div>
         </div>
       </section>
 
