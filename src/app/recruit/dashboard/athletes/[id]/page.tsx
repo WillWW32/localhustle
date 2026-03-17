@@ -816,6 +816,55 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
             </div>
           </div>
 
+          {/* Custom Profile URL */}
+          <div className="dash-card">
+            <h3 style={{ fontSize: '1.125rem', marginBottom: '0.75rem' }}>Profile URL</h3>
+            <p style={{ color: '#666', fontSize: '0.8rem', marginBottom: '0.75rem' }}>
+              Customize your public profile link. Use lowercase letters, numbers, and hyphens only.
+            </p>
+            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+              <span style={{ color: '#999', fontSize: '0.8rem', whiteSpace: 'nowrap' }}>localhustle.org/recruit/</span>
+              <input
+                type="text"
+                defaultValue={athlete.slug}
+                id="slug-input"
+                style={{
+                  flex: 1,
+                  padding: '0.5rem 0.75rem',
+                  fontSize: '0.875rem',
+                  fontFamily: "'Courier New', Courier, monospace",
+                  border: '1px solid #ddd',
+                  borderRadius: '8px',
+                  outline: 'none',
+                }}
+                placeholder="josiah-boone-26"
+              />
+              <button
+                className="dash-btn"
+                style={{ padding: '0.5rem 1rem', fontSize: '0.75rem', whiteSpace: 'nowrap' }}
+                onClick={async () => {
+                  const input = document.getElementById('slug-input') as HTMLInputElement
+                  const newSlug = input.value.toLowerCase().replace(/[^a-z0-9-]/g, '').replace(/--+/g, '-')
+                  if (!newSlug || newSlug.length < 3) { alert('URL must be at least 3 characters'); return }
+                  const res = await fetch('/api/recruit/update-slug', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ athleteId: id, slug: newSlug }),
+                  })
+                  if (res.ok) {
+                    setAthlete(prev => prev ? { ...prev, slug: newSlug } : prev)
+                    alert('Profile URL updated!')
+                  } else {
+                    const data = await res.json()
+                    alert(data.error || 'Failed to update URL')
+                  }
+                }}
+              >
+                Save
+              </button>
+            </div>
+          </div>
+
           <div className="dash-card">
             <h3 style={{ fontSize: '1.125rem', marginBottom: '1rem' }}>Privacy</h3>
             <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }}>

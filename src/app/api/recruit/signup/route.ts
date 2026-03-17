@@ -2,8 +2,22 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabaseClient'
 import { randomUUID } from 'crypto'
 
-function generateSlug(firstName: string, lastName: string): string {
-  return `${firstName.toLowerCase()}-${lastName.toLowerCase()}-${Date.now()}`
+async function generateSlug(firstName: string, lastName: string, gradYear?: string): Promise<string> {
+  const base = `${firstName.toLowerCase()}-${lastName.toLowerCase()}`
+  const suffix = gradYear ? gradYear.slice(-2) : String(Math.floor(Math.random() * 99) + 1)
+  let slug = `${base}-${suffix}`
+
+  // Check if slug exists, add number if needed
+  const { data: existing } = await supabaseAdmin
+    .from('athlete_profiles')
+    .select('slug')
+    .eq('slug', slug)
+    .maybeSingle()
+
+  if (existing) {
+    slug = `${base}-${suffix}-${Math.floor(Math.random() * 99) + 1}`
+  }
+  return slug
 }
 
 export async function POST(request: NextRequest) {
@@ -52,7 +66,7 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    const slug = generateSlug(athlete.firstName, athlete.lastName)
+    const slug = await generateSlug(athlete.firstName, athlete.lastName, athlete.gradYear)
 
     // Insert athlete record — use UUID for unique email to avoid constraint violations
     const { data: athleteRecord, error: athleteError } = await supabaseAdmin
