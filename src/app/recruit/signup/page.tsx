@@ -81,7 +81,8 @@ export default function SignupPage() {
         throw new Error(errorData.error || 'Signup failed')
       }
 
-      router.push('/recruit/dashboard')
+      const data = await response.json()
+      router.push(`/recruit/success?slug=${data.slug}`)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred during signup')
     } finally {
