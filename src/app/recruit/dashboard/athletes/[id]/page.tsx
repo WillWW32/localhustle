@@ -97,98 +97,28 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
   const [creatingCard, setCreatingCard] = useState(false)
   const [editingCard, setEditingCard] = useState<any>(null)
 
-  // Load athlete and campaign from Supabase
+  // Load athlete and campaign via server-side API
   useEffect(() => {
     const loadAthlete = async () => {
       setLoading(true)
       try {
-        const { data: athleteRow, error: athleteErr } = await supabase
-          .from('athletes')
-          .select('*')
-          .eq('id', id)
-          .single()
-
-        if (athleteErr || !athleteRow) {
-          console.error('Failed to load athlete:', athleteErr)
+        const res = await fetch(`/api/recruit/athlete?id=${id}`)
+        if (!res.ok) {
+          console.error('Failed to load athlete')
           setLoading(false)
           return
         }
+        const data = await res.json()
 
-        setAthlete({
-          id: athleteRow.id,
-          firstName: athleteRow.first_name,
-          lastName: athleteRow.last_name,
-          sport: athleteRow.sport || '',
-          position: athleteRow.position || '',
-          height: athleteRow.height || '',
-          weight: athleteRow.weight || '',
-          highSchool: athleteRow.high_school || '',
-          city: athleteRow.city || '',
-          state: athleteRow.state || '',
-          gradYear: athleteRow.grad_year || '',
-          bio: athleteRow.bio || '',
-          highlightUrl: athleteRow.highlight_url || '',
-          xConnected: !!athleteRow.x_handle,
-          slug: athleteRow.slug || '',
-          instagramReels: athleteRow.instagram_reels || [],
-        })
-        setInstagramReels(athleteRow.instagram_reels || [])
+        setAthlete(data.athlete)
+        setInstagramReels(data.athlete.instagramReels || [])
 
-        // Fetch slug from athlete_profiles if not on athletes table
-        if (!athleteRow.slug) {
-          try {
-            const { data: ap } = await supabase
-              .from('athlete_profiles')
-              .select('slug')
-              .eq('athlete_id', id)
-              .limit(1)
-              .single()
-            if (ap?.slug) {
-              setAthlete(prev => prev ? { ...prev, slug: ap.slug } : prev)
-            }
-          } catch { /* no athlete_profiles row */ }
+        if (data.campaign) {
+          setCampaignId(data.campaign.id)
+          setCampaignStatus(data.campaign.status === 'paused' ? 'paused' : 'active')
         }
 
-        // Load campaign
-        const { data: campaign } = await supabase
-          .from('campaigns')
-          .select('*')
-          .eq('athlete_id', id)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .single()
-
-        if (campaign) {
-          setCampaignId(campaign.id)
-          setCampaignStatus(campaign.status === 'paused' ? 'paused' : 'active')
-        }
-
-        // Load send counts from messages table
-        const { count: totalCount } = await supabase
-          .from('messages')
-          .select('*', { count: 'exact', head: true })
-          .eq('athlete_id', id)
-
-        const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString()
-        const { count: weekCount } = await supabase
-          .from('messages')
-          .select('*', { count: 'exact', head: true })
-          .eq('athlete_id', id)
-          .gte('sent_at', weekAgo)
-
-        const todayStart = new Date()
-        todayStart.setHours(0, 0, 0, 0)
-        const { count: todayCount } = await supabase
-          .from('messages')
-          .select('*', { count: 'exact', head: true })
-          .eq('athlete_id', id)
-          .gte('sent_at', todayStart.toISOString())
-
-        setSendCount({
-          total: totalCount || 0,
-          thisWeek: weekCount || 0,
-          today: todayCount || 0,
-        })
+        setSendCount(data.sendCount)
 
         // Fetch player cards
         try {
