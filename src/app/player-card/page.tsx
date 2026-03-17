@@ -2,7 +2,7 @@
 
 import { useState, useRef, useCallback } from 'react'
 import type { CardData, TemplateName } from '@/components/player-cards/types'
-import { DEFAULT_CARD_DATA, TEMPLATE_INFO, SPORT_PRESETS, COLOR_PRESETS } from '@/components/player-cards/types'
+import { DEFAULT_CARD_DATA, TEMPLATE_INFO, SPORT_PRESETS, COLOR_PRESETS, STAT_OPTIONS } from '@/components/player-cards/types'
 import { Fleer86Front, Fleer86Back } from '@/components/player-cards/templates/Fleer86'
 import { Topps80BBallFront, Topps80BBallBack } from '@/components/player-cards/templates/Topps80BBall'
 import { Donruss84Front, Donruss84Back } from '@/components/player-cards/templates/Donruss84'
@@ -338,9 +338,15 @@ export default function PlayerCardGeneratorPage() {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
               {([1, 2, 3, 4] as const).map(i => (
                 <div key={i}>
-                  <label style={{ ...labelStyle, fontSize: '0.65rem' }}>Stat {i} Label</label>
-                  <input style={{ ...inputStyle, marginBottom: '0.25rem' }} value={data[`stat${i}Label` as keyof CardData] as string} onChange={e => update(`stat${i}Label` as keyof CardData, e.target.value)} />
-                  <label style={{ ...labelStyle, fontSize: '0.65rem' }}>Value</label>
+                  <select
+                    style={{ ...inputStyle, marginBottom: '0.25rem', fontSize: '0.75rem', fontWeight: 'bold', color: '#444' }}
+                    value={data[`stat${i}Label` as keyof CardData] as string}
+                    onChange={e => update(`stat${i}Label` as keyof CardData, e.target.value)}
+                  >
+                    {(STAT_OPTIONS[data.sport] || []).map(opt => (
+                      <option key={opt} value={opt}>{opt}</option>
+                    ))}
+                  </select>
                   <input style={inputStyle} value={data[`stat${i}Value` as keyof CardData] as string} onChange={e => update(`stat${i}Value` as keyof CardData, e.target.value)} placeholder="0.0" />
                 </div>
               ))}
@@ -384,10 +390,45 @@ export default function PlayerCardGeneratorPage() {
               { label: 'Accent', field: 'accentColor' as keyof CardData },
               { label: 'Text', field: 'textColor' as keyof CardData },
             ].map(c => (
-              <div key={c.field} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.35rem' }}>
-                <input type="color" value={data[c.field] as string} onChange={e => update(c.field, e.target.value)} style={{ width: '32px', height: '32px', border: 'none', padding: 0, cursor: 'pointer' }} />
-                <span style={{ fontSize: '0.75rem', color: '#666', minWidth: '65px' }}>{c.label}</span>
-                <input style={{ ...inputStyle, maxWidth: '90px', fontFamily: 'monospace', fontSize: '0.75rem' }} value={data[c.field] as string} onChange={e => update(c.field, e.target.value)} />
+              <div key={c.field} style={{ marginBottom: '0.75rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.3rem' }}>
+                  <span style={{ fontSize: '0.75rem', color: '#666', fontWeight: 'bold' }}>{c.label}</span>
+                  <div style={{ width: '20px', height: '20px', borderRadius: '4px', background: data[c.field] as string, border: '1px solid #ddd' }} />
+                </div>
+                <div
+                  style={{
+                    height: '32px',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    border: '1px solid #ddd',
+                    background: c.field === 'textColor'
+                      ? 'linear-gradient(to right, #000000, #333333, #666666, #999999, #cccccc, #ffffff)'
+                      : 'linear-gradient(to right, #ff0000, #ff8800, #ffff00, #00cc00, #0088ff, #0000cc, #8800ff, #ff0088, #ff0000)',
+                  }}
+                  onClick={e => {
+                    const rect = e.currentTarget.getBoundingClientRect()
+                    const x = (e.clientX - rect.left) / rect.width
+                    let color: string
+                    if (c.field === 'textColor') {
+                      const v = Math.round(x * 255)
+                      color = `#${v.toString(16).padStart(2, '0').repeat(3)}`
+                    } else {
+                      const hue = Math.round(x * 360)
+                      color = `hsl(${hue}, 80%, 40%)`
+                      // Convert HSL to hex
+                      const tmp = document.createElement('div')
+                      tmp.style.color = color
+                      document.body.appendChild(tmp)
+                      const computed = getComputedStyle(tmp).color
+                      document.body.removeChild(tmp)
+                      const match = computed.match(/\d+/g)
+                      if (match) {
+                        color = '#' + match.slice(0, 3).map(n => parseInt(n).toString(16).padStart(2, '0')).join('')
+                      }
+                    }
+                    update(c.field, color)
+                  }}
+                />
               </div>
             ))}
           </div>

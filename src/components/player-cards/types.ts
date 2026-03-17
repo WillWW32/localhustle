@@ -35,17 +35,26 @@ export const TEMPLATE_INFO: Record<TemplateName, { name: string; year: string; d
   topps80bball: { name: "1980 Topps BBall", year: "1980", description: "Tri-panel scoring leaders" },
   donruss84: { name: "1984 Donruss", year: "1984", description: "Borderless with bold waves" },
   topps83: { name: "1983 Topps", year: "1983", description: "Dual-photo with circular inset" },
-  topps80baseball: { name: "Fleer Jordan RC", year: "1986", description: "Striped borders, bold banner" },
+  topps80baseball: { name: "Jordan RC", year: "1986", description: "Five-band horizontal color design" },
   henderson80: { name: "1980 Henderson", year: "1980", description: "Bold banner & badge" },
 };
 
 export const SPORT_PRESETS: Record<string, { s1: string; s2: string; s3: string; s4: string }> = {
-  Basketball: { s1: 'PPG', s2: 'RPG', s3: 'APG', s4: 'FG%' },
+  Basketball: { s1: 'PTS/32', s2: 'REB/32', s3: 'AST/32', s4: 'FG%' },
   Baseball: { s1: 'AVG', s2: 'HR', s3: 'RBI', s4: 'OPS' },
   Football: { s1: 'Pass YDS', s2: 'TDs', s3: 'Tackles', s4: 'INT' },
   Soccer: { s1: 'Goals', s2: 'Assists', s3: 'Saves', s4: 'Mins' },
   Volleyball: { s1: 'Kills', s2: 'Aces', s3: 'Blocks', s4: 'Digs' },
   Track: { s1: '100m', s2: '200m', s3: 'Long Jump', s4: 'High Jump' },
+};
+
+export const STAT_OPTIONS: Record<string, string[]> = {
+  Basketball: ['PTS/32', 'REB/32', 'AST/32', 'FG%', '3PT%', 'FT%', 'STL/GM', 'BLK/GM', 'AST/GM', 'PPG', 'RPG', 'APG', 'MPG', 'TO/GM'],
+  Baseball: ['AVG', 'HR', 'RBI', 'OPS', 'ERA', 'SO', 'SB', 'OBP', 'SLG', 'WAR', 'WHIP', 'BB'],
+  Football: ['Pass YDS', 'TDs', 'Tackles', 'INT', 'Rush YDS', 'Rec YDS', 'Sacks', 'QBR', 'Comp%', 'FF'],
+  Soccer: ['Goals', 'Assists', 'Saves', 'Mins', 'Shots', 'Pass%', 'Tackles', 'Clean Sheets'],
+  Volleyball: ['Kills', 'Aces', 'Blocks', 'Digs', 'Assists', 'Hit%', 'Errors', 'Sets'],
+  Track: ['100m', '200m', 'Long Jump', 'High Jump', '400m', '800m', 'Shot Put', 'Discus', '110H'],
 };
 
 export const COLOR_PRESETS = [
@@ -67,11 +76,11 @@ export const DEFAULT_CARD_DATA: CardData = {
   height: "",
   weight: "",
   hometown: "",
-  stat1Label: "PPG",
+  stat1Label: "PTS/32",
   stat1Value: "",
-  stat2Label: "RPG",
+  stat2Label: "REB/32",
   stat2Value: "",
-  stat3Label: "APG",
+  stat3Label: "AST/32",
   stat3Value: "",
   stat4Label: "FG%",
   stat4Value: "",

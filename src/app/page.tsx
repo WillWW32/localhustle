@@ -3,9 +3,6 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
-import { Fleer86Front } from '@/components/player-cards/templates/Fleer86'
-import type { CardData } from '@/components/player-cards/types'
-import { DEFAULT_CARD_DATA } from '@/components/player-cards/types'
 
 type Role = 'athlete' | 'parent' | 'business'
 
@@ -91,6 +88,57 @@ export default function Home() {
       </section>
 
 
+      {/* College Recruitment — prominent CTA */}
+      <section style={{ padding: '4rem 2rem', background: 'black', color: 'white' }}>
+        <div style={{ maxWidth: '560px', margin: '0 auto' }}>
+          <div className="fade-in-scroll" style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
+            <h2 style={{ fontSize: '1.75rem', fontWeight: 'bold', marginBottom: '1rem' }}>
+              Get Recruited. Automatically.
+            </h2>
+            <p style={{ fontSize: '0.95rem', fontWeight: 'normal', color: '#aaa', lineHeight: 1.7, margin: 0 }}>
+              We handle outreach to college coaches — emails, DMs, follow-ups on autopilot.
+            </p>
+          </div>
+
+          <div className="fade-in-scroll" style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '2.5rem' }}>
+            <div style={{ background: '#1a1a1a', borderRadius: '16px', padding: '1.5rem', border: '1px solid #333' }}>
+              <p style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '0.5rem', color: '#22c55e' }}>01</p>
+              <h3 style={{ fontSize: '0.95rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>Create Profile</h3>
+              <p style={{ fontSize: '0.8rem', fontWeight: 'normal', color: '#888', margin: 0 }}>Stats, highlights, achievements — one quick form.</p>
+            </div>
+            <div style={{ background: '#1a1a1a', borderRadius: '16px', padding: '1.5rem', border: '1px solid #333' }}>
+              <p style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '0.5rem', color: '#22c55e' }}>02</p>
+              <h3 style={{ fontSize: '0.95rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>Connect X Account</h3>
+              <p style={{ fontSize: '0.8rem', fontWeight: 'normal', color: '#888', margin: 0 }}>Amplify visibility to coaches.</p>
+            </div>
+            <div style={{ background: '#1a1a1a', borderRadius: '16px', padding: '1.5rem', border: '1px solid #333' }}>
+              <p style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '0.5rem', color: '#22c55e' }}>03</p>
+              <h3 style={{ fontSize: '0.95rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>We Handle Outreach</h3>
+              <p style={{ fontSize: '0.8rem', fontWeight: 'normal', color: '#888', margin: 0 }}>Coaches in all 50 states. Real-time tracking.</p>
+            </div>
+          </div>
+
+          <div className="fade-in-scroll" style={{ textAlign: 'center' }}>
+            <a href="/recruit/signup" style={{
+              display: 'inline-block',
+              padding: '1rem 3rem',
+              fontSize: '1rem',
+              fontWeight: 'bold',
+              fontFamily: "'Courier New', Courier, monospace",
+              background: '#22c55e',
+              color: 'white',
+              border: 'none',
+              borderRadius: '9999px',
+              textDecoration: 'none',
+              letterSpacing: '0.02em',
+            }}>
+              Get Recruited Now
+            </a>
+          </div>
+        </div>
+      </section>
+
+
       {/* Benefits */}
       <section style={{ padding: '4rem 2rem', background: '#fafafa' }}>
         <div className="fade-in-scroll" style={{ maxWidth: '560px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
@@ -142,46 +190,6 @@ export default function Home() {
               </p>
             </div>
           </div>
-        </div>
-      </section>
-
-
-      {/* Player Card CTA */}
-      <section style={{ padding: '4rem 2rem', background: '#fafafa' }}>
-        <div className="fade-in-scroll" style={{ maxWidth: '560px', margin: '0 auto', textAlign: 'center' }}>
-          <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '1rem' }}>
-            Create Your Player Card
-          </h2>
-          <p style={{ fontSize: '0.9rem', fontWeight: 'normal', color: '#666', lineHeight: 1.7, marginBottom: '2rem' }}>
-            Build a retro trading card with your stats, school colors, and highlights. Free to create — download instantly.
-          </p>
-
-          {/* Jordan RC style preview card */}
-          <div style={{ width: '220px', margin: '0 auto 2rem', filter: 'drop-shadow(0 6px 20px rgba(0,0,0,0.2))', transform: 'rotate(-2deg)' }}>
-            <Fleer86Front data={{
-              ...DEFAULT_CARD_DATA,
-              playerName: 'YOUR NAME',
-              position: 'Guard',
-              jerseyNumber: '23',
-              school: 'YOUR SCHOOL',
-              primaryColor: '#ce1141',
-              secondaryColor: '#000000',
-              accentColor: '#ffffff',
-              textColor: '#ffffff',
-              sport: 'Basketball',
-              stat1Label: 'PPG', stat1Value: '28.2',
-              stat2Label: 'RPG', stat2Value: '6.2',
-              stat3Label: 'APG', stat3Value: '5.3',
-              stat4Label: 'FG%', stat4Value: '.497',
-            }} />
-          </div>
-
-          <p style={{ fontSize: '0.75rem', color: '#999', marginBottom: '1.5rem' }}>
-            6 retro templates — customize colors, stats, and photos
-          </p>
-          <a href="/player-card" className="btn-fixed-200" style={{ background: '#22c55e', borderColor: '#22c55e' }}>
-            Make My Card
-          </a>
         </div>
       </section>
 
@@ -249,43 +257,6 @@ export default function Home() {
               Sending magic link...
             </p>
           )}
-        </div>
-      </section>
-
-
-      {/* College Recruitment */}
-      <section style={{ padding: '4rem 2rem' }}>
-        <div style={{ maxWidth: '560px', margin: '0 auto' }}>
-          <div className="fade-in-scroll" style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
-            <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '1rem' }}>
-              Get Recruited. Automatically.
-            </h2>
-            <p style={{ fontSize: '0.9rem', fontWeight: 'normal', color: '#666', lineHeight: 1.7, margin: 0 }}>
-              We handle outreach to college coaches — emails, DMs, follow-ups on autopilot.
-            </p>
-          </div>
-
-          <div className="fade-in-scroll" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', marginBottom: '2.5rem' }}>
-            <div style={{ background: '#f5f5f5', borderRadius: '16px', padding: '1.75rem' }}>
-              <p style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '0.5rem', color: '#22c55e' }}>01</p>
-              <h3 style={{ fontSize: '0.95rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>Create Profile</h3>
-              <p style={{ fontSize: '0.8rem', fontWeight: 'normal', color: '#666', margin: 0 }}>Stats, highlights, achievements.</p>
-            </div>
-            <div style={{ background: '#f5f5f5', borderRadius: '16px', padding: '1.75rem' }}>
-              <p style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '0.5rem', color: '#22c55e' }}>02</p>
-              <h3 style={{ fontSize: '0.95rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>Connect X Account</h3>
-              <p style={{ fontSize: '0.8rem', fontWeight: 'normal', color: '#666', margin: 0 }}>Amplify visibility to coaches.</p>
-            </div>
-            <div style={{ background: '#f5f5f5', borderRadius: '16px', padding: '1.75rem' }}>
-              <p style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '0.5rem', color: '#22c55e' }}>03</p>
-              <h3 style={{ fontSize: '0.95rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>We Handle Outreach</h3>
-              <p style={{ fontSize: '0.8rem', fontWeight: 'normal', color: '#666', margin: 0 }}>Coaches in all 50 states. Real-time tracking.</p>
-            </div>
-          </div>
-
-          <div className="fade-in-scroll" style={{ textAlign: 'center' }}>
-            <a href="/recruit" className="btn-fixed-200">Get Recruited</a>
-          </div>
         </div>
       </section>
 

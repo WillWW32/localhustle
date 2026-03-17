@@ -9,53 +9,52 @@ export function Topps80BaseballFront({ data }: Props) {
   return (
     <svg viewBox="0 0 525 735" xmlns="http://www.w3.org/2000/svg" style={{ width: '100%', height: '100%' }}>
       <defs>
-        <clipPath id="jrc-photo"><rect x="52" y="36" width="421" height="548" rx="10" /></clipPath>
+        <clipPath id="jrc-photo"><rect x="52" y="36" width="421" height="612" rx="10" /></clipPath>
       </defs>
 
       {/* === FIVE HORIZONTAL COLOR BANDS === */}
       {/* Band 1: Red top (0–125) */}
       <rect width="525" height="735" rx="14" fill={primaryColor} />
 
-      {/* Band 2: Blue (125–305) — taller for visibility */}
+      {/* Band 2: Blue (125–305) */}
       <rect x="0" y="125" width="525" height="180" fill={secondaryColor} />
 
       {/* Band 3: White middle (305–430) */}
       <rect x="0" y="305" width="525" height="125" fill="white" />
 
-      {/* Band 4: Blue (430–610) — taller for visibility */}
+      {/* Band 4: Blue (430–610) */}
       <rect x="0" y="430" width="525" height="180" fill={secondaryColor} />
 
       {/* Band 5: Red bottom (610–735) — covered by base rect */}
 
       {/* === MAIN PHOTO CONTAINER — rounded rect with yellow stroke === */}
       {/* Yellow stroke border */}
-      <rect x="46" y="30" width="433" height="560" rx="12" fill={accentColor} />
+      <rect x="46" y="30" width="433" height="624" rx="12" fill={accentColor} />
       {/* Inner photo area */}
-      <rect x="52" y="36" width="421" height="548" rx="10" fill="#e0e0e0" />
+      <rect x="52" y="36" width="421" height="612" rx="10" fill="#e0e0e0" />
 
       {/* Checkerboard placeholder when no photo */}
       {!mainPhoto && (
         <g clipPath="url(#jrc-photo)">
-          {Array.from({ length: 29 }).map((_, i) =>
+          {Array.from({ length: 32 }).map((_, i) =>
             Array.from({ length: 22 }).map((_, j) =>
               (i + j) % 2 === 0 ? <rect key={`${i}-${j}`} x={52 + j * 20} y={36 + i * 20} width="20" height="20" fill="#d0d0d0" /> : null
             )
           )}
-          <text x="262" y="320" textAnchor="middle" fill="#999" fontSize="22" fontFamily="sans-serif">DROP PHOTO HERE</text>
+          <text x="262" y="300" textAnchor="middle" fill="#999" fontSize="22" fontFamily="sans-serif">DROP PHOTO HERE</text>
         </g>
       )}
       {mainPhoto && (
-        <image href={mainPhoto} x="52" y="36" width="421" height="548" clipPath="url(#jrc-photo)" preserveAspectRatio="xMidYMid slice" />
+        <image href={mainPhoto} x="52" y="36" width="421" height="612" clipPath="url(#jrc-photo)" preserveAspectRatio="xMidYMid slice" />
       )}
 
-      {/* === NAME BANNER — below the photo container === */}
-      <rect x="46" y="608" width="433" height="52" rx="6" fill={secondaryColor} />
-      <rect x="46" y="608" width="433" height="52" rx="6" fill="none" stroke={accentColor} strokeWidth="2" />
-      <text x="262" y="642" textAnchor="middle" fill={textColor} fontSize="26" fontWeight="bold" fontFamily="'Arial Black', sans-serif" letterSpacing="3">
+      {/* === NAME BANNER — overlapping bottom of photo container === */}
+      <rect x="52" y="590" width="421" height="52" rx="4" fill={secondaryColor} opacity="0.92" />
+      <text x="262" y="624" textAnchor="middle" fill={textColor} fontSize="26" fontWeight="bold" fontFamily="'Arial Black', sans-serif" letterSpacing="3">
         {playerName}
       </text>
 
-      {/* Position + School */}
+      {/* Position + School — below container on red band */}
       <text x="262" y="686" textAnchor="middle" fill={textColor} fontSize="14" fontWeight="bold" fontFamily="sans-serif" letterSpacing="1" opacity="0.9">
         {school} {'\u2022'} {position}
       </text>
@@ -150,7 +149,7 @@ export function Topps80BaseballBack({ data }: Props) {
       {/* Stats column headers */}
       <rect x="36" y="256" width="453" height="28" fill={secondaryColor} opacity="0.15" />
       {stats.map((s, i) => (
-        <text key={`h${i}`} x={149 + i * 113} y="275" textAnchor="middle" fill={secondaryColor} fontSize="11" fontWeight="bold" fontFamily="sans-serif">
+        <text key={`h${i}`} x={93 + i * 113} y="275" textAnchor="middle" fill={secondaryColor} fontSize="11" fontWeight="bold" fontFamily="sans-serif">
           {s.label}
         </text>
       ))}
@@ -158,7 +157,7 @@ export function Topps80BaseballBack({ data }: Props) {
       {/* Stats values */}
       <rect x="36" y="284" width="453" height="50" fill="white" stroke="#eee" strokeWidth="1" />
       {stats.map((s, i) => (
-        <text key={`v${i}`} x={149 + i * 113} y="316" textAnchor="middle" fill={primaryColor} fontSize="24" fontWeight="bold" fontFamily="'Arial Black', sans-serif">
+        <text key={`v${i}`} x={93 + i * 113} y="316" textAnchor="middle" fill={primaryColor} fontSize="24" fontWeight="bold" fontFamily="'Arial Black', sans-serif">
           {s.value}
         </text>
       ))}

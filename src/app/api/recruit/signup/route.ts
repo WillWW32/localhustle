@@ -10,8 +10,8 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { parent, athlete } = body
 
-    if (!parent?.name || !parent?.email || !parent?.phone) {
-      return NextResponse.json({ error: 'Missing parent information' }, { status: 400 })
+    if (!parent?.email) {
+      return NextResponse.json({ error: 'Missing email' }, { status: 400 })
     }
 
     if (!athlete?.firstName || !athlete?.lastName || !athlete?.sport || !athlete?.position) {
@@ -26,10 +26,10 @@ export async function POST(request: NextRequest) {
       .insert({
         first_name: athlete.firstName,
         last_name: athlete.lastName,
-        email: parent.email,
-        parent_name: parent.name,
+        email: `${athlete.firstName.toLowerCase()}.${athlete.lastName.toLowerCase()}.${Date.now()}@athlete.localhustle.org`,
+        parent_name: parent.name || null,
         parent_email: parent.email,
-        parent_phone: parent.phone,
+        parent_phone: parent.phone || null,
         sport: athlete.sport,
         position: athlete.position,
         height: athlete.height || null,

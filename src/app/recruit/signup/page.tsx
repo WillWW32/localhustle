@@ -4,17 +4,10 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
-type FormStep = 1 | 2
-
-interface ParentFormData {
-  name: string
-  email: string
-  phone: string
-}
-
-interface AthleteFormData {
+interface FormData {
   firstName: string
   lastName: string
+  email: string
   sport: string
   position: string
   height: string
@@ -27,19 +20,13 @@ interface AthleteFormData {
 
 export default function SignupPage() {
   const router = useRouter()
-  const [currentStep, setCurrentStep] = useState<FormStep>(1)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const [parentData, setParentData] = useState<ParentFormData>({
-    name: '',
-    email: '',
-    phone: '',
-  })
-
-  const [athleteData, setAthleteData] = useState<AthleteFormData>({
+  const [form, setForm] = useState<FormData>({
     firstName: '',
     lastName: '',
+    email: '',
     sport: '',
     position: '',
     height: '',
@@ -50,60 +37,43 @@ export default function SignupPage() {
     state: '',
   })
 
-  const handleParentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target
-    setParentData((prev) => ({ ...prev, [name]: value }))
+    setForm((prev) => ({ ...prev, [name]: value }))
   }
 
-  const handleAthleteChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
-    const { name, value } = e.target
-    setAthleteData((prev) => ({ ...prev, [name]: value }))
-  }
-
-  const validateParentForm = () => {
-    if (!parentData.name.trim()) { setError('Please enter your name'); return false }
-    if (!parentData.email.trim() || !parentData.email.includes('@')) { setError('Please enter a valid email'); return false }
-    if (!parentData.phone.trim()) { setError('Please enter your phone number'); return false }
+  const validate = () => {
+    if (!form.firstName.trim()) { setError("Please enter first name"); return false }
+    if (!form.lastName.trim()) { setError("Please enter last name"); return false }
+    if (!form.email.trim() || !form.email.includes('@')) { setError('Please enter a valid email'); return false }
+    if (!form.sport) { setError('Please select a sport'); return false }
+    if (!form.position.trim()) { setError('Please enter position'); return false }
+    if (!form.gradYear) { setError('Please select graduation year'); return false }
+    if (!form.highSchool.trim()) { setError('Please enter high school'); return false }
+    if (!form.state) { setError('Please select state'); return false }
     return true
-  }
-
-  const validateAthleteForm = () => {
-    if (!athleteData.firstName.trim()) { setError("Please enter athlete's first name"); return false }
-    if (!athleteData.lastName.trim()) { setError("Please enter athlete's last name"); return false }
-    if (!athleteData.sport) { setError('Please select a sport'); return false }
-    if (!athleteData.position.trim()) { setError('Please enter position'); return false }
-    if (!athleteData.height.trim()) { setError('Please enter height'); return false }
-    if (!athleteData.weight.trim()) { setError('Please enter weight'); return false }
-    if (!athleteData.gradYear) { setError('Please select graduation year'); return false }
-    if (!athleteData.highSchool.trim()) { setError('Please enter high school'); return false }
-    if (!athleteData.city.trim()) { setError('Please enter city'); return false }
-    if (!athleteData.state) { setError('Please select state'); return false }
-    return true
-  }
-
-  const handleNext = () => {
-    setError(null)
-    if (validateParentForm()) setCurrentStep(2)
-  }
-
-  const handleBack = () => {
-    setError(null)
-    setCurrentStep(1)
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
-    if (!validateAthleteForm()) return
+    if (!validate()) return
 
     setIsLoading(true)
     try {
       const response = await fetch('/api/recruit/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ parent: parentData, athlete: athleteData }),
+        body: JSON.stringify({
+          parent: { name: '', email: form.email, phone: '' },
+          athlete: {
+            firstName: form.firstName, lastName: form.lastName,
+            sport: form.sport, position: form.position,
+            height: form.height, weight: form.weight,
+            gradYear: form.gradYear, highSchool: form.highSchool,
+            city: form.city, state: form.state,
+          },
+        }),
       })
 
       if (!response.ok) {
@@ -146,10 +116,6 @@ export default function SignupPage() {
     outline: 'none',
   }
 
-  const selectStyle: React.CSSProperties = {
-    ...inputStyle,
-  }
-
   const labelStyle: React.CSSProperties = {
     display: 'block',
     fontSize: '0.75rem',
@@ -170,127 +136,93 @@ export default function SignupPage() {
             &larr; Back to Recruit
           </Link>
           <h1 style={{ fontSize: '1.75rem', fontWeight: 'bold', marginTop: '1.5rem', marginBottom: '0.75rem' }}>
-            Get Your Athlete Recruited
+            Get Recruited
           </h1>
           <p style={{ fontSize: '0.9rem', color: '#666', margin: 0 }}>
-            Fill out this quick form and we&apos;ll start reaching out to coaches.
+            One quick form — we&apos;ll start reaching out to coaches immediately.
           </p>
-        </div>
-
-        {/* Progress bar */}
-        <div style={{ marginBottom: '2.5rem' }}>
-          <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
-            <div className="progress-bar-track" style={{ flex: 1 }}>
-              <div className="progress-bar-fill" style={{ width: currentStep >= 1 ? '100%' : '0%' }} />
-            </div>
-            <div className="progress-bar-track" style={{ flex: 1 }}>
-              <div className="progress-bar-fill" style={{ width: currentStep >= 2 ? '100%' : '0%' }} />
-            </div>
-          </div>
-          <p style={{ fontSize: '0.75rem', color: '#999', margin: 0 }}>Step {currentStep} of 2</p>
         </div>
 
         {/* Form */}
         <div style={{ background: '#fafafa', borderRadius: '16px', padding: '2rem' }}>
           <form onSubmit={handleSubmit}>
-            {currentStep === 1 ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                <h3 style={{ fontSize: '1rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>Parent/Guardian Information</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
 
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <div>
-                  <label style={labelStyle}>Full Name</label>
-                  <input type="text" name="name" value={parentData.name} onChange={handleParentChange}
-                    style={inputStyle} placeholder="John Smith" />
+                  <label style={labelStyle}>First Name</label>
+                  <input type="text" name="firstName" value={form.firstName} onChange={handleChange}
+                    style={inputStyle} placeholder="Alex" />
                 </div>
-
                 <div>
-                  <label style={labelStyle}>Email Address</label>
-                  <input type="email" name="email" value={parentData.email} onChange={handleParentChange}
-                    style={inputStyle} placeholder="john@example.com" />
-                </div>
-
-                <div>
-                  <label style={labelStyle}>Phone Number</label>
-                  <input type="tel" name="phone" value={parentData.phone} onChange={handleParentChange}
-                    style={inputStyle} placeholder="(555) 123-4567" />
+                  <label style={labelStyle}>Last Name</label>
+                  <input type="text" name="lastName" value={form.lastName} onChange={handleChange}
+                    style={inputStyle} placeholder="Johnson" />
                 </div>
               </div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                <h3 style={{ fontSize: '1rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>Athlete Information</h3>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                  <div>
-                    <label style={labelStyle}>First Name</label>
-                    <input type="text" name="firstName" value={athleteData.firstName} onChange={handleAthleteChange}
-                      style={inputStyle} placeholder="Alex" />
-                  </div>
-                  <div>
-                    <label style={labelStyle}>Last Name</label>
-                    <input type="text" name="lastName" value={athleteData.lastName} onChange={handleAthleteChange}
-                      style={inputStyle} placeholder="Johnson" />
-                  </div>
+              <div>
+                <label style={labelStyle}>Email</label>
+                <input type="email" name="email" value={form.email} onChange={handleChange}
+                  style={inputStyle} placeholder="alex@example.com" />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div>
+                  <label style={labelStyle}>Sport</label>
+                  <select name="sport" value={form.sport} onChange={handleChange} style={inputStyle}>
+                    <option value="">Select a sport</option>
+                    {sports.map((sport) => (<option key={sport} value={sport}>{sport}</option>))}
+                  </select>
                 </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                  <div>
-                    <label style={labelStyle}>Sport</label>
-                    <select name="sport" value={athleteData.sport} onChange={handleAthleteChange} style={selectStyle}>
-                      <option value="">Select a sport</option>
-                      {sports.map((sport) => (<option key={sport} value={sport}>{sport}</option>))}
-                    </select>
-                  </div>
-                  <div>
-                    <label style={labelStyle}>Position</label>
-                    <input type="text" name="position" value={athleteData.position} onChange={handleAthleteChange}
-                      style={inputStyle} placeholder="Quarterback" />
-                  </div>
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                  <div>
-                    <label style={labelStyle}>Height</label>
-                    <input type="text" name="height" value={athleteData.height} onChange={handleAthleteChange}
-                      style={inputStyle} placeholder="6'2&quot;" />
-                  </div>
-                  <div>
-                    <label style={labelStyle}>Weight (lbs)</label>
-                    <input type="text" name="weight" value={athleteData.weight} onChange={handleAthleteChange}
-                      style={inputStyle} placeholder="210" />
-                  </div>
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                  <div>
-                    <label style={labelStyle}>Graduation Year</label>
-                    <select name="gradYear" value={athleteData.gradYear} onChange={handleAthleteChange} style={selectStyle}>
-                      <option value="">Select year</option>
-                      {gradYears.map((year) => (<option key={year} value={year}>{year}</option>))}
-                    </select>
-                  </div>
-                  <div>
-                    <label style={labelStyle}>High School</label>
-                    <input type="text" name="highSchool" value={athleteData.highSchool} onChange={handleAthleteChange}
-                      style={inputStyle} placeholder="Lincoln High School" />
-                  </div>
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                  <div>
-                    <label style={labelStyle}>City</label>
-                    <input type="text" name="city" value={athleteData.city} onChange={handleAthleteChange}
-                      style={inputStyle} placeholder="San Francisco" />
-                  </div>
-                  <div>
-                    <label style={labelStyle}>State</label>
-                    <select name="state" value={athleteData.state} onChange={handleAthleteChange} style={selectStyle}>
-                      <option value="">Select state</option>
-                      {states.map((state) => (<option key={state} value={state}>{state}</option>))}
-                    </select>
-                  </div>
+                <div>
+                  <label style={labelStyle}>Position</label>
+                  <input type="text" name="position" value={form.position} onChange={handleChange}
+                    style={inputStyle} placeholder="Quarterback" />
                 </div>
               </div>
-            )}
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
+                <div>
+                  <label style={labelStyle}>Grad Year</label>
+                  <select name="gradYear" value={form.gradYear} onChange={handleChange} style={inputStyle}>
+                    <option value="">Year</option>
+                    {gradYears.map((year) => (<option key={year} value={year}>{year}</option>))}
+                  </select>
+                </div>
+                <div>
+                  <label style={labelStyle}>Height</label>
+                  <input type="text" name="height" value={form.height} onChange={handleChange}
+                    style={inputStyle} placeholder="6'2&quot;" />
+                </div>
+                <div>
+                  <label style={labelStyle}>Weight</label>
+                  <input type="text" name="weight" value={form.weight} onChange={handleChange}
+                    style={inputStyle} placeholder="210 lbs" />
+                </div>
+              </div>
+
+              <div>
+                <label style={labelStyle}>High School</label>
+                <input type="text" name="highSchool" value={form.highSchool} onChange={handleChange}
+                  style={inputStyle} placeholder="Lincoln High School" />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1rem' }}>
+                <div>
+                  <label style={labelStyle}>City</label>
+                  <input type="text" name="city" value={form.city} onChange={handleChange}
+                    style={inputStyle} placeholder="San Francisco" />
+                </div>
+                <div>
+                  <label style={labelStyle}>State</label>
+                  <select name="state" value={form.state} onChange={handleChange} style={inputStyle}>
+                    <option value="">State</option>
+                    {states.map((state) => (<option key={state} value={state}>{state}</option>))}
+                  </select>
+                </div>
+              </div>
+            </div>
 
             {/* Error message */}
             {error && (
@@ -299,43 +231,13 @@ export default function SignupPage() {
               </div>
             )}
 
-            {/* Form buttons */}
-            <div style={{ marginTop: '2rem', display: 'flex', gap: '0.75rem' }}>
-              {currentStep === 2 && (
-                <button type="button" onClick={handleBack}
-                  style={{
-                    flex: 1, padding: '0.75rem', fontSize: '0.9rem', fontWeight: 'bold',
-                    fontFamily: "'Courier New', Courier, monospace",
-                    background: '#f0f0f0', color: '#333', border: 'none', borderRadius: '9999px', cursor: 'pointer',
-                  }}>
-                  Back
-                </button>
-              )}
-              <button
-                type={currentStep === 1 ? 'button' : 'submit'}
-                onClick={currentStep === 1 ? handleNext : undefined}
-                disabled={isLoading}
-                className="btn-fixed-200"
-                style={{ flex: 1, opacity: isLoading ? 0.6 : 1 }}
-              >
-                {isLoading ? 'Creating account...' : currentStep === 1 ? 'Next' : 'Complete Signup'}
+            {/* Submit */}
+            <div style={{ marginTop: '2rem' }}>
+              <button type="submit" disabled={isLoading} className="btn-fixed-200" style={{ width: '100%', opacity: isLoading ? 0.6 : 1 }}>
+                {isLoading ? 'Creating profile...' : 'Start Recruiting'}
               </button>
             </div>
           </form>
-        </div>
-
-        {/* Info section */}
-        <div style={{ marginTop: '3rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          {[
-            { title: 'Secure', desc: 'Your data is encrypted and safe' },
-            { title: 'Instant', desc: 'Start receiving outreach immediately' },
-            { title: 'Simple', desc: 'Manage everything from your phone' },
-          ].map((item, idx) => (
-            <div key={idx} style={{ background: '#f5f5f5', borderRadius: '12px', padding: '1.25rem 1.5rem', textAlign: 'center' }}>
-              <h4 style={{ fontSize: '0.9rem', fontWeight: 'bold', marginBottom: '0.25rem' }}>{item.title}</h4>
-              <p style={{ fontSize: '0.8rem', color: '#666', margin: 0 }}>{item.desc}</p>
-            </div>
-          ))}
         </div>
 
       </div>
