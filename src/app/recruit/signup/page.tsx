@@ -82,7 +82,7 @@ export default function SignupPage() {
       }
 
       const data = await response.json()
-      router.push(`/recruit/success?slug=${data.slug}`)
+      router.push(`/recruit/dashboard/athletes/${data.athleteId}`)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred during signup')
     } finally {

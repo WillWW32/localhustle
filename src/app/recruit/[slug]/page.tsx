@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, use } from 'react'
-import { supabase } from '@/lib/supabaseClient'
 import ReelContainer from '@/components/ReelContainer'
 
 interface AthleteProfile {
@@ -44,106 +43,41 @@ export default function PublicAthleteProfilePage({ params }: { params: Promise<{
     const loadProfile = async () => {
       setLoading(true)
       try {
-        // Load athlete profile by slug
-        const { data: profile } = await supabase
-          .from('athlete_profiles')
-          .select('*')
-          .eq('slug', slug)
-          .single()
-
-        if (!profile) {
+        const res = await fetch(`/api/recruit/profile?slug=${encodeURIComponent(slug)}`)
+        if (!res.ok) {
           setLoading(false)
           return
         }
-
-        // Load athlete data
-        const { data: athleteRow } = await supabase
-          .from('athletes')
-          .select('*')
-          .eq('id', profile.athlete_id)
-          .single()
-
-        if (!athleteRow) {
-          setLoading(false)
-          return
-        }
-
-        // Increment view count
-        await supabase
-          .from('athlete_profiles')
-          .update({ views: (profile.views || 0) + 1 })
-          .eq('id', profile.id)
-
-        // Gather reels from athlete table
-        let reels: string[] = athleteRow.instagram_reels || []
-
-        // Also try to get reels from linked profile if profile_id exists
-        if (athleteRow.profile_id) {
-          const { data: linkedProfile } = await supabase
-            .from('profiles')
-            .select('instagram_reels')
-            .eq('id', athleteRow.profile_id)
-            .single()
-
-          if (linkedProfile?.instagram_reels) {
-            // Merge and deduplicate
-            const merged = [...reels, ...linkedProfile.instagram_reels]
-            reels = [...new Set(merged)].slice(0, 3)
-          }
-        }
+        const data = await res.json()
 
         setAthlete({
           slug,
-          firstName: athleteRow.first_name,
-          lastName: athleteRow.last_name,
-          sport: athleteRow.sport || '',
-          position: athleteRow.position || '',
-          height: athleteRow.height || '',
-          weight: athleteRow.weight || '',
-          gradYear: athleteRow.grad_year || '',
-          highSchool: athleteRow.high_school || '',
-          city: athleteRow.city || '',
-          state: athleteRow.state || '',
-          bio: athleteRow.bio || profile.about || '',
-          stats: athleteRow.stats || {},
-          achievements: profile.achievements || [],
-          highlightUrl: athleteRow.highlight_url || '',
-          viewCount: (profile.views || 0) + 1,
-          isPrivate: profile.visibility === 'private',
-          athleteId: athleteRow.id,
-          instagramReels: reels,
+          firstName: data.profile.firstName || '',
+          lastName: data.profile.lastName || '',
+          sport: data.profile.sport || '',
+          position: data.profile.position || '',
+          height: data.profile.height || '',
+          weight: data.profile.weight || '',
+          gradYear: data.profile.gradYear || '',
+          highSchool: data.profile.highSchool || '',
+          city: data.profile.city || '',
+          state: data.profile.state || '',
+          bio: data.profile.bio || '',
+          stats: data.profile.stats || {},
+          achievements: data.profile.achievements || [],
+          highlightUrl: data.profile.highlightUrl || '',
+          viewCount: data.profile.viewCount || 0,
+          isPrivate: data.profile.isPrivate || false,
+          athleteId: data.profile.athleteId,
+          instagramReels: data.profile.instagramReels || [],
         })
 
-        // Load scouting report summary if exists
-        const { data: report } = await supabase
-          .from('scouting_reports')
-          .select('report')
-          .eq('athlete_id', athleteRow.id)
-          .single()
-
-        if (report?.report) {
-          setScoutingReport({
-            overall_score: report.report.overall_score,
-            division_projection: report.report.division_projection,
-            stars: report.report.stars || null,
-          })
+        if (data.scoutingReport) {
+          setScoutingReport(data.scoutingReport)
         }
 
-        // Load coach letters
-        const { data: letters } = await supabase
-          .from('coach_letters')
-          .select('*')
-          .eq('athlete_id', athleteRow.id)
-          .order('created_at', { ascending: false })
-
-        if (letters) {
-          setCoachLetters(letters.map(l => ({
-            id: l.id,
-            coachName: l.coach_name,
-            school: l.school,
-            letterText: l.letter_text,
-            uploadedAt: l.created_at,
-          })))
+        if (data.coachLetters) {
+          setCoachLetters(data.coachLetters)
         }
       } catch (err) {
         console.error('Failed to load profile:', err)
