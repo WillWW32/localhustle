@@ -411,17 +411,27 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
               reels={instagramReels}
               onReelsChange={async (newReels) => {
                 setInstagramReels(newReels)
-                await supabase
-                  .from('athletes')
-                  .update({ instagram_reels: newReels })
-                  .eq('id', athlete.id)
+                await fetch('/api/recruit/update-profile', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ athleteId: id, field: 'instagram_reels', value: newReels }),
+                })
               }}
             />
           </div>
           <div className="dash-card">
             <h3 style={{ fontSize: '1.125rem', marginBottom: '1rem' }}>Bio</h3>
-            <textarea defaultValue={athlete.bio} className="dash-textarea" rows={4} />
-            <button className="dash-btn" style={{ marginTop: '0.75rem' }}>Save Bio</button>
+            <textarea id="bio-input" defaultValue={athlete.bio} className="dash-textarea" rows={4} />
+            <button className="dash-btn" style={{ marginTop: '0.75rem' }} onClick={async () => {
+              const bio = (document.getElementById('bio-input') as HTMLTextAreaElement).value
+              const res = await fetch('/api/recruit/update-profile', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ athleteId: id, field: 'about', value: bio }),
+              })
+              if (res.ok) alert('Bio saved!')
+              else alert('Failed to save bio')
+            }}>Save Bio</button>
           </div>
           <div className="dash-card">
             <h3 style={{ fontSize: '1.125rem', marginBottom: '1rem' }}>Photos</h3>
