@@ -90,6 +90,7 @@ export async function GET(request: NextRequest) {
       contactEmail: athleteRow.parent_email || '',
       contactPhone: athleteRow.parent_phone || '',
       profileImageUrl: athleteRow.profile_image_url || '',
+      parentRelationship: athleteRow.parent_relationship || '',
     },
     scoutingReport: scoutingRow || null,
     coachLetters: (letters || []).map((l: Record<string, unknown>) => ({

@@ -26,6 +26,7 @@ interface AthleteProfile {
   contactEmail: string
   contactPhone: string
   profileImageUrl: string
+  parentRelationship: string
 }
 
 interface ScoutingReportSummary {
@@ -76,6 +77,7 @@ export default function PublicAthleteProfilePage({ params }: { params: Promise<{
           contactEmail: data.profile.contactEmail || '',
           contactPhone: data.profile.contactPhone || '',
           profileImageUrl: data.profile.profileImageUrl || '',
+          parentRelationship: data.profile.parentRelationship || '',
         })
 
         if (data.scoutingReport) {
@@ -347,7 +349,7 @@ export default function PublicAthleteProfilePage({ params }: { params: Promise<{
               {athlete.contactEmail ? (
                 <div>
                   <p style={{ color: '#666', fontSize: '0.875rem', marginBottom: '0.25rem' }}>
-                    {athlete.contactEmail}
+                    {athlete.contactEmail}{athlete.parentRelationship ? ` (${athlete.parentRelationship})` : ''}
                   </p>
                   {athlete.contactPhone && (
                     <p style={{ color: '#666', fontSize: '0.875rem', marginBottom: 0 }}>

@@ -361,8 +361,26 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
                 onChange={async (e) => {
                   const file = e.target.files?.[0]
                   if (!file) return
+                  // Compress image client-side to stay under Vercel's 4.5MB limit
+                  const compress = (f: File): Promise<Blob> => {
+                    return new Promise((resolve) => {
+                      const img = new Image()
+                      img.onload = () => {
+                        const canvas = document.createElement('canvas')
+                        const maxSize = 800
+                        let w = img.width, h = img.height
+                        if (w > h) { if (w > maxSize) { h = h * maxSize / w; w = maxSize } }
+                        else { if (h > maxSize) { w = w * maxSize / h; h = maxSize } }
+                        canvas.width = w; canvas.height = h
+                        canvas.getContext('2d')?.drawImage(img, 0, 0, w, h)
+                        canvas.toBlob((blob) => resolve(blob || f), 'image/jpeg', 0.85)
+                      }
+                      img.src = URL.createObjectURL(f)
+                    })
+                  }
+                  const compressed = await compress(file)
                   const formData = new FormData()
-                  formData.append('file', file)
+                  formData.append('file', compressed, 'profile.jpg')
                   formData.append('athleteId', id)
                   const res = await fetch('/api/recruit/upload-image', { method: 'POST', body: formData })
                   if (res.ok) {
@@ -370,7 +388,8 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
                     setAthlete(prev => prev ? { ...prev, profileImageUrl: url } : prev)
                     alert('Profile photo saved!')
                   } else {
-                    alert('Failed to upload photo')
+                    const err = await res.json().catch(() => ({}))
+                    alert('Failed to upload: ' + (err.error || 'Unknown error'))
                   }
                 }}
               />
