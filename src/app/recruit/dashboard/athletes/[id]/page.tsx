@@ -361,13 +361,16 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
                 onChange={async (e) => {
                   const file = e.target.files?.[0]
                   if (!file) return
-                  const path = `public/${id}-profile.jpg`
-                  const { error: uploadErr } = await supabase.storage.from('profile-pics').upload(path, file, { upsert: true })
-                  if (uploadErr) { console.error('Upload error:', uploadErr); return }
-                  const { data: urlData } = supabase.storage.from('profile-pics').getPublicUrl(path)
-                  if (urlData?.publicUrl) {
-                    await supabase.from('athletes').update({ profile_image_url: urlData.publicUrl }).eq('id', id)
-                    setAthlete(prev => prev ? { ...prev, profileImageUrl: urlData.publicUrl } : prev)
+                  const formData = new FormData()
+                  formData.append('file', file)
+                  formData.append('athleteId', id)
+                  const res = await fetch('/api/recruit/upload-image', { method: 'POST', body: formData })
+                  if (res.ok) {
+                    const { url } = await res.json()
+                    setAthlete(prev => prev ? { ...prev, profileImageUrl: url } : prev)
+                    alert('Profile photo saved!')
+                  } else {
+                    alert('Failed to upload photo')
                   }
                 }}
               />
