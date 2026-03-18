@@ -701,17 +701,13 @@ footer p {
    ============================================ */
 
 .reel-container {
-  display: flex;
-  gap: 16px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
   width: 100%;
-  justify-content: center;
-  flex-wrap: wrap;
 }
 
 .reel-slot {
-  flex: 1;
-  min-width: 260px;
-  max-width: 340px;
   aspect-ratio: 9 / 16;
   border-radius: 12px;
   display: flex;
@@ -768,8 +764,8 @@ footer p {
 }
 
 @media (max-width: 639px) {
-  .reel-slot {
-    min-width: 100%;
-    max-width: 100%;
+  .reel-container {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
   }
 }
