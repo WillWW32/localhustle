@@ -48,15 +48,6 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <title>LocalHustle — NIL Money &amp; Scholarships for Student Athletes</title>
-        <meta name="description" content="Turn local support into real money. Scholarships, gigs, and brand deals for student athletes. The NIL platform built for high school athletes." />
-        <meta name="keywords" content="high school athlete NIL, college athlete NIL, basketball NIL, football NIL, student athlete earnings, local business sponsorship, Freedom Scholarships" />
-        <meta name="robots" content="index, follow" />
-        <meta property="og:title" content="LocalHustle — NIL Money &amp; Scholarships for Student Athletes" />
-        <meta property="og:description" content="Athletes earn. Parents support. Businesses sponsor. Everyone wins. The NIL platform built for high school athletes." />
-        <meta property="og:image" content="https://app.localhustle.org/og-image.jpg" />
-        <meta property="og:url" content="https://app.localhustle.org" />
-        <meta property="og:type" content="website" />
         <link rel="manifest" href="/manifest.json" />
         <link rel="apple-touch-icon" href="/icon-192.png" />
         <meta name="theme-color" content="#000000" />
