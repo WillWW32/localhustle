@@ -4,7 +4,8 @@ const X_AUTHORIZATION_URL = 'https://twitter.com/i/oauth2/authorize'
 const X_TOKEN_URL = 'https://api.twitter.com/2/oauth2/token'
 const X_USER_PROFILE_URL = 'https://api.twitter.com/2/users/me'
 
-const SCOPES = ['dm.write', 'dm.read', 'tweet.read', 'users.read', 'offline.access']
+// DM scopes require Pro tier - connect profile first, add DM later
+const SCOPES = ['tweet.read', 'users.read', 'offline.access']
 
 interface TokenResponse {
   access_token: string
@@ -62,14 +63,18 @@ export function getAuthorizationUrl(athleteId: string, codeChallenge: string): s
 export async function exchangeCodeForToken(code: string, codeVerifier: string): Promise<TokenResponse> {
   const config = getOAuthConfig()
 
+  // Confidential clients must use Basic auth for token exchange
+  const basicAuth = Buffer.from(`${config.clientId}:${config.clientSecret}`).toString('base64')
+
   const response = await fetch(X_TOKEN_URL, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'Authorization': `Basic ${basicAuth}`,
+    },
     body: new URLSearchParams({
       grant_type: 'authorization_code',
       code,
-      client_id: config.clientId,
-      client_secret: config.clientSecret,
       redirect_uri: config.redirectUri,
       code_verifier: codeVerifier,
     }).toString(),
@@ -86,14 +91,17 @@ export async function exchangeCodeForToken(code: string, codeVerifier: string): 
 export async function refreshAccessToken(refreshToken: string): Promise<TokenResponse> {
   const config = getOAuthConfig()
 
+  const basicAuth = Buffer.from(`${config.clientId}:${config.clientSecret}`).toString('base64')
+
   const response = await fetch(X_TOKEN_URL, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'Authorization': `Basic ${basicAuth}`,
+    },
     body: new URLSearchParams({
       grant_type: 'refresh_token',
       refresh_token: refreshToken,
-      client_id: config.clientId,
-      client_secret: config.clientSecret,
     }).toString(),
   })
 
