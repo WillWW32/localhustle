@@ -62,10 +62,10 @@ export function getAuthorizationUrl(athleteId: string, codeChallenge: string): s
 export async function exchangeCodeForToken(code: string, codeVerifier: string): Promise<TokenResponse> {
   const config = getOAuthConfig()
 
-  // Confidential clients must use Basic auth for token exchange
+  // Try Basic auth first, fall back to client_secret_post if it fails
   const basicAuth = Buffer.from(`${config.clientId}:${config.clientSecret}`).toString('base64')
 
-  const response = await fetch(X_TOKEN_URL, {
+  let response = await fetch(X_TOKEN_URL, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
@@ -78,6 +78,24 @@ export async function exchangeCodeForToken(code: string, codeVerifier: string): 
       code_verifier: codeVerifier,
     }).toString(),
   })
+
+  // If Basic auth fails, try client_secret_post method (credentials in body)
+  if (!response.ok) {
+    response = await fetch(X_TOKEN_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({
+        grant_type: 'authorization_code',
+        code,
+        redirect_uri: config.redirectUri,
+        code_verifier: codeVerifier,
+        client_id: config.clientId,
+        client_secret: config.clientSecret,
+      }).toString(),
+    })
+  }
 
   if (!response.ok) {
     const error = await response.text()
@@ -92,7 +110,7 @@ export async function refreshAccessToken(refreshToken: string): Promise<TokenRes
 
   const basicAuth = Buffer.from(`${config.clientId}:${config.clientSecret}`).toString('base64')
 
-  const response = await fetch(X_TOKEN_URL, {
+  let response = await fetch(X_TOKEN_URL, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
@@ -103,6 +121,21 @@ export async function refreshAccessToken(refreshToken: string): Promise<TokenRes
       refresh_token: refreshToken,
     }).toString(),
   })
+
+  if (!response.ok) {
+    response = await fetch(X_TOKEN_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({
+        grant_type: 'refresh_token',
+        refresh_token: refreshToken,
+        client_id: config.clientId,
+        client_secret: config.clientSecret,
+      }).toString(),
+    })
+  }
 
   if (!response.ok) {
     const error = await response.text()

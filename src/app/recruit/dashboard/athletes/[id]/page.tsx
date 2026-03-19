@@ -304,13 +304,16 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
 
       {/* Athlete Header Card */}
       <div className="dash-card" style={{ marginBottom: '1.5rem' }}>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-          <div>
-            <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'black', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '0.75rem' }}>
+        {/* Row 1: Profile photo+name (left) | Physical stats (right) */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1.5rem', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'black', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', fontWeight: 'bold', flexShrink: 0 }}>
               {athlete.firstName.charAt(0)}{athlete.lastName.charAt(0)}
             </div>
-            <p style={{ fontWeight: 'bold', fontSize: '1.125rem', marginBottom: '0.25rem' }}>{athlete.firstName} {athlete.lastName}</p>
-            <p style={{ color: '#666', fontSize: '0.875rem', marginBottom: 0 }}>{athlete.sport} &bull; {athlete.position}</p>
+            <div>
+              <p style={{ fontWeight: 'bold', fontSize: '1.125rem', marginBottom: '0.25rem' }}>{athlete.firstName} {athlete.lastName}</p>
+              <p style={{ color: '#666', fontSize: '0.875rem', marginBottom: 0 }}>{athlete.sport} &bull; {athlete.position}</p>
+            </div>
           </div>
           <div>
             <p style={{ fontWeight: 'bold', fontSize: '0.75rem', textTransform: 'uppercase', color: '#999', marginBottom: '0.75rem' }}>Physical</p>
@@ -319,12 +322,37 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
             <p style={{ marginBottom: '0.25rem' }}><span style={{ color: '#999', fontSize: '0.75rem' }}>School:</span> {athlete.highSchool}</p>
             <p style={{ marginBottom: 0 }}><span style={{ color: '#999', fontSize: '0.75rem' }}>Grad Year:</span> {athlete.gradYear}</p>
           </div>
-          <div>
-            <p style={{ fontWeight: 'bold', fontSize: '0.75rem', textTransform: 'uppercase', color: '#999', marginBottom: '0.75rem' }}>About</p>
-            <p style={{ fontSize: '0.875rem', color: '#333', marginBottom: '0.5rem' }}>{athlete.bio || 'No bio yet'}</p>
-            <p style={{ fontSize: '0.875rem', color: '#999', marginBottom: 0 }}>{athlete.city}, {athlete.state}</p>
-          </div>
         </div>
+        {/* Row 2: Full-width About/Bio */}
+        <div style={{ marginTop: '1.25rem', borderTop: '1px solid #eee', paddingTop: '1rem' }}>
+          <p style={{ fontWeight: 'bold', fontSize: '0.75rem', textTransform: 'uppercase', color: '#999', marginBottom: '0.5rem' }}>About</p>
+          <p style={{ fontSize: '0.875rem', color: '#333', marginBottom: '0.25rem' }}>{athlete.bio || 'No bio yet'}</p>
+          <p style={{ fontSize: '0.875rem', color: '#999', marginBottom: 0 }}>{athlete.city}, {athlete.state}</p>
+        </div>
+      </div>
+
+      {/* X Connection Banner */}
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1.25rem',
+        borderRadius: '12px', marginBottom: '1rem', fontWeight: 'bold', fontSize: '0.875rem',
+        background: athlete.xConnected ? '#e6f9e6' : '#fff3e0',
+        border: athlete.xConnected ? '1.5px solid #4caf50' : '1.5px solid #ff9800',
+        color: athlete.xConnected ? '#2e7d32' : '#e65100',
+      }}>
+        {athlete.xConnected ? (
+          <span>&#10003; X Connected @{athlete.firstName.toLowerCase()}{athlete.lastName.toLowerCase()}</span>
+        ) : (
+          <>
+            <span style={{ fontSize: '1.125rem' }}>&#x1D54F;</span>
+            <span>Connect X Account to enable DM outreach</span>
+            <button
+              onClick={() => setCurrentTab('settings')}
+              style={{ marginLeft: 'auto', padding: '0.4rem 1rem', borderRadius: '9999px', background: '#ff9800', color: 'white', border: 'none', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.8rem', fontFamily: 'inherit' }}
+            >
+              Connect X
+            </button>
+          </>
+        )}
       </div>
 
       {/* Tabs */}
@@ -408,6 +436,71 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
             </div>
             <span style={{ fontSize: '1.5rem', color: 'green' }}>&rarr;</span>
           </Link>
+
+          {/* Campaign Overview (on Profile tab) */}
+          <div className="dash-card" style={{ borderColor: '#1976d2', borderWidth: '1.5px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <h3 style={{ fontSize: '1.125rem', marginBottom: 0, color: '#1976d2' }}>Outreach Campaign</h3>
+              <button
+                onClick={handleToggleCampaign}
+                className={campaignStatus === 'active' ? 'dash-btn-green' : 'dash-btn-outline'}
+                style={{ padding: '0.4rem 0.9rem', fontSize: '0.8rem' }}
+              >
+                {campaignStatus === 'active' ? '● Active' : '❚❚ Paused'}
+              </button>
+            </div>
+
+            {/* Workflow steps */}
+            <div style={{ background: '#f8f9fa', borderRadius: '10px', padding: '1rem 1.25rem', marginBottom: '1rem' }}>
+              <p style={{ fontWeight: 'bold', fontSize: '0.8rem', textTransform: 'uppercase', color: '#999', marginBottom: '0.75rem' }}>Outreach Workflow</p>
+              {[
+                { step: 1, text: 'Connect X account for DM outreach', done: athlete.xConnected },
+                { step: 2, text: 'Review your 172 target coaches', done: sendCount.total > 0 },
+                { step: 3, text: 'Set up email & DM templates', done: false },
+                { step: 4, text: 'Launch automated outreach campaign', done: campaignStatus === 'active' },
+              ].map((item) => (
+                <div key={item.step} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.4rem' }}>
+                  <span style={{ width: '22px', height: '22px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', fontWeight: 'bold', flexShrink: 0, background: item.done ? '#4caf50' : '#e0e0e0', color: item.done ? 'white' : '#666' }}>
+                    {item.done ? '\u2713' : item.step}
+                  </span>
+                  <span style={{ fontSize: '0.875rem', color: item.done ? '#333' : '#666' }}>{item.text}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Campaign stats counters */}
+            <div className="grid grid-cols-3 gap-3">
+              {[
+                { label: 'Total Sent', value: sendCount.total },
+                { label: 'This Week', value: sendCount.thisWeek },
+                { label: 'Today', value: sendCount.today },
+              ].map((s, i) => (
+                <div key={i} style={{ textAlign: 'center', background: '#f5f5f5', borderRadius: '10px', padding: '0.75rem' }}>
+                  <p style={{ fontWeight: 'bold', fontSize: '1.25rem', marginBottom: '0.125rem' }}>{s.value}</p>
+                  <p style={{ color: '#999', fontSize: '0.625rem', textTransform: 'uppercase', marginBottom: 0 }}>{s.label}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Outreach Targets Card */}
+          <div className="dash-card" style={{ borderColor: '#7b1fa2', borderWidth: '1.5px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <h3 style={{ fontSize: '1.125rem', marginBottom: '0.25rem', color: '#7b1fa2' }}>Outreach Targets</h3>
+                <p style={{ color: '#666', fontSize: '0.875rem', marginBottom: '0.25rem' }}>
+                  <span style={{ fontWeight: 'bold', color: '#333' }}>{sendCount.total || 172}</span> coaches loaded
+                </p>
+                <p style={{ color: '#999', fontSize: '0.8rem', marginBottom: 0 }}>172 coaches pre-loaded from previous research. Review and manage in Campaign tab.</p>
+              </div>
+              <button
+                onClick={() => setCurrentTab('campaign')}
+                style={{ padding: '0.5rem 1rem', borderRadius: '9999px', background: '#7b1fa2', color: 'white', border: 'none', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.8rem', fontFamily: 'inherit', flexShrink: 0 }}
+              >
+                View Coaches
+              </button>
+            </div>
+          </div>
 
           <div className="dash-card">
             <h3 style={{ fontSize: '1.125rem', marginBottom: '1rem' }}>Highlight Video</h3>
