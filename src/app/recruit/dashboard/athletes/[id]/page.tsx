@@ -345,12 +345,12 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
           <>
             <span style={{ fontSize: '1.125rem' }}>&#x1D54F;</span>
             <span>Connect X Account to enable DM outreach</span>
-            <button
-              onClick={() => setCurrentTab('settings')}
-              style={{ marginLeft: 'auto', padding: '0.4rem 1rem', borderRadius: '9999px', background: '#ff9800', color: 'white', border: 'none', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.8rem', fontFamily: 'inherit' }}
+            <a
+              href={`/api/auth/x/authorize?athleteId=${athlete.id}`}
+              style={{ marginLeft: 'auto', padding: '0.4rem 1rem', borderRadius: '9999px', background: '#ff9800', color: 'white', border: 'none', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.8rem', fontFamily: 'inherit', textDecoration: 'none' }}
             >
               Connect X
-            </button>
+            </a>
           </>
         )}
       </div>
