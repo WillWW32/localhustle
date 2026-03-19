@@ -62,43 +62,26 @@ export function getAuthorizationUrl(athleteId: string, codeChallenge: string): s
 export async function exchangeCodeForToken(code: string, codeVerifier: string): Promise<TokenResponse> {
   const config = getOAuthConfig()
 
-  // Try Basic auth first, fall back to client_secret_post if it fails
-  const basicAuth = Buffer.from(`${config.clientId}:${config.clientSecret}`).toString('base64')
-
-  let response = await fetch(X_TOKEN_URL, {
+  // Use client_secret_post method (credentials in request body)
+  // Note: auth codes are single-use, so we can only attempt ONE method
+  const response = await fetch(X_TOKEN_URL, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
-      'Authorization': `Basic ${basicAuth}`,
     },
     body: new URLSearchParams({
       grant_type: 'authorization_code',
       code,
       redirect_uri: config.redirectUri,
       code_verifier: codeVerifier,
+      client_id: config.clientId,
+      client_secret: config.clientSecret,
     }).toString(),
   })
 
-  // If Basic auth fails, try client_secret_post method (credentials in body)
-  if (!response.ok) {
-    response = await fetch(X_TOKEN_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: new URLSearchParams({
-        grant_type: 'authorization_code',
-        code,
-        redirect_uri: config.redirectUri,
-        code_verifier: codeVerifier,
-        client_id: config.clientId,
-        client_secret: config.clientSecret,
-      }).toString(),
-    })
-  }
-
   if (!response.ok) {
     const error = await response.text()
+    console.error('Token exchange failed:', response.status, error)
     throw new Error(`Failed to exchange code for token: ${error}`)
   }
 
@@ -108,37 +91,23 @@ export async function exchangeCodeForToken(code: string, codeVerifier: string): 
 export async function refreshAccessToken(refreshToken: string): Promise<TokenResponse> {
   const config = getOAuthConfig()
 
-  const basicAuth = Buffer.from(`${config.clientId}:${config.clientSecret}`).toString('base64')
-
-  let response = await fetch(X_TOKEN_URL, {
+  // Use client_secret_post method (credentials in request body)
+  const response = await fetch(X_TOKEN_URL, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
-      'Authorization': `Basic ${basicAuth}`,
     },
     body: new URLSearchParams({
       grant_type: 'refresh_token',
       refresh_token: refreshToken,
+      client_id: config.clientId,
+      client_secret: config.clientSecret,
     }).toString(),
   })
 
   if (!response.ok) {
-    response = await fetch(X_TOKEN_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: new URLSearchParams({
-        grant_type: 'refresh_token',
-        refresh_token: refreshToken,
-        client_id: config.clientId,
-        client_secret: config.clientSecret,
-      }).toString(),
-    })
-  }
-
-  if (!response.ok) {
     const error = await response.text()
+    console.error('Token refresh failed:', response.status, error)
     throw new Error(`Failed to refresh access token: ${error}`)
   }
 

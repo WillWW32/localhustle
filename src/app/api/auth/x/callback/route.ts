@@ -65,8 +65,9 @@ export async function GET(request: NextRequest) {
     response.cookies.delete('x_oauth_pkce')
 
     return response
-  } catch (error) {
-    console.error('Callback error:', error)
+  } catch (error: any) {
+    console.error('Callback error:', error?.message || error)
+    console.error('Full error:', JSON.stringify(error, Object.getOwnPropertyNames(error || {})))
     const athleteId = new URL(request.url).searchParams.get('state')
     const redirectUrl = athleteId
       ? `${process.env.NEXT_PUBLIC_APP_URL}/recruit/dashboard/athletes/${athleteId}?error=${encodeURIComponent('Authorization failed')}`
