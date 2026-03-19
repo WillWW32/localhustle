@@ -62,20 +62,26 @@ export function getAuthorizationUrl(athleteId: string, codeChallenge: string): s
 export async function exchangeCodeForToken(code: string, codeVerifier: string): Promise<TokenResponse> {
   const config = getOAuthConfig()
 
-  // Use client_secret_post method (credentials in request body)
-  // Note: auth codes are single-use, so we can only attempt ONE method
+  // Use Basic auth for confidential clients (required by X API)
+  // Auth codes are single-use, so we can only attempt ONE method
+  const credentials = `${config.clientId}:${config.clientSecret}`
+  const basicAuth = Buffer.from(credentials).toString('base64')
+
+  console.log('Token exchange - redirect_uri:', config.redirectUri)
+  console.log('Token exchange - client_id length:', config.clientId.length)
+  console.log('Token exchange - client_secret length:', config.clientSecret.length)
+
   const response = await fetch(X_TOKEN_URL, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
+      'Authorization': `Basic ${basicAuth}`,
     },
     body: new URLSearchParams({
       grant_type: 'authorization_code',
       code,
       redirect_uri: config.redirectUri,
       code_verifier: codeVerifier,
-      client_id: config.clientId,
-      client_secret: config.clientSecret,
     }).toString(),
   })
 
@@ -91,17 +97,19 @@ export async function exchangeCodeForToken(code: string, codeVerifier: string): 
 export async function refreshAccessToken(refreshToken: string): Promise<TokenResponse> {
   const config = getOAuthConfig()
 
-  // Use client_secret_post method (credentials in request body)
+  // Use Basic auth for confidential clients
+  const credentials = `${config.clientId}:${config.clientSecret}`
+  const basicAuth = Buffer.from(credentials).toString('base64')
+
   const response = await fetch(X_TOKEN_URL, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
+      'Authorization': `Basic ${basicAuth}`,
     },
     body: new URLSearchParams({
       grant_type: 'refresh_token',
       refresh_token: refreshToken,
-      client_id: config.clientId,
-      client_secret: config.clientSecret,
     }).toString(),
   })
 
