@@ -62,6 +62,18 @@ export async function GET(request: NextRequest) {
 
   const stats = athleteRow.stats || {}
 
+  // Check if X is connected via OAuth tokens table (in addition to x_handle on athlete)
+  let xConnected = !!athleteRow.x_handle
+  if (!xConnected) {
+    const { data: xToken } = await supabaseAdmin
+      .from('x_oauth_tokens')
+      .select('id')
+      .eq('athlete_id', id)
+      .limit(1)
+      .single()
+    xConnected = !!xToken
+  }
+
   return NextResponse.json({
     athlete: {
       id: athleteRow.id,
@@ -78,7 +90,7 @@ export async function GET(request: NextRequest) {
       gradYear: athleteRow.grad_year || '',
       bio: athleteRow.bio || '',
       highlightUrl: athleteRow.highlight_url || '',
-      xConnected: !!athleteRow.x_handle,
+      xConnected,
       slug,
       instagramReels: athleteRow.instagram_reels || [],
       profileImageUrl: athleteRow.profile_image_url || '',

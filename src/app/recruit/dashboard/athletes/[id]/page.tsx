@@ -1316,10 +1316,10 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
             <div style={{ background: '#f8f9fa', borderRadius: '10px', padding: '1rem 1.25rem', marginBottom: '1rem' }}>
               <p style={{ fontWeight: 'bold', fontSize: '0.8rem', textTransform: 'uppercase', color: '#999', marginBottom: '0.75rem' }}>Outreach Workflow</p>
               {[
-                { step: 1, text: 'Connect X account for DM outreach', done: athlete.xConnected, action: () => { document.getElementById('dm-hub-section')?.scrollIntoView({ behavior: 'smooth' }); } },
-                { step: 2, text: 'Review your 172 target coaches', done: sendCount.total > 0, action: () => { setShowCoachesList(true); if (!targetCoachesLoaded) loadTargetCoaches(); document.getElementById('target-coaches-section')?.scrollIntoView({ behavior: 'smooth' }); } },
-                { step: 3, text: 'Set up email & DM templates', done: !!templateBody, action: () => { document.getElementById('outreach-letter-section')?.scrollIntoView({ behavior: 'smooth' }); setEditingTemplate(true); } },
-                { step: 4, text: 'Launch automated outreach campaign', done: campaignStatus === 'active', action: () => { document.getElementById('send-buttons-section')?.scrollIntoView({ behavior: 'smooth' }); } },
+                { step: 1, text: athlete.xConnected ? 'X account connected ✓' : 'Connect X account for DM outreach', done: athlete.xConnected, action: () => { setCurrentTab('campaign'); setTimeout(() => document.getElementById('dm-hub-section')?.scrollIntoView({ behavior: 'smooth' }), 100); } },
+                { step: 2, text: 'Review your 172 target coaches', done: sendCount.total > 0, action: () => { setCurrentTab('campaign'); setShowCoachesList(true); if (!targetCoachesLoaded) loadTargetCoaches(); setTimeout(() => document.getElementById('target-coaches-section')?.scrollIntoView({ behavior: 'smooth' }), 100); } },
+                { step: 3, text: 'Set up email & DM templates', done: !!templateBody, action: () => { setCurrentTab('campaign'); setEditingTemplate(true); setTimeout(() => document.getElementById('outreach-letter-section')?.scrollIntoView({ behavior: 'smooth' }), 100); } },
+                { step: 4, text: 'Launch automated outreach campaign', done: campaignStatus === 'active', action: () => { setCurrentTab('campaign'); setTimeout(() => document.getElementById('send-buttons-section')?.scrollIntoView({ behavior: 'smooth' }), 100); } },
               ].map((item) => (
                 <div key={item.step} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.4rem' }}>
                   <span style={{ width: '22px', height: '22px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', fontWeight: 'bold', flexShrink: 0, background: item.done ? '#4caf50' : '#e0e0e0', color: item.done ? 'white' : '#666' }}>
