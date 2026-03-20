@@ -7,6 +7,7 @@ export async function GET(request: NextRequest) {
     const state = request.nextUrl.searchParams.get('state')
     const campaignId = request.nextUrl.searchParams.get('campaignId')
     const contacted = request.nextUrl.searchParams.get('contacted')
+    const athleteId = request.nextUrl.searchParams.get('athleteId')
 
     let query = supabaseAdmin.from('coaches').select('*')
 
@@ -17,6 +18,37 @@ export async function GET(request: NextRequest) {
 
     if (coachError) {
       return NextResponse.json({ error: coachError.message }, { status: 400 })
+    }
+
+    // Build outreach status map when athleteId is provided
+    let statusMap = new Map<string, { emailed: boolean; dmd: boolean; responded: boolean; sentAt: string | null }>()
+    let outreachMap = new Map<string, string>()
+
+    if (athleteId) {
+      const { data: messages } = await supabaseAdmin
+        .from('messages')
+        .select('coach_id, status, type, sent_at')
+        .eq('athlete_id', athleteId)
+        .in('type', ['email', 'follow_up', 'dm'])
+        .not('status', 'eq', 'failed')
+
+      for (const msg of messages || []) {
+        const existing = statusMap.get(msg.coach_id) || { emailed: false, dmd: false, responded: false, sentAt: null }
+        if (msg.type === 'email' || msg.type === 'follow_up') existing.emailed = true
+        if (msg.type === 'dm') existing.dmd = true
+        if (msg.status === 'received') existing.responded = true
+        if (msg.sent_at && (!existing.sentAt || msg.sent_at > existing.sentAt)) existing.sentAt = msg.sent_at
+        statusMap.set(msg.coach_id, existing)
+      }
+
+      const { data: outreach } = await supabaseAdmin
+        .from('custom_outreach')
+        .select('coach_id, status')
+        .eq('athlete_id', athleteId)
+
+      for (const o of outreach || []) {
+        outreachMap.set(o.coach_id, o.status)
+      }
     }
 
     if (campaignId) {
@@ -39,7 +71,33 @@ export async function GET(request: NextRequest) {
       return a.last_name.localeCompare(b.last_name)
     })
 
-    return NextResponse.json({ success: true, count: coaches?.length || 0, coaches })
+    // Enrich with status if athleteId was provided
+    const enriched = (coaches || []).map((c: any) => {
+      const msgs = statusMap.get(c.id)
+      const oStatus = outreachMap.get(c.id)
+      let outreachStatus: 'responded' | 'emailed' | 'queued' | 'not_contacted' = 'not_contacted'
+      if (msgs?.responded || oStatus === 'responded') outreachStatus = 'responded'
+      else if (msgs?.emailed) outreachStatus = 'emailed'
+      else if (oStatus === 'queued' || oStatus === 'sent') outreachStatus = 'queued'
+
+      return {
+        ...c,
+        outreach_status: outreachStatus,
+        emailed: msgs?.emailed || false,
+        dmd: msgs?.dmd || false,
+        responded: msgs?.responded || oStatus === 'responded',
+        last_contact_at: msgs?.sentAt || null,
+      }
+    })
+
+    const stats = athleteId ? {
+      total: enriched.length,
+      emailed: enriched.filter((c: any) => c.emailed).length,
+      responded: enriched.filter((c: any) => c.responded).length,
+      notContacted: enriched.filter((c: any) => c.outreach_status === 'not_contacted').length,
+    } : null
+
+    return NextResponse.json({ success: true, count: enriched.length, coaches: enriched, stats })
   } catch (err: any) {
     console.error('Coaches GET error:', err)
     return NextResponse.json({ error: err.message || 'Internal server error' }, { status: 500 })

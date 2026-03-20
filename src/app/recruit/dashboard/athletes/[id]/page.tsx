@@ -134,6 +134,13 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
   const [queueLoaded, setQueueLoaded] = useState(false)
   const [sendingOutreachId, setSendingOutreachId] = useState<string | null>(null)
 
+  // Target coaches list state
+  const [targetCoaches, setTargetCoaches] = useState<any[]>([])
+  const [targetCoachesLoaded, setTargetCoachesLoaded] = useState(false)
+  const [coachFilter, setCoachFilter] = useState<'all' | 'not_contacted' | 'emailed' | 'responded'>('all')
+  const [coachSearch, setCoachSearch] = useState('')
+  const [showCoachesList, setShowCoachesList] = useState(false)
+
   // X DM Hub state
   const [dmCoaches, setDmCoaches] = useState<any[]>([])
   const [dmCoachesLoaded, setDmCoachesLoaded] = useState(false)
@@ -553,12 +560,31 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
     }
   }
 
-  // Load queue when campaign tab opens
+  // Load target coaches list
+  const loadTargetCoaches = async () => {
+    if (!athlete) return
+    try {
+      const res = await fetch(`/api/recruit/coaches?athleteId=${athlete.id}`)
+      const data = await res.json()
+      if (data.success) {
+        setTargetCoaches(data.coaches || [])
+      }
+    } catch {
+      // silently fail
+    } finally {
+      setTargetCoachesLoaded(true)
+    }
+  }
+
+  // Load queue and coaches when campaign tab opens
   useEffect(() => {
     if (currentTab === 'campaign' && !queueLoaded && athlete) {
       loadOutreachQueue()
     }
-  }, [currentTab, queueLoaded, athlete])
+    if (currentTab === 'campaign' && !targetCoachesLoaded && athlete) {
+      loadTargetCoaches()
+    }
+  }, [currentTab, queueLoaded, targetCoachesLoaded, athlete])
 
   // Load DM-eligible coaches when campaign tab opens
   const loadDmCoaches = async () => {
@@ -872,7 +898,7 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
               <p style={{ fontWeight: 'bold', fontSize: '0.8rem', textTransform: 'uppercase', color: '#999', marginBottom: '0.75rem' }}>Outreach Workflow</p>
               {[
                 { step: 1, text: 'Connect X account for DM outreach', done: athlete.xConnected, action: () => { document.getElementById('dm-hub-section')?.scrollIntoView({ behavior: 'smooth' }); } },
-                { step: 2, text: 'Review your 172 target coaches', done: sendCount.total > 0, action: () => { document.getElementById('send-buttons-section')?.scrollIntoView({ behavior: 'smooth' }); } },
+                { step: 2, text: 'Review your 172 target coaches', done: sendCount.total > 0, action: () => { setShowCoachesList(true); if (!targetCoachesLoaded) loadTargetCoaches(); document.getElementById('target-coaches-section')?.scrollIntoView({ behavior: 'smooth' }); } },
                 { step: 3, text: 'Set up email & DM templates', done: !!templateBody, action: () => { document.getElementById('outreach-letter-section')?.scrollIntoView({ behavior: 'smooth' }); setEditingTemplate(true); } },
                 { step: 4, text: 'Launch automated outreach campaign', done: campaignStatus === 'active', action: () => { document.getElementById('send-buttons-section')?.scrollIntoView({ behavior: 'smooth' }); } },
               ].map((item) => (
@@ -1205,6 +1231,126 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
                 <p style={{ fontSize: '0.7rem', color: '#999', marginTop: '0.5rem', marginBottom: 0, fontStyle: 'italic' }}>
                   [School] and [Coach Name] are filled automatically for each coach when sent.
                 </p>
+              </>
+            )}
+          </div>
+
+          {/* Target Coaches List */}
+          <div id="target-coaches-section" className="dash-card" style={{ borderColor: '#7b1fa2', borderWidth: '1.5px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+              <h3 style={{ fontSize: '1.125rem', margin: 0, color: '#7b1fa2' }}>Target Coaches</h3>
+              <button
+                onClick={() => { setShowCoachesList(!showCoachesList); if (!targetCoachesLoaded) loadTargetCoaches(); }}
+                className="dash-btn-outline"
+                style={{ padding: '0.35rem 0.9rem', fontSize: '0.8rem' }}
+              >
+                {showCoachesList ? 'Hide List' : `View All (${targetCoaches.length || '...'})`}
+              </button>
+            </div>
+
+            {/* Stats bar */}
+            {targetCoachesLoaded && (
+              <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
+                {[
+                  { label: 'Total', value: targetCoaches.length, color: '#7b1fa2' },
+                  { label: 'Emailed', value: targetCoaches.filter((c: any) => c.emailed).length, color: '#2e7d32' },
+                  { label: 'Responded', value: targetCoaches.filter((c: any) => c.responded).length, color: '#1976d2' },
+                  { label: 'Not Contacted', value: targetCoaches.filter((c: any) => c.outreach_status === 'not_contacted').length, color: '#e65100' },
+                ].map((s, i) => (
+                  <div key={i} style={{ textAlign: 'center', background: '#f5f5f5', borderRadius: '8px', padding: '0.5rem 0.75rem', flex: 1, minWidth: '70px' }}>
+                    <p style={{ fontWeight: 'bold', fontSize: '1.1rem', margin: 0, color: s.color }}>{s.value}</p>
+                    <p style={{ color: '#999', fontSize: '0.6rem', textTransform: 'uppercase', margin: 0 }}>{s.label}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {showCoachesList && (
+              <>
+                {/* Search + filter */}
+                <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
+                  <input
+                    type="text"
+                    placeholder="Search by name, school, or state..."
+                    value={coachSearch}
+                    onChange={(e) => setCoachSearch(e.target.value)}
+                    style={{ flex: 1, minWidth: '180px', padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid #ddd', fontSize: '0.85rem', fontFamily: 'inherit' }}
+                  />
+                  <select
+                    value={coachFilter}
+                    onChange={(e) => setCoachFilter(e.target.value as any)}
+                    style={{ padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid #ddd', fontSize: '0.85rem', fontFamily: 'inherit', background: 'white' }}
+                  >
+                    <option value="all">All</option>
+                    <option value="not_contacted">Not Contacted</option>
+                    <option value="emailed">Emailed</option>
+                    <option value="responded">Responded</option>
+                  </select>
+                </div>
+
+                {/* Coach list */}
+                <div style={{ maxHeight: '400px', overflowY: 'auto', border: '1px solid #eee', borderRadius: '8px' }}>
+                  {/* Header row */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '2fr 2fr 0.8fr 1fr 1.2fr', padding: '0.5rem 0.75rem', background: '#f5f5f5', fontSize: '0.7rem', fontWeight: 'bold', textTransform: 'uppercase', color: '#999', letterSpacing: '0.03em', position: 'sticky', top: 0 }}>
+                    <span>Coach</span>
+                    <span>School</span>
+                    <span>Div</span>
+                    <span>State</span>
+                    <span>Status</span>
+                  </div>
+                  {targetCoaches
+                    .filter((c: any) => {
+                      if (coachFilter !== 'all' && c.outreach_status !== coachFilter) return false
+                      if (coachSearch) {
+                        const q = coachSearch.toLowerCase()
+                        return (
+                          `${c.first_name} ${c.last_name}`.toLowerCase().includes(q) ||
+                          (c.school || '').toLowerCase().includes(q) ||
+                          (c.state || '').toLowerCase().includes(q) ||
+                          (c.email || '').toLowerCase().includes(q)
+                        )
+                      }
+                      return true
+                    })
+                    .map((c: any) => (
+                      <div key={c.id} style={{ display: 'grid', gridTemplateColumns: '2fr 2fr 0.8fr 1fr 1.2fr', padding: '0.5rem 0.75rem', borderBottom: '1px solid #f0f0f0', fontSize: '0.8rem', alignItems: 'center' }}>
+                        <div>
+                          <span style={{ fontWeight: 500 }}>{c.first_name} {c.last_name}</span>
+                          {c.title && <span style={{ color: '#999', fontSize: '0.7rem', display: 'block' }}>{c.title}</span>}
+                        </div>
+                        <span style={{ color: '#333' }}>{c.school}</span>
+                        <span style={{ color: '#7b1fa2', fontWeight: 'bold', fontSize: '0.7rem' }}>{c.division || '—'}</span>
+                        <span style={{ color: '#666' }}>{c.state || '—'}</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                          {c.outreach_status === 'responded' && (
+                            <span style={{ fontSize: '0.65rem', fontWeight: 'bold', background: '#e3f2fd', color: '#1976d2', padding: '0.15rem 0.4rem', borderRadius: '9999px' }}>Responded</span>
+                          )}
+                          {c.outreach_status === 'emailed' && (
+                            <span style={{ fontSize: '0.65rem', fontWeight: 'bold', background: '#e8f5e9', color: '#2e7d32', padding: '0.15rem 0.4rem', borderRadius: '9999px' }}>Emailed</span>
+                          )}
+                          {c.outreach_status === 'queued' && (
+                            <span style={{ fontSize: '0.65rem', fontWeight: 'bold', background: '#fff3e0', color: '#e65100', padding: '0.15rem 0.4rem', borderRadius: '9999px' }}>Queued</span>
+                          )}
+                          {c.outreach_status === 'not_contacted' && (
+                            <span style={{ fontSize: '0.65rem', fontWeight: 'bold', background: '#f5f5f5', color: '#999', padding: '0.15rem 0.4rem', borderRadius: '9999px' }}>Not Contacted</span>
+                          )}
+                          {c.dmd && (
+                            <span style={{ fontSize: '0.65rem', fontWeight: 'bold', background: '#e8f5fe', color: '#1da1f2', padding: '0.15rem 0.4rem', borderRadius: '9999px' }}>DM&apos;d</span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  {targetCoaches.filter((c: any) => {
+                    if (coachFilter !== 'all' && c.outreach_status !== coachFilter) return false
+                    if (coachSearch) {
+                      const q = coachSearch.toLowerCase()
+                      return `${c.first_name} ${c.last_name}`.toLowerCase().includes(q) || (c.school || '').toLowerCase().includes(q) || (c.state || '').toLowerCase().includes(q)
+                    }
+                    return true
+                  }).length === 0 && (
+                    <p style={{ textAlign: 'center', color: '#999', padding: '1.5rem', fontSize: '0.85rem' }}>No coaches match your filters.</p>
+                  )}
+                </div>
               </>
             )}
           </div>
