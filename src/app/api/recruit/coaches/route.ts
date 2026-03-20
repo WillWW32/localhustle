@@ -24,6 +24,18 @@ export async function GET(request: NextRequest) {
     let statusMap = new Map<string, { emailed: boolean; dmd: boolean; responded: boolean; sentAt: string | null }>()
     let outreachMap = new Map<string, string>()
 
+    // Fetch favorites when athleteId is provided
+    let favoriteSet = new Set<string>()
+    if (athleteId) {
+      const { data: favorites } = await supabaseAdmin
+        .from('coach_favorites')
+        .select('coach_id')
+        .eq('athlete_id', athleteId)
+      for (const fav of favorites || []) {
+        favoriteSet.add(fav.coach_id)
+      }
+    }
+
     if (athleteId) {
       const { data: messages } = await supabaseAdmin
         .from('messages')
@@ -87,6 +99,7 @@ export async function GET(request: NextRequest) {
         dmd: msgs?.dmd || false,
         responded: msgs?.responded || oStatus === 'responded',
         last_contact_at: msgs?.sentAt || null,
+        is_favorite: favoriteSet.has(c.id),
       }
     })
 

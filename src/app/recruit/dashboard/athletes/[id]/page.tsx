@@ -129,6 +129,13 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
   const [resultsLoading, setResultsLoading] = useState(false)
   const [showResults, setShowResults] = useState(false)
 
+  // Deliverability state
+  const [deliverability, setDeliverability] = useState<{
+    stats: { totalSent: number; delivered: number; opened: number; clicked: number; bounced: number; failed: number; complained: number; deliveryRate: number; openRate: number; clickRate: number }
+    recentIssues: Array<{ type: string; recipient: string | null; error: string | null; date: string; coachName: string | null }>
+  } | null>(null)
+  const [deliverabilityLoading, setDeliverabilityLoading] = useState(false)
+
   // Custom outreach queue state
   const [outreachQueue, setOutreachQueue] = useState<any[]>([])
   const [queueLoaded, setQueueLoaded] = useState(false)
@@ -140,6 +147,7 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
   const [coachFilter, setCoachFilter] = useState<'all' | 'not_contacted' | 'emailed' | 'responded'>('all')
   const [coachSearch, setCoachSearch] = useState('')
   const [showCoachesList, setShowCoachesList] = useState(false)
+  const [favoriteCoaches, setFavoriteCoaches] = useState<Set<string>>(new Set())
 
   // X DM Hub state
   const [dmCoaches, setDmCoaches] = useState<any[]>([])
@@ -567,12 +575,51 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
       const res = await fetch(`/api/recruit/coaches?athleteId=${athlete.id}`)
       const data = await res.json()
       if (data.success) {
-        setTargetCoaches(data.coaches || [])
+        const coaches = data.coaches || []
+        const favIds = new Set<string>(coaches.filter((c: any) => c.is_favorite).map((c: any) => c.id))
+        setFavoriteCoaches(favIds)
+        setTargetCoaches(coaches)
       }
     } catch {
       // silently fail
     } finally {
       setTargetCoachesLoaded(true)
+    }
+  }
+
+  const toggleFavoriteCoach = async (coachId: string) => {
+    if (!athlete) return
+    const isFav = favoriteCoaches.has(coachId)
+    // Optimistic update
+    setFavoriteCoaches(prev => {
+      const next = new Set(prev)
+      if (isFav) next.delete(coachId)
+      else next.add(coachId)
+      return next
+    })
+    try {
+      const res = await fetch('/api/recruit/coaches/favorite', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ athleteId: athlete.id, coachId, favorite: !isFav }),
+      })
+      if (!res.ok) {
+        // Revert on failure
+        setFavoriteCoaches(prev => {
+          const next = new Set(prev)
+          if (isFav) next.add(coachId)
+          else next.delete(coachId)
+          return next
+        })
+      }
+    } catch {
+      // Revert on failure
+      setFavoriteCoaches(prev => {
+        const next = new Set(prev)
+        if (isFav) next.add(coachId)
+        else next.delete(coachId)
+        return next
+      })
     }
   }
 
@@ -634,6 +681,20 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
       loadDmCoaches()
     }
   }, [currentTab, dmCoachesLoaded, athlete])
+
+  // Load deliverability stats when campaign tab opens
+  useEffect(() => {
+    if (currentTab === 'campaign' && athlete && !deliverabilityLoading && !deliverability) {
+      setDeliverabilityLoading(true)
+      fetch(`/api/recruit/deliverability?athleteId=${athlete.id}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.stats) setDeliverability(data)
+        })
+        .catch(() => { /* silently fail */ })
+        .finally(() => setDeliverabilityLoading(false))
+    }
+  }, [currentTab, athlete, deliverability, deliverabilityLoading])
 
   // Load outreach results (open rates, delivery stats)
   const loadResults = async () => {
@@ -1291,7 +1352,8 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
                 {/* Coach list */}
                 <div style={{ maxHeight: '400px', overflowY: 'auto', border: '1px solid #eee', borderRadius: '8px' }}>
                   {/* Header row */}
-                  <div style={{ display: 'grid', gridTemplateColumns: '2fr 2fr 0.8fr 1fr 1.2fr', padding: '0.5rem 0.75rem', background: '#f5f5f5', fontSize: '0.7rem', fontWeight: 'bold', textTransform: 'uppercase', color: '#999', letterSpacing: '0.03em', position: 'sticky', top: 0 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '0.3fr 2fr 2fr 0.8fr 1fr 1.2fr', padding: '0.5rem 0.75rem', background: '#f5f5f5', fontSize: '0.7rem', fontWeight: 'bold', textTransform: 'uppercase', color: '#999', letterSpacing: '0.03em', position: 'sticky', top: 0 }}>
+                    <span></span>
                     <span>Coach</span>
                     <span>School</span>
                     <span>Div</span>
@@ -1312,8 +1374,20 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
                       }
                       return true
                     })
+                    .sort((a: any, b: any) => {
+                      const aFav = favoriteCoaches.has(a.id) ? 0 : 1
+                      const bFav = favoriteCoaches.has(b.id) ? 0 : 1
+                      return aFav - bFav
+                    })
                     .map((c: any) => (
-                      <div key={c.id} style={{ display: 'grid', gridTemplateColumns: '2fr 2fr 0.8fr 1fr 1.2fr', padding: '0.5rem 0.75rem', borderBottom: '1px solid #f0f0f0', fontSize: '0.8rem', alignItems: 'center' }}>
+                      <div key={c.id} style={{ display: 'grid', gridTemplateColumns: '0.3fr 2fr 2fr 0.8fr 1fr 1.2fr', padding: '0.5rem 0.75rem', borderBottom: '1px solid #f0f0f0', fontSize: '0.8rem', alignItems: 'center' }}>
+                        <span
+                          onClick={() => toggleFavoriteCoach(c.id)}
+                          style={{ cursor: 'pointer', fontSize: '1rem', color: favoriteCoaches.has(c.id) ? '#f9a825' : '#ccc', userSelect: 'none' }}
+                          title={favoriteCoaches.has(c.id) ? 'Remove from favorites' : 'Add to favorites'}
+                        >
+                          {favoriteCoaches.has(c.id) ? '\u2605' : '\u2606'}
+                        </span>
                         <div>
                           <span style={{ fontWeight: 500 }}>{c.first_name} {c.last_name}</span>
                           {c.title && <span style={{ color: '#999', fontSize: '0.7rem', display: 'block' }}>{c.title}</span>}
@@ -1733,6 +1807,112 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
                         </div>
                       </div>
                     ))}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+
+          {/* Deliverability Monitor */}
+          <div className="dash-card" style={{ borderColor: '#0288d1', borderWidth: '1.5px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <h3 style={{ fontSize: '1.125rem', marginBottom: 0, color: '#0288d1' }}>Email Deliverability</h3>
+              {deliverability && (
+                <button
+                  onClick={() => { setDeliverability(null) }}
+                  className="dash-btn-outline"
+                  style={{ padding: '0.3rem 0.7rem', fontSize: '0.7rem' }}
+                >
+                  Refresh
+                </button>
+              )}
+            </div>
+
+            {deliverabilityLoading && (
+              <p style={{ color: '#999', fontSize: '0.8rem' }}>Loading deliverability data...</p>
+            )}
+
+            {!deliverabilityLoading && deliverability && deliverability.stats.totalSent === 0 && (
+              <p style={{ color: '#999', fontSize: '0.8rem', marginBottom: 0 }}>No emails sent yet. Stats will appear after your first campaign send.</p>
+            )}
+
+            {!deliverabilityLoading && deliverability && deliverability.stats.totalSent > 0 && (
+              <>
+                {/* Rate cards */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3" style={{ marginBottom: '1rem' }}>
+                  {[
+                    {
+                      label: 'Delivered',
+                      value: `${deliverability.stats.deliveryRate}%`,
+                      sub: `${deliverability.stats.delivered}/${deliverability.stats.totalSent}`,
+                      color: deliverability.stats.deliveryRate >= 95 ? '#2e7d32' : deliverability.stats.deliveryRate >= 80 ? '#e65100' : '#c62828',
+                      bg: deliverability.stats.deliveryRate >= 95 ? '#e8f5e9' : deliverability.stats.deliveryRate >= 80 ? '#fff3e0' : '#ffebee',
+                    },
+                    {
+                      label: 'Opened',
+                      value: `${deliverability.stats.openRate}%`,
+                      sub: `${deliverability.stats.opened}/${deliverability.stats.totalSent}`,
+                      color: deliverability.stats.openRate >= 30 ? '#2e7d32' : deliverability.stats.openRate >= 15 ? '#e65100' : '#c62828',
+                      bg: deliverability.stats.openRate >= 30 ? '#e8f5e9' : deliverability.stats.openRate >= 15 ? '#fff3e0' : '#ffebee',
+                    },
+                    {
+                      label: 'Clicked',
+                      value: `${deliverability.stats.clickRate}%`,
+                      sub: `${deliverability.stats.clicked}/${deliverability.stats.totalSent}`,
+                      color: deliverability.stats.clickRate >= 5 ? '#2e7d32' : deliverability.stats.clickRate >= 1 ? '#e65100' : '#757575',
+                      bg: deliverability.stats.clickRate >= 5 ? '#e8f5e9' : deliverability.stats.clickRate >= 1 ? '#fff3e0' : '#f5f5f5',
+                    },
+                    {
+                      label: 'Bounced',
+                      value: String(deliverability.stats.bounced),
+                      sub: deliverability.stats.complained > 0 ? `${deliverability.stats.complained} complaints` : '',
+                      color: deliverability.stats.bounced === 0 ? '#2e7d32' : deliverability.stats.bounced <= 3 ? '#e65100' : '#c62828',
+                      bg: deliverability.stats.bounced === 0 ? '#e8f5e9' : deliverability.stats.bounced <= 3 ? '#fff3e0' : '#ffebee',
+                    },
+                  ].map((s, i) => (
+                    <div key={i} style={{ textAlign: 'center', background: s.bg, borderRadius: '10px', padding: '0.75rem 0.5rem' }}>
+                      <p style={{ fontWeight: 'bold', fontSize: '1.25rem', marginBottom: '0.125rem', color: s.color }}>{s.value}</p>
+                      <p style={{ color: '#666', fontSize: '0.625rem', textTransform: 'uppercase', marginBottom: 0 }}>{s.label}</p>
+                      {s.sub && <p style={{ color: '#999', fontSize: '0.6rem', marginBottom: 0, marginTop: '0.125rem' }}>{s.sub}</p>}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Summary bar */}
+                <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', fontSize: '0.75rem', color: '#666', marginBottom: deliverability.recentIssues.length > 0 ? '1rem' : 0 }}>
+                  <span>Total sent: <strong>{deliverability.stats.totalSent}</strong></span>
+                  <span>Failed: <strong style={{ color: deliverability.stats.failed > 0 ? '#c62828' : '#666' }}>{deliverability.stats.failed}</strong></span>
+                </div>
+
+                {/* Recent issues */}
+                {deliverability.recentIssues.length > 0 && (
+                  <div>
+                    <p style={{ fontSize: '0.8rem', fontWeight: 600, color: '#c62828', marginBottom: '0.5rem' }}>Recent Issues</p>
+                    <div style={{ maxHeight: '180px', overflowY: 'auto' }}>
+                      {deliverability.recentIssues.map((issue, i) => (
+                        <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.35rem 0', borderBottom: '1px solid #f0f0f0', fontSize: '0.75rem' }}>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <span style={{
+                              display: 'inline-block',
+                              padding: '0.1rem 0.35rem',
+                              borderRadius: '4px',
+                              fontSize: '0.6rem',
+                              fontWeight: 'bold',
+                              marginRight: '0.4rem',
+                              color: 'white',
+                              background: issue.type === 'bounced' ? '#e65100' : issue.type === 'complained' ? '#c62828' : '#757575',
+                            }}>
+                              {issue.type}
+                            </span>
+                            <span style={{ color: '#333' }}>{issue.coachName || issue.recipient || 'Unknown'}</span>
+                          </div>
+                          <div style={{ flexShrink: 0, textAlign: 'right' }}>
+                            {issue.error && <span style={{ color: '#999', fontSize: '0.65rem', marginRight: '0.5rem' }}>{issue.error}</span>}
+                            <span style={{ color: '#bbb', fontSize: '0.65rem' }}>{new Date(issue.date).toLocaleDateString()}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
               </>
