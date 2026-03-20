@@ -1,11 +1,14 @@
 {
   "name": "LocalHustle",
   "short_name": "LocalHustle",
-  "description": "Earn real money with local gigs and scholarships",
-  "start_url": "/",
+  "description": "Athletic recruiting profiles, highlight reels, and coach outreach for high school athletes",
+  "start_url": "/recruit/login",
+  "scope": "/",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#ffffff",
   "theme_color": "#000000",
+  "categories": ["sports", "education"],
   "icons": [
     {
       "src": "/icon-192.png",

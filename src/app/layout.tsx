@@ -31,6 +31,14 @@ export default function RootLayout({
   }
 
   useEffect(() => {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch((err) => {
+        console.log('SW registration failed:', err)
+      })
+    }
+  }, [])
+
+  useEffect(() => {
     let index = 0
     const interval = setInterval(() => {
       if (index <= slogan.length) {
@@ -51,9 +59,9 @@ export default function RootLayout({
         <link rel="manifest" href="/manifest.json" />
         <link rel="apple-touch-icon" href="/icon-192.png" />
         <meta name="theme-color" content="#000000" />
-        <meta name="mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="black" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
         <meta name="google-site-verification" content="UIK5Zy5W_07pMvsiK_WKladS2TsMAXDlzdpkjgIc3Xs" />
       </head>
       <body>

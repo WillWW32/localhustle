@@ -69,6 +69,31 @@ interface FollowUpTemplates {
   no_response: string
 }
 
+interface EngagementCoach {
+  coachId: string
+  coachName: string
+  school: string
+  division: string
+  email: string
+  score: number
+  tier: 'Hot' | 'Warm' | 'Cold'
+  breakdown: string
+  opens: number
+  clicks: number
+  replied: boolean
+  delivered: number
+  lastInteraction: string | null
+}
+
+interface EngagementData {
+  coaches: EngagementCoach[]
+  summary: {
+    totalEngaged: number
+    hottestLead: { name: string; school: string; score: number } | null
+    averageScore: number
+  }
+}
+
 type Tab = 'profile' | 'campaign' | 'followups' | 'responses' | 'settings'
 
 export default function AthleteManagementPage({ params }: { params: Promise<{ id: string }> }) {
@@ -167,6 +192,38 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
   const [dmResult, setDmResult] = useState<{ success: boolean; message: string } | null>(null)
   const [dmComposeCoach, setDmComposeCoach] = useState<any | null>(null)
 
+  // Coach Engagement state
+  const [engagementData, setEngagementData] = useState<EngagementData | null>(null)
+  const [engagementLoaded, setEngagementLoaded] = useState(false)
+  const [engagementFilter, setEngagementFilter] = useState<'all' | 'Hot' | 'Warm' | 'Cold'>('all')
+
+  // Activity Tracker state
+  const [activities, setActivities] = useState<any[]>([])
+  const [activitiesLoaded, setActivitiesLoaded] = useState(false)
+  const [showAddActivity, setShowAddActivity] = useState(false)
+  const [activityForm, setActivityForm] = useState({
+    activityType: 'campus_visit',
+    title: '',
+    school: '',
+    activityDate: '',
+    description: '',
+    status: 'planned',
+  })
+  const [savingActivity, setSavingActivity] = useState(false)
+  const [editingActivityId, setEditingActivityId] = useState<string | null>(null)
+  const [outcomeText, setOutcomeText] = useState<Record<string, string>>({})
+
+  // Offer Board state
+  const [offers, setOffers] = useState<any[]>([])
+  const [offersLoaded, setOffersLoaded] = useState(false)
+  const [showAddOffer, setShowAddOffer] = useState(false)
+  const [editingOfferId, setEditingOfferId] = useState<string | null>(null)
+  const [offerForm, setOfferForm] = useState({
+    school: '', division: '', offer_type: 'interest', scholarship_amount: '',
+    notes: '', interest_level: 3, coach_interest_level: 3, decision_deadline: '',
+  })
+  const [savingOffer, setSavingOffer] = useState(false)
+
   // Load athlete and campaign via server-side API
   useEffect(() => {
     const loadAthlete = async () => {
@@ -226,6 +283,70 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
   useEffect(() => {
     if (currentTab === 'followups' && campaignId) fetchFollowUps()
   }, [currentTab, fetchFollowUps, campaignId])
+
+  // Fetch activities when followups tab opens
+  const fetchActivities = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/recruit/activities?athleteId=${id}`)
+      if (res.ok) {
+        const data = await res.json()
+        setActivities(data.activities || [])
+      }
+    } catch (err) {
+      console.error('Failed to fetch activities:', err)
+    } finally {
+      setActivitiesLoaded(true)
+    }
+  }, [id])
+
+  useEffect(() => {
+    if (currentTab === 'followups' && !activitiesLoaded) fetchActivities()
+  }, [currentTab, activitiesLoaded, fetchActivities])
+
+  const saveActivity = async () => {
+    setSavingActivity(true)
+    try {
+      const res = await fetch('/api/recruit/activities', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ athleteId: id, ...activityForm }),
+      })
+      if (res.ok) {
+        setShowAddActivity(false)
+        setActivityForm({ activityType: 'campus_visit', title: '', school: '', activityDate: '', description: '', status: 'planned' })
+        fetchActivities()
+      }
+    } catch (err) {
+      console.error('Failed to save activity:', err)
+    } finally {
+      setSavingActivity(false)
+    }
+  }
+
+  const updateActivityStatus = async (activityId: string, newStatus: string, outcome?: string) => {
+    try {
+      const body: any = { id: activityId, status: newStatus }
+      if (outcome !== undefined) body.outcome = outcome
+      const res = await fetch('/api/recruit/activities', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
+      if (res.ok) fetchActivities()
+    } catch (err) {
+      console.error('Failed to update activity:', err)
+    }
+  }
+
+  const deleteActivity = async (activityId: string) => {
+    if (!confirm('Delete this activity?')) return
+    try {
+      const res = await fetch(`/api/recruit/activities?id=${activityId}`, { method: 'DELETE' })
+      if (res.ok) fetchActivities()
+    } catch (err) {
+      console.error('Failed to delete activity:', err)
+    }
+  }
 
   // Build a default template pre-populated with athlete data
   const buildDefaultTemplate = (a: AthleteProfile) => {
@@ -660,6 +781,19 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
     }
   }, [currentTab, parentAccessLoaded, athlete])
 
+  // Load offers when responses tab opens
+  useEffect(() => {
+    if (currentTab === 'responses' && !offersLoaded && athlete) {
+      fetch(`/api/recruit/offers?athleteId=${athlete.id}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) setOffers(data.offers || [])
+        })
+        .catch(() => {})
+        .finally(() => setOffersLoaded(true))
+    }
+  }, [currentTab, offersLoaded, athlete])
+
   // Load DM-eligible coaches when campaign tab opens
   const loadDmCoaches = async () => {
     if (!athlete) return
@@ -722,6 +856,19 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
         .finally(() => setDeliverabilityLoading(false))
     }
   }, [currentTab, athlete, deliverability, deliverabilityLoading])
+
+  // Load coach engagement scores when campaign tab opens
+  useEffect(() => {
+    if (currentTab === 'campaign' && athlete && !engagementLoaded) {
+      fetch(`/api/recruit/engagement?athleteId=${athlete.id}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.coaches) setEngagementData(data)
+        })
+        .catch(() => { /* silently fail */ })
+        .finally(() => setEngagementLoaded(true))
+    }
+  }, [currentTab, athlete, engagementLoaded])
 
   // Load outreach results (open rates, delivery stats)
   const loadResults = async () => {
@@ -1946,6 +2093,150 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
             )}
           </div>
 
+          {/* ── Coach Engagement Scoring ── */}
+          <div className="dash-card" style={{ borderColor: '#ea580c', borderWidth: '2px' }}>
+            <h3 style={{ fontSize: '1.125rem', marginBottom: '0.75rem', color: '#ea580c' }}>Coach Engagement</h3>
+
+            {!engagementLoaded && (
+              <p style={{ color: '#999', fontSize: '0.875rem' }}>Loading engagement data...</p>
+            )}
+
+            {engagementLoaded && engagementData && (
+              <>
+                {/* Summary Stats */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.5rem', marginBottom: '1rem' }}>
+                  <div style={{ textAlign: 'center', background: '#fff7ed', borderRadius: '10px', padding: '0.6rem' }}>
+                    <p style={{ fontWeight: 'bold', fontSize: '1.25rem', marginBottom: '0.125rem', color: '#ea580c' }}>{engagementData.summary.totalEngaged}</p>
+                    <p style={{ color: '#999', fontSize: '0.625rem', textTransform: 'uppercase', marginBottom: 0 }}>Engaged</p>
+                  </div>
+                  <div style={{ textAlign: 'center', background: '#fff7ed', borderRadius: '10px', padding: '0.6rem' }}>
+                    <p style={{ fontWeight: 'bold', fontSize: '1.25rem', marginBottom: '0.125rem', color: '#ea580c' }}>{engagementData.summary.averageScore}</p>
+                    <p style={{ color: '#999', fontSize: '0.625rem', textTransform: 'uppercase', marginBottom: 0 }}>Avg Score</p>
+                  </div>
+                  <div style={{ textAlign: 'center', background: '#fff7ed', borderRadius: '10px', padding: '0.6rem', overflow: 'hidden' }}>
+                    <p style={{ fontWeight: 'bold', fontSize: '0.8rem', marginBottom: '0.125rem', color: '#ea580c', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {engagementData.summary.hottestLead ? engagementData.summary.hottestLead.name : '--'}
+                    </p>
+                    <p style={{ color: '#999', fontSize: '0.625rem', textTransform: 'uppercase', marginBottom: 0 }}>Hottest Lead</p>
+                  </div>
+                </div>
+
+                {/* Tier Filter Tabs */}
+                <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+                  {(['all', 'Hot', 'Warm', 'Cold'] as const).map((tier) => {
+                    const count = tier === 'all'
+                      ? engagementData.coaches.length
+                      : engagementData.coaches.filter(c => c.tier === tier).length
+                    const isActive = engagementFilter === tier
+                    return (
+                      <button
+                        key={tier}
+                        onClick={() => setEngagementFilter(tier)}
+                        style={{
+                          flex: 1,
+                          padding: '0.5rem 0.25rem',
+                          fontSize: '0.75rem',
+                          fontWeight: isActive ? 'bold' : 'normal',
+                          border: isActive ? '2px solid #ea580c' : '1px solid #ddd',
+                          borderRadius: '8px',
+                          background: isActive ? '#fff7ed' : '#fff',
+                          color: isActive ? '#ea580c' : '#666',
+                          cursor: 'pointer',
+                          fontFamily: 'inherit',
+                        }}
+                      >
+                        {tier === 'Hot' ? '\uD83D\uDD25' : tier === 'Warm' ? '\u2600\uFE0F' : tier === 'Cold' ? '\u2744\uFE0F' : ''} {tier === 'all' ? 'All' : tier} ({count})
+                      </button>
+                    )
+                  })}
+                </div>
+
+                {/* Coach Cards List */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '400px', overflowY: 'auto' }}>
+                  {engagementData.coaches
+                    .filter(c => engagementFilter === 'all' || c.tier === engagementFilter)
+                    .map((coach) => (
+                      <div
+                        key={coach.coachId}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          padding: '0.6rem 0.75rem',
+                          borderRadius: '10px',
+                          border: `1px solid ${coach.tier === 'Hot' ? '#fed7aa' : coach.tier === 'Warm' ? '#fef3c7' : '#e5e7eb'}`,
+                          background: coach.tier === 'Hot' ? '#fffbf5' : coach.tier === 'Warm' ? '#fffef5' : '#fafafa',
+                        }}
+                      >
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.15rem' }}>
+                            <span style={{ fontSize: '0.9rem' }}>
+                              {coach.tier === 'Hot' ? '\uD83D\uDD25' : coach.tier === 'Warm' ? '\u2600\uFE0F' : '\u2744\uFE0F'}
+                            </span>
+                            <span style={{ fontWeight: 'bold', fontSize: '0.875rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                              {coach.coachName}
+                            </span>
+                            <span style={{
+                              background: coach.tier === 'Hot' ? '#ea580c' : coach.tier === 'Warm' ? '#f59e0b' : '#9ca3af',
+                              color: '#fff',
+                              fontSize: '0.65rem',
+                              fontWeight: 'bold',
+                              padding: '0.1rem 0.4rem',
+                              borderRadius: '999px',
+                              flexShrink: 0,
+                            }}>
+                              {coach.score}
+                            </span>
+                          </div>
+                          <p style={{ color: '#666', fontSize: '0.75rem', marginBottom: '0.1rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {coach.school}{coach.division ? ` (${coach.division})` : ''}
+                          </p>
+                          <p style={{ color: '#999', fontSize: '0.7rem', marginBottom: 0 }}>
+                            {coach.breakdown}
+                            {coach.lastInteraction && (
+                              <> &middot; {new Date(coach.lastInteraction).toLocaleDateString()}</>
+                            )}
+                          </p>
+                        </div>
+                        {coach.tier === 'Warm' && (
+                          <button
+                            className="dash-btn-outline"
+                            style={{ padding: '0.3rem 0.6rem', fontSize: '0.7rem', flexShrink: 0, marginLeft: '0.5rem' }}
+                            onClick={() => {
+                              setCurrentTab('followups')
+                            }}
+                          >
+                            Follow-up
+                          </button>
+                        )}
+                        {coach.tier === 'Hot' && (
+                          <button
+                            className="dash-btn"
+                            style={{ padding: '0.3rem 0.6rem', fontSize: '0.7rem', flexShrink: 0, marginLeft: '0.5rem', background: '#ea580c', borderColor: '#ea580c' }}
+                            onClick={() => {
+                              setCurrentTab('followups')
+                            }}
+                          >
+                            Personalize
+                          </button>
+                        )}
+                      </div>
+                    ))}
+
+                  {engagementData.coaches.filter(c => engagementFilter === 'all' || c.tier === engagementFilter).length === 0 && (
+                    <p style={{ color: '#999', fontSize: '0.875rem', textAlign: 'center', padding: '1rem 0' }}>
+                      No coaches in this tier yet.
+                    </p>
+                  )}
+                </div>
+              </>
+            )}
+
+            {engagementLoaded && !engagementData && (
+              <p style={{ color: '#999', fontSize: '0.875rem' }}>No engagement data available. Start your campaign to see coach engagement scores.</p>
+            )}
+          </div>
+
           {/* Coach Targets */}
           <div className="dash-card" style={{ borderColor: '#7b1fa2', borderWidth: '1.5px' }}>
             <h3 style={{ fontSize: '1.125rem', marginBottom: '0.25rem', color: '#7b1fa2' }}>Outreach Targets</h3>
@@ -2171,6 +2462,282 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
               )}
             </>
           )}
+
+          {/* ── ACTIVITY TRACKER ── */}
+          <div className="dash-card" style={{ borderColor: '#0d9488', borderWidth: '1.5px', marginTop: '1rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <h3 style={{ fontSize: '1.125rem', marginBottom: 0, color: '#0d9488' }}>Activity Tracker</h3>
+              <button
+                onClick={() => setShowAddActivity(!showAddActivity)}
+                style={{ padding: '0.5rem 1rem', borderRadius: '9999px', background: '#0d9488', color: 'white', border: 'none', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.8rem', fontFamily: 'inherit' }}
+              >
+                {showAddActivity ? 'Cancel' : '+ Log Activity'}
+              </button>
+            </div>
+
+            {/* Add Activity Form */}
+            {showAddActivity && (
+              <div style={{ background: '#f0fdfa', borderRadius: '8px', padding: '1rem', marginBottom: '1rem', border: '1px solid #ccfbf1' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 'bold', color: '#0d9488', marginBottom: '0.25rem' }}>Activity Type</label>
+                    <select
+                      value={activityForm.activityType}
+                      onChange={e => setActivityForm(f => ({ ...f, activityType: e.target.value }))}
+                      style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #d1d5db', fontSize: '0.85rem', fontFamily: 'inherit' }}
+                    >
+                      <option value="campus_visit">Campus Visit</option>
+                      <option value="unofficial_visit">Unofficial Visit</option>
+                      <option value="official_visit">Official Visit</option>
+                      <option value="camp">Camp</option>
+                      <option value="showcase">Showcase</option>
+                      <option value="combine">Combine</option>
+                      <option value="phone_call">Phone Call</option>
+                      <option value="video_call">Video Call</option>
+                      <option value="meeting">Meeting</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 'bold', color: '#0d9488', marginBottom: '0.25rem' }}>Date</label>
+                    <input
+                      type="datetime-local"
+                      value={activityForm.activityDate}
+                      onChange={e => setActivityForm(f => ({ ...f, activityDate: e.target.value }))}
+                      style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #d1d5db', fontSize: '0.85rem', fontFamily: 'inherit' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 'bold', color: '#0d9488', marginBottom: '0.25rem' }}>Title</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Duke Campus Visit"
+                      value={activityForm.title}
+                      onChange={e => setActivityForm(f => ({ ...f, title: e.target.value }))}
+                      style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #d1d5db', fontSize: '0.85rem', fontFamily: 'inherit' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 'bold', color: '#0d9488', marginBottom: '0.25rem' }}>School</label>
+                    <input
+                      type="text"
+                      placeholder="School name"
+                      value={activityForm.school}
+                      onChange={e => setActivityForm(f => ({ ...f, school: e.target.value }))}
+                      style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #d1d5db', fontSize: '0.85rem', fontFamily: 'inherit' }}
+                    />
+                  </div>
+                  <div style={{ gridColumn: '1 / -1' }}>
+                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 'bold', color: '#0d9488', marginBottom: '0.25rem' }}>Notes</label>
+                    <textarea
+                      placeholder="Description or notes..."
+                      value={activityForm.description}
+                      onChange={e => setActivityForm(f => ({ ...f, description: e.target.value }))}
+                      rows={3}
+                      style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #d1d5db', fontSize: '0.85rem', fontFamily: 'inherit', resize: 'vertical' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 'bold', color: '#0d9488', marginBottom: '0.25rem' }}>Status</label>
+                    <select
+                      value={activityForm.status}
+                      onChange={e => setActivityForm(f => ({ ...f, status: e.target.value }))}
+                      style={{ width: '100%', padding: '0.5rem', borderRadius: '6px', border: '1px solid #d1d5db', fontSize: '0.85rem', fontFamily: 'inherit' }}
+                    >
+                      <option value="planned">Planned</option>
+                      <option value="completed">Completed</option>
+                      <option value="cancelled">Cancelled</option>
+                    </select>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: '0.75rem' }}>
+                  <button
+                    onClick={() => setShowAddActivity(false)}
+                    style={{ padding: '0.5rem 1rem', borderRadius: '9999px', background: 'white', color: '#666', border: '1px solid #d1d5db', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.8rem', fontFamily: 'inherit' }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={saveActivity}
+                    disabled={savingActivity || !activityForm.title || !activityForm.activityDate}
+                    style={{ padding: '0.5rem 1rem', borderRadius: '9999px', background: savingActivity || !activityForm.title || !activityForm.activityDate ? '#99f6e4' : '#0d9488', color: 'white', border: 'none', cursor: savingActivity || !activityForm.title || !activityForm.activityDate ? 'not-allowed' : 'pointer', fontWeight: 'bold', fontSize: '0.8rem', fontFamily: 'inherit' }}
+                  >
+                    {savingActivity ? 'Saving...' : 'Save Activity'}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {!activitiesLoaded && <div className="dash-empty">Loading activities...</div>}
+
+            {activitiesLoaded && activities.length === 0 && !showAddActivity && (
+              <p style={{ color: '#999', fontSize: '0.85rem', textAlign: 'center', marginBottom: 0 }}>
+                No activities logged yet. Click &quot;Log Activity&quot; to track campus visits, camps, calls, and more.
+              </p>
+            )}
+
+            {activitiesLoaded && activities.length > 0 && (() => {
+              const now = new Date()
+              const upcoming = activities.filter(a => new Date(a.activityDate) >= now && a.status !== 'cancelled')
+              const past = activities.filter(a => new Date(a.activityDate) < now || a.status === 'cancelled')
+
+              const activityTypeConfig: Record<string, { label: string; color: string; bg: string }> = {
+                campus_visit: { label: 'Campus Visit', color: '#1d4ed8', bg: '#dbeafe' },
+                unofficial_visit: { label: 'Unofficial Visit', color: '#1d4ed8', bg: '#dbeafe' },
+                official_visit: { label: 'Official Visit', color: '#1e40af', bg: '#bfdbfe' },
+                camp: { label: 'Camp', color: '#15803d', bg: '#dcfce7' },
+                showcase: { label: 'Showcase', color: '#15803d', bg: '#dcfce7' },
+                combine: { label: 'Combine', color: '#b45309', bg: '#fef3c7' },
+                phone_call: { label: 'Phone Call', color: '#7c3aed', bg: '#ede9fe' },
+                video_call: { label: 'Video Call', color: '#7c3aed', bg: '#ede9fe' },
+                meeting: { label: 'Meeting', color: '#0369a1', bg: '#e0f2fe' },
+                other: { label: 'Other', color: '#6b7280', bg: '#f3f4f6' },
+              }
+
+              const statusConfig: Record<string, { label: string; color: string; bg: string }> = {
+                planned: { label: 'Planned', color: '#a16207', bg: '#fef9c3' },
+                completed: { label: 'Completed', color: '#15803d', bg: '#dcfce7' },
+                cancelled: { label: 'Cancelled', color: '#dc2626', bg: '#fee2e2' },
+              }
+
+              const formatRelativeDate = (dateStr: string) => {
+                const date = new Date(dateStr)
+                const diffMs = date.getTime() - now.getTime()
+                const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24))
+                if (diffDays === 0) return 'Today'
+                if (diffDays === 1) return 'Tomorrow'
+                if (diffDays === -1) return 'Yesterday'
+                if (diffDays > 1 && diffDays <= 30) return `In ${diffDays} days`
+                if (diffDays < -1 && diffDays >= -30) return `${Math.abs(diffDays)} days ago`
+                return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+              }
+
+              const renderActivity = (activity: any) => {
+                const typeConf = activityTypeConfig[activity.activityType] || activityTypeConfig.other
+                const statConf = statusConfig[activity.status] || statusConfig.planned
+                const isEditing = editingActivityId === activity.id
+
+                return (
+                  <div key={activity.id} style={{ display: 'flex', gap: '0.75rem', padding: '0.75rem 0', borderBottom: '1px solid #f3f4f6' }}>
+                    {/* Timeline dot */}
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: '12px', paddingTop: '0.25rem' }}>
+                      <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: typeConf.color, flexShrink: 0 }} />
+                      <div style={{ width: '2px', flex: 1, background: '#e5e7eb', marginTop: '4px' }} />
+                    </div>
+
+                    {/* Content */}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.25rem' }}>
+                        <span style={{ fontSize: '0.65rem', fontWeight: 'bold', padding: '0.15rem 0.5rem', borderRadius: '9999px', background: typeConf.bg, color: typeConf.color }}>
+                          {typeConf.label}
+                        </span>
+                        <span style={{ fontSize: '0.65rem', fontWeight: 'bold', padding: '0.15rem 0.5rem', borderRadius: '9999px', background: statConf.bg, color: statConf.color }}>
+                          {statConf.label}
+                        </span>
+                      </div>
+                      <p style={{ fontWeight: 'bold', fontSize: '0.9rem', marginBottom: '0.125rem' }}>
+                        {activity.title}
+                        {activity.school && <span style={{ fontWeight: 'normal', color: '#666' }}> &mdash; {activity.school}</span>}
+                      </p>
+                      <p style={{ color: '#999', fontSize: '0.75rem', marginBottom: '0.25rem' }}>
+                        {new Date(activity.activityDate).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                        {' '}<span style={{ color: '#0d9488', fontWeight: 'bold' }}>({formatRelativeDate(activity.activityDate)})</span>
+                      </p>
+                      {activity.description && (
+                        <p style={{ color: '#555', fontSize: '0.8rem', marginBottom: '0.25rem' }}>{activity.description}</p>
+                      )}
+                      {activity.outcome && (
+                        <p style={{ color: '#15803d', fontSize: '0.8rem', marginBottom: '0.25rem', fontStyle: 'italic' }}>Outcome: {activity.outcome}</p>
+                      )}
+
+                      {/* Outcome input when editing */}
+                      {isEditing && (
+                        <div style={{ marginTop: '0.5rem', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                          <input
+                            type="text"
+                            placeholder="Enter outcome notes..."
+                            value={outcomeText[activity.id] || ''}
+                            onChange={e => setOutcomeText(prev => ({ ...prev, [activity.id]: e.target.value }))}
+                            style={{ flex: 1, padding: '0.4rem 0.6rem', borderRadius: '6px', border: '1px solid #d1d5db', fontSize: '0.8rem', fontFamily: 'inherit' }}
+                          />
+                          <button
+                            onClick={() => {
+                              updateActivityStatus(activity.id, 'completed', outcomeText[activity.id] || undefined)
+                              setEditingActivityId(null)
+                            }}
+                            style={{ padding: '0.4rem 0.8rem', borderRadius: '6px', background: '#15803d', color: 'white', border: 'none', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 'bold', fontFamily: 'inherit' }}
+                          >
+                            Save
+                          </button>
+                          <button
+                            onClick={() => setEditingActivityId(null)}
+                            style={{ padding: '0.4rem 0.8rem', borderRadius: '6px', background: 'white', color: '#666', border: '1px solid #d1d5db', cursor: 'pointer', fontSize: '0.75rem', fontFamily: 'inherit' }}
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      )}
+
+                      {/* Action buttons */}
+                      {!isEditing && activity.status === 'planned' && (
+                        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.375rem' }}>
+                          <button
+                            onClick={() => setEditingActivityId(activity.id)}
+                            style={{ padding: '0.3rem 0.7rem', borderRadius: '6px', background: '#dcfce7', color: '#15803d', border: 'none', cursor: 'pointer', fontSize: '0.7rem', fontWeight: 'bold', fontFamily: 'inherit' }}
+                          >
+                            Complete
+                          </button>
+                          <button
+                            onClick={() => updateActivityStatus(activity.id, 'cancelled')}
+                            style={{ padding: '0.3rem 0.7rem', borderRadius: '6px', background: '#fee2e2', color: '#dc2626', border: 'none', cursor: 'pointer', fontSize: '0.7rem', fontWeight: 'bold', fontFamily: 'inherit' }}
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            onClick={() => deleteActivity(activity.id)}
+                            style={{ padding: '0.3rem 0.7rem', borderRadius: '6px', background: '#f3f4f6', color: '#6b7280', border: 'none', cursor: 'pointer', fontSize: '0.7rem', fontFamily: 'inherit' }}
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      )}
+                      {!isEditing && activity.status !== 'planned' && (
+                        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.375rem' }}>
+                          <button
+                            onClick={() => deleteActivity(activity.id)}
+                            style={{ padding: '0.3rem 0.7rem', borderRadius: '6px', background: '#f3f4f6', color: '#6b7280', border: 'none', cursor: 'pointer', fontSize: '0.7rem', fontFamily: 'inherit' }}
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )
+              }
+
+              return (
+                <div>
+                  {upcoming.length > 0 && (
+                    <>
+                      <p style={{ fontWeight: 'bold', fontSize: '0.8rem', color: '#0d9488', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>
+                        Upcoming ({upcoming.length})
+                      </p>
+                      {upcoming.map(renderActivity)}
+                    </>
+                  )}
+                  {past.length > 0 && (
+                    <>
+                      <p style={{ fontWeight: 'bold', fontSize: '0.8rem', color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem', marginTop: upcoming.length > 0 ? '1rem' : 0 }}>
+                        Past ({past.length})
+                      </p>
+                      {past.map(renderActivity)}
+                    </>
+                  )}
+                </div>
+              )
+            })()}
+          </div>
         </div>
       )}
 
@@ -2201,6 +2768,282 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
               <p style={{ color: '#999', fontSize: '0.75rem', marginBottom: 0 }}>{new Date(response.respondedAt).toLocaleDateString()}</p>
             </div>
           ))}
+          {/* ── OFFER BOARD ── */}
+          <div className="dash-card" style={{ border: '2px solid #f59e0b', marginTop: '1rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <h3 style={{ fontSize: '1.125rem', marginBottom: 0, color: '#b45309' }}>Offer Board</h3>
+              <button
+                onClick={() => {
+                  setOfferForm({ school: '', division: '', offer_type: 'interest', scholarship_amount: '', notes: '', interest_level: 3, coach_interest_level: 3, decision_deadline: '' })
+                  setEditingOfferId(null)
+                  setShowAddOffer(true)
+                }}
+                style={{ padding: '0.4rem 1rem', borderRadius: '9999px', background: '#f59e0b', color: 'white', border: 'none', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.8rem', fontFamily: 'inherit' }}
+              >
+                + Add Offer
+              </button>
+            </div>
+
+            {/* Summary Stats */}
+            {offers.length > 0 && (
+              <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
+                <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '8px', padding: '0.5rem 1rem', textAlign: 'center', flex: '1 1 80px' }}>
+                  <p style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#b45309', marginBottom: '0.125rem' }}>{offers.length}</p>
+                  <p style={{ fontSize: '0.7rem', color: '#92400e', marginBottom: 0 }}>Total Offers</p>
+                </div>
+                <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '8px', padding: '0.5rem 1rem', textAlign: 'center', flex: '1 1 80px' }}>
+                  <p style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#b45309', marginBottom: '0.125rem' }}>
+                    {(() => {
+                      const typeRank: Record<string, number> = { interest: 0, preferred_walk_on: 1, partial_scholarship: 2, full_scholarship: 3, verbal_offer: 4, official_offer: 5, committed: 6 }
+                      const best = offers.reduce((a: any, b: any) => (typeRank[b.offer_type] || 0) > (typeRank[a.offer_type] || 0) ? b : a, offers[0])
+                      const labels: Record<string, string> = { interest: 'Interest', preferred_walk_on: 'PWO', partial_scholarship: 'Partial', full_scholarship: 'Full', verbal_offer: 'Verbal', official_offer: 'Official', committed: 'Committed' }
+                      return labels[best?.offer_type] || 'N/A'
+                    })()}
+                  </p>
+                  <p style={{ fontSize: '0.7rem', color: '#92400e', marginBottom: 0 }}>Highest Level</p>
+                </div>
+                <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '8px', padding: '0.5rem 1rem', textAlign: 'center', flex: '1 1 80px' }}>
+                  <p style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#b45309', marginBottom: '0.125rem' }}>{new Set(offers.map((o: any) => o.school)).size}</p>
+                  <p style={{ fontSize: '0.7rem', color: '#92400e', marginBottom: 0 }}>Schools</p>
+                </div>
+              </div>
+            )}
+
+            {/* Add/Edit Offer Form */}
+            {showAddOffer && (
+              <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '10px', padding: '1rem', marginBottom: '1rem' }}>
+                <h4 style={{ fontSize: '0.9rem', marginBottom: '0.75rem', color: '#92400e' }}>{editingOfferId ? 'Edit Offer' : 'Add New Offer'}</h4>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    <input
+                      type="text" placeholder="School Name *" value={offerForm.school}
+                      onChange={e => setOfferForm(f => ({ ...f, school: e.target.value }))}
+                      style={{ flex: '2 1 200px', padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid #ddd', fontSize: '0.85rem', fontFamily: 'inherit' }}
+                    />
+                    <select
+                      value={offerForm.division} onChange={e => setOfferForm(f => ({ ...f, division: e.target.value }))}
+                      style={{ flex: '1 1 120px', padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid #ddd', fontSize: '0.85rem', fontFamily: 'inherit', background: 'white' }}
+                    >
+                      <option value="">Division</option>
+                      <option value="D1">D1</option>
+                      <option value="D2">D2</option>
+                      <option value="D3">D3</option>
+                      <option value="NAIA">NAIA</option>
+                      <option value="JUCO">JUCO</option>
+                    </select>
+                  </div>
+                  <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    <select
+                      value={offerForm.offer_type} onChange={e => setOfferForm(f => ({ ...f, offer_type: e.target.value }))}
+                      style={{ flex: '1 1 160px', padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid #ddd', fontSize: '0.85rem', fontFamily: 'inherit', background: 'white' }}
+                    >
+                      <option value="interest">Interest</option>
+                      <option value="preferred_walk_on">Preferred Walk-On</option>
+                      <option value="partial_scholarship">Partial Scholarship</option>
+                      <option value="full_scholarship">Full Scholarship</option>
+                      <option value="verbal_offer">Verbal Offer</option>
+                      <option value="official_offer">Official Offer</option>
+                      <option value="committed">Committed</option>
+                    </select>
+                    <input
+                      type="text" placeholder="Scholarship Amount" value={offerForm.scholarship_amount}
+                      onChange={e => setOfferForm(f => ({ ...f, scholarship_amount: e.target.value }))}
+                      style={{ flex: '1 1 140px', padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid #ddd', fontSize: '0.85rem', fontFamily: 'inherit' }}
+                    />
+                  </div>
+                  <textarea
+                    placeholder="Notes (optional)" value={offerForm.notes}
+                    onChange={e => setOfferForm(f => ({ ...f, notes: e.target.value }))}
+                    rows={2}
+                    style={{ padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid #ddd', fontSize: '0.85rem', fontFamily: 'inherit', resize: 'vertical' }}
+                  />
+                  <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', color: '#666', display: 'block', marginBottom: '0.25rem' }}>My Interest (1-5)</label>
+                      <input type="range" min={1} max={5} value={offerForm.interest_level} onChange={e => setOfferForm(f => ({ ...f, interest_level: Number(e.target.value) }))} style={{ width: '100px' }} />
+                      <span style={{ marginLeft: '0.5rem', fontWeight: 'bold', fontSize: '0.85rem' }}>{offerForm.interest_level}</span>
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.75rem', color: '#666', display: 'block', marginBottom: '0.25rem' }}>Coach Interest (1-5)</label>
+                      <input type="range" min={1} max={5} value={offerForm.coach_interest_level} onChange={e => setOfferForm(f => ({ ...f, coach_interest_level: Number(e.target.value) }))} style={{ width: '100px' }} />
+                      <span style={{ marginLeft: '0.5rem', fontWeight: 'bold', fontSize: '0.85rem' }}>{offerForm.coach_interest_level}</span>
+                    </div>
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '0.75rem', color: '#666', display: 'block', marginBottom: '0.25rem' }}>Decision Deadline</label>
+                    <input
+                      type="date" value={offerForm.decision_deadline}
+                      onChange={e => setOfferForm(f => ({ ...f, decision_deadline: e.target.value }))}
+                      style={{ padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid #ddd', fontSize: '0.85rem', fontFamily: 'inherit' }}
+                    />
+                  </div>
+                  <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.25rem' }}>
+                    <button
+                      disabled={savingOffer || !offerForm.school.trim()}
+                      onClick={async () => {
+                        setSavingOffer(true)
+                        try {
+                          if (editingOfferId) {
+                            const res = await fetch('/api/recruit/offers', {
+                              method: 'PUT',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ id: editingOfferId, ...offerForm, decision_deadline: offerForm.decision_deadline || null }),
+                            })
+                            const data = await res.json()
+                            if (data.success) {
+                              setOffers(prev => prev.map(o => o.id === editingOfferId ? { ...o, ...data.offer } : o))
+                              setShowAddOffer(false)
+                              setEditingOfferId(null)
+                            }
+                          } else {
+                            const res = await fetch('/api/recruit/offers', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ athlete_id: id, ...offerForm, decision_deadline: offerForm.decision_deadline || null }),
+                            })
+                            const data = await res.json()
+                            if (data.success) {
+                              setOffers(prev => [data.offer, ...prev])
+                              setShowAddOffer(false)
+                            }
+                          }
+                        } catch (err) {
+                          console.error('Failed to save offer:', err)
+                        } finally {
+                          setSavingOffer(false)
+                        }
+                      }}
+                      style={{ padding: '0.5rem 1.25rem', borderRadius: '9999px', background: savingOffer || !offerForm.school.trim() ? '#ccc' : '#f59e0b', color: 'white', border: 'none', cursor: savingOffer ? 'default' : 'pointer', fontWeight: 'bold', fontSize: '0.8rem', fontFamily: 'inherit' }}
+                    >
+                      {savingOffer ? 'Saving...' : editingOfferId ? 'Update Offer' : 'Save Offer'}
+                    </button>
+                    <button
+                      onClick={() => { setShowAddOffer(false); setEditingOfferId(null) }}
+                      style={{ padding: '0.5rem 1rem', borderRadius: '9999px', background: 'white', color: '#666', border: '1px solid #ddd', cursor: 'pointer', fontSize: '0.8rem', fontFamily: 'inherit' }}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Offer Cards */}
+            {offers.length === 0 && !showAddOffer && (
+              <p style={{ color: '#999', fontSize: '0.85rem', textAlign: 'center', marginBottom: 0 }}>No offers yet. Add your first offer to start tracking.</p>
+            )}
+            {offers.map((offer: any) => {
+              const typeColors: Record<string, { bg: string; color: string }> = {
+                interest: { bg: '#f3f4f6', color: '#374151' },
+                preferred_walk_on: { bg: '#dbeafe', color: '#1e40af' },
+                partial_scholarship: { bg: '#d1fae5', color: '#065f46' },
+                full_scholarship: { bg: '#fef3c7', color: '#92400e' },
+                verbal_offer: { bg: '#ede9fe', color: '#5b21b6' },
+                official_offer: { bg: '#d1fae5', color: '#047857' },
+                committed: { bg: '#fee2e2', color: '#991b1b' },
+              }
+              const typeLabels: Record<string, string> = {
+                interest: 'Interest', preferred_walk_on: 'Preferred Walk-On', partial_scholarship: 'Partial Scholarship',
+                full_scholarship: 'Full Scholarship', verbal_offer: 'Verbal Offer', official_offer: 'Official Offer', committed: 'Committed',
+              }
+              const statusColors: Record<string, { bg: string; color: string }> = {
+                active: { bg: '#d1fae5', color: '#065f46' },
+                declined: { bg: '#f3f4f6', color: '#6b7280' },
+                committed: { bg: '#fee2e2', color: '#991b1b' },
+                expired: { bg: '#f3f4f6', color: '#9ca3af' },
+              }
+              const tc = typeColors[offer.offer_type] || typeColors.interest
+              const sc = statusColors[offer.status] || statusColors.active
+              const daysRemaining = offer.decision_deadline ? Math.ceil((new Date(offer.decision_deadline).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : null
+
+              return (
+                <div key={offer.id} style={{ background: 'white', border: '1px solid #e5e7eb', borderRadius: '10px', padding: '0.75rem', marginBottom: '0.5rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
+                    <div>
+                      <p style={{ fontWeight: 'bold', fontSize: '0.95rem', marginBottom: '0.125rem' }}>{offer.school}</p>
+                      <div style={{ display: 'flex', gap: '0.375rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                        {offer.division && (
+                          <span style={{ background: '#e5e7eb', color: '#374151', fontSize: '0.65rem', padding: '0.125rem 0.5rem', borderRadius: '9999px', fontWeight: 'bold' }}>{offer.division}</span>
+                        )}
+                        <span style={{ background: tc.bg, color: tc.color, fontSize: '0.65rem', padding: '0.125rem 0.5rem', borderRadius: '9999px', fontWeight: 'bold' }}>
+                          {typeLabels[offer.offer_type] || offer.offer_type}
+                        </span>
+                        <span style={{ background: sc.bg, color: sc.color, fontSize: '0.65rem', padding: '0.125rem 0.5rem', borderRadius: '9999px', fontWeight: 'bold' }}>
+                          {offer.status}
+                        </span>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: '0.25rem' }}>
+                      <button
+                        onClick={() => {
+                          setOfferForm({
+                            school: offer.school || '', division: offer.division || '', offer_type: offer.offer_type || 'interest',
+                            scholarship_amount: offer.scholarship_amount || '', notes: offer.notes || '',
+                            interest_level: offer.interest_level ?? 3, coach_interest_level: offer.coach_interest_level ?? 3,
+                            decision_deadline: offer.decision_deadline ? offer.decision_deadline.split('T')[0] : '',
+                          })
+                          setEditingOfferId(offer.id)
+                          setShowAddOffer(true)
+                        }}
+                        style={{ background: 'none', border: '1px solid #ddd', borderRadius: '6px', padding: '0.25rem 0.5rem', cursor: 'pointer', fontSize: '0.7rem', color: '#666', fontFamily: 'inherit' }}
+                      >
+                        Edit
+                      </button>
+                      {offer.status === 'active' && (
+                        <button
+                          onClick={async () => {
+                            const res = await fetch('/api/recruit/offers', {
+                              method: 'PUT',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ id: offer.id, status: 'declined' }),
+                            })
+                            const data = await res.json()
+                            if (data.success) setOffers(prev => prev.map(o => o.id === offer.id ? { ...o, status: 'declined' } : o))
+                          }}
+                          style={{ background: 'none', border: '1px solid #fca5a5', borderRadius: '6px', padding: '0.25rem 0.5rem', cursor: 'pointer', fontSize: '0.7rem', color: '#dc2626', fontFamily: 'inherit' }}
+                        >
+                          Decline
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {offer.coach_name && (
+                    <p style={{ fontSize: '0.8rem', color: '#666', marginBottom: '0.375rem' }}>Coach: {offer.coach_name}</p>
+                  )}
+                  {offer.scholarship_amount && (
+                    <p style={{ fontSize: '0.8rem', color: '#065f46', fontWeight: 'bold', marginBottom: '0.375rem' }}>Scholarship: {offer.scholarship_amount}</p>
+                  )}
+
+                  {/* Interest Level Meters */}
+                  <div style={{ display: 'flex', gap: '1.25rem', marginBottom: '0.375rem', flexWrap: 'wrap' }}>
+                    <div style={{ fontSize: '0.75rem', color: '#666' }}>
+                      <span>My Interest: </span>
+                      {[1, 2, 3, 4, 5].map(n => (
+                        <span key={n} style={{ color: n <= (offer.interest_level || 0) ? '#f59e0b' : '#d1d5db', fontSize: '0.85rem' }}>&#9733;</span>
+                      ))}
+                    </div>
+                    <div style={{ fontSize: '0.75rem', color: '#666' }}>
+                      <span>Coach Interest: </span>
+                      {[1, 2, 3, 4, 5].map(n => (
+                        <span key={n} style={{ color: n <= (offer.coach_interest_level || 0) ? '#3b82f6' : '#d1d5db', fontSize: '0.85rem' }}>&#9733;</span>
+                      ))}
+                    </div>
+                  </div>
+
+                  {offer.notes && (
+                    <p style={{ fontSize: '0.8rem', color: '#555', marginBottom: '0.375rem', fontStyle: 'italic' }}>{offer.notes}</p>
+                  )}
+
+                  {daysRemaining !== null && (
+                    <p style={{ fontSize: '0.75rem', color: daysRemaining <= 7 ? '#dc2626' : daysRemaining <= 30 ? '#f59e0b' : '#666', fontWeight: daysRemaining <= 7 ? 'bold' : 'normal', marginBottom: 0 }}>
+                      Deadline: {new Date(offer.decision_deadline).toLocaleDateString()} ({daysRemaining > 0 ? `${daysRemaining} days left` : daysRemaining === 0 ? 'Today' : 'Passed'})
+                    </p>
+                  )}
+                </div>
+              )
+            })}
+          </div>
         </div>
       )}
 
