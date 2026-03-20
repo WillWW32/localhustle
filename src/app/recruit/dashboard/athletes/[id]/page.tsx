@@ -1163,11 +1163,36 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
                 {campaignResult.upNext.length > 0 && (
                   <div>
                     <p style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#1976d2', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.4rem' }}>Up Next</p>
-                    <div style={{ maxHeight: '150px', overflowY: 'auto' }}>
+                    <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
                       {campaignResult.upNext.map((c) => (
-                        <div key={c.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.3rem 0', borderBottom: '1px solid #f0f0f0', fontSize: '0.8rem', color: '#999' }}>
+                        <div key={c.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.3rem 0', borderBottom: '1px solid #f0f0f0', fontSize: '0.8rem', color: '#999' }}>
                           <span>{c.name}</span>
-                          <span>{c.school} {c.division && <span style={{ fontSize: '0.7rem' }}>({c.division})</span>}</span>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <span>{c.school} {c.division && <span style={{ fontSize: '0.7rem' }}>({c.division})</span>}</span>
+                            <button
+                              onClick={async () => {
+                                const defaultBody = `Coach ${c.name.split(' ').pop()},\n\nMy name is ${athlete?.firstName} ${athlete?.lastName}, a ${athlete?.height}, ${athlete?.weight} lb ${athlete?.position} from ${athlete?.highSchool} in ${athlete?.city}, ${athlete?.state} (Class of ${athlete?.gradYear}).\n\n[Add your personalized message here — why this specific program?]\n\nMy highlight film: ${athlete?.highlightUrl || ''}\n\nRespectfully,\n${athlete?.firstName} ${athlete?.lastName}\n${athlete?.email}`
+                                const res = await fetch('/api/recruit/outreach-queue', {
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({
+                                    athleteId: athlete?.id,
+                                    coachId: c.id,
+                                    subject: `Interest in ${c.school} — ${athlete?.firstName} ${athlete?.lastName}, Class of ${athlete?.gradYear}`,
+                                    body: defaultBody,
+                                  }),
+                                })
+                                const data = await res.json()
+                                if (data.success) {
+                                  await loadOutreachQueue()
+                                  alert(`${c.name} moved to Personalized Queue — edit the letter before sending!`)
+                                }
+                              }}
+                              style={{ padding: '0.2rem 0.5rem', borderRadius: '9999px', background: '#e65100', color: 'white', border: 'none', cursor: 'pointer', fontSize: '0.6rem', fontWeight: 'bold', fontFamily: 'inherit', whiteSpace: 'nowrap' }}
+                            >
+                              Personalize
+                            </button>
+                          </div>
                         </div>
                       ))}
                     </div>
