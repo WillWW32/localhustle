@@ -109,6 +109,12 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
   const [savingTemplate, setSavingTemplate] = useState(false)
   const [runningCampaign, setRunningCampaign] = useState(false)
   const [campaignResult, setCampaignResult] = useState<{ emailsSent: number; errors: any[]; remaining: number } | null>(null)
+  const [staggerProgress, setStaggerProgress] = useState<{ sent: number; total: number; batch: number; done: boolean } | null>(null)
+
+  // Open results state
+  const [outreachResults, setOutreachResults] = useState<any>(null)
+  const [resultsLoading, setResultsLoading] = useState(false)
+  const [showResults, setShowResults] = useState(false)
 
   // Load athlete and campaign via server-side API
   useEffect(() => {
@@ -360,6 +366,92 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
       alert('Failed to run campaign: ' + err.message)
     } finally {
       setRunningCampaign(false)
+    }
+  }
+
+  // Send All Staggered — sends batches of 10 with 3s gaps
+  const runCampaignStaggered = async () => {
+    setRunningCampaign(true)
+    setCampaignResult(null)
+    setStaggerProgress({ sent: 0, total: 0, batch: 0, done: false })
+    try {
+      const activeCampaignId = await ensureCampaign()
+      if (!activeCampaignId) {
+        setRunningCampaign(false)
+        setStaggerProgress(null)
+        return
+      }
+      // Save template first
+      await fetch('/api/recruit/template', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ campaignId: activeCampaignId, subject: templateSubject, bodyText: templateBody }),
+      })
+
+      let totalSent = 0
+      let totalErrors: any[] = []
+      let remaining = 999
+      let batchNum = 0
+
+      while (remaining > 0) {
+        batchNum++
+        setStaggerProgress({ sent: totalSent, total: 0, batch: batchNum, done: false })
+
+        const res = await fetch('/api/recruit/run', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ campaignId: activeCampaignId, maxEmails: 10 }),
+        })
+        const data = await res.json()
+        if (!data.success) {
+          alert('Campaign error: ' + (data.error || 'Unknown error'))
+          break
+        }
+
+        totalSent += data.emailsSent
+        totalErrors = [...totalErrors, ...data.errors]
+        remaining = data.remaining
+
+        setStaggerProgress({ sent: totalSent, total: totalSent + remaining, batch: batchNum, done: false })
+        setSendCount(prev => ({
+          total: prev.total + data.emailsSent,
+          thisWeek: prev.thisWeek + data.emailsSent,
+          today: prev.today + data.emailsSent,
+        }))
+
+        // If no emails sent this batch (limit hit or no more coaches), stop
+        if (data.emailsSent === 0) break
+
+        // Wait 3 seconds between batches to be polite to Resend rate limits
+        if (remaining > 0) {
+          await new Promise(r => setTimeout(r, 3000))
+        }
+      }
+
+      setCampaignResult({ emailsSent: totalSent, errors: totalErrors, remaining })
+      setStaggerProgress({ sent: totalSent, total: totalSent + remaining, batch: batchNum, done: true })
+    } catch (err: any) {
+      alert('Failed to run staggered campaign: ' + err.message)
+      setStaggerProgress(null)
+    } finally {
+      setRunningCampaign(false)
+    }
+  }
+
+  // Load outreach results (open rates, delivery stats)
+  const loadResults = async () => {
+    const activeCampaignId = campaignId
+    if (!activeCampaignId) return
+    setResultsLoading(true)
+    try {
+      const res = await fetch(`/api/recruit/results?campaignId=${activeCampaignId}`)
+      const data = await res.json()
+      setOutreachResults(data)
+      setShowResults(true)
+    } catch (err: any) {
+      alert('Failed to load results: ' + err.message)
+    } finally {
+      setResultsLoading(false)
     }
   }
 
@@ -882,33 +974,144 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
                 <p style={{ color: '#666', marginBottom: 0 }}>{campaignResult.remaining} coaches remaining</p>
               </div>
             )}
-            <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center' }}>
               <button
                 onClick={() => runCampaign(5)}
                 disabled={runningCampaign || !templateBody}
                 style={{ padding: '0.75rem 1.5rem', borderRadius: '9999px', background: runningCampaign ? '#ccc' : '#22c55e', color: 'white', border: 'none', cursor: runningCampaign ? 'default' : 'pointer', fontWeight: 'bold', fontSize: '0.875rem', fontFamily: 'inherit' }}
               >
-                {runningCampaign ? 'Sending...' : 'Send 5 Emails'}
+                {runningCampaign ? 'Sending...' : 'Send 5'}
               </button>
               <button
                 onClick={() => runCampaign(10)}
                 disabled={runningCampaign || !templateBody}
                 style={{ padding: '0.75rem 1.5rem', borderRadius: '9999px', background: runningCampaign ? '#ccc' : '#1976d2', color: 'white', border: 'none', cursor: runningCampaign ? 'default' : 'pointer', fontWeight: 'bold', fontSize: '0.875rem', fontFamily: 'inherit' }}
               >
-                {runningCampaign ? 'Sending...' : 'Send 10 Emails'}
+                {runningCampaign ? 'Sending...' : 'Send 10'}
               </button>
               <button
                 onClick={() => runCampaign(25)}
                 disabled={runningCampaign || !templateBody}
                 style={{ padding: '0.75rem 1.5rem', borderRadius: '9999px', background: runningCampaign ? '#ccc' : '#7b1fa2', color: 'white', border: 'none', cursor: runningCampaign ? 'default' : 'pointer', fontWeight: 'bold', fontSize: '0.875rem', fontFamily: 'inherit' }}
               >
-                {runningCampaign ? 'Sending...' : 'Send 25 Emails'}
+                {runningCampaign ? 'Sending...' : 'Send 25'}
+              </button>
+              <button
+                onClick={runCampaignStaggered}
+                disabled={runningCampaign || !templateBody}
+                style={{ padding: '0.75rem 1.5rem', borderRadius: '9999px', background: runningCampaign ? '#ccc' : '#e65100', color: 'white', border: 'none', cursor: runningCampaign ? 'default' : 'pointer', fontWeight: 'bold', fontSize: '0.875rem', fontFamily: 'inherit' }}
+              >
+                {runningCampaign ? 'Sending...' : 'Send All (Staggered)'}
               </button>
             </div>
+            {/* Stagger progress bar */}
+            {staggerProgress && !staggerProgress.done && (
+              <div style={{ marginTop: '0.75rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: '#666', marginBottom: '0.25rem' }}>
+                  <span>Batch {staggerProgress.batch} &mdash; {staggerProgress.sent} sent</span>
+                  <span>{staggerProgress.total > 0 ? `${Math.round((staggerProgress.sent / staggerProgress.total) * 100)}%` : '...'}</span>
+                </div>
+                <div style={{ background: '#e0e0e0', borderRadius: '9999px', height: '8px', overflow: 'hidden' }}>
+                  <div
+                    style={{
+                      background: 'linear-gradient(90deg, #e65100, #ff9800)',
+                      height: '100%',
+                      borderRadius: '9999px',
+                      width: staggerProgress.total > 0 ? `${Math.min(100, (staggerProgress.sent / staggerProgress.total) * 100)}%` : '10%',
+                      transition: 'width 0.5s ease',
+                    }}
+                  />
+                </div>
+              </div>
+            )}
             {!templateBody && (
               <p style={{ color: '#e65100', fontSize: '0.8rem', marginTop: '0.5rem', marginBottom: 0 }}>
                 Edit your outreach letter above before sending.
               </p>
+            )}
+          </div>
+
+          {/* Open Results */}
+          <div className="dash-card" style={{ borderColor: '#1976d2', borderWidth: '1.5px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+              <h3 style={{ fontSize: '1.125rem', margin: 0, color: '#1976d2' }}>Outreach Results</h3>
+              <button
+                onClick={loadResults}
+                disabled={resultsLoading || !campaignId}
+                className="dash-btn"
+                style={{ padding: '0.4rem 1rem', fontSize: '0.8rem', background: '#1976d2', color: 'white', border: 'none', borderRadius: '9999px', cursor: 'pointer' }}
+              >
+                {resultsLoading ? 'Loading...' : showResults ? 'Refresh' : 'View Results'}
+              </button>
+            </div>
+
+            {!showResults && !resultsLoading && (
+              <p style={{ color: '#999', fontSize: '0.875rem', marginBottom: 0 }}>
+                Click &ldquo;View Results&rdquo; to see delivery and open rates for your outreach.
+              </p>
+            )}
+
+            {showResults && outreachResults && (
+              <>
+                {/* Summary stats */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(80px, 1fr))', gap: '0.5rem', marginBottom: '1rem' }}>
+                  {[
+                    { label: 'Sent', value: outreachResults.summary.sent, color: '#333' },
+                    { label: 'Delivered', value: outreachResults.summary.delivered, color: '#1976d2' },
+                    { label: 'Opened', value: outreachResults.summary.opened, color: '#22c55e' },
+                    { label: 'Replied', value: outreachResults.summary.replied, color: '#7b1fa2' },
+                    { label: 'Failed', value: outreachResults.summary.failed, color: '#e65100' },
+                    { label: 'Open Rate', value: `${outreachResults.summary.openRate}%`, color: '#22c55e' },
+                  ].map((stat) => (
+                    <div key={stat.label} style={{ background: '#f9f9f9', borderRadius: '8px', padding: '0.5rem', textAlign: 'center' }}>
+                      <div style={{ fontSize: '1.25rem', fontWeight: 'bold', color: stat.color }}>{stat.value}</div>
+                      <div style={{ fontSize: '0.7rem', color: '#999', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{stat.label}</div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Per-coach results list */}
+                {outreachResults.results.length > 0 ? (
+                  <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                    <table style={{ width: '100%', fontSize: '0.8rem', borderCollapse: 'collapse' }}>
+                      <thead>
+                        <tr style={{ borderBottom: '2px solid #eee', textAlign: 'left' }}>
+                          <th style={{ padding: '0.4rem 0.5rem', color: '#999', fontWeight: 600 }}>Coach</th>
+                          <th style={{ padding: '0.4rem 0.5rem', color: '#999', fontWeight: 600 }}>School</th>
+                          <th style={{ padding: '0.4rem 0.5rem', color: '#999', fontWeight: 600 }}>Status</th>
+                          <th style={{ padding: '0.4rem 0.5rem', color: '#999', fontWeight: 600 }}>Sent</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {outreachResults.results.map((r: any) => {
+                          const statusColors: Record<string, string> = {
+                            sent: '#999', delivered: '#1976d2', opened: '#22c55e', replied: '#7b1fa2', failed: '#e65100', queued: '#ccc',
+                          }
+                          return (
+                            <tr key={r.id} style={{ borderBottom: '1px solid #f0f0f0' }}>
+                              <td style={{ padding: '0.4rem 0.5rem' }}>{r.coachName}</td>
+                              <td style={{ padding: '0.4rem 0.5rem', color: '#666' }}>{r.school}</td>
+                              <td style={{ padding: '0.4rem 0.5rem' }}>
+                                <span style={{
+                                  display: 'inline-block', padding: '0.15rem 0.5rem', borderRadius: '9999px', fontSize: '0.7rem', fontWeight: 'bold',
+                                  background: (statusColors[r.status] || '#999') + '20', color: statusColors[r.status] || '#999',
+                                }}>
+                                  {r.status === 'opened' ? 'Opened' : r.status === 'delivered' ? 'Delivered' : r.status === 'replied' ? 'Replied' : r.status === 'failed' ? 'Failed' : r.status === 'sent' ? 'Sent' : 'Queued'}
+                                </span>
+                              </td>
+                              <td style={{ padding: '0.4rem 0.5rem', color: '#999' }}>
+                                {r.sentAt ? new Date(r.sentAt).toLocaleDateString() : '-'}
+                              </td>
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <p style={{ color: '#999', fontSize: '0.8rem', marginBottom: 0 }}>No emails sent yet.</p>
+                )}
+              </>
             )}
           </div>
 
