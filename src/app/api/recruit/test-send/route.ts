@@ -81,6 +81,7 @@ export async function POST(request: NextRequest) {
 
     const result = await resend.emails.send({
       from: `${fromName} <${fromEmail}>`,
+      reply_to: athlete.email,
       to: testEmail,
       subject: `[TEST] ${renderedSubject}`,
       text: renderedBody,

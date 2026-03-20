@@ -193,7 +193,7 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
     const highlightLine = a.highlightUrl
       ? `My highlight film is available here: ${a.highlightUrl}\n\n`
       : ''
-    const body = `Coach {{coach_last}},\n\nMy name is ${a.firstName} ${a.lastName}, a ${a.height}, ${a.weight} lb ${a.position} from ${a.highSchool} in ${a.city}, ${a.state} (Class of ${a.gradYear}).\n\nI am very interested in {{school}} and believe I could contribute to your program. ${statsLine}${highlightLine}I would love the opportunity to learn more about your program and what it takes to be part of your team.\n\nThank you for your time, Coach.\n\nRespectfully,\n${a.firstName} ${a.lastName}\n${a.email || ''}${a.highlightUrl ? '\n' + a.highlightUrl : ''}`
+    const body = `Coach {{coach_last}},\n\nMy name is ${a.firstName} ${a.lastName}, a ${a.height}, ${a.weight} lb ${a.position} from ${a.highSchool} in ${a.city}, ${a.state} (Class of ${a.gradYear}).\n\nI am very interested in {{school}} and believe I could contribute to your program. ${statsLine}${highlightLine}I would love the opportunity to learn more about your program and what it takes to be part of your team.\n\nThank you for your time, Coach.\n\nRespectfully,\n${a.firstName} ${a.lastName}\n${a.email || ''}\nlocalhustle.org/recruit/${a.slug || ''}`
     return { subject, body }
   }
 

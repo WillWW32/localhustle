@@ -71,9 +71,10 @@ export async function sendRecruitmentEmail(params: SendEmailParams) {
   }
 
   try {
-    // Send via Resend
+    // Send via Resend — from verified domain, reply-to goes to athlete
     const result = await resend.emails.send({
-      from: `${fromName} <${fromEmail}>`,
+      from: `${fromName} <notifications@localhustle.org>`,
+      reply_to: fromEmail,
       to: toEmail,
       subject,
       text: body,
