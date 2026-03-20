@@ -12,6 +12,7 @@ interface AthleteProfile {
   id: string
   firstName: string
   lastName: string
+  email: string
   sport: string
   position: string
   height: string
@@ -26,6 +27,8 @@ interface AthleteProfile {
   slug: string
   instagramReels: string[]
   profileImageUrl: string
+  ppg: string
+  rpg: string
 }
 
 interface RespondedCoach {
@@ -167,25 +170,46 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
     if (currentTab === 'followups' && campaignId) fetchFollowUps()
   }, [currentTab, fetchFollowUps, campaignId])
 
+  // Build a default template pre-populated with athlete data
+  const buildDefaultTemplate = (a: AthleteProfile) => {
+    const subject = `Interest in {{school}} — ${a.firstName} ${a.lastName}, Class of ${a.gradYear}`
+    const statsLine = a.ppg || a.rpg
+      ? `This season I averaged${a.ppg ? ` ${a.ppg} points` : ''}${a.ppg && a.rpg ? ',' : ''}${a.rpg ? ` ${a.rpg} rebounds` : ''} per game.\n\n`
+      : ''
+    const highlightLine = a.highlightUrl
+      ? `My highlight film is available here: ${a.highlightUrl}\n\n`
+      : ''
+    const body = `Coach {{coach_last}},\n\nMy name is ${a.firstName} ${a.lastName}, a ${a.height}, ${a.weight} lb ${a.position} from ${a.highSchool} in ${a.city}, ${a.state} (Class of ${a.gradYear}).\n\nI am very interested in {{school}} and believe I could contribute to your program. ${statsLine}${highlightLine}I would love the opportunity to learn more about your program and what it takes to be part of your team.\n\nThank you for your time, Coach.\n\nRespectfully,\n${a.firstName} ${a.lastName}\n${a.email || ''}${a.highlightUrl ? '\n' + a.highlightUrl : ''}`
+    return { subject, body }
+  }
+
   // Load template when campaign tab is opened
   useEffect(() => {
-    if (currentTab === 'campaign' && campaignId && !templateLoaded) {
-      fetch(`/api/recruit/template?campaignId=${campaignId}`)
-        .then(res => res.json())
-        .then(data => {
-          if (data.template) {
-            setTemplateSubject(data.template.subject || '')
-            setTemplateBody(data.template.body || '')
-          } else {
-            // Default template
-            setTemplateSubject('Interest in {{school}} — {{athlete_first}} {{athlete_last}}, Class of {{grad_year}}')
-            setTemplateBody(`Coach {{coach_last}},\n\nMy name is {{athlete_first}} {{athlete_last}}, a {{height}}, {{weight}} lb {{position}} from {{high_school}} in {{city}}, {{state}} (Class of {{grad_year}}).\n\nI am very interested in {{school}} and believe I could contribute to your program. This season I averaged {{ppg}} points, {{rpg}} rebounds per game.\n\nI would love the opportunity to learn more about your program. My highlight film is available here: {{highlight_url}}\n\nThank you for your time.\n\nRespectfully,\n{{athlete_first}} {{athlete_last}}\n{{athlete_email}}`)
-          }
-          setTemplateLoaded(true)
-        })
-        .catch(() => setTemplateLoaded(true))
+    if (currentTab === 'campaign' && !templateLoaded && athlete) {
+      if (campaignId) {
+        fetch(`/api/recruit/template?campaignId=${campaignId}`)
+          .then(res => res.json())
+          .then(data => {
+            if (data.template) {
+              setTemplateSubject(data.template.subject || '')
+              setTemplateBody(data.template.body || '')
+            } else {
+              const defaults = buildDefaultTemplate(athlete)
+              setTemplateSubject(defaults.subject)
+              setTemplateBody(defaults.body)
+            }
+            setTemplateLoaded(true)
+          })
+          .catch(() => setTemplateLoaded(true))
+      } else {
+        // No campaign yet — show default template pre-populated with athlete data
+        const defaults = buildDefaultTemplate(athlete)
+        setTemplateSubject(defaults.subject)
+        setTemplateBody(defaults.body)
+        setTemplateLoaded(true)
+      }
     }
-  }, [currentTab, campaignId, templateLoaded])
+  }, [currentTab, campaignId, templateLoaded, athlete])
 
   const getFollowUpMessage = (coachId: string, type: 'no_response' | 'responded_positive' | 'responded_neutral') => {
     if (editingMessage[coachId]) return editingMessage[coachId]
@@ -255,13 +279,17 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
   }
 
   const saveTemplate = async () => {
-    if (!campaignId) return
     setSavingTemplate(true)
     try {
+      const activeCampaignId = await ensureCampaign()
+      if (!activeCampaignId) {
+        setSavingTemplate(false)
+        return
+      }
       const res = await fetch('/api/recruit/template', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ campaignId, subject: templateSubject, bodyText: templateBody }),
+        body: JSON.stringify({ campaignId: activeCampaignId, subject: templateSubject, bodyText: templateBody }),
       })
       if (res.ok) {
         setEditingTemplate(false)
@@ -275,21 +303,47 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
     }
   }
 
+  const ensureCampaign = async (): Promise<string | null> => {
+    if (campaignId) return campaignId
+    // Auto-create a campaign for this athlete
+    try {
+      const res = await fetch('/api/recruit/campaign', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ athleteId: id }),
+      })
+      const data = await res.json()
+      if (data.campaignId) {
+        setCampaignId(data.campaignId)
+        return data.campaignId
+      }
+      alert('Failed to create campaign: ' + (data.error || 'Unknown error'))
+      return null
+    } catch {
+      alert('Failed to create campaign. Please try again.')
+      return null
+    }
+  }
+
   const runCampaign = async (count: number) => {
-    if (!campaignId) return
     setRunningCampaign(true)
     setCampaignResult(null)
     try {
-      // Save template first if not saved
+      const activeCampaignId = await ensureCampaign()
+      if (!activeCampaignId) {
+        setRunningCampaign(false)
+        return
+      }
+      // Save template first
       await fetch('/api/recruit/template', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ campaignId, subject: templateSubject, bodyText: templateBody }),
+        body: JSON.stringify({ campaignId: activeCampaignId, subject: templateSubject, bodyText: templateBody }),
       })
       const res = await fetch('/api/recruit/run', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ campaignId, maxEmails: count }),
+        body: JSON.stringify({ campaignId: activeCampaignId, maxEmails: count }),
       })
       const data = await res.json()
       if (data.success) {
@@ -787,14 +841,26 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
               <>
                 <div style={{ background: '#f8f9fa', borderRadius: '10px', padding: '1rem 1.25rem', marginBottom: '0.5rem' }}>
                   <p style={{ fontSize: '0.7rem', fontWeight: 'bold', color: '#999', textTransform: 'uppercase', marginBottom: '0.25rem' }}>Subject</p>
-                  <p style={{ fontSize: '0.875rem', fontWeight: 'bold', marginBottom: 0 }}>{templateSubject || 'No subject set'}</p>
+                  <p style={{ fontSize: '0.875rem', fontWeight: 'bold', marginBottom: 0 }}>
+                    {(templateSubject || 'No subject set')
+                      .replace(/\{\{school\}\}/g, '[School]')
+                      .replace(/\{\{coach_last\}\}/g, '[Coach Name]')
+                      .replace(/\{\{coach_first\}\}/g, '[Coach First]')}
+                  </p>
                 </div>
                 <div style={{ background: '#f8f9fa', borderRadius: '10px', padding: '1rem 1.25rem' }}>
                   <p style={{ fontSize: '0.7rem', fontWeight: 'bold', color: '#999', textTransform: 'uppercase', marginBottom: '0.5rem' }}>Preview</p>
                   <pre style={{ fontSize: '0.8rem', color: '#333', margin: 0, whiteSpace: 'pre-wrap', fontFamily: "'Courier New', Courier, monospace", lineHeight: 1.6 }}>
-                    {templateBody || 'No template set. Click "Edit Letter" to create your outreach letter.'}
+                    {(templateBody || 'No template set. Click "Edit Letter" to create your outreach letter.')
+                      .replace(/\{\{school\}\}/g, '[School]')
+                      .replace(/\{\{coach_last\}\}/g, '[Coach Name]')
+                      .replace(/\{\{coach_first\}\}/g, '[Coach First]')
+                      .replace(/\{\{coach_title\}\}/g, '[Title]')}
                   </pre>
                 </div>
+                <p style={{ fontSize: '0.7rem', color: '#999', marginTop: '0.5rem', marginBottom: 0, fontStyle: 'italic' }}>
+                  [School] and [Coach Name] are filled automatically for each coach when sent.
+                </p>
               </>
             )}
           </div>

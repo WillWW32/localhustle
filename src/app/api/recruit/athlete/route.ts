@@ -60,11 +60,14 @@ export async function GET(request: NextRequest) {
     .eq('athlete_id', id)
     .gte('sent_at', todayStart.toISOString())
 
+  const stats = athleteRow.stats || {}
+
   return NextResponse.json({
     athlete: {
       id: athleteRow.id,
       firstName: athleteRow.first_name,
       lastName: athleteRow.last_name,
+      email: athleteRow.email || '',
       sport: athleteRow.sport || '',
       position: athleteRow.position || '',
       height: athleteRow.height || '',
@@ -79,6 +82,8 @@ export async function GET(request: NextRequest) {
       slug,
       instagramReels: athleteRow.instagram_reels || [],
       profileImageUrl: athleteRow.profile_image_url || '',
+      ppg: stats.ppg || '',
+      rpg: stats.rpg || '',
     },
     campaign: campaign ? {
       id: campaign.id,
