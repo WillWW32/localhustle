@@ -871,20 +871,16 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
             <div style={{ background: '#f8f9fa', borderRadius: '10px', padding: '1rem 1.25rem', marginBottom: '1rem' }}>
               <p style={{ fontWeight: 'bold', fontSize: '0.8rem', textTransform: 'uppercase', color: '#999', marginBottom: '0.75rem' }}>Outreach Workflow</p>
               {[
-                { step: 1, text: 'Connect X account for DM outreach', done: athlete.xConnected },
-                { step: 2, text: 'Review your 172 target coaches', done: sendCount.total > 0 },
+                { step: 1, text: 'Connect X account for DM outreach', done: athlete.xConnected, action: () => { document.getElementById('dm-hub-section')?.scrollIntoView({ behavior: 'smooth' }); } },
+                { step: 2, text: 'Review your 172 target coaches', done: sendCount.total > 0, action: () => { document.getElementById('send-buttons-section')?.scrollIntoView({ behavior: 'smooth' }); } },
                 { step: 3, text: 'Set up email & DM templates', done: !!templateBody, action: () => { document.getElementById('outreach-letter-section')?.scrollIntoView({ behavior: 'smooth' }); setEditingTemplate(true); } },
-                { step: 4, text: 'Launch automated outreach campaign', done: campaignStatus === 'active' },
+                { step: 4, text: 'Launch automated outreach campaign', done: campaignStatus === 'active', action: () => { document.getElementById('send-buttons-section')?.scrollIntoView({ behavior: 'smooth' }); } },
               ].map((item) => (
                 <div key={item.step} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.4rem' }}>
                   <span style={{ width: '22px', height: '22px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', fontWeight: 'bold', flexShrink: 0, background: item.done ? '#4caf50' : '#e0e0e0', color: item.done ? 'white' : '#666' }}>
                     {item.done ? '\u2713' : item.step}
                   </span>
-                  {item.action ? (
-                    <button onClick={item.action} style={{ fontSize: '0.875rem', color: '#1976d2', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit', textDecoration: 'underline', textAlign: 'left' }}>{item.text}</button>
-                  ) : (
-                    <span style={{ fontSize: '0.875rem', color: item.done ? '#333' : '#666' }}>{item.text}</span>
-                  )}
+                  <button onClick={item.action} style={{ fontSize: '0.875rem', color: '#1976d2', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit', textDecoration: 'underline', textAlign: 'left' }}>{item.text}</button>
                 </div>
               ))}
             </div>
@@ -1228,7 +1224,7 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
             )}
 
             {/* Buttons row */}
-            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center', marginBottom: '0.75rem' }}>
+            <div id="send-buttons-section" style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center', marginBottom: '0.75rem' }}>
               <button
                 onClick={sendTestEmail}
                 disabled={testSending || runningCampaign || !templateBody}
@@ -1497,7 +1493,7 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
           </div>
 
           {/* X DM Outreach Hub */}
-          <div className="dash-card" style={{ borderColor: '#1da1f2', borderWidth: '1.5px' }}>
+          <div id="dm-hub-section" className="dash-card" style={{ borderColor: '#1da1f2', borderWidth: '1.5px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
               <h3 style={{ fontSize: '1.125rem', margin: 0, color: '#1da1f2' }}>X / DM Outreach</h3>
               {athlete?.xConnected && (
