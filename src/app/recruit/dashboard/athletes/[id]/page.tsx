@@ -124,6 +124,11 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
   const [resultsLoading, setResultsLoading] = useState(false)
   const [showResults, setShowResults] = useState(false)
 
+  // Custom outreach queue state
+  const [outreachQueue, setOutreachQueue] = useState<any[]>([])
+  const [queueLoaded, setQueueLoaded] = useState(false)
+  const [sendingOutreachId, setSendingOutreachId] = useState<string | null>(null)
+
   // Load athlete and campaign via server-side API
   useEffect(() => {
     const loadAthlete = async () => {
@@ -482,6 +487,65 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
       setRunningCampaign(false)
     }
   }
+
+  // Load custom outreach queue
+  const loadOutreachQueue = async () => {
+    if (!athlete) return
+    try {
+      const res = await fetch(`/api/recruit/outreach-queue?athleteId=${athlete.id}`)
+      const data = await res.json()
+      if (data.success) {
+        setOutreachQueue(data.outreach || [])
+      }
+    } catch {
+      // silently fail
+    } finally {
+      setQueueLoaded(true)
+    }
+  }
+
+  // Send a queued custom outreach
+  const sendQueuedOutreach = async (outreachId: string) => {
+    setSendingOutreachId(outreachId)
+    try {
+      const res = await fetch('/api/recruit/outreach-send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ outreachId }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        await loadOutreachQueue()
+      } else {
+        alert('Send failed: ' + (data.error || 'Unknown error'))
+      }
+    } catch (err: any) {
+      alert('Send error: ' + err.message)
+    } finally {
+      setSendingOutreachId(null)
+    }
+  }
+
+  // Stop a custom outreach sequence
+  const stopOutreach = async (outreachId: string) => {
+    try {
+      await fetch('/api/recruit/outreach-queue', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: outreachId }),
+      })
+      await loadOutreachQueue()
+    } catch {
+      // silently fail
+    }
+  }
+
+  // Load queue when campaign tab opens
+  useEffect(() => {
+    if (currentTab === 'campaign' && !queueLoaded && athlete) {
+      loadOutreachQueue()
+    }
+  }, [currentTab, queueLoaded, athlete])
 
   // Load outreach results (open rates, delivery stats)
   const loadResults = async () => {
@@ -1195,6 +1259,69 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
                 )}
               </>
             )}
+          </div>
+
+          {/* Personalized Outreach Queue */}
+          <div className="dash-card" style={{ borderColor: '#e65100', borderWidth: '1.5px' }}>
+            <h3 style={{ fontSize: '1.125rem', marginBottom: '0.5rem', color: '#e65100' }}>Personalized Outreach Queue</h3>
+            <p style={{ color: '#666', fontSize: '0.8rem', marginBottom: '0.75rem' }}>
+              Custom letters with automatic weekly follow-ups: Checking in &rarr; Did you see my film &rarr; I&apos;m in the gym &rarr; Will work for food
+            </p>
+
+            {outreachQueue.length === 0 && queueLoaded && (
+              <p style={{ color: '#999', fontSize: '0.85rem', fontStyle: 'italic' }}>No personalized outreach queued yet.</p>
+            )}
+
+            {outreachQueue.map((item) => (
+              <div key={item.id} style={{ border: '1px solid #eee', borderRadius: '10px', padding: '0.75rem 1rem', marginBottom: '0.5rem', background: item.status === 'queued' ? '#fff8e1' : item.status === 'sent' ? '#e8f5e9' : item.status === 'responded' ? '#e3f2fd' : '#f5f5f5' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.4rem' }}>
+                  <div>
+                    <p style={{ fontWeight: 'bold', fontSize: '0.85rem', margin: 0, color: '#333' }}>{item.coach_name}</p>
+                    <p style={{ fontSize: '0.75rem', color: '#666', margin: 0 }}>{item.school} {item.division && <span style={{ fontWeight: 'bold', color: '#7b1fa2' }}>({item.division})</span>}</p>
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <span style={{
+                      fontSize: '0.65rem',
+                      fontWeight: 'bold',
+                      textTransform: 'uppercase',
+                      padding: '0.15rem 0.5rem',
+                      borderRadius: '9999px',
+                      background: item.status === 'queued' ? '#fff3e0' : item.status === 'sent' ? '#e8f5e9' : item.status === 'responded' ? '#e3f2fd' : '#eee',
+                      color: item.status === 'queued' ? '#e65100' : item.status === 'sent' ? '#2e7d32' : item.status === 'responded' ? '#1565c0' : '#999',
+                    }}>
+                      {item.status === 'queued' ? 'Ready to Send' : item.status === 'sent' ? `Step ${item.followup_step}/4` : item.status === 'responded' ? 'Responded!' : 'Stopped'}
+                    </span>
+                    {item.followup_step > 0 && item.status === 'sent' && (
+                      <p style={{ fontSize: '0.65rem', color: '#999', margin: '0.2rem 0 0 0' }}>
+                        Next follow-up: {item.next_send_at ? new Date(item.next_send_at).toLocaleDateString() : 'N/A'}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <p style={{ fontSize: '0.75rem', color: '#555', margin: '0.25rem 0', fontStyle: 'italic' }}>
+                  &ldquo;{item.subject}&rdquo;
+                </p>
+                <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.4rem' }}>
+                  {item.status === 'queued' && (
+                    <button
+                      onClick={() => sendQueuedOutreach(item.id)}
+                      disabled={sendingOutreachId === item.id}
+                      style={{ padding: '0.35rem 0.75rem', borderRadius: '9999px', background: sendingOutreachId === item.id ? '#ccc' : '#22c55e', color: 'white', border: 'none', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.7rem', fontFamily: 'inherit' }}
+                    >
+                      {sendingOutreachId === item.id ? 'Sending...' : 'Send Now'}
+                    </button>
+                  )}
+                  {(item.status === 'queued' || item.status === 'sent') && (
+                    <button
+                      onClick={() => stopOutreach(item.id)}
+                      style={{ padding: '0.35rem 0.75rem', borderRadius: '9999px', background: 'transparent', color: '#999', border: '1px solid #ddd', cursor: 'pointer', fontSize: '0.7rem', fontFamily: 'inherit' }}
+                    >
+                      {item.status === 'sent' ? 'Stop Sequence' : 'Remove'}
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
 
           {/* Coach Targets */}
