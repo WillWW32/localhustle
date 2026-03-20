@@ -12,13 +12,31 @@ export async function POST(request: NextRequest) {
     }
 
     const buffer = Buffer.from(await file.arrayBuffer())
-    const path = `public/${athleteId}-profile.jpg`
+    const ext = file.type === 'image/png' ? 'png' : 'jpg'
+    const path = `${athleteId}-profile.${ext}`
+
+    // Ensure the storage bucket exists and is public
+    const { error: bucketErr } = await supabaseAdmin.storage.createBucket('profile-pics', {
+      public: true,
+      fileSizeLimit: 5242880, // 5MB
+      allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp'],
+    })
+    // Ignore "already exists" error
+    if (bucketErr && !bucketErr.message?.includes('already exists')) {
+      console.error('Bucket creation error:', bucketErr)
+    }
+
+    // Remove old files (both legacy and current paths) to avoid stale cache
+    await supabaseAdmin.storage
+      .from('profile-pics')
+      .remove([path, `public/${athleteId}-profile.jpg`, `public/${athleteId}-profile.png`])
 
     const { error: uploadErr } = await supabaseAdmin.storage
       .from('profile-pics')
       .upload(path, buffer, {
         upsert: true,
         contentType: file.type || 'image/jpeg',
+        cacheControl: '0',
       })
 
     if (uploadErr) {
@@ -34,10 +52,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to get public URL' }, { status: 500 })
     }
 
+    // Append cache-buster so browsers and CDNs fetch the new image
+    const publicUrl = `${urlData.publicUrl}?t=${Date.now()}`
+
     // Update athlete record
     const { error: updateErr } = await supabaseAdmin
       .from('athletes')
-      .update({ profile_image_url: urlData.publicUrl })
+      .update({ profile_image_url: publicUrl })
       .eq('id', athleteId)
 
     if (updateErr) {
@@ -45,7 +66,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: updateErr.message }, { status: 500 })
     }
 
-    return NextResponse.json({ url: urlData.publicUrl })
+    return NextResponse.json({ url: publicUrl })
   } catch (error) {
     console.error('Upload error:', error)
     return NextResponse.json({ error: 'Upload failed' }, { status: 500 })
