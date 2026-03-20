@@ -29,6 +29,7 @@ interface AthleteProfile {
   profileImageUrl: string
   ppg: string
   rpg: string
+  photos: string[]
 }
 
 interface RespondedCoach {
@@ -130,6 +131,78 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
   const [editingHighlight, setEditingHighlight] = useState(false)
   const [highlightDraft, setHighlightDraft] = useState('')
   const [savingHighlight, setSavingHighlight] = useState(false)
+
+  // Athlete photos state
+  const [athletePhotos, setAthletePhotos] = useState<string[]>([])
+  const [uploadingPhotoIdx, setUploadingPhotoIdx] = useState<number | null>(null)
+
+  const uploadAthletePhoto = async (file: File, index: number) => {
+    setUploadingPhotoIdx(index)
+    try {
+      const compress = (f: File): Promise<Blob> => {
+        return new Promise((resolve, reject) => {
+          const img = new Image()
+          const objectUrl = URL.createObjectURL(f)
+          img.onload = () => {
+            URL.revokeObjectURL(objectUrl)
+            const canvas = document.createElement('canvas')
+            const maxSize = 1200
+            let w = img.width, h = img.height
+            if (w > h) { if (w > maxSize) { h = h * maxSize / w; w = maxSize } }
+            else { if (h > maxSize) { w = w * maxSize / h; h = maxSize } }
+            canvas.width = w; canvas.height = h
+            canvas.getContext('2d')?.drawImage(img, 0, 0, w, h)
+            canvas.toBlob((blob) => {
+              if (blob) resolve(blob)
+              else reject(new Error('Failed to compress'))
+            }, 'image/jpeg', 0.85)
+          }
+          img.onerror = () => { URL.revokeObjectURL(objectUrl); reject(new Error('Failed to load image')) }
+          img.src = objectUrl
+        })
+      }
+      const compressed = await compress(file)
+      const formData = new FormData()
+      formData.append('file', compressed, `photo-${index}.jpg`)
+      formData.append('athleteId', id)
+      formData.append('photoIndex', String(index))
+      const res = await fetch('/api/recruit/upload-image', { method: 'POST', body: formData })
+      if (res.ok) {
+        const { url } = await res.json()
+        setAthletePhotos(prev => {
+          const updated = [...prev]
+          updated[index] = url
+          return updated
+        })
+        // Save photo URLs to profile
+        const updatedPhotos = [...athletePhotos]
+        updatedPhotos[index] = url
+        await fetch('/api/recruit/update-profile', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ athleteId: id, field: 'photos', value: updatedPhotos.filter(Boolean) }),
+        })
+      } else {
+        const err = await res.json().catch(() => ({}))
+        alert('Upload failed: ' + (err.error || 'Unknown error'))
+      }
+    } catch (err: any) {
+      alert('Upload failed: ' + (err.message || 'Unknown error'))
+    } finally {
+      setUploadingPhotoIdx(null)
+    }
+  }
+
+  const deleteAthletePhoto = async (index: number) => {
+    const updated = [...athletePhotos]
+    updated[index] = ''
+    setAthletePhotos(updated)
+    await fetch('/api/recruit/update-profile', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ athleteId: id, field: 'photos', value: updated.filter(Boolean) }),
+    })
+  }
 
   // Template state
   const [templateSubject, setTemplateSubject] = useState('')
@@ -245,6 +318,7 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
 
         setAthlete(data.athlete)
         setInstagramReels(data.athlete.instagramReels || [])
+        setAthletePhotos(data.athlete.photos || [])
 
         if (data.campaign) {
           setCampaignId(data.campaign.id)
@@ -1404,9 +1478,58 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
           <div className="dash-card">
             <h3 style={{ fontSize: '1.125rem', marginBottom: '1rem' }}>Photos</h3>
             <div className="grid grid-cols-3 gap-3">
-              {[1, 2, 3].map((i) => (
-                <div key={i} style={{ aspectRatio: '1', border: '2px dashed #ddd', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#999', cursor: 'pointer', fontSize: '1.5rem' }}>+</div>
-              ))}
+              {[0, 1, 2].map((i) => {
+                const photoUrl = athletePhotos[i] || null
+                return (
+                  <div
+                    key={i}
+                    style={{ aspectRatio: '1', border: photoUrl ? 'none' : '2px dashed #ddd', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#999', cursor: 'pointer', fontSize: '1.5rem', position: 'relative', overflow: 'hidden', background: photoUrl ? '#000' : '#fafafa' }}
+                    onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = '#1976d2'; e.currentTarget.style.background = '#e3f2fd' }}
+                    onDragLeave={(e) => { e.currentTarget.style.borderColor = '#ddd'; e.currentTarget.style.background = photoUrl ? '#000' : '#fafafa' }}
+                    onDrop={async (e) => {
+                      e.preventDefault()
+                      e.currentTarget.style.borderColor = '#ddd'
+                      e.currentTarget.style.background = photoUrl ? '#000' : '#fafafa'
+                      const file = e.dataTransfer.files?.[0]
+                      if (!file || !file.type.startsWith('image/')) return
+                      await uploadAthletePhoto(file, i)
+                    }}
+                    onClick={() => {
+                      const input = document.createElement('input')
+                      input.type = 'file'
+                      input.accept = 'image/*'
+                      input.onchange = async (e) => {
+                        const file = (e.target as HTMLInputElement).files?.[0]
+                        if (!file) return
+                        await uploadAthletePhoto(file, i)
+                      }
+                      input.click()
+                    }}
+                  >
+                    {photoUrl ? (
+                      <>
+                        <img src={photoUrl} alt={`Photo ${i + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '12px' }} />
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            deleteAthletePhoto(i)
+                          }}
+                          style={{ position: 'absolute', top: '4px', right: '4px', width: '24px', height: '24px', borderRadius: '50%', background: 'rgba(0,0,0,0.6)', color: 'white', border: 'none', cursor: 'pointer', fontSize: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                        >
+                          ✕
+                        </button>
+                      </>
+                    ) : uploadingPhotoIdx === i ? (
+                      <span style={{ fontSize: '0.8rem', color: '#1976d2' }}>Uploading...</span>
+                    ) : (
+                      <div style={{ textAlign: 'center' }}>
+                        <span style={{ fontSize: '2rem', display: 'block' }}>+</span>
+                        <span style={{ fontSize: '0.65rem', display: 'block', marginTop: '0.25rem' }}>Click or drag</span>
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
             </div>
           </div>
           {/* Player Cards */}

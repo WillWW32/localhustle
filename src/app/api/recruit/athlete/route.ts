@@ -84,6 +84,7 @@ export async function GET(request: NextRequest) {
       profileImageUrl: athleteRow.profile_image_url || '',
       ppg: stats.ppg || '',
       rpg: stats.rpg || '',
+      photos: athleteRow.photos || [],
     },
     campaign: campaign ? {
       id: campaign.id,

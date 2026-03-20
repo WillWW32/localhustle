@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing athleteId or field' }, { status: 400 })
     }
 
-    const allowedAthleteFields = ['instagram_reels', 'bio', 'highlight_url', 'profile_image_url']
+    const allowedAthleteFields = ['instagram_reels', 'bio', 'highlight_url', 'profile_image_url', 'photos']
     const allowedProfileFields = ['about', 'achievements']
 
     if (allowedAthleteFields.includes(field)) {

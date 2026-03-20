@@ -11,9 +11,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing file or athleteId' }, { status: 400 })
     }
 
+    const photoIndex = formData.get('photoIndex') as string | null
     const buffer = Buffer.from(await file.arrayBuffer())
     const ext = file.type === 'image/png' ? 'png' : 'jpg'
-    const path = `${athleteId}-profile.${ext}`
+    const path = photoIndex != null
+      ? `${athleteId}-photo-${photoIndex}.${ext}`
+      : `${athleteId}-profile.${ext}`
 
     // Ensure the storage bucket exists and is public
     const { error: bucketErr } = await supabaseAdmin.storage.createBucket('profile-pics', {
@@ -26,10 +29,16 @@ export async function POST(request: NextRequest) {
       console.error('Bucket creation error:', bucketErr)
     }
 
-    // Remove old files (both legacy and current paths) to avoid stale cache
-    await supabaseAdmin.storage
-      .from('profile-pics')
-      .remove([path, `public/${athleteId}-profile.jpg`, `public/${athleteId}-profile.png`])
+    // Remove old files to avoid stale cache
+    if (photoIndex != null) {
+      await supabaseAdmin.storage
+        .from('profile-pics')
+        .remove([`${athleteId}-photo-${photoIndex}.jpg`, `${athleteId}-photo-${photoIndex}.png`])
+    } else {
+      await supabaseAdmin.storage
+        .from('profile-pics')
+        .remove([path, `public/${athleteId}-profile.jpg`, `public/${athleteId}-profile.png`])
+    }
 
     const { error: uploadErr } = await supabaseAdmin.storage
       .from('profile-pics')
@@ -55,15 +64,17 @@ export async function POST(request: NextRequest) {
     // Append cache-buster so browsers and CDNs fetch the new image
     const publicUrl = `${urlData.publicUrl}?t=${Date.now()}`
 
-    // Update athlete record
-    const { error: updateErr } = await supabaseAdmin
-      .from('athletes')
-      .update({ profile_image_url: publicUrl })
-      .eq('id', athleteId)
+    // Update athlete record only for profile pic uploads (not photo gallery)
+    if (photoIndex == null) {
+      const { error: updateErr } = await supabaseAdmin
+        .from('athletes')
+        .update({ profile_image_url: publicUrl })
+        .eq('id', athleteId)
 
-    if (updateErr) {
-      console.error('Update error:', updateErr)
-      return NextResponse.json({ error: updateErr.message }, { status: 500 })
+      if (updateErr) {
+        console.error('Update error:', updateErr)
+        return NextResponse.json({ error: updateErr.message }, { status: 500 })
+      }
     }
 
     return NextResponse.json({ url: publicUrl })
