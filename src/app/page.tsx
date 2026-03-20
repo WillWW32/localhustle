@@ -74,6 +74,29 @@ export default function Home() {
   return (
     <div style={{ minHeight: '100vh', background: 'white', color: 'black', fontFamily: "'Courier New', Courier, monospace" }}>
 
+      {/* Top Bar */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 2rem', borderBottom: '1px solid #eee' }}>
+        <span style={{ fontWeight: 'bold', fontSize: '1rem', letterSpacing: '0.05em' }}>
+          <span style={{ fontSize: '0.6rem', verticalAlign: 'super' }}>local</span>HUSTLE
+        </span>
+        <a
+          href="/recruit/dashboard"
+          style={{
+            padding: '0.5rem 1.25rem',
+            fontSize: '0.8rem',
+            fontWeight: 'bold',
+            fontFamily: "'Courier New', Courier, monospace",
+            background: 'black',
+            color: 'white',
+            border: 'none',
+            borderRadius: '9999px',
+            textDecoration: 'none',
+          }}
+        >
+          Athlete Login
+        </a>
+      </div>
+
       {/* Hero */}
       <section style={{ padding: '4rem 2rem', textAlign: 'center' }}>
         <div className="fade-in-scroll" style={{ maxWidth: '560px', margin: '0 auto' }}>

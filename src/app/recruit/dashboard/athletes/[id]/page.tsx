@@ -98,6 +98,15 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
   const [creatingCard, setCreatingCard] = useState(false)
   const [editingCard, setEditingCard] = useState<any>(null)
 
+  // Template state
+  const [templateSubject, setTemplateSubject] = useState('')
+  const [templateBody, setTemplateBody] = useState('')
+  const [templateLoaded, setTemplateLoaded] = useState(false)
+  const [editingTemplate, setEditingTemplate] = useState(false)
+  const [savingTemplate, setSavingTemplate] = useState(false)
+  const [runningCampaign, setRunningCampaign] = useState(false)
+  const [campaignResult, setCampaignResult] = useState<{ emailsSent: number; errors: any[]; remaining: number } | null>(null)
+
   // Load athlete and campaign via server-side API
   useEffect(() => {
     const loadAthlete = async () => {
@@ -157,6 +166,26 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
   useEffect(() => {
     if (currentTab === 'followups' && campaignId) fetchFollowUps()
   }, [currentTab, fetchFollowUps, campaignId])
+
+  // Load template when campaign tab is opened
+  useEffect(() => {
+    if (currentTab === 'campaign' && campaignId && !templateLoaded) {
+      fetch(`/api/recruit/template?campaignId=${campaignId}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.template) {
+            setTemplateSubject(data.template.subject || '')
+            setTemplateBody(data.template.body || '')
+          } else {
+            // Default template
+            setTemplateSubject('Interest in {{school}} — {{athlete_first}} {{athlete_last}}, Class of {{grad_year}}')
+            setTemplateBody(`Coach {{coach_last}},\n\nMy name is {{athlete_first}} {{athlete_last}}, a {{height}}, {{weight}} lb {{position}} from {{high_school}} in {{city}}, {{state}} (Class of {{grad_year}}).\n\nI am very interested in {{school}} and believe I could contribute to your program. This season I averaged {{ppg}} points, {{rpg}} rebounds per game.\n\nI would love the opportunity to learn more about your program. My highlight film is available here: {{highlight_url}}\n\nThank you for your time.\n\nRespectfully,\n{{athlete_first}} {{athlete_last}}\n{{athlete_email}}`)
+          }
+          setTemplateLoaded(true)
+        })
+        .catch(() => setTemplateLoaded(true))
+    }
+  }, [currentTab, campaignId, templateLoaded])
 
   const getFollowUpMessage = (coachId: string, type: 'no_response' | 'responded_positive' | 'responded_neutral') => {
     if (editingMessage[coachId]) return editingMessage[coachId]
@@ -223,6 +252,61 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
       .filter(c => !c.followUpSent && !sentFollowUps.has(c.coachId))
       .map(c => c.coachId)
     setBulkSelected(new Set(eligible))
+  }
+
+  const saveTemplate = async () => {
+    if (!campaignId) return
+    setSavingTemplate(true)
+    try {
+      const res = await fetch('/api/recruit/template', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ campaignId, subject: templateSubject, bodyText: templateBody }),
+      })
+      if (res.ok) {
+        setEditingTemplate(false)
+      } else {
+        alert('Failed to save template')
+      }
+    } catch {
+      alert('Failed to save template')
+    } finally {
+      setSavingTemplate(false)
+    }
+  }
+
+  const runCampaign = async (count: number) => {
+    if (!campaignId) return
+    setRunningCampaign(true)
+    setCampaignResult(null)
+    try {
+      // Save template first if not saved
+      await fetch('/api/recruit/template', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ campaignId, subject: templateSubject, bodyText: templateBody }),
+      })
+      const res = await fetch('/api/recruit/run', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ campaignId, maxEmails: count }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        setCampaignResult({ emailsSent: data.emailsSent, errors: data.errors, remaining: data.remaining })
+        setSendCount(prev => ({
+          total: prev.total + data.emailsSent,
+          thisWeek: prev.thisWeek + data.emailsSent,
+          today: prev.today + data.emailsSent,
+        }))
+      } else {
+        alert('Campaign error: ' + (data.error || 'Unknown error'))
+      }
+    } catch (err: any) {
+      alert('Failed to run campaign: ' + err.message)
+    } finally {
+      setRunningCampaign(false)
+    }
   }
 
   const handleToggleCampaign = async () => {
@@ -491,13 +575,13 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
                 <p style={{ color: '#666', fontSize: '0.875rem', marginBottom: '0.25rem' }}>
                   <span style={{ fontWeight: 'bold', color: '#333' }}>{sendCount.total || 172}</span> coaches loaded
                 </p>
-                <p style={{ color: '#999', fontSize: '0.8rem', marginBottom: 0 }}>172 coaches pre-loaded from previous research. Review and manage in Campaign tab.</p>
+                <p style={{ color: '#999', fontSize: '0.8rem', marginBottom: 0 }}>172 coaches pre-loaded from previous research.</p>
               </div>
               <button
                 onClick={() => setCurrentTab('campaign')}
                 style={{ padding: '0.5rem 1rem', borderRadius: '9999px', background: '#7b1fa2', color: 'white', border: 'none', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.8rem', fontFamily: 'inherit', flexShrink: 0 }}
               >
-                View Coaches
+                Start Campaign
               </button>
             </div>
           </div>
@@ -624,6 +708,7 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
       {/* ══ CAMPAIGN TAB ══ */}
       {currentTab === 'campaign' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          {/* Status + Stats Row */}
           <div className="dash-card">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
               <h3 style={{ fontSize: '1.125rem', marginBottom: 0 }}>Campaign Status</h3>
@@ -635,23 +720,143 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
                 {campaignStatus === 'active' ? '● Active' : '❚❚ Paused'}
               </button>
             </div>
-            <p style={{ color: '#666', fontSize: '0.875rem' }}>
-              {campaignStatus === 'active'
-                ? 'Your campaign is actively reaching out to coaches.'
-                : 'Your campaign is paused. No new outreach is happening.'}
-            </p>
+            <div className="grid grid-cols-3 gap-3">
+              {[
+                { label: 'Total Sent', value: sendCount.total },
+                { label: 'This Week', value: sendCount.thisWeek },
+                { label: 'Today', value: sendCount.today },
+              ].map((s, i) => (
+                <div key={i} style={{ textAlign: 'center', background: '#f5f5f5', borderRadius: '10px', padding: '0.75rem' }}>
+                  <p style={{ fontWeight: 'bold', fontSize: '1.25rem', marginBottom: '0.125rem' }}>{s.value}</p>
+                  <p style={{ color: '#999', fontSize: '0.625rem', textTransform: 'uppercase', marginBottom: 0 }}>{s.label}</p>
+                </div>
+              ))}
+            </div>
           </div>
-          <div className="grid grid-cols-3 gap-3">
-            {[
-              { label: 'Total Sent', value: sendCount.total },
-              { label: 'This Week', value: sendCount.thisWeek },
-              { label: 'Today', value: sendCount.today },
-            ].map((s, i) => (
-              <div key={i} className="dash-card" style={{ textAlign: 'center' }}>
-                <p className="dash-stat-value">{s.value}</p>
-                <p className="dash-stat-label">{s.label}</p>
+
+          {/* Outreach Letter */}
+          <div className="dash-card" style={{ borderColor: '#1976d2', borderWidth: '1.5px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <h3 style={{ fontSize: '1.125rem', marginBottom: 0, color: '#1976d2' }}>Outreach Letter</h3>
+              {!editingTemplate ? (
+                <button onClick={() => setEditingTemplate(true)} className="dash-btn-outline" style={{ padding: '0.4rem 0.9rem', fontSize: '0.8rem' }}>
+                  Edit Letter
+                </button>
+              ) : (
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <button onClick={() => setEditingTemplate(false)} className="dash-btn-outline" style={{ padding: '0.4rem 0.9rem', fontSize: '0.8rem' }}>
+                    Cancel
+                  </button>
+                  <button onClick={saveTemplate} disabled={savingTemplate} className="dash-btn" style={{ padding: '0.4rem 0.9rem', fontSize: '0.8rem' }}>
+                    {savingTemplate ? 'Saving...' : 'Save'}
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {!templateLoaded ? (
+              <p style={{ color: '#999', fontSize: '0.875rem' }}>Loading template...</p>
+            ) : editingTemplate ? (
+              <>
+                <div style={{ marginBottom: '0.75rem' }}>
+                  <label style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#999', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>Subject Line</label>
+                  <input
+                    type="text"
+                    value={templateSubject}
+                    onChange={(e) => setTemplateSubject(e.target.value)}
+                    style={{ width: '100%', padding: '0.5rem 0.75rem', fontSize: '0.875rem', fontFamily: "'Courier New', Courier, monospace", border: '1px solid #ddd', borderRadius: '8px', outline: 'none' }}
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#999', textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>Email Body</label>
+                  <textarea
+                    value={templateBody}
+                    onChange={(e) => setTemplateBody(e.target.value)}
+                    className="dash-textarea"
+                    rows={14}
+                  />
+                </div>
+                <div style={{ marginTop: '0.75rem', background: '#f0f7ff', borderRadius: '8px', padding: '0.75rem' }}>
+                  <p style={{ fontSize: '0.7rem', fontWeight: 'bold', color: '#1976d2', marginBottom: '0.25rem' }}>Available Variables</p>
+                  <p style={{ fontSize: '0.7rem', color: '#666', marginBottom: 0, lineHeight: 1.8 }}>
+                    {'{{coach_first}} {{coach_last}} {{school}} {{athlete_first}} {{athlete_last}} {{position}} {{height}} {{weight}} {{high_school}} {{city}} {{state}} {{grad_year}} {{ppg}} {{rpg}} {{highlight_url}} {{athlete_email}}'}
+                  </p>
+                </div>
+              </>
+            ) : (
+              <>
+                <div style={{ background: '#f8f9fa', borderRadius: '10px', padding: '1rem 1.25rem', marginBottom: '0.5rem' }}>
+                  <p style={{ fontSize: '0.7rem', fontWeight: 'bold', color: '#999', textTransform: 'uppercase', marginBottom: '0.25rem' }}>Subject</p>
+                  <p style={{ fontSize: '0.875rem', fontWeight: 'bold', marginBottom: 0 }}>{templateSubject || 'No subject set'}</p>
+                </div>
+                <div style={{ background: '#f8f9fa', borderRadius: '10px', padding: '1rem 1.25rem' }}>
+                  <p style={{ fontSize: '0.7rem', fontWeight: 'bold', color: '#999', textTransform: 'uppercase', marginBottom: '0.5rem' }}>Preview</p>
+                  <pre style={{ fontSize: '0.8rem', color: '#333', margin: 0, whiteSpace: 'pre-wrap', fontFamily: "'Courier New', Courier, monospace", lineHeight: 1.6 }}>
+                    {templateBody || 'No template set. Click "Edit Letter" to create your outreach letter.'}
+                  </pre>
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Start Campaign */}
+          <div className="dash-card" style={{ borderColor: '#22c55e', borderWidth: '1.5px' }}>
+            <h3 style={{ fontSize: '1.125rem', marginBottom: '0.5rem', color: '#22c55e' }}>Send Outreach</h3>
+            <p style={{ color: '#666', fontSize: '0.875rem', marginBottom: '1rem' }}>
+              Send personalized emails to coaches using your letter above. Each coach gets a customized version with their name and school.
+            </p>
+            {campaignResult && (
+              <div style={{ background: campaignResult.emailsSent > 0 ? '#e6f9e6' : '#fff3e0', borderRadius: '8px', padding: '0.75rem 1rem', marginBottom: '1rem', fontSize: '0.875rem' }}>
+                <p style={{ fontWeight: 'bold', marginBottom: '0.25rem', color: campaignResult.emailsSent > 0 ? '#2e7d32' : '#e65100' }}>
+                  {campaignResult.emailsSent > 0 ? `Sent ${campaignResult.emailsSent} emails!` : 'No emails sent'}
+                </p>
+                {campaignResult.errors.length > 0 && (
+                  <p style={{ color: '#e65100', marginBottom: '0.25rem' }}>{campaignResult.errors.length} errors</p>
+                )}
+                <p style={{ color: '#666', marginBottom: 0 }}>{campaignResult.remaining} coaches remaining</p>
               </div>
-            ))}
+            )}
+            <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+              <button
+                onClick={() => runCampaign(5)}
+                disabled={runningCampaign || !templateBody}
+                style={{ padding: '0.75rem 1.5rem', borderRadius: '9999px', background: runningCampaign ? '#ccc' : '#22c55e', color: 'white', border: 'none', cursor: runningCampaign ? 'default' : 'pointer', fontWeight: 'bold', fontSize: '0.875rem', fontFamily: 'inherit' }}
+              >
+                {runningCampaign ? 'Sending...' : 'Send 5 Emails'}
+              </button>
+              <button
+                onClick={() => runCampaign(10)}
+                disabled={runningCampaign || !templateBody}
+                style={{ padding: '0.75rem 1.5rem', borderRadius: '9999px', background: runningCampaign ? '#ccc' : '#1976d2', color: 'white', border: 'none', cursor: runningCampaign ? 'default' : 'pointer', fontWeight: 'bold', fontSize: '0.875rem', fontFamily: 'inherit' }}
+              >
+                {runningCampaign ? 'Sending...' : 'Send 10 Emails'}
+              </button>
+              <button
+                onClick={() => runCampaign(25)}
+                disabled={runningCampaign || !templateBody}
+                style={{ padding: '0.75rem 1.5rem', borderRadius: '9999px', background: runningCampaign ? '#ccc' : '#7b1fa2', color: 'white', border: 'none', cursor: runningCampaign ? 'default' : 'pointer', fontWeight: 'bold', fontSize: '0.875rem', fontFamily: 'inherit' }}
+              >
+                {runningCampaign ? 'Sending...' : 'Send 25 Emails'}
+              </button>
+            </div>
+            {!templateBody && (
+              <p style={{ color: '#e65100', fontSize: '0.8rem', marginTop: '0.5rem', marginBottom: 0 }}>
+                Edit your outreach letter above before sending.
+              </p>
+            )}
+          </div>
+
+          {/* Coach Targets */}
+          <div className="dash-card" style={{ borderColor: '#7b1fa2', borderWidth: '1.5px' }}>
+            <h3 style={{ fontSize: '1.125rem', marginBottom: '0.25rem', color: '#7b1fa2' }}>Outreach Targets</h3>
+            <p style={{ color: '#666', fontSize: '0.875rem', marginBottom: '0.5rem' }}>
+              <span style={{ fontWeight: 'bold', color: '#333' }}>172</span> coaches loaded &mdash; D1 head coaches, Pacific Northwest region
+            </p>
+            <p style={{ color: '#999', fontSize: '0.8rem', marginBottom: 0 }}>
+              {sendCount.total > 0
+                ? `${sendCount.total} contacted so far. ${Math.max(0, 172 - sendCount.total)} remaining.`
+                : 'No coaches contacted yet. Start your campaign above.'}
+            </p>
           </div>
         </div>
       )}
