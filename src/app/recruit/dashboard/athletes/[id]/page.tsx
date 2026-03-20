@@ -1325,7 +1325,7 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
                   <span style={{ width: '22px', height: '22px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', fontWeight: 'bold', flexShrink: 0, background: item.done ? '#4caf50' : '#e0e0e0', color: item.done ? 'white' : '#666' }}>
                     {item.done ? '\u2713' : item.step}
                   </span>
-                  <button onClick={item.action} style={{ fontSize: '0.875rem', color: '#1976d2', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit', textDecoration: 'underline', textAlign: 'left' }}>{item.text}</button>
+                  <a href="#" onClick={(e) => { e.preventDefault(); item.action(); }} style={{ fontSize: '0.875rem', color: '#1976d2', cursor: 'pointer', textDecoration: 'underline', textAlign: 'left', fontFamily: 'inherit', fontWeight: 500 }}>{item.text}</a>
                 </div>
               ))}
             </div>
