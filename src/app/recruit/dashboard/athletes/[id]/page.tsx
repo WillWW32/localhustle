@@ -1699,6 +1699,49 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
                 <p style={{ fontSize: '0.7rem', color: '#999', marginTop: '0.5rem', marginBottom: 0, fontStyle: 'italic' }}>
                   [School] and [Coach Name] are filled automatically for each coach when sent.
                 </p>
+
+                {/* Sample Proof — what the coach actually receives */}
+                <details style={{ marginTop: '1rem' }}>
+                  <summary style={{ cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold', color: '#1976d2', userSelect: 'none' }}>
+                    👁 View Sample Message (as coach sees it)
+                  </summary>
+                  <div style={{ marginTop: '0.75rem', background: 'white', border: '1px solid #e0e0e0', borderRadius: '10px', padding: '1rem 1.25rem' }}>
+                    <div style={{ borderBottom: '1px solid #eee', paddingBottom: '0.5rem', marginBottom: '0.75rem' }}>
+                      <p style={{ fontSize: '0.7rem', color: '#999', margin: '0 0 0.15rem' }}>From: <span style={{ color: '#333' }}>{athlete?.firstName} {athlete?.lastName} &lt;{athlete?.firstName?.toLowerCase()}.{athlete?.lastName?.toLowerCase()}@localhustle.org&gt;</span></p>
+                      <p style={{ fontSize: '0.7rem', color: '#999', margin: '0 0 0.15rem' }}>To: <span style={{ color: '#333' }}>Coach Williams &lt;williams@sampleuniversity.edu&gt;</span></p>
+                      <p style={{ fontSize: '0.7rem', color: '#999', margin: 0 }}>Subject: <span style={{ color: '#333', fontWeight: 'bold' }}>{(templateSubject || '')
+                        .replace(/\{\{school\}\}/g, 'Sample University')
+                        .replace(/\{\{coach_last\}\}/g, 'Williams')
+                        .replace(/\{\{coach_first\}\}/g, 'Coach')}</span></p>
+                    </div>
+                    <pre style={{ fontSize: '0.8rem', color: '#333', margin: 0, whiteSpace: 'pre-wrap', fontFamily: "'Courier New', Courier, monospace", lineHeight: 1.6 }}>
+                      {(templateBody || '')
+                        .replace(/\{\{coach_last\}\}/g, 'Williams')
+                        .replace(/\{\{coach_first\}\}/g, 'Coach')
+                        .replace(/\{\{school\}\}/g, 'Sample University')
+                        .replace(/\{\{coach_title\}\}/g, 'Head Coach')
+                        .replace(/\{\{athlete_first\}\}/g, athlete?.firstName || '')
+                        .replace(/\{\{athlete_last\}\}/g, athlete?.lastName || '')
+                        .replace(/\{\{position\}\}/g, athlete?.position || '')
+                        .replace(/\{\{height\}\}/g, athlete?.height || '')
+                        .replace(/\{\{weight\}\}/g, athlete?.weight || '')
+                        .replace(/\{\{high_school\}\}/g, athlete?.highSchool || '')
+                        .replace(/\{\{city\}\}/g, athlete?.city || '')
+                        .replace(/\{\{state\}\}/g, athlete?.state || '')
+                        .replace(/\{\{grad_year\}\}/g, athlete?.gradYear || '')
+                        .replace(/\{\{ppg\}\}/g, athlete?.ppg || '')
+                        .replace(/\{\{rpg\}\}/g, athlete?.rpg || '')
+                        .replace(/\{\{highlight_url\}\}/g, athlete?.highlightUrl || '')
+                        .replace(/\{\{athlete_email\}\}/g, athlete?.email || '')}
+                    </pre>
+                  </div>
+                  <div style={{ marginTop: '0.75rem', background: '#f0f8ff', border: '1px solid #b3d9ff', borderRadius: '10px', padding: '0.75rem 1rem' }}>
+                    <p style={{ fontSize: '0.7rem', fontWeight: 'bold', color: '#1da1f2', marginBottom: '0.25rem' }}>Sample X DM</p>
+                    <p style={{ fontSize: '0.8rem', color: '#333', margin: 0, lineHeight: 1.5, fontFamily: "'Courier New', Courier, monospace" }}>
+                      Coach Williams, my name is {athlete?.firstName} {athlete?.lastName}. I&apos;m a {athlete?.height}, {athlete?.weight} lb {athlete?.position} from {athlete?.highSchool} (Class of {athlete?.gradYear}). I&apos;m very interested in Sample University and would love to connect. Here&apos;s my film: {athlete?.highlightUrl || '[highlight link]'}
+                    </p>
+                  </div>
+                </details>
               </>
             )}
           </div>
