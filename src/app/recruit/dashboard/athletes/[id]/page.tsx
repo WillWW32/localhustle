@@ -134,6 +134,14 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
   const [queueLoaded, setQueueLoaded] = useState(false)
   const [sendingOutreachId, setSendingOutreachId] = useState<string | null>(null)
 
+  // X DM Hub state
+  const [dmCoaches, setDmCoaches] = useState<any[]>([])
+  const [dmCoachesLoaded, setDmCoachesLoaded] = useState(false)
+  const [sendingDmTo, setSendingDmTo] = useState<string | null>(null)
+  const [dmMessage, setDmMessage] = useState('')
+  const [dmResult, setDmResult] = useState<{ success: boolean; message: string } | null>(null)
+  const [dmComposeCoach, setDmComposeCoach] = useState<any | null>(null)
+
   // Load athlete and campaign via server-side API
   useEffect(() => {
     const loadAthlete = async () => {
@@ -203,7 +211,7 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
     const highlightLine = a.highlightUrl
       ? `My highlight film is available here: ${a.highlightUrl}\n\n`
       : ''
-    const body = `Coach {{coach_last}},\n\nMy name is ${a.firstName} ${a.lastName}, a ${a.height}, ${a.weight} lb ${a.position} from ${a.highSchool} in ${a.city}, ${a.state} (Class of ${a.gradYear}).\n\nI am very interested in {{school}} and believe I could contribute to your program. ${statsLine}${highlightLine}I would love the opportunity to learn more about your program and what it takes to be part of your team.\n\nThank you for your time, Coach.\n\nRespectfully,\n${a.firstName} ${a.lastName}\n${a.email || ''}\nlocalhustle.org/recruit/${a.slug || ''}`
+    const body = `Coach {{coach_last}},\n\nMy name is ${a.firstName} ${a.lastName}, a ${a.height}, ${a.weight} lb ${a.position} from ${a.highSchool} in ${a.city}, ${a.state} (Class of ${a.gradYear}).\n\nI've been following {{school}}'s program closely and I want to play for you, Coach. The way your team competes and the culture you've built is exactly where I see myself thriving. ${statsLine}${highlightLine}I would love the opportunity to visit campus, learn more about your program, and show you what I can bring to {{school}}.\n\nThank you for your time, Coach.\n\nRespectfully,\n${a.firstName} ${a.lastName}\n${a.email || ''}\nlocalhustle.org/recruit/${a.slug || ''}`
     return { subject, body }
   }
 
@@ -552,6 +560,55 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
     }
   }, [currentTab, queueLoaded, athlete])
 
+  // Load DM-eligible coaches when campaign tab opens
+  const loadDmCoaches = async () => {
+    if (!athlete) return
+    try {
+      const res = await fetch(`/api/recruit/dm/coaches?athleteId=${athlete.id}`)
+      const data = await res.json()
+      if (data.success) {
+        setDmCoaches(data.coaches || [])
+      }
+    } catch {
+      // silently fail
+    } finally {
+      setDmCoachesLoaded(true)
+    }
+  }
+
+  // Send a DM to a coach
+  const sendDm = async (coachXHandle: string, message: string) => {
+    if (!athlete || !message.trim()) return
+    setSendingDmTo(coachXHandle)
+    setDmResult(null)
+    try {
+      const res = await fetch('/api/recruit/dm/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ athleteId: athlete.id, coachXHandle, message: message.trim() }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        setDmResult({ success: true, message: `DM sent to @${coachXHandle}` })
+        setDmMessage('')
+        setDmComposeCoach(null)
+        await loadDmCoaches()
+      } else {
+        setDmResult({ success: false, message: data.error || 'DM failed' })
+      }
+    } catch (err: any) {
+      setDmResult({ success: false, message: err.message })
+    } finally {
+      setSendingDmTo(null)
+    }
+  }
+
+  useEffect(() => {
+    if (currentTab === 'campaign' && !dmCoachesLoaded && athlete) {
+      loadDmCoaches()
+    }
+  }, [currentTab, dmCoachesLoaded, athlete])
+
   // Load outreach results (open rates, delivery stats)
   const loadResults = async () => {
     const activeCampaignId = campaignId
@@ -824,7 +881,7 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
                     {item.done ? '\u2713' : item.step}
                   </span>
                   {item.action ? (
-                    <button onClick={item.action} style={{ fontSize: '0.875rem', color: item.done ? '#333' : '#1976d2', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit', textDecoration: item.done ? 'none' : 'underline', textAlign: 'left' }}>{item.text}</button>
+                    <button onClick={item.action} style={{ fontSize: '0.875rem', color: '#1976d2', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit', textDecoration: 'underline', textAlign: 'left' }}>{item.text}</button>
                   ) : (
                     <span style={{ fontSize: '0.875rem', color: item.done ? '#333' : '#666' }}>{item.text}</span>
                   )}
@@ -1437,6 +1494,107 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
                 </div>
               </div>
             ))}
+          </div>
+
+          {/* X DM Outreach Hub */}
+          <div className="dash-card" style={{ borderColor: '#1da1f2', borderWidth: '1.5px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+              <h3 style={{ fontSize: '1.125rem', margin: 0, color: '#1da1f2' }}>X / DM Outreach</h3>
+              {athlete?.xConnected && (
+                <span style={{ fontSize: '0.65rem', fontWeight: 'bold', background: '#e8f5fe', color: '#1da1f2', padding: '0.15rem 0.5rem', borderRadius: '9999px' }}>
+                  Connected
+                </span>
+              )}
+            </div>
+
+            {!athlete?.xConnected ? (
+              <div style={{ background: '#f9f9f9', borderRadius: '10px', padding: '1rem', textAlign: 'center' }}>
+                <p style={{ color: '#666', fontSize: '0.85rem', marginBottom: '0.5rem' }}>Connect your X account to DM coaches directly.</p>
+                <a href={`/api/auth/x/authorize?athleteId=${athlete?.id}`} style={{ display: 'inline-block', padding: '0.5rem 1.25rem', background: '#1da1f2', color: 'white', borderRadius: '9999px', fontWeight: 'bold', fontSize: '0.8rem', textDecoration: 'none' }}>
+                  Connect X Account
+                </a>
+              </div>
+            ) : (
+              <>
+                {/* DM result toast */}
+                {dmResult && (
+                  <div style={{ background: dmResult.success ? '#e6f9e6' : '#fff3e0', borderRadius: '8px', padding: '0.5rem 0.75rem', marginBottom: '0.5rem', fontSize: '0.8rem' }}>
+                    <span style={{ fontWeight: 'bold', color: dmResult.success ? '#2e7d32' : '#e65100' }}>{dmResult.message}</span>
+                  </div>
+                )}
+
+                {/* Compose DM overlay */}
+                {dmComposeCoach && (
+                  <div style={{ background: '#f0f8ff', border: '1px solid #1da1f2', borderRadius: '10px', padding: '0.75rem 1rem', marginBottom: '0.75rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                      <p style={{ fontWeight: 'bold', fontSize: '0.85rem', margin: 0 }}>
+                        DM to @{dmComposeCoach.x_handle} <span style={{ fontWeight: 'normal', color: '#666' }}>({dmComposeCoach.name} — {dmComposeCoach.school})</span>
+                      </p>
+                      <button onClick={() => { setDmComposeCoach(null); setDmMessage('') }} style={{ background: 'none', border: 'none', fontSize: '1rem', cursor: 'pointer', color: '#999' }}>&times;</button>
+                    </div>
+                    <textarea
+                      value={dmMessage}
+                      onChange={(e) => setDmMessage(e.target.value)}
+                      placeholder={`Coach ${dmComposeCoach.name.split(' ').pop()}, I'm ${athlete?.firstName} ${athlete?.lastName}, a ${athlete?.position} from ${athlete?.highSchool}...`}
+                      rows={4}
+                      style={{ width: '100%', padding: '0.5rem', borderRadius: '8px', border: '1px solid #ddd', fontSize: '0.8rem', fontFamily: 'inherit', resize: 'vertical', marginBottom: '0.5rem' }}
+                    />
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      <button
+                        onClick={() => sendDm(dmComposeCoach.x_handle, dmMessage)}
+                        disabled={sendingDmTo === dmComposeCoach.x_handle || !dmMessage.trim()}
+                        style={{ padding: '0.4rem 1rem', borderRadius: '9999px', background: sendingDmTo ? '#ccc' : '#1da1f2', color: 'white', border: 'none', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.75rem', fontFamily: 'inherit' }}
+                      >
+                        {sendingDmTo === dmComposeCoach.x_handle ? 'Sending...' : 'Send DM'}
+                      </button>
+                      <button
+                        onClick={() => {
+                          setDmMessage(`Coach ${dmComposeCoach.name.split(' ').pop()}, my name is ${athlete?.firstName} ${athlete?.lastName}. I'm a ${athlete?.height}, ${athlete?.weight} lb ${athlete?.position} from ${athlete?.highSchool} (Class of ${athlete?.gradYear}). I'm very interested in ${dmComposeCoach.school} and would love to connect. Here's my film: ${athlete?.highlightUrl || '[highlight link]'}`)
+                        }}
+                        style={{ padding: '0.4rem 0.75rem', borderRadius: '9999px', background: 'transparent', color: '#1da1f2', border: '1px solid #1da1f2', cursor: 'pointer', fontSize: '0.7rem', fontFamily: 'inherit' }}
+                      >
+                        Auto-fill
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Coach list with DM status */}
+                <p style={{ fontSize: '0.75rem', color: '#666', marginBottom: '0.5rem' }}>
+                  {dmCoaches.length > 0
+                    ? `${dmCoaches.length} coaches with X handles — ${dmCoaches.filter((c: any) => c.dmStatus === 'sent').length} DM'd`
+                    : dmCoachesLoaded ? 'No coaches with X handles found.' : 'Loading...'}
+                </p>
+
+                {dmCoaches.length > 0 && (
+                  <div style={{ maxHeight: '250px', overflowY: 'auto' }}>
+                    {dmCoaches.map((c: any) => (
+                      <div key={c.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.35rem 0', borderBottom: '1px solid #f0f0f0', fontSize: '0.8rem' }}>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <span style={{ fontWeight: 500 }}>{c.name}</span>
+                          <span style={{ color: '#1da1f2', fontSize: '0.7rem', marginLeft: '0.4rem' }}>@{c.x_handle}</span>
+                          <span style={{ color: '#999', fontSize: '0.7rem', marginLeft: '0.4rem' }}>{c.school}</span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexShrink: 0 }}>
+                          {c.dmStatus === 'sent' ? (
+                            <span style={{ fontSize: '0.6rem', fontWeight: 'bold', color: '#2e7d32', background: '#e8f5e9', padding: '0.1rem 0.4rem', borderRadius: '9999px' }}>DM&apos;d</span>
+                          ) : c.dmStatus === 'queued' ? (
+                            <span style={{ fontSize: '0.6rem', fontWeight: 'bold', color: '#e65100', background: '#fff3e0', padding: '0.1rem 0.4rem', borderRadius: '9999px' }}>Queued</span>
+                          ) : (
+                            <button
+                              onClick={() => { setDmComposeCoach(c); setDmMessage('') }}
+                              style={{ padding: '0.2rem 0.5rem', borderRadius: '9999px', background: '#1da1f2', color: 'white', border: 'none', cursor: 'pointer', fontSize: '0.6rem', fontWeight: 'bold', fontFamily: 'inherit' }}
+                            >
+                              DM
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
           </div>
 
           {/* Coach Targets */}
