@@ -96,6 +96,9 @@ export async function GET(request: NextRequest) {
       profileImageUrl: athleteRow.profile_image_url || '',
       ppg: stats.ppg || '',
       rpg: stats.rpg || '',
+      threePtPct: stats.three_pt_pct || stats.threePct || '',
+      twoPtPct: stats.two_pt_pct || stats.fgPct || '',
+      mpg: stats.mpg || '',
       photos: athleteRow.photos || [],
     },
     campaign: campaign ? {
