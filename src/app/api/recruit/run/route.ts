@@ -84,9 +84,8 @@ export async function POST(request: NextRequest) {
       .filter((c: any) => !contactedSetForFilter.has(c.id))
       .slice(0, emailsToSend)
 
-    const emailsSent: string[] = []
-    const dmsSent: string[] = []
-    const errors: Array<{ coach: string; error: string }> = []
+    const emailsSentList: Array<{ id: string; name: string; school: string; division: string }> = []
+    const errors: Array<{ coach: string; name: string; error: string }> = []
 
     if (uncontactedCoaches && uncontactedCoaches.length > 0) {
       for (const coach of uncontactedCoaches) {
@@ -109,34 +108,47 @@ export async function POST(request: NextRequest) {
           })
 
           if (sendResult.success) {
-            emailsSent.push(coach.id)
+            emailsSentList.push({ id: coach.id, name: `${coach.first_name} ${coach.last_name}`, school: coach.school, division: coach.division || '' })
           } else {
-            errors.push({ coach: coach.id, error: sendResult.error || 'Unknown error' })
+            errors.push({ coach: coach.id, name: `${coach.first_name} ${coach.last_name}`, error: sendResult.error || 'Unknown error' })
           }
         } catch (err: any) {
-          errors.push({ coach: coach.id, error: err.message || 'Failed to send email' })
+          errors.push({ coach: coach.id, name: 'Unknown', error: err.message || 'Failed to send email' })
         }
 
-        if (emailsSent.length >= emailsToSend) break
+        if (emailsSentList.length >= emailsToSend) break
       }
     }
 
-    const { data: allCoaches } = await supabaseAdmin.from('coaches').select('id')
-    const { data: contactedIds } = await supabaseAdmin
+    // Get remaining uncontacted coaches (next in queue)
+    const { data: allCoachesPost } = await supabaseAdmin
+      .from('coaches')
+      .select('id, first_name, last_name, school, division')
+
+    const { data: contactedIdsPost } = await supabaseAdmin
       .from('messages')
       .select('coach_id')
       .eq('campaign_id', campaignId)
 
-    const contactedSet = new Set(contactedIds?.map((m: any) => m.coach_id) || [])
-    const remaining = (allCoaches || []).length - contactedSet.size
+    const contactedSetPost = new Set(contactedIdsPost?.map((m: any) => m.coach_id) || [])
+    const remainingCoaches = (allCoachesPost || [])
+      .filter((c: any) => !contactedSetPost.has(c.id))
+
+    // Return next 10 upcoming coaches so the UI can show "up next"
+    const upNext = remainingCoaches.slice(0, 10).map((c: any) => ({
+      id: c.id,
+      name: `${c.first_name} ${c.last_name}`,
+      school: c.school,
+      division: c.division || '',
+    }))
 
     return NextResponse.json({
       success: true,
-      emailsSent: emailsSent.length,
-      dmsSent: dmsSent.length,
+      emailsSent: emailsSentList.length,
+      sentCoaches: emailsSentList,
       errors,
-      remaining: Math.max(0, remaining - emailsSent.length),
-      sentCoachIds: emailsSent,
+      remaining: remainingCoaches.length,
+      upNext,
     })
   } catch (err: any) {
     console.error('Recruitment run error:', err)

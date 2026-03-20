@@ -108,8 +108,16 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
   const [editingTemplate, setEditingTemplate] = useState(false)
   const [savingTemplate, setSavingTemplate] = useState(false)
   const [runningCampaign, setRunningCampaign] = useState(false)
-  const [campaignResult, setCampaignResult] = useState<{ emailsSent: number; errors: any[]; remaining: number } | null>(null)
+  const [campaignResult, setCampaignResult] = useState<{
+    emailsSent: number;
+    sentCoaches: Array<{ id: string; name: string; school: string; division: string }>;
+    errors: any[];
+    remaining: number;
+    upNext: Array<{ id: string; name: string; school: string; division: string }>;
+  } | null>(null)
   const [staggerProgress, setStaggerProgress] = useState<{ sent: number; total: number; batch: number; done: boolean } | null>(null)
+  const [testSending, setTestSending] = useState(false)
+  const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null)
 
   // Open results state
   const [outreachResults, setOutreachResults] = useState<any>(null)
@@ -353,7 +361,13 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
       })
       const data = await res.json()
       if (data.success) {
-        setCampaignResult({ emailsSent: data.emailsSent, errors: data.errors, remaining: data.remaining })
+        setCampaignResult({
+          emailsSent: data.emailsSent,
+          sentCoaches: data.sentCoaches || [],
+          errors: data.errors,
+          remaining: data.remaining,
+          upNext: data.upNext || [],
+        })
         setSendCount(prev => ({
           total: prev.total + data.emailsSent,
           thisWeek: prev.thisWeek + data.emailsSent,
@@ -366,6 +380,37 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
       alert('Failed to run campaign: ' + err.message)
     } finally {
       setRunningCampaign(false)
+    }
+  }
+
+  // Test Send — sends one test email to a specified address
+  const sendTestEmail = async () => {
+    setTestSending(true)
+    setTestResult(null)
+    try {
+      const activeCampaignId = await ensureCampaign()
+      if (!activeCampaignId) { setTestSending(false); return }
+
+      const res = await fetch('/api/recruit/test-send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          campaignId: activeCampaignId,
+          testEmail: 'jesse@entreartists.com',
+          subject: templateSubject,
+          bodyText: templateBody,
+        }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        setTestResult({ success: true, message: `Test sent to ${data.testEmail}` })
+      } else {
+        setTestResult({ success: false, message: data.error || 'Test send failed' })
+      }
+    } catch (err: any) {
+      setTestResult({ success: false, message: err.message })
+    } finally {
+      setTestSending(false)
     }
   }
 
@@ -428,7 +473,7 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
         }
       }
 
-      setCampaignResult({ emailsSent: totalSent, errors: totalErrors, remaining })
+      setCampaignResult({ emailsSent: totalSent, sentCoaches: [], errors: totalErrors, remaining, upNext: [] })
       setStaggerProgress({ sent: totalSent, total: totalSent + remaining, batch: batchNum, done: true })
     } catch (err: any) {
       alert('Failed to run staggered campaign: ' + err.message)
@@ -957,77 +1002,114 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
             )}
           </div>
 
-          {/* Start Campaign */}
+          {/* Send Outreach */}
           <div className="dash-card" style={{ borderColor: '#22c55e', borderWidth: '1.5px' }}>
             <h3 style={{ fontSize: '1.125rem', marginBottom: '0.5rem', color: '#22c55e' }}>Send Outreach</h3>
             <p style={{ color: '#666', fontSize: '0.875rem', marginBottom: '1rem' }}>
-              Send personalized emails to coaches using your letter above. Each coach gets a customized version with their name and school.
+              Each coach gets a personalized version with their name and school filled in automatically.
             </p>
-            {campaignResult && (
-              <div style={{ background: campaignResult.emailsSent > 0 ? '#e6f9e6' : '#fff3e0', borderRadius: '8px', padding: '0.75rem 1rem', marginBottom: '1rem', fontSize: '0.875rem' }}>
-                <p style={{ fontWeight: 'bold', marginBottom: '0.25rem', color: campaignResult.emailsSent > 0 ? '#2e7d32' : '#e65100' }}>
-                  {campaignResult.emailsSent > 0 ? `Sent ${campaignResult.emailsSent} emails!` : 'No emails sent'}
-                </p>
-                {campaignResult.errors.length > 0 && (
-                  <p style={{ color: '#e65100', marginBottom: '0.25rem' }}>{campaignResult.errors.length} errors</p>
-                )}
-                <p style={{ color: '#666', marginBottom: 0 }}>{campaignResult.remaining} coaches remaining</p>
+
+            {/* Test result */}
+            {testResult && (
+              <div style={{ background: testResult.success ? '#e6f9e6' : '#fff3e0', borderRadius: '8px', padding: '0.6rem 1rem', marginBottom: '0.75rem', fontSize: '0.8rem' }}>
+                <span style={{ fontWeight: 'bold', color: testResult.success ? '#2e7d32' : '#e65100' }}>{testResult.message}</span>
               </div>
             )}
-            <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center' }}>
+
+            {/* Buttons row */}
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center', marginBottom: '0.75rem' }}>
+              <button
+                onClick={sendTestEmail}
+                disabled={testSending || runningCampaign || !templateBody}
+                style={{ padding: '0.6rem 1.25rem', borderRadius: '9999px', background: testSending ? '#ccc' : '#666', color: 'white', border: 'none', cursor: testSending ? 'default' : 'pointer', fontWeight: 'bold', fontSize: '0.8rem', fontFamily: 'inherit' }}
+              >
+                {testSending ? 'Sending...' : 'Test Send'}
+              </button>
               <button
                 onClick={() => runCampaign(5)}
                 disabled={runningCampaign || !templateBody}
-                style={{ padding: '0.75rem 1.5rem', borderRadius: '9999px', background: runningCampaign ? '#ccc' : '#22c55e', color: 'white', border: 'none', cursor: runningCampaign ? 'default' : 'pointer', fontWeight: 'bold', fontSize: '0.875rem', fontFamily: 'inherit' }}
+                style={{ padding: '0.6rem 1.25rem', borderRadius: '9999px', background: runningCampaign ? '#ccc' : '#22c55e', color: 'white', border: 'none', cursor: runningCampaign ? 'default' : 'pointer', fontWeight: 'bold', fontSize: '0.8rem', fontFamily: 'inherit' }}
               >
                 {runningCampaign ? 'Sending...' : 'Send 5'}
               </button>
               <button
-                onClick={() => runCampaign(10)}
+                onClick={() => runCampaign(20)}
                 disabled={runningCampaign || !templateBody}
-                style={{ padding: '0.75rem 1.5rem', borderRadius: '9999px', background: runningCampaign ? '#ccc' : '#1976d2', color: 'white', border: 'none', cursor: runningCampaign ? 'default' : 'pointer', fontWeight: 'bold', fontSize: '0.875rem', fontFamily: 'inherit' }}
+                style={{ padding: '0.6rem 1.25rem', borderRadius: '9999px', background: runningCampaign ? '#ccc' : '#1976d2', color: 'white', border: 'none', cursor: runningCampaign ? 'default' : 'pointer', fontWeight: 'bold', fontSize: '0.8rem', fontFamily: 'inherit' }}
               >
-                {runningCampaign ? 'Sending...' : 'Send 10'}
-              </button>
-              <button
-                onClick={() => runCampaign(25)}
-                disabled={runningCampaign || !templateBody}
-                style={{ padding: '0.75rem 1.5rem', borderRadius: '9999px', background: runningCampaign ? '#ccc' : '#7b1fa2', color: 'white', border: 'none', cursor: runningCampaign ? 'default' : 'pointer', fontWeight: 'bold', fontSize: '0.875rem', fontFamily: 'inherit' }}
-              >
-                {runningCampaign ? 'Sending...' : 'Send 25'}
+                {runningCampaign ? 'Sending...' : 'Send 20'}
               </button>
               <button
                 onClick={runCampaignStaggered}
                 disabled={runningCampaign || !templateBody}
-                style={{ padding: '0.75rem 1.5rem', borderRadius: '9999px', background: runningCampaign ? '#ccc' : '#e65100', color: 'white', border: 'none', cursor: runningCampaign ? 'default' : 'pointer', fontWeight: 'bold', fontSize: '0.875rem', fontFamily: 'inherit' }}
+                style={{ padding: '0.6rem 1.25rem', borderRadius: '9999px', background: runningCampaign ? '#ccc' : '#e65100', color: 'white', border: 'none', cursor: runningCampaign ? 'default' : 'pointer', fontWeight: 'bold', fontSize: '0.8rem', fontFamily: 'inherit' }}
               >
                 {runningCampaign ? 'Sending...' : 'Send All (Staggered)'}
               </button>
             </div>
+
             {/* Stagger progress bar */}
             {staggerProgress && !staggerProgress.done && (
-              <div style={{ marginTop: '0.75rem' }}>
+              <div style={{ marginBottom: '0.75rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: '#666', marginBottom: '0.25rem' }}>
                   <span>Batch {staggerProgress.batch} &mdash; {staggerProgress.sent} sent</span>
                   <span>{staggerProgress.total > 0 ? `${Math.round((staggerProgress.sent / staggerProgress.total) * 100)}%` : '...'}</span>
                 </div>
                 <div style={{ background: '#e0e0e0', borderRadius: '9999px', height: '8px', overflow: 'hidden' }}>
-                  <div
-                    style={{
-                      background: 'linear-gradient(90deg, #e65100, #ff9800)',
-                      height: '100%',
-                      borderRadius: '9999px',
-                      width: staggerProgress.total > 0 ? `${Math.min(100, (staggerProgress.sent / staggerProgress.total) * 100)}%` : '10%',
-                      transition: 'width 0.5s ease',
-                    }}
-                  />
+                  <div style={{ background: 'linear-gradient(90deg, #e65100, #ff9800)', height: '100%', borderRadius: '9999px', width: staggerProgress.total > 0 ? `${Math.min(100, (staggerProgress.sent / staggerProgress.total) * 100)}%` : '10%', transition: 'width 0.5s ease' }} />
                 </div>
               </div>
             )}
+
             {!templateBody && (
-              <p style={{ color: '#e65100', fontSize: '0.8rem', marginTop: '0.5rem', marginBottom: 0 }}>
+              <p style={{ color: '#e65100', fontSize: '0.8rem', marginTop: '0', marginBottom: '0.5rem' }}>
                 Edit your outreach letter above before sending.
               </p>
+            )}
+
+            {/* Send results — who was sent + who's next */}
+            {campaignResult && (
+              <div style={{ marginTop: '0.25rem' }}>
+                <div style={{ background: campaignResult.emailsSent > 0 ? '#e6f9e6' : '#fff3e0', borderRadius: '8px', padding: '0.75rem 1rem', marginBottom: '0.75rem', fontSize: '0.875rem' }}>
+                  <p style={{ fontWeight: 'bold', marginBottom: '0.25rem', color: campaignResult.emailsSent > 0 ? '#2e7d32' : '#e65100' }}>
+                    {campaignResult.emailsSent > 0 ? `Sent ${campaignResult.emailsSent} emails!` : 'No emails sent'}
+                  </p>
+                  {campaignResult.errors.length > 0 && (
+                    <p style={{ color: '#e65100', marginBottom: '0.25rem' }}>{campaignResult.errors.length} error{campaignResult.errors.length > 1 ? 's' : ''}</p>
+                  )}
+                  <p style={{ color: '#666', marginBottom: 0 }}>{campaignResult.remaining} coaches remaining</p>
+                </div>
+
+                {/* Sent coaches list */}
+                {campaignResult.sentCoaches.length > 0 && (
+                  <div style={{ marginBottom: '0.75rem' }}>
+                    <p style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#2e7d32', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.4rem' }}>Sent To</p>
+                    <div style={{ maxHeight: '150px', overflowY: 'auto' }}>
+                      {campaignResult.sentCoaches.map((c) => (
+                        <div key={c.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.3rem 0', borderBottom: '1px solid #f0f0f0', fontSize: '0.8rem' }}>
+                          <span style={{ fontWeight: 500 }}>{c.name}</span>
+                          <span style={{ color: '#666' }}>{c.school} {c.division && <span style={{ fontSize: '0.7rem', fontWeight: 'bold', color: '#7b1fa2' }}>({c.division})</span>}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Up next coaches */}
+                {campaignResult.upNext.length > 0 && (
+                  <div>
+                    <p style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#1976d2', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.4rem' }}>Up Next</p>
+                    <div style={{ maxHeight: '150px', overflowY: 'auto' }}>
+                      {campaignResult.upNext.map((c) => (
+                        <div key={c.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.3rem 0', borderBottom: '1px solid #f0f0f0', fontSize: '0.8rem', color: '#999' }}>
+                          <span>{c.name}</span>
+                          <span>{c.school} {c.division && <span style={{ fontSize: '0.7rem' }}>({c.division})</span>}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
             )}
           </div>
 
