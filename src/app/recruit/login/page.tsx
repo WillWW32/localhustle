@@ -69,10 +69,10 @@ export default function RecruitLoginPage() {
       <div style={{ maxWidth: '400px', margin: '0 auto', textAlign: 'center' }}>
 
         <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '0.75rem' }}>
-          Athlete Login
+          Athlete &amp; Parent Login
         </h1>
         <p style={{ fontSize: '0.9rem', color: '#666', marginBottom: '2.5rem' }}>
-          Enter the email you signed up with.
+          Enter your email — works for athletes and parents/guardians.
         </p>
 
         {!athletes ? (

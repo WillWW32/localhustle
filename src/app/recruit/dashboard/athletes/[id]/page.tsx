@@ -149,6 +149,16 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
   const [showCoachesList, setShowCoachesList] = useState(false)
   const [favoriteCoaches, setFavoriteCoaches] = useState<Set<string>>(new Set())
 
+  // Parent/Guardian access state
+  const [parentAccessList, setParentAccessList] = useState<any[]>([])
+  const [parentAccessPrimary, setParentAccessPrimary] = useState<string | null>(null)
+  const [showAddParent, setShowAddParent] = useState(false)
+  const [newParentEmail, setNewParentEmail] = useState('')
+  const [newParentName, setNewParentName] = useState('')
+  const [newParentRelationship, setNewParentRelationship] = useState('')
+  const [addingParent, setAddingParent] = useState(false)
+  const [addParentError, setAddParentError] = useState<string | null>(null)
+
   // X DM Hub state
   const [dmCoaches, setDmCoaches] = useState<any[]>([])
   const [dmCoachesLoaded, setDmCoachesLoaded] = useState(false)
@@ -632,6 +642,23 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
       loadTargetCoaches()
     }
   }, [currentTab, queueLoaded, targetCoachesLoaded, athlete])
+
+  // Load parent access when settings tab opens
+  const [parentAccessLoaded, setParentAccessLoaded] = useState(false)
+  useEffect(() => {
+    if (currentTab === 'settings' && !parentAccessLoaded && athlete) {
+      fetch(`/api/recruit/parent-access?athleteId=${athlete.id}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            setParentAccessPrimary(data.primaryEmail)
+            setParentAccessList(data.guardians || [])
+          }
+        })
+        .catch(() => {})
+        .finally(() => setParentAccessLoaded(true))
+    }
+  }, [currentTab, parentAccessLoaded, athlete])
 
   // Load DM-eligible coaches when campaign tab opens
   const loadDmCoaches = async () => {
@@ -2199,6 +2226,159 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
             ) : (
               <button style={{ color: 'red', fontWeight: 'bold', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>
                 Disconnect X Account
+              </button>
+            )}
+          </div>
+
+          {/* Parent / Guardian Access */}
+          <div className="dash-card" style={{ borderColor: '#7b1fa2', borderWidth: '1.5px' }}>
+            <h3 style={{ fontSize: '1.125rem', marginBottom: '0.5rem', color: '#7b1fa2' }}>Parent / Guardian Access</h3>
+            <p style={{ color: '#666', fontSize: '0.85rem', marginBottom: '1rem' }}>
+              Add parents or guardians so they can log in and view the recruiting dashboard too.
+            </p>
+
+            {/* Primary account holder */}
+            <div style={{ background: '#f8f9fa', borderRadius: '8px', padding: '0.75rem 1rem', marginBottom: '0.75rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <p style={{ fontWeight: 'bold', fontSize: '0.85rem', margin: 0 }}>Primary Account Holder</p>
+                  <p style={{ color: '#666', fontSize: '0.8rem', margin: 0 }}>{parentAccessPrimary || 'Not set'}</p>
+                </div>
+                <span style={{ fontSize: '0.65rem', fontWeight: 'bold', background: '#e8f5e9', color: '#2e7d32', padding: '0.15rem 0.5rem', borderRadius: '9999px' }}>Owner</span>
+              </div>
+            </div>
+
+            {/* Additional guardians list */}
+            {parentAccessList.map((g) => (
+              <div key={g.id} style={{ background: '#f8f9fa', borderRadius: '8px', padding: '0.75rem 1rem', marginBottom: '0.5rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <p style={{ fontWeight: 500, fontSize: '0.85rem', margin: 0 }}>
+                      {g.name || g.email}
+                      {g.relationship && <span style={{ color: '#999', fontWeight: 'normal' }}> — {g.relationship}</span>}
+                    </p>
+                    {g.name && <p style={{ color: '#666', fontSize: '0.8rem', margin: 0 }}>{g.email}</p>}
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <span style={{ fontSize: '0.65rem', fontWeight: 'bold', background: g.status === 'active' ? '#e3f2fd' : '#fce4ec', color: g.status === 'active' ? '#1976d2' : '#c62828', padding: '0.15rem 0.5rem', borderRadius: '9999px' }}>
+                      {g.status === 'active' ? 'Active' : 'Revoked'}
+                    </span>
+                    {g.status === 'active' && (
+                      <button
+                        onClick={async () => {
+                          if (!confirm(`Remove access for ${g.email}?`)) return
+                          const res = await fetch('/api/recruit/parent-access', {
+                            method: 'DELETE',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ accessId: g.id }),
+                          })
+                          if (res.ok) {
+                            setParentAccessList(prev => prev.map(p => p.id === g.id ? { ...p, status: 'revoked' } : p))
+                          }
+                        }}
+                        style={{ color: '#c62828', background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.75rem', fontFamily: 'inherit', fontWeight: 'bold' }}
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+
+            {/* Add parent form */}
+            {showAddParent ? (
+              <div style={{ background: '#faf5ff', borderRadius: '8px', padding: '1rem', marginTop: '0.5rem', border: '1px solid #e8d5f5' }}>
+                <p style={{ fontWeight: 'bold', fontSize: '0.85rem', marginBottom: '0.75rem', color: '#7b1fa2' }}>Add Parent / Guardian</p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  <input
+                    type="email"
+                    placeholder="Email address *"
+                    value={newParentEmail}
+                    onChange={(e) => setNewParentEmail(e.target.value)}
+                    style={{ padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid #ddd', fontSize: '0.85rem', fontFamily: 'inherit' }}
+                  />
+                  <input
+                    type="text"
+                    placeholder="Name (optional)"
+                    value={newParentName}
+                    onChange={(e) => setNewParentName(e.target.value)}
+                    style={{ padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid #ddd', fontSize: '0.85rem', fontFamily: 'inherit' }}
+                  />
+                  <select
+                    value={newParentRelationship}
+                    onChange={(e) => setNewParentRelationship(e.target.value)}
+                    style={{ padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid #ddd', fontSize: '0.85rem', fontFamily: 'inherit', background: 'white' }}
+                  >
+                    <option value="">Relationship (optional)</option>
+                    <option value="Mother">Mother</option>
+                    <option value="Father">Father</option>
+                    <option value="Guardian">Guardian</option>
+                    <option value="Stepparent">Stepparent</option>
+                    <option value="Grandparent">Grandparent</option>
+                    <option value="Coach">Coach</option>
+                    <option value="Trainer">Trainer</option>
+                    <option value="Other">Other</option>
+                  </select>
+                  {addParentError && (
+                    <p style={{ color: '#c62828', fontSize: '0.8rem', margin: 0 }}>{addParentError}</p>
+                  )}
+                  <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.25rem' }}>
+                    <button
+                      onClick={async () => {
+                        if (!newParentEmail.includes('@')) {
+                          setAddParentError('Please enter a valid email')
+                          return
+                        }
+                        setAddingParent(true)
+                        setAddParentError(null)
+                        try {
+                          const res = await fetch('/api/recruit/parent-access', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                              athleteId: id,
+                              email: newParentEmail,
+                              name: newParentName || undefined,
+                              relationship: newParentRelationship || undefined,
+                            }),
+                          })
+                          const data = await res.json()
+                          if (data.success) {
+                            setParentAccessList(prev => [...prev, data.access])
+                            setNewParentEmail('')
+                            setNewParentName('')
+                            setNewParentRelationship('')
+                            setShowAddParent(false)
+                          } else {
+                            setAddParentError(data.error || 'Failed to add')
+                          }
+                        } catch {
+                          setAddParentError('Failed to add parent')
+                        } finally {
+                          setAddingParent(false)
+                        }
+                      }}
+                      disabled={addingParent}
+                      style={{ padding: '0.5rem 1.25rem', borderRadius: '9999px', background: addingParent ? '#ccc' : '#7b1fa2', color: 'white', border: 'none', cursor: addingParent ? 'default' : 'pointer', fontWeight: 'bold', fontSize: '0.8rem', fontFamily: 'inherit' }}
+                    >
+                      {addingParent ? 'Adding...' : 'Send Invite'}
+                    </button>
+                    <button
+                      onClick={() => { setShowAddParent(false); setAddParentError(null) }}
+                      style={{ padding: '0.5rem 1rem', borderRadius: '9999px', background: 'white', color: '#666', border: '1px solid #ddd', cursor: 'pointer', fontSize: '0.8rem', fontFamily: 'inherit' }}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <button
+                onClick={() => setShowAddParent(true)}
+                style={{ marginTop: '0.5rem', padding: '0.6rem 1.25rem', borderRadius: '9999px', background: '#7b1fa2', color: 'white', border: 'none', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.8rem', fontFamily: 'inherit' }}
+              >
+                + Add Parent / Guardian
               </button>
             )}
           </div>
