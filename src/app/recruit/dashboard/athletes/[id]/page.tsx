@@ -192,6 +192,12 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
   const [dmResult, setDmResult] = useState<{ success: boolean; message: string } | null>(null)
   const [dmComposeCoach, setDmComposeCoach] = useState<any | null>(null)
 
+  // X Engagement state (follow/like)
+  const [xEngagements, setXEngagements] = useState<Record<string, { followed: boolean; likedTweets: string[] }>>({})
+  const [xEngagementsLoaded, setXEngagementsLoaded] = useState(false)
+  const [xEngageLoading, setXEngageLoading] = useState<string | null>(null)
+  const [xEngageResult, setXEngageResult] = useState<{ success: boolean; message: string } | null>(null)
+
   // Coach Engagement state
   const [engagementData, setEngagementData] = useState<EngagementData | null>(null)
   const [engagementLoaded, setEngagementLoaded] = useState(false)
@@ -837,11 +843,115 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
     }
   }
 
+  // Load X engagement status (follows/likes)
+  const loadXEngagements = async () => {
+    if (!athlete) return
+    try {
+      const res = await fetch(`/api/recruit/x-engage?athleteId=${athlete.id}`)
+      const data = await res.json()
+      if (data.success) {
+        setXEngagements(data.engagements || {})
+      }
+    } catch {
+      // silently fail
+    } finally {
+      setXEngagementsLoaded(true)
+    }
+  }
+
+  // Follow a coach on X
+  const followOnX = async (coach: any) => {
+    if (!athlete) return
+    const handle = coach.x_handle.startsWith('@') ? coach.x_handle.slice(1) : coach.x_handle
+    setXEngageLoading(`follow-${handle}`)
+    setXEngageResult(null)
+    try {
+      const res = await fetch('/api/recruit/x-engage', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ athleteId: athlete.id, action: 'follow', targetXHandle: handle, coachId: coach.id }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        setXEngageResult({ success: true, message: data.alreadyDone ? `Already following @${handle}` : `Now following @${handle}` })
+        setXEngagements(prev => ({
+          ...prev,
+          [handle.toLowerCase()]: { ...(prev[handle.toLowerCase()] || { followed: false, likedTweets: [] }), followed: true }
+        }))
+      } else {
+        setXEngageResult({ success: false, message: data.error || 'Follow failed' })
+      }
+    } catch (err: any) {
+      setXEngageResult({ success: false, message: err.message })
+    } finally {
+      setXEngageLoading(null)
+    }
+  }
+
+  // Like a coach's latest tweet
+  const likeLatestTweet = async (coach: any) => {
+    if (!athlete) return
+    const handle = coach.x_handle.startsWith('@') ? coach.x_handle.slice(1) : coach.x_handle
+    setXEngageLoading(`like-${handle}`)
+    setXEngageResult(null)
+    try {
+      // First fetch the coach's recent tweets to find one to like
+      const { data: tokenRow } = await supabase
+        .from('x_oauth_tokens')
+        .select('access_token, x_user_id')
+        .eq('athlete_id', athlete.id)
+        .single()
+
+      if (!tokenRow) {
+        setXEngageResult({ success: false, message: 'X account not connected' })
+        return
+      }
+
+      // Resolve user ID and get tweets via our API
+      // We'll pass a dummy tweetId and let the server handle it,
+      // or better: fetch tweets client-side isn't possible without CORS.
+      // Instead, call the engage endpoint which needs a tweetId.
+      // We need to get the tweetId first - let's use a dedicated approach:
+      // Call the auto endpoint for just this coach, or resolve via the API.
+
+      // For simplicity, we'll call a helper that fetches + likes in one go
+      const res = await fetch('/api/recruit/x-engage/latest-tweet', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ athleteId: athlete.id, targetXHandle: handle, coachId: coach.id }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        setXEngageResult({ success: true, message: data.alreadyDone ? 'Already liked latest tweet' : `Liked @${handle}'s tweet` })
+        setXEngagements(prev => {
+          const existing = prev[handle.toLowerCase()] || { followed: false, likedTweets: [] }
+          return {
+            ...prev,
+            [handle.toLowerCase()]: { ...existing, likedTweets: [...existing.likedTweets, data.tweetId] }
+          }
+        })
+      } else {
+        setXEngageResult({ success: false, message: data.error || 'Like failed' })
+      }
+    } catch (err: any) {
+      setXEngageResult({ success: false, message: err.message })
+    } finally {
+      setXEngageLoading(null)
+    }
+  }
+
   useEffect(() => {
     if (currentTab === 'campaign' && !dmCoachesLoaded && athlete) {
       loadDmCoaches()
     }
   }, [currentTab, dmCoachesLoaded, athlete])
+
+  // Load X engagements when DM hub loads
+  useEffect(() => {
+    if (currentTab === 'campaign' && !xEngagementsLoaded && athlete?.xConnected) {
+      loadXEngagements()
+    }
+  }, [currentTab, xEngagementsLoaded, athlete])
 
   // Load deliverability stats when campaign tab opens
   useEffect(() => {
@@ -1913,6 +2023,14 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
                   </div>
                 )}
 
+                {/* X Engagement result toast */}
+                {xEngageResult && (
+                  <div style={{ background: xEngageResult.success ? '#e6f9e6' : '#fff3e0', borderRadius: '8px', padding: '0.5rem 0.75rem', marginBottom: '0.5rem', fontSize: '0.8rem' }}>
+                    <span style={{ fontWeight: 'bold', color: xEngageResult.success ? '#2e7d32' : '#e65100' }}>{xEngageResult.message}</span>
+                    <button onClick={() => setXEngageResult(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#999', marginLeft: '0.5rem', fontSize: '0.75rem' }}>&times;</button>
+                  </div>
+                )}
+
                 {/* Compose DM overlay */}
                 {dmComposeCoach && (
                   <div style={{ background: '#f0f8ff', border: '1px solid #1da1f2', borderRadius: '10px', padding: '0.75rem 1rem', marginBottom: '0.75rem' }}>
@@ -1965,15 +2083,43 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
                           <span style={{ color: '#1da1f2', fontSize: '0.7rem', marginLeft: '0.4rem' }}>@{c.x_handle}</span>
                           <span style={{ color: '#999', fontSize: '0.7rem', marginLeft: '0.4rem' }}>{c.school}</span>
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexShrink: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', flexShrink: 0 }}>
+                          {/* Follow status / button */}
+                          {(() => {
+                            const handle = (c.x_handle || '').startsWith('@') ? c.x_handle.slice(1).toLowerCase() : (c.x_handle || '').toLowerCase()
+                            const engagement = xEngagements[handle]
+                            if (engagement?.followed) {
+                              return <span style={{ fontSize: '0.55rem', fontWeight: 'bold', color: '#7b1fa2', background: '#f3e5f5', padding: '0.1rem 0.35rem', borderRadius: '9999px' }}>Following &#10003;</span>
+                            }
+                            return (
+                              <button
+                                onClick={() => followOnX(c)}
+                                disabled={xEngageLoading === `follow-${handle}`}
+                                style={{ padding: '0.15rem 0.4rem', borderRadius: '9999px', background: xEngageLoading === `follow-${handle}` ? '#ccc' : '#7b1fa2', color: 'white', border: 'none', cursor: 'pointer', fontSize: '0.55rem', fontWeight: 'bold', fontFamily: 'inherit' }}
+                              >
+                                {xEngageLoading === `follow-${handle}` ? '...' : 'Follow'}
+                              </button>
+                            )
+                          })()}
+
+                          {/* Like Latest button */}
+                          <button
+                            onClick={() => likeLatestTweet(c)}
+                            disabled={xEngageLoading === `like-${((c.x_handle || '').startsWith('@') ? c.x_handle.slice(1) : c.x_handle || '').toLowerCase()}`}
+                            style={{ padding: '0.15rem 0.4rem', borderRadius: '9999px', background: 'transparent', color: '#e91e63', border: '1px solid #e91e63', cursor: 'pointer', fontSize: '0.55rem', fontWeight: 'bold', fontFamily: 'inherit' }}
+                          >
+                            {xEngageLoading === `like-${((c.x_handle || '').startsWith('@') ? c.x_handle.slice(1) : c.x_handle || '').toLowerCase()}` ? '...' : '\u2665 Like'}
+                          </button>
+
+                          {/* DM button */}
                           {c.dmStatus === 'sent' ? (
-                            <span style={{ fontSize: '0.6rem', fontWeight: 'bold', color: '#2e7d32', background: '#e8f5e9', padding: '0.1rem 0.4rem', borderRadius: '9999px' }}>DM&apos;d</span>
+                            <span style={{ fontSize: '0.55rem', fontWeight: 'bold', color: '#2e7d32', background: '#e8f5e9', padding: '0.1rem 0.35rem', borderRadius: '9999px' }}>DM&apos;d</span>
                           ) : c.dmStatus === 'queued' ? (
-                            <span style={{ fontSize: '0.6rem', fontWeight: 'bold', color: '#e65100', background: '#fff3e0', padding: '0.1rem 0.4rem', borderRadius: '9999px' }}>Queued</span>
+                            <span style={{ fontSize: '0.55rem', fontWeight: 'bold', color: '#e65100', background: '#fff3e0', padding: '0.1rem 0.35rem', borderRadius: '9999px' }}>Queued</span>
                           ) : (
                             <button
                               onClick={() => { setDmComposeCoach(c); setDmMessage('') }}
-                              style={{ padding: '0.2rem 0.5rem', borderRadius: '9999px', background: '#1da1f2', color: 'white', border: 'none', cursor: 'pointer', fontSize: '0.6rem', fontWeight: 'bold', fontFamily: 'inherit' }}
+                              style={{ padding: '0.15rem 0.4rem', borderRadius: '9999px', background: '#1da1f2', color: 'white', border: 'none', cursor: 'pointer', fontSize: '0.55rem', fontWeight: 'bold', fontFamily: 'inherit' }}
                             >
                               DM
                             </button>
