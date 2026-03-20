@@ -1,0 +1,12 @@
+{
+  "crons": [
+    {
+      "path": "/api/recruit/followup-cron",
+      "schedule": "0 8 * * *"
+    },
+    {
+      "path": "/api/recruit/x-engage/auto",
+      "schedule": "0 9 * * *"
+    }
+  ]
+}

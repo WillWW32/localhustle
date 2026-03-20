@@ -18,8 +18,14 @@ interface CoachRow {
 
 // GET /api/recruit/x-engage/auto
 // Cron-style endpoint: auto-follows coaches and likes their recent tweets
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    // Verify cron secret for Vercel cron jobs
+    const authHeader = request.headers.get('authorization')
+    if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     // Find all athletes with connected X accounts
     const { data: tokens, error: tokenError } = await supabaseAdmin
       .from('x_oauth_tokens')

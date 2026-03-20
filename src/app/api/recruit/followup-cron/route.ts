@@ -33,6 +33,12 @@ function getFollowUpBody(
 // Cron endpoint: finds due follow-ups and sends them automatically
 export async function GET(request: NextRequest) {
   try {
+    // Verify cron secret for Vercel cron jobs
+    const authHeader = request.headers.get('authorization')
+    if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     const now = new Date()
 
     // Find all outreach that is due for a follow-up
