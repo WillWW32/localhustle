@@ -71,11 +71,20 @@ export async function sendRecruitmentEmail(params: SendEmailParams) {
   }
 
   try {
-    // Send via Resend — from athlete's localhustle.org address, reply-to same
+    // Send via Resend — from athlete's localhustle.org address
     const senderEmail = fromEmail.endsWith('@localhustle.org') ? fromEmail : 'notifications@localhustle.org'
+
+    // Get parent/account holder email for reply-to forwarding
+    const { data: athleteRecord } = await supabaseAdmin
+      .from('athletes')
+      .select('parent_email')
+      .eq('id', athleteId)
+      .single()
+    const replyTo = athleteRecord?.parent_email || fromEmail
+
     const result = await resend.emails.send({
       from: `${fromName} <${senderEmail}>`,
-      reply_to: fromEmail,
+      reply_to: replyTo,
       to: toEmail,
       subject,
       text: body,

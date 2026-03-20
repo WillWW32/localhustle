@@ -97,7 +97,7 @@ export async function GET(request: NextRequest) {
 
         const sendResult = await resend.emails.send({
           from: `${fromName} <${senderEmail}>`,
-          reply_to: athlete.email,
+          reply_to: athlete.parent_email || athlete.email,
           to: coach.email,
           subject: followUpSubject,
           text: followUpBody,

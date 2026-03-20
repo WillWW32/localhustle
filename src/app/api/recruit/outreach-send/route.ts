@@ -57,9 +57,11 @@ export async function POST(request: NextRequest) {
       ? athlete.email
       : `${athlete.first_name.toLowerCase()}.${athlete.last_name.toLowerCase()}@localhustle.org`
 
+    const replyTo = athlete.parent_email || athlete.email
+
     const result = await resend.emails.send({
       from: `${fromName} <${senderEmail}>`,
-      reply_to: athlete.email,
+      reply_to: replyTo,
       to: coach.email,
       subject: outreach.subject,
       text: outreach.body,
