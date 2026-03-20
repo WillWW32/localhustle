@@ -101,6 +101,11 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
   const [creatingCard, setCreatingCard] = useState(false)
   const [editingCard, setEditingCard] = useState<any>(null)
 
+  // Highlight URL edit state
+  const [editingHighlight, setEditingHighlight] = useState(false)
+  const [highlightDraft, setHighlightDraft] = useState('')
+  const [savingHighlight, setSavingHighlight] = useState(false)
+
   // Template state
   const [templateSubject, setTemplateSubject] = useState('')
   const [templateBody, setTemplateBody] = useState('')
@@ -728,36 +733,52 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
                 onChange={async (e) => {
                   const file = e.target.files?.[0]
                   if (!file) return
-                  // Compress image client-side to stay under Vercel's 4.5MB limit
-                  const compress = (f: File): Promise<Blob> => {
-                    return new Promise((resolve) => {
-                      const img = new Image()
-                      img.onload = () => {
-                        const canvas = document.createElement('canvas')
-                        const maxSize = 800
-                        let w = img.width, h = img.height
-                        if (w > h) { if (w > maxSize) { h = h * maxSize / w; w = maxSize } }
-                        else { if (h > maxSize) { w = w * maxSize / h; h = maxSize } }
-                        canvas.width = w; canvas.height = h
-                        canvas.getContext('2d')?.drawImage(img, 0, 0, w, h)
-                        canvas.toBlob((blob) => resolve(blob || f), 'image/jpeg', 0.85)
-                      }
-                      img.src = URL.createObjectURL(f)
-                    })
+                  try {
+                    // Compress image client-side to stay under Vercel's 4.5MB limit
+                    const compress = (f: File): Promise<Blob> => {
+                      return new Promise((resolve, reject) => {
+                        const img = new Image()
+                        const objectUrl = URL.createObjectURL(f)
+                        img.onload = () => {
+                          URL.revokeObjectURL(objectUrl)
+                          const canvas = document.createElement('canvas')
+                          const maxSize = 800
+                          let w = img.width, h = img.height
+                          if (w > h) { if (w > maxSize) { h = h * maxSize / w; w = maxSize } }
+                          else { if (h > maxSize) { w = w * maxSize / h; h = maxSize } }
+                          canvas.width = w; canvas.height = h
+                          canvas.getContext('2d')?.drawImage(img, 0, 0, w, h)
+                          canvas.toBlob((blob) => {
+                            if (blob) resolve(blob)
+                            else reject(new Error('Failed to compress image'))
+                          }, 'image/jpeg', 0.85)
+                        }
+                        img.onerror = () => {
+                          URL.revokeObjectURL(objectUrl)
+                          reject(new Error('Failed to load image'))
+                        }
+                        img.src = objectUrl
+                      })
+                    }
+                    const compressed = await compress(file)
+                    const formData = new FormData()
+                    formData.append('file', compressed, 'profile.jpg')
+                    formData.append('athleteId', id)
+                    const res = await fetch('/api/recruit/upload-image', { method: 'POST', body: formData })
+                    if (res.ok) {
+                      const { url } = await res.json()
+                      setAthlete(prev => prev ? { ...prev, profileImageUrl: url } : prev)
+                      alert('Profile photo saved!')
+                    } else {
+                      const err = await res.json().catch(() => ({}))
+                      alert('Failed to upload: ' + (err.error || 'Unknown error'))
+                    }
+                  } catch (uploadError: any) {
+                    console.error('Image upload error:', uploadError)
+                    alert('Failed to upload image: ' + (uploadError.message || 'Unknown error'))
                   }
-                  const compressed = await compress(file)
-                  const formData = new FormData()
-                  formData.append('file', compressed, 'profile.jpg')
-                  formData.append('athleteId', id)
-                  const res = await fetch('/api/recruit/upload-image', { method: 'POST', body: formData })
-                  if (res.ok) {
-                    const { url } = await res.json()
-                    setAthlete(prev => prev ? { ...prev, profileImageUrl: url } : prev)
-                    alert('Profile photo saved!')
-                  } else {
-                    const err = await res.json().catch(() => ({}))
-                    alert('Failed to upload: ' + (err.error || 'Unknown error'))
-                  }
+                  // Reset input so re-selecting the same file triggers onChange
+                  e.target.value = ''
                 }}
               />
             </label>
@@ -795,14 +816,18 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
               {[
                 { step: 1, text: 'Connect X account for DM outreach', done: athlete.xConnected },
                 { step: 2, text: 'Review your 172 target coaches', done: sendCount.total > 0 },
-                { step: 3, text: 'Set up email & DM templates', done: false },
+                { step: 3, text: 'Set up email & DM templates', done: !!templateBody, action: () => { document.getElementById('outreach-letter-section')?.scrollIntoView({ behavior: 'smooth' }); setEditingTemplate(true); } },
                 { step: 4, text: 'Launch automated outreach campaign', done: campaignStatus === 'active' },
               ].map((item) => (
                 <div key={item.step} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.4rem' }}>
                   <span style={{ width: '22px', height: '22px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', fontWeight: 'bold', flexShrink: 0, background: item.done ? '#4caf50' : '#e0e0e0', color: item.done ? 'white' : '#666' }}>
                     {item.done ? '\u2713' : item.step}
                   </span>
-                  <span style={{ fontSize: '0.875rem', color: item.done ? '#333' : '#666' }}>{item.text}</span>
+                  {item.action ? (
+                    <button onClick={item.action} style={{ fontSize: '0.875rem', color: item.done ? '#333' : '#1976d2', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit', textDecoration: item.done ? 'none' : 'underline', textAlign: 'left' }}>{item.text}</button>
+                  ) : (
+                    <span style={{ fontSize: '0.875rem', color: item.done ? '#333' : '#666' }}>{item.text}</span>
+                  )}
                 </div>
               ))}
             </div>
@@ -842,17 +867,82 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
           </div>
 
           <div className="dash-card">
-            <h3 style={{ fontSize: '1.125rem', marginBottom: '1rem' }}>Highlight Video</h3>
-            {athlete.highlightUrl ? (
-              <div style={{ background: '#f5f5f5', padding: '2rem', textAlign: 'center', borderRadius: '12px' }}>
-                <p style={{ color: '#666', marginBottom: '0.5rem' }}>Video from HUDL</p>
-                <a href={athlete.highlightUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'green', fontWeight: 'bold' }}>
-                  Watch on HUDL &rarr;
-                </a>
-              </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <h3 style={{ fontSize: '1.125rem', marginBottom: 0 }}>Highlight Video</h3>
+              {!editingHighlight ? (
+                <button
+                  onClick={() => { setHighlightDraft(athlete.highlightUrl || ''); setEditingHighlight(true) }}
+                  className="dash-btn-outline"
+                  style={{ padding: '0.4rem 0.9rem', fontSize: '0.8rem' }}
+                >
+                  {athlete.highlightUrl ? 'Edit URL' : 'Add URL'}
+                </button>
+              ) : (
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <button onClick={() => setEditingHighlight(false)} className="dash-btn-outline" style={{ padding: '0.4rem 0.9rem', fontSize: '0.8rem' }}>
+                    Cancel
+                  </button>
+                  <button
+                    disabled={savingHighlight}
+                    onClick={async () => {
+                      setSavingHighlight(true)
+                      const res = await fetch('/api/recruit/update-profile', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ athleteId: id, field: 'highlight_url', value: highlightDraft.trim() }),
+                      })
+                      if (res.ok) {
+                        setAthlete(prev => prev ? { ...prev, highlightUrl: highlightDraft.trim() } : prev)
+                        setEditingHighlight(false)
+                      } else {
+                        alert('Failed to save highlight URL')
+                      }
+                      setSavingHighlight(false)
+                    }}
+                    className="dash-btn-outline"
+                    style={{ padding: '0.4rem 0.9rem', fontSize: '0.8rem', background: '#1976d2', color: 'white', border: 'none' }}
+                  >
+                    {savingHighlight ? 'Saving...' : 'Save'}
+                  </button>
+                </div>
+              )}
+            </div>
+            {editingHighlight ? (
+              <input
+                type="url"
+                value={highlightDraft}
+                onChange={(e) => setHighlightDraft(e.target.value)}
+                placeholder="Paste YouTube, Hudl, or other video URL"
+                style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #ccc', fontSize: '0.9rem', fontFamily: 'inherit', boxSizing: 'border-box' }}
+              />
+            ) : athlete.highlightUrl ? (
+              (() => {
+                const url = athlete.highlightUrl
+                const ytMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]+)/)
+                if (ytMatch) {
+                  return (
+                    <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, borderRadius: '12px', overflow: 'hidden' }}>
+                      <iframe
+                        src={`https://www.youtube.com/embed/${ytMatch[1]}`}
+                        style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }}
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                      />
+                    </div>
+                  )
+                }
+                return (
+                  <div style={{ background: '#f5f5f5', padding: '2rem', textAlign: 'center', borderRadius: '12px' }}>
+                    <p style={{ color: '#666', marginBottom: '0.5rem' }}>Highlight Video</p>
+                    <a href={url} target="_blank" rel="noopener noreferrer" style={{ color: 'green', fontWeight: 'bold' }}>
+                      Watch Highlights &rarr;
+                    </a>
+                  </div>
+                )
+              })()
             ) : (
               <div style={{ padding: '2rem', border: '2px dashed #ddd', borderRadius: '12px', textAlign: 'center', color: '#999' }}>
-                Upload Highlight Video
+                No highlight video added yet
               </div>
             )}
           </div>
@@ -990,7 +1080,7 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
           </div>
 
           {/* Outreach Letter */}
-          <div className="dash-card" style={{ borderColor: '#1976d2', borderWidth: '1.5px' }}>
+          <div id="outreach-letter-section" className="dash-card" style={{ borderColor: '#1976d2', borderWidth: '1.5px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
               <h3 style={{ fontSize: '1.125rem', marginBottom: 0, color: '#1976d2' }}>Outreach Letter</h3>
               {!editingTemplate ? (
