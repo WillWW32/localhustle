@@ -454,24 +454,25 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
   // Build a default template pre-populated with athlete data
   const buildDefaultTemplate = (a: AthleteProfile) => {
     const subject = `${a.firstName} ${a.lastName} - ${a.gradYear} ${a.position} interested in {{school}}`
+    const parentLine = a.parentName ? `\n\nMy father, ${a.parentName}, can also be reached at ${a.parentEmail || '{{parent_email}}'}` : ''
     const body = `Coach {{coach_last}},
 
-I hope this message finds you well. My name is ${a.firstName} ${a.lastName}. I'm a ${a.height}, ${a.weight} lb ${a.position} from ${a.highSchool} in ${a.city}, ${a.state}, Class of ${a.gradYear}.
+I know recruiting season keeps you busy, so I'll keep this brief. My name is ${a.firstName} ${a.lastName}. I'm a ${a.height}, ${a.weight} lb ${a.position} from ${a.highSchool} in ${a.city}, ${a.state}, Class of ${a.gradYear}, and a coach's son.
 
-I've been researching {{school}}'s program and I'm reaching out because I believe my game is a fit for what you're building. The way your teams play, the toughness, the competitiveness, that's how I was raised and how I play every night. I want to be part of a program where I can compete, develop, and contribute from day one.
+I've been researching {{school}}'s program and I'm reaching out because I believe my game is a fit for what you're building. The way your teams play, the toughness, the competitiveness, that's how I was raised and how I play every night.
 
-This past season I was our team's leading scorer, starting all 25 games and averaging ${a.ppg || '{{ppg}}'} ppg, ${a.rpg || '{{rpg}}'} rpg, and ${a.mpg || '{{mpg}}'} mpg while shooting ${a.twoPtPct || '{{two_pt_pct}}'} from the field and ${a.threePtPct || '{{three_pt_pct}}'} from three. We finished with a 3rd place finish at the Montana Class AA State Tournament. Beyond my own game, my coaches have credited me for helping develop our younger players and being someone the team looks to on and off the court. I'm a 3-level scorer who takes pride in defending, rebounding, and doing whatever it takes to win.
+This past season I was our team's leading scorer, starting all 25 games and averaging ${a.ppg || '{{ppg}}'} ppg, ${a.rpg || '{{rpg}}'} rpg, and ${a.mpg || '{{mpg}}'} mpg while shooting ${a.twoPtPct || '{{two_pt_pct}}'} from the field and ${a.threePtPct || '{{three_pt_pct}}'} from three. We finished 3rd at the Montana Class AA State Tournament. My coaches have also credited me for helping develop our younger players and being someone the team looks to on and off the court.
 
 Here is my film: ${a.highlightUrl || '{{highlight_url}}'}
 
-I would love the chance to talk with you about {{school}} and what I could bring to your program. I'm open to visiting campus anytime.
+I'd love to set up a call, visit campus, or come get a run in with the squad this spring.
 
-Thank you for your time, Coach {{coach_last}}. I look forward to hearing from you.
+Thank you for your time, Coach {{coach_last}}.
 
 Respectfully,
 ${a.firstName} ${a.lastName}
 ${a.email || ''}
-localhustle.org/recruit/${a.slug || ''}`
+localhustle.org/recruit/${a.slug || ''}${parentLine}`
     return { subject, body }
   }
 
