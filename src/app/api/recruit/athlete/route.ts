@@ -99,6 +99,8 @@ export async function GET(request: NextRequest) {
       threePtPct: stats.three_pt_pct || stats.threePct || '',
       twoPtPct: stats.two_pt_pct || stats.fgPct || '',
       mpg: stats.mpg || '',
+      parentName: athleteRow.parent_name || '',
+      parentEmail: athleteRow.parent_email || '',
       photos: athleteRow.photos || [],
     },
     campaign: campaign ? {

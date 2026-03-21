@@ -29,6 +29,11 @@ interface AthleteProfile {
   profileImageUrl: string
   ppg: string
   rpg: string
+  mpg: string
+  threePtPct: string
+  twoPtPct: string
+  parentName: string
+  parentEmail: string
   photos: string[]
 }
 
@@ -448,20 +453,25 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
 
   // Build a default template pre-populated with athlete data
   const buildDefaultTemplate = (a: AthleteProfile) => {
-    const subject = `Interest in {{school}} — ${a.firstName} ${a.lastName}, Class of ${a.gradYear}`
-    const statParts: string[] = []
-    if (a.ppg) statParts.push(`${a.ppg} ppg`)
-    if (a.rpg) statParts.push(`${a.rpg} rpg`)
-    if (a.mpg) statParts.push(`${a.mpg} mpg`)
-    if (a.threePtPct) statParts.push(`${a.threePtPct} from three`)
-    if (a.twoPtPct) statParts.push(`${a.twoPtPct} from the field`)
-    const statsLine = statParts.length > 0
-      ? `This season I averaged ${statParts.join(', ')}.\n\n`
-      : ''
-    const highlightLine = a.highlightUrl
-      ? `My highlight film is available here: ${a.highlightUrl}\n\n`
-      : ''
-    const body = `Coach {{coach_last}},\n\nMy name is ${a.firstName} ${a.lastName}, a ${a.height}, ${a.weight} lb ${a.position} from ${a.highSchool} in ${a.city}, ${a.state} (Class of ${a.gradYear}).\n\nI've been following {{school}}'s program closely and I want to play for you, Coach. The way your team competes and the culture you've built is exactly where I see myself thriving.\n\n${statsLine}${highlightLine}I would love the opportunity to visit campus, learn more about your program, and show you what I can bring to {{school}}.\n\nThank you for your time, Coach {{coach_last}}.\n\nRespectfully,\n${a.firstName} ${a.lastName}\n${a.email || ''}\nlocalhustle.org/recruit/${a.slug || ''}`
+    const subject = `${a.firstName} ${a.lastName} — ${a.gradYear} ${a.position} interested in {{school}}`
+    const body = `Coach {{coach_last}},
+
+I hope this message finds you well. My name is ${a.firstName} ${a.lastName} — I'm a ${a.height}, ${a.weight} lb ${a.position} from ${a.highSchool} in ${a.city}, ${a.state}, Class of ${a.gradYear}.
+
+I've been researching {{school}}'s program and I'm reaching out because I believe my game is a fit for what you're building. The way your teams play — the toughness, the competitiveness — that's how I was raised and how I play every night. I want to be part of a program where I can compete, develop, and contribute from day one.
+
+This past season I was our team's leading scorer, starting all 25 games and averaging ${a.ppg || '{{ppg}}'} ppg, ${a.rpg || '{{rpg}}'} rpg, and ${a.mpg || '{{mpg}}'} mpg while shooting ${a.twoPtPct || '{{two_pt_pct}}'} from the field and ${a.threePtPct || '{{three_pt_pct}}'} from three. We finished with a 3rd place finish at the Montana Class AA State Tournament. Beyond my own game, my coaches have credited me for helping develop our younger players and being someone the team looks to on and off the court. I'm a 3-level scorer who takes pride in defending, rebounding, and doing whatever it takes to win.
+
+Here is my film: ${a.highlightUrl || '{{highlight_url}}'}
+
+I would love the chance to talk with you about {{school}} and what I could bring to your program. I'm open to visiting campus anytime.
+
+Thank you for your time, Coach {{coach_last}}. I look forward to hearing from you.
+
+Respectfully,
+${a.firstName} ${a.lastName}
+${a.email || ''}
+localhustle.org/recruit/${a.slug || ''}`
     return { subject, body }
   }
 
@@ -1888,7 +1898,7 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
                 <div style={{ marginTop: '0.75rem', background: '#f0f7ff', borderRadius: '8px', padding: '0.75rem' }}>
                   <p style={{ fontSize: '0.7rem', fontWeight: 'bold', color: '#1976d2', marginBottom: '0.25rem' }}>Available Variables</p>
                   <p style={{ fontSize: '0.7rem', color: '#666', marginBottom: 0, lineHeight: 1.8 }}>
-                    {'{{coach_first}} {{coach_last}} {{school}} {{athlete_first}} {{athlete_last}} {{position}} {{height}} {{weight}} {{high_school}} {{city}} {{state}} {{grad_year}} {{ppg}} {{rpg}} {{highlight_url}} {{athlete_email}}'}
+                    {'{{coach_first}} {{coach_last}} {{school}} {{athlete_first}} {{athlete_last}} {{position}} {{height}} {{weight}} {{high_school}} {{city}} {{state}} {{grad_year}} {{ppg}} {{rpg}} {{mpg}} {{two_pt_pct}} {{three_pt_pct}} {{highlight_url}} {{athlete_email}} {{parent_name}} {{parent_email}}'}
                   </p>
                 </div>
               </>
@@ -1948,8 +1958,13 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
                         .replace(/\{\{grad_year\}\}/g, athlete?.gradYear || '')
                         .replace(/\{\{ppg\}\}/g, athlete?.ppg || '')
                         .replace(/\{\{rpg\}\}/g, athlete?.rpg || '')
+                        .replace(/\{\{mpg\}\}/g, athlete?.mpg || '')
+                        .replace(/\{\{two_pt_pct\}\}/g, athlete?.twoPtPct || '')
+                        .replace(/\{\{three_pt_pct\}\}/g, athlete?.threePtPct || '')
                         .replace(/\{\{highlight_url\}\}/g, athlete?.highlightUrl || '')
-                        .replace(/\{\{athlete_email\}\}/g, athlete?.email || '')}
+                        .replace(/\{\{athlete_email\}\}/g, athlete?.email || '')
+                        .replace(/\{\{parent_name\}\}/g, athlete?.parentName || '')
+                        .replace(/\{\{parent_email\}\}/g, athlete?.parentEmail || '')}
                     </pre>
                   </div>
                   <div style={{ marginTop: '0.75rem', background: '#f0f8ff', border: '1px solid #b3d9ff', borderRadius: '10px', padding: '0.75rem 1rem' }}>
