@@ -453,12 +453,12 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
 
   // Build a default template pre-populated with athlete data
   const buildDefaultTemplate = (a: AthleteProfile) => {
-    const subject = `${a.firstName} ${a.lastName} — ${a.gradYear} ${a.position} interested in {{school}}`
+    const subject = `${a.firstName} ${a.lastName} - ${a.gradYear} ${a.position} interested in {{school}}`
     const body = `Coach {{coach_last}},
 
-I hope this message finds you well. My name is ${a.firstName} ${a.lastName} — I'm a ${a.height}, ${a.weight} lb ${a.position} from ${a.highSchool} in ${a.city}, ${a.state}, Class of ${a.gradYear}.
+I hope this message finds you well. My name is ${a.firstName} ${a.lastName}. I'm a ${a.height}, ${a.weight} lb ${a.position} from ${a.highSchool} in ${a.city}, ${a.state}, Class of ${a.gradYear}.
 
-I've been researching {{school}}'s program and I'm reaching out because I believe my game is a fit for what you're building. The way your teams play — the toughness, the competitiveness — that's how I was raised and how I play every night. I want to be part of a program where I can compete, develop, and contribute from day one.
+I've been researching {{school}}'s program and I'm reaching out because I believe my game is a fit for what you're building. The way your teams play, the toughness, the competitiveness, that's how I was raised and how I play every night. I want to be part of a program where I can compete, develop, and contribute from day one.
 
 This past season I was our team's leading scorer, starting all 25 games and averaging ${a.ppg || '{{ppg}}'} ppg, ${a.rpg || '{{rpg}}'} rpg, and ${a.mpg || '{{mpg}}'} mpg while shooting ${a.twoPtPct || '{{two_pt_pct}}'} from the field and ${a.threePtPct || '{{three_pt_pct}}'} from three. We finished with a 3rd place finish at the Montana Class AA State Tournament. Beyond my own game, my coaches have credited me for helping develop our younger players and being someone the team looks to on and off the court. I'm a 3-level scorer who takes pride in defending, rebounding, and doing whatever it takes to win.
 
