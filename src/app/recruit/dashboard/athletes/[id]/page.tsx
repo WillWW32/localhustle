@@ -265,6 +265,15 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
   const [dmResult, setDmResult] = useState<{ success: boolean; message: string } | null>(null)
   const [dmComposeCoach, setDmComposeCoach] = useState<any | null>(null)
 
+  // Bulk DM state
+  const [bulkDmTemplate, setBulkDmTemplate] = useState('')
+  const [bulkDmShowPreview, setBulkDmShowPreview] = useState(false)
+  const [bulkDmSending, setBulkDmSending] = useState(false)
+  const [bulkDmPaused, setBulkDmPaused] = useState(false)
+  const [bulkDmProgress, setBulkDmProgress] = useState({ sent: 0, total: 0, failed: 0 })
+  const [bulkDmStatus, setBulkDmStatus] = useState<{ sentToday: number; dailyLimit: number; remainingToday: number; totalQueued: number } | null>(null)
+  const [bulkDmLog, setBulkDmLog] = useState<Array<{ coach: string; success: boolean; error?: string }>>([])
+
   // X Engagement state (follow/like)
   const [xEngagements, setXEngagements] = useState<Record<string, { followed: boolean; likedTweets: string[] }>>({})
   const [xEngagementsLoaded, setXEngagementsLoaded] = useState(false)
@@ -925,6 +934,179 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
     }
   }
 
+  // Fill DM template with coach/athlete data
+  const fillDmTemplate = (template: string, coach: any) => {
+    return template
+      .replace(/\{\{coach_first\}\}/g, coach.firstName || coach.first_name || '')
+      .replace(/\{\{coach_last\}\}/g, coach.lastName || coach.last_name || coach.name?.split(' ').pop() || '')
+      .replace(/\{\{coach_name\}\}/g, coach.name || `${coach.first_name} ${coach.last_name}`)
+      .replace(/\{\{school\}\}/g, coach.school || '')
+      .replace(/\{\{division\}\}/g, coach.division || '')
+      .replace(/\{\{state\}\}/g, coach.state || '')
+      .replace(/\{\{athlete_first\}\}/g, athlete?.firstName || '')
+      .replace(/\{\{athlete_last\}\}/g, athlete?.lastName || '')
+      .replace(/\{\{position\}\}/g, athlete?.position || '')
+      .replace(/\{\{height\}\}/g, athlete?.height || '')
+      .replace(/\{\{weight\}\}/g, athlete?.weight || '')
+      .replace(/\{\{high_school\}\}/g, athlete?.highSchool || '')
+      .replace(/\{\{grad_year\}\}/g, athlete?.gradYear || '')
+      .replace(/\{\{highlight_url\}\}/g, athlete?.highlightUrl || '')
+      .replace(/\{\{gpa\}\}/g, (athlete as any)?.gpa || '')
+  }
+
+  // Load bulk DM status
+  const loadBulkDmStatus = async () => {
+    if (!athlete) return
+    try {
+      const res = await fetch(`/api/recruit/dm/bulk?athleteId=${athlete.id}`)
+      const data = await res.json()
+      if (data.success) {
+        setBulkDmStatus({
+          sentToday: data.sentToday,
+          dailyLimit: data.dailyLimit,
+          remainingToday: data.remainingToday,
+          totalQueued: data.totalQueued,
+        })
+        if (data.totalQueued > 0) {
+          setBulkDmProgress(prev => ({ ...prev, total: data.totalQueued + data.totalSent }))
+        }
+      }
+    } catch {
+      // silently fail
+    }
+  }
+
+  // Start bulk DM campaign
+  const startBulkDm = async () => {
+    if (!athlete || !bulkDmTemplate.trim()) return
+
+    const eligibleCoaches = dmCoaches.filter((c: any) => c.dmStatus === 'not_sent')
+    if (eligibleCoaches.length === 0) {
+      setDmResult({ success: false, message: 'No unsent coaches to DM' })
+      return
+    }
+
+    setBulkDmSending(true)
+    setBulkDmPaused(false)
+    setBulkDmLog([])
+
+    try {
+      // Queue all DMs via bulk API
+      const res = await fetch('/api/recruit/dm/bulk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          athleteId: athlete.id,
+          template: bulkDmTemplate,
+          coachIds: eligibleCoaches.map((c: any) => c.id),
+        }),
+      })
+      const data = await res.json()
+      if (!data.success && data.queued === undefined) {
+        setDmResult({ success: false, message: data.error || 'Failed to queue DMs' })
+        setBulkDmSending(false)
+        return
+      }
+
+      setBulkDmProgress({ sent: 0, total: data.queued || 0, failed: 0 })
+      setDmResult({ success: true, message: `${data.queued} DMs queued. Sending...` })
+
+      // Now send them one by one with delays
+      await processBulkDmQueue(data.queued || 0)
+    } catch (err: any) {
+      setDmResult({ success: false, message: err.message || 'Bulk DM failed' })
+      setBulkDmSending(false)
+    }
+  }
+
+  // Process queued DMs one at a time
+  const processBulkDmQueue = async (totalToSend: number) => {
+    let sentCount = 0
+    let failedCount = 0
+
+    for (let i = 0; i < totalToSend; i++) {
+      // Check if paused or stopped
+      // We use a ref-like approach through the state setter to check current value
+      const shouldContinue = await new Promise<boolean>((resolve) => {
+        setBulkDmPaused(current => {
+          resolve(!current)
+          return current
+        })
+      })
+
+      if (!shouldContinue) {
+        // Paused - break out and let resume pick up
+        setDmResult({ success: true, message: `Paused after ${sentCount} sent, ${failedCount} failed. ${totalToSend - sentCount - failedCount} remaining.` })
+        return
+      }
+
+      try {
+        const res = await fetch('/api/recruit/dm/bulk', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ athleteId: athlete?.id, action: 'send_next' }),
+        })
+        const data = await res.json()
+
+        if (data.done) {
+          // No more queued DMs
+          break
+        }
+
+        if (data.success) {
+          sentCount++
+          setBulkDmProgress(prev => ({ ...prev, sent: prev.sent + 1 }))
+          setBulkDmLog(prev => [...prev, { coach: data.sent?.coachXHandle || 'unknown', success: true }])
+        } else if (res.status === 429) {
+          // Daily limit reached
+          setDmResult({ success: false, message: `Daily limit reached (${data.sentToday}/${data.dailyLimit}). Remaining DMs will be sent tomorrow.` })
+          setBulkDmSending(false)
+          await loadDmCoaches()
+          return
+        } else {
+          failedCount++
+          setBulkDmProgress(prev => ({ ...prev, failed: prev.failed + 1 }))
+          setBulkDmLog(prev => [...prev, { coach: data.failedCoach || 'unknown', success: false, error: data.error }])
+        }
+
+        // Rate limit: wait 3 seconds between DMs to be safe
+        if (i < totalToSend - 1) {
+          await new Promise(resolve => setTimeout(resolve, 3000))
+        }
+      } catch (err: any) {
+        failedCount++
+        setBulkDmProgress(prev => ({ ...prev, failed: prev.failed + 1 }))
+        setBulkDmLog(prev => [...prev, { coach: 'unknown', success: false, error: err.message }])
+      }
+    }
+
+    setBulkDmSending(false)
+    setDmResult({ success: true, message: `Bulk DM complete: ${sentCount} sent, ${failedCount} failed.` })
+    await loadDmCoaches()
+    await loadBulkDmStatus()
+  }
+
+  // Cancel all queued DMs
+  const cancelBulkDm = async () => {
+    if (!athlete) return
+    try {
+      const res = await fetch('/api/recruit/dm/bulk', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ athleteId: athlete.id, action: 'cancel' }),
+      })
+      const data = await res.json()
+      setBulkDmSending(false)
+      setBulkDmPaused(false)
+      setBulkDmProgress({ sent: 0, total: 0, failed: 0 })
+      setDmResult({ success: true, message: data.message || 'Queued DMs cancelled' })
+      await loadDmCoaches()
+      await loadBulkDmStatus()
+    } catch (err: any) {
+      setDmResult({ success: false, message: err.message })
+    }
+  }
+
   // Load X engagement status (follows/likes)
   const loadXEngagements = async () => {
     if (!athlete) return
@@ -1019,6 +1201,20 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
       loadXEngagements()
     }
   }, [currentTab, xEngagementsLoaded, athlete])
+
+  // Load bulk DM status when DM hub loads
+  useEffect(() => {
+    if (currentTab === 'campaign' && dmCoachesLoaded && athlete?.xConnected) {
+      loadBulkDmStatus()
+    }
+  }, [currentTab, dmCoachesLoaded, athlete])
+
+  // Set default DM template when athlete data loads
+  useEffect(() => {
+    if (athlete && !bulkDmTemplate) {
+      setBulkDmTemplate(`Coach {{coach_last}}, my name is {{athlete_first}} {{athlete_last}}. I'm a {{height}}, {{weight}} lb {{position}} from {{high_school}} (Class of {{grad_year}}). I'm very interested in {{school}} and would love to connect. Here's my film: {{highlight_url}}`)
+    }
+  }, [athlete, bulkDmTemplate])
 
   // Load deliverability stats when campaign tab opens
   useEffect(() => {
@@ -2222,6 +2418,148 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
                       >
                         Auto-fill
                       </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Bulk DM Controls */}
+                {dmCoaches.length > 0 && !dmComposeCoach && (
+                  <div style={{ background: '#f8fbff', border: '1px solid #e0ecf8', borderRadius: '10px', padding: '0.75rem 1rem', marginBottom: '0.75rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                      <p style={{ fontWeight: 'bold', fontSize: '0.85rem', margin: 0, color: '#1a73e8' }}>Bulk DM Campaign</p>
+                      {bulkDmStatus && (
+                        <span style={{ fontSize: '0.65rem', color: '#666' }}>
+                          {bulkDmStatus.sentToday}/{bulkDmStatus.dailyLimit} sent today
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Template textarea */}
+                    <div style={{ marginBottom: '0.5rem' }}>
+                      <label style={{ fontSize: '0.7rem', color: '#666', display: 'block', marginBottom: '0.25rem' }}>
+                        DM Template — variables: {'{{coach_last}}'} {'{{school}}'} {'{{athlete_first}}'} {'{{athlete_last}}'} {'{{position}}'} {'{{height}}'} {'{{weight}}'} {'{{high_school}}'} {'{{grad_year}}'} {'{{highlight_url}}'}
+                      </label>
+                      <textarea
+                        value={bulkDmTemplate}
+                        onChange={(e) => setBulkDmTemplate(e.target.value)}
+                        rows={4}
+                        placeholder="Coach {{coach_last}}, my name is {{athlete_first}} {{athlete_last}}..."
+                        style={{ width: '100%', padding: '0.5rem', borderRadius: '8px', border: '1px solid #ddd', fontSize: '0.8rem', fontFamily: 'inherit', resize: 'vertical', boxSizing: 'border-box' }}
+                        disabled={bulkDmSending}
+                      />
+                    </div>
+
+                    {/* Preview */}
+                    {bulkDmShowPreview && (
+                      <div style={{ background: '#fff', border: '1px solid #e0e0e0', borderRadius: '8px', padding: '0.5rem 0.75rem', marginBottom: '0.5rem', maxHeight: '200px', overflowY: 'auto' }}>
+                        <p style={{ fontSize: '0.7rem', fontWeight: 'bold', color: '#333', margin: '0 0 0.4rem' }}>Preview (first 3 unsent coaches):</p>
+                        {dmCoaches
+                          .filter((c: any) => c.dmStatus === 'not_sent')
+                          .slice(0, 3)
+                          .map((c: any, idx: number) => (
+                            <div key={c.id} style={{ background: idx % 2 === 0 ? '#f9f9f9' : '#fff', borderRadius: '6px', padding: '0.4rem 0.5rem', marginBottom: '0.3rem', border: '1px solid #eee' }}>
+                              <p style={{ fontSize: '0.65rem', fontWeight: 'bold', color: '#1da1f2', margin: '0 0 0.2rem' }}>
+                                To: {c.x_handle?.startsWith('@') ? c.x_handle : `@${c.x_handle}`} ({c.name} — {c.school})
+                              </p>
+                              <p style={{ fontSize: '0.75rem', color: '#333', margin: 0, whiteSpace: 'pre-wrap', lineHeight: '1.3' }}>
+                                {fillDmTemplate(bulkDmTemplate, c)}
+                              </p>
+                            </div>
+                          ))}
+                        {dmCoaches.filter((c: any) => c.dmStatus === 'not_sent').length === 0 && (
+                          <p style={{ fontSize: '0.75rem', color: '#999', margin: 0 }}>No unsent coaches to preview.</p>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Progress bar */}
+                    {bulkDmSending && bulkDmProgress.total > 0 && (
+                      <div style={{ marginBottom: '0.5rem' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: '#666', marginBottom: '0.2rem' }}>
+                          <span>{bulkDmProgress.sent} sent{bulkDmProgress.failed > 0 ? `, ${bulkDmProgress.failed} failed` : ''}</span>
+                          <span>{bulkDmProgress.total - bulkDmProgress.sent - bulkDmProgress.failed} remaining</span>
+                        </div>
+                        <div style={{ background: '#e0e0e0', borderRadius: '9999px', height: '8px', overflow: 'hidden' }}>
+                          <div style={{
+                            background: bulkDmPaused ? '#ffa726' : '#1da1f2',
+                            height: '100%',
+                            borderRadius: '9999px',
+                            width: `${Math.round(((bulkDmProgress.sent + bulkDmProgress.failed) / bulkDmProgress.total) * 100)}%`,
+                            transition: 'width 0.3s ease',
+                          }} />
+                        </div>
+                        {bulkDmPaused && (
+                          <p style={{ fontSize: '0.65rem', color: '#ffa726', fontWeight: 'bold', margin: '0.2rem 0 0' }}>PAUSED</p>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Send log (last 5) */}
+                    {bulkDmLog.length > 0 && (
+                      <div style={{ marginBottom: '0.5rem', maxHeight: '80px', overflowY: 'auto', fontSize: '0.65rem' }}>
+                        {bulkDmLog.slice(-5).map((entry, idx) => (
+                          <div key={idx} style={{ color: entry.success ? '#2e7d32' : '#e65100', padding: '0.1rem 0' }}>
+                            {entry.success ? '\u2713' : '\u2717'} @{entry.coach}{entry.error ? ` — ${entry.error}` : ''}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Action buttons */}
+                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                      {!bulkDmSending ? (
+                        <>
+                          <button
+                            onClick={() => setBulkDmShowPreview(!bulkDmShowPreview)}
+                            disabled={!bulkDmTemplate.trim()}
+                            style={{ padding: '0.35rem 0.75rem', borderRadius: '9999px', background: 'transparent', color: '#1da1f2', border: '1px solid #1da1f2', cursor: 'pointer', fontSize: '0.7rem', fontWeight: 'bold', fontFamily: 'inherit' }}
+                          >
+                            {bulkDmShowPreview ? 'Hide Preview' : 'Preview'}
+                          </button>
+                          <button
+                            onClick={() => {
+                              const unsent = dmCoaches.filter((c: any) => c.dmStatus === 'not_sent').length
+                              if (unsent === 0) {
+                                setDmResult({ success: false, message: 'All coaches have already been DM\'d' })
+                                return
+                              }
+                              if (confirm(`Send DMs to ${unsent} coaches? (Max ${bulkDmStatus?.remainingToday || 20}/day will be sent today, rest queued)`)) {
+                                startBulkDm()
+                              }
+                            }}
+                            disabled={!bulkDmTemplate.trim() || dmCoaches.filter((c: any) => c.dmStatus === 'not_sent').length === 0}
+                            style={{ padding: '0.35rem 0.75rem', borderRadius: '9999px', background: (!bulkDmTemplate.trim() || dmCoaches.filter((c: any) => c.dmStatus === 'not_sent').length === 0) ? '#ccc' : '#1da1f2', color: 'white', border: 'none', cursor: 'pointer', fontSize: '0.7rem', fontWeight: 'bold', fontFamily: 'inherit' }}
+                          >
+                            Send to All ({dmCoaches.filter((c: any) => c.dmStatus === 'not_sent').length})
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <button
+                            onClick={() => {
+                              if (bulkDmPaused) {
+                                setBulkDmPaused(false)
+                                processBulkDmQueue(bulkDmProgress.total - bulkDmProgress.sent - bulkDmProgress.failed)
+                              } else {
+                                setBulkDmPaused(true)
+                              }
+                            }}
+                            style={{ padding: '0.35rem 0.75rem', borderRadius: '9999px', background: bulkDmPaused ? '#4caf50' : '#ffa726', color: 'white', border: 'none', cursor: 'pointer', fontSize: '0.7rem', fontWeight: 'bold', fontFamily: 'inherit' }}
+                          >
+                            {bulkDmPaused ? 'Resume' : 'Pause'}
+                          </button>
+                          <button
+                            onClick={() => {
+                              if (confirm('Cancel all remaining queued DMs?')) {
+                                cancelBulkDm()
+                              }
+                            }}
+                            style={{ padding: '0.35rem 0.75rem', borderRadius: '9999px', background: '#e53935', color: 'white', border: 'none', cursor: 'pointer', fontSize: '0.7rem', fontWeight: 'bold', fontFamily: 'inherit' }}
+                          >
+                            Stop
+                          </button>
+                        </>
+                      )}
                     </div>
                   </div>
                 )}
