@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabaseClient'
 import { resend } from '@/lib/resend'
+import { renderTemplate, buildContext } from '@/lib/recruit/template-engine'
 
 // POST /api/recruit/custom-send
 // Sends a fully custom one-off email to a specific coach
@@ -33,6 +34,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Coach not found' }, { status: 404 })
     }
 
+    // Personalize template variables with coach data
+    const context = buildContext(athlete, coach)
+    const personalizedSubject = renderTemplate(subject, context)
+    const personalizedBody = renderTemplate(emailBody, context)
+
     const fromName = `${athlete.first_name} ${athlete.last_name}`
     const senderEmail = athlete.email.endsWith('@localhustle.org') ? athlete.email : 'notifications@localhustle.org'
 
@@ -40,8 +46,8 @@ export async function POST(request: NextRequest) {
       from: `${fromName} <${senderEmail}>`,
       reply_to: athlete.email,
       to: coach.email,
-      subject,
-      text: emailBody,
+      subject: personalizedSubject,
+      text: personalizedBody,
     })
 
     // Log to messages table
@@ -60,8 +66,8 @@ export async function POST(request: NextRequest) {
         type: 'email',
         channel: 'resend',
         to_address: coach.email,
-        subject,
-        body: emailBody,
+        subject: personalizedSubject,
+        body: personalizedBody,
         status: 'sent',
         resend_id: result.data?.id,
         sent_at: new Date().toISOString(),

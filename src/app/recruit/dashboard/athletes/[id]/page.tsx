@@ -448,13 +448,19 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
   // Build a default template pre-populated with athlete data
   const buildDefaultTemplate = (a: AthleteProfile) => {
     const subject = `Interest in {{school}} — ${a.firstName} ${a.lastName}, Class of ${a.gradYear}`
-    const statsLine = a.ppg || a.rpg
-      ? `This season I averaged${a.ppg ? ` ${a.ppg} points` : ''}${a.ppg && a.rpg ? ',' : ''}${a.rpg ? ` ${a.rpg} rebounds` : ''} per game.\n\n`
+    const statParts: string[] = []
+    if (a.ppg) statParts.push(`${a.ppg} ppg`)
+    if (a.rpg) statParts.push(`${a.rpg} rpg`)
+    if (a.mpg) statParts.push(`${a.mpg} mpg`)
+    if (a.threePtPct) statParts.push(`${a.threePtPct} from three`)
+    if (a.twoPtPct) statParts.push(`${a.twoPtPct} from the field`)
+    const statsLine = statParts.length > 0
+      ? `This season I averaged ${statParts.join(', ')}.\n\n`
       : ''
     const highlightLine = a.highlightUrl
       ? `My highlight film is available here: ${a.highlightUrl}\n\n`
       : ''
-    const body = `Coach {{coach_last}},\n\nMy name is ${a.firstName} ${a.lastName}, a ${a.height}, ${a.weight} lb ${a.position} from ${a.highSchool} in ${a.city}, ${a.state} (Class of ${a.gradYear}).\n\nI've been following {{school}}'s program closely and I want to play for you, Coach. The way your team competes and the culture you've built is exactly where I see myself thriving. ${statsLine}${highlightLine}I would love the opportunity to visit campus, learn more about your program, and show you what I can bring to {{school}}.\n\nThank you for your time, Coach.\n\nRespectfully,\n${a.firstName} ${a.lastName}\n${a.email || ''}\nlocalhustle.org/recruit/${a.slug || ''}`
+    const body = `Coach {{coach_last}},\n\nMy name is ${a.firstName} ${a.lastName}, a ${a.height}, ${a.weight} lb ${a.position} from ${a.highSchool} in ${a.city}, ${a.state} (Class of ${a.gradYear}).\n\nI've been following {{school}}'s program closely and I want to play for you, Coach. The way your team competes and the culture you've built is exactly where I see myself thriving.\n\n${statsLine}${highlightLine}I would love the opportunity to visit campus, learn more about your program, and show you what I can bring to {{school}}.\n\nThank you for your time, Coach {{coach_last}}.\n\nRespectfully,\n${a.firstName} ${a.lastName}\n${a.email || ''}\nlocalhustle.org/recruit/${a.slug || ''}`
     return { subject, body }
   }
 
@@ -569,10 +575,13 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
       if (res.ok) {
         setEditingTemplate(false)
       } else {
-        alert('Failed to save template')
+        const errData = await res.json().catch(() => ({}))
+        console.error('Template save failed:', res.status, errData)
+        alert('Failed to save template: ' + (errData.error || `HTTP ${res.status}`))
       }
-    } catch {
-      alert('Failed to save template')
+    } catch (err: any) {
+      console.error('Template save error:', err)
+      alert('Failed to save template: ' + (err.message || 'Network error'))
     } finally {
       setSavingTemplate(false)
     }

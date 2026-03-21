@@ -48,6 +48,8 @@ export function buildContext(athlete: any, coach: any): TemplateContext {
     rpg: stats.rpg || '',
     spg: stats.spg || '',
     mpg: stats.mpg || '',
+    three_pt_pct: stats.three_pt_pct || stats.threePct || '',
+    two_pt_pct: stats.two_pt_pct || stats.fgPct || '',
     highlight_url: athlete.highlight_url || '',
     x_profile_url: athlete.x_profile_url || '',
     athlete_email: athlete.email,
