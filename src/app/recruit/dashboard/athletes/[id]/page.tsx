@@ -829,8 +829,8 @@ localhustle.org/recruit/${a.slug || ''}${parentLine}`
     const bodies: Record<number, string> = {
       1: `Coach ${coachLast},\n\nJust checking in on my previous email. I remain very interested in ${school} and would love to connect when you have a moment.\n\nRespectfully,\n${name}\n${email}`,
       2: `Coach ${coachLast},\n\nI wanted to follow up and see if you've had a chance to watch my film yet. I've been putting in work this offseason and would love your feedback.\n\nFilm: ${highlightUrl}\n\nRespectfully,\n${name}\n${email}`,
-      3: `Coach ${coachLast},\n\nStill in the gym every day getting better. I know your schedule is packed, especially with the season you're having, but I wanted you to know I'm still here and still interested in ${school}.\n\n${name}\n${email}`,
-      4: `Coach ${coachLast},\n\nLast one from me for now — I'll let my game do the talking. But if you ever need a kid who will work for food and outwork everyone in the gym, you know where to find me.\n\nRespectfully,\n${name}\n${email}`,
+      3: `Coach ${coachLast},\n\nStill in the gym every day getting better. I know your schedule is packed, especially considering this time of the year, but I wanted you to know I'm still here and still interested in ${school}.\n\n${name}\n${email}`,
+      4: `Coach ${coachLast},\n\nLast one from me for now. I'll let my game do the talking. But if you ever need a kid who will work for food and outwork everyone in the gym, you know where to find me.\n\nRespectfully,\n${name}\n${email}`,
     }
     return { label: labels[step] || `Step ${step}`, body: bodies[step] || '' }
   }
@@ -2217,14 +2217,14 @@ localhustle.org/recruit/${a.slug || ''}${parentLine}`
                             <span>{c.school} {c.division && <span style={{ fontSize: '0.7rem' }}>({c.division})</span>}</span>
                             <button
                               onClick={async () => {
-                                const defaultBody = `Coach ${c.name.split(' ').pop()},\n\nMy name is ${athlete?.firstName} ${athlete?.lastName}, a ${athlete?.height}, ${athlete?.weight} lb ${athlete?.position} from ${athlete?.highSchool} in ${athlete?.city}, ${athlete?.state} (Class of ${athlete?.gradYear}).\n\n[Add your personalized message here — why this specific program?]\n\nMy highlight film: ${athlete?.highlightUrl || ''}\n\nRespectfully,\n${athlete?.firstName} ${athlete?.lastName}\n${athlete?.email}`
+                                const defaultBody = `Coach ${c.name.split(' ').pop()},\n\nMy name is ${athlete?.firstName} ${athlete?.lastName}, a ${athlete?.height}, ${athlete?.weight} lb ${athlete?.position} from ${athlete?.highSchool} in ${athlete?.city}, ${athlete?.state} (Class of ${athlete?.gradYear}).\n\n[Add your personalized message here - why this specific program?]\n\nMy highlight film: ${athlete?.highlightUrl || ''}\n\nRespectfully,\n${athlete?.firstName} ${athlete?.lastName}\n${athlete?.email}`
                                 const res = await fetch('/api/recruit/outreach-queue', {
                                   method: 'POST',
                                   headers: { 'Content-Type': 'application/json' },
                                   body: JSON.stringify({
                                     athleteId: athlete?.id,
                                     coachId: c.id,
-                                    subject: `Interest in ${c.school} — ${athlete?.firstName} ${athlete?.lastName}, Class of ${athlete?.gradYear}`,
+                                    subject: `Interest in ${c.school} - ${athlete?.firstName} ${athlete?.lastName}, Class of ${athlete?.gradYear}`,
                                     body: defaultBody,
                                   }),
                                 })

@@ -21,9 +21,9 @@ function getFollowUpBody(
     case 2:
       return `Coach ${coachLast},\n\nI wanted to follow up and see if you've had a chance to watch my film yet. I've been putting in work this offseason and would love your feedback.\n\nFilm: ${highlightUrl}\n\nRespectfully,\n${athleteFirst} ${athleteLast}\n${athleteEmail}`
     case 3:
-      return `Coach ${coachLast},\n\nStill in the gym every day getting better. I know your schedule is packed, especially with the season you're having, but I wanted you to know I'm still here and still interested in ${school}.\n\n${athleteFirst} ${athleteLast}\n${athleteEmail}`
+      return `Coach ${coachLast},\n\nStill in the gym every day getting better. I know your schedule is packed, especially considering this time of the year, but I wanted you to know I'm still here and still interested in ${school}.\n\n${athleteFirst} ${athleteLast}\n${athleteEmail}`
     case 4:
-      return `Coach ${coachLast},\n\nLast one from me for now — I'll let my game do the talking. But if you ever need a kid who will work for food and outwork everyone in the gym, you know where to find me.\n\nRespectfully,\n${athleteFirst} ${athleteLast}\n${athleteEmail}`
+      return `Coach ${coachLast},\n\nLast one from me for now. I'll let my game do the talking. But if you ever need a kid who will work for food and outwork everyone in the gym, you know where to find me.\n\nRespectfully,\n${athleteFirst} ${athleteLast}\n${athleteEmail}`
     default:
       return ''
   }
