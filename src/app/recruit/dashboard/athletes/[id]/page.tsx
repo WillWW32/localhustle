@@ -271,6 +271,14 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
   const [xEngageLoading, setXEngageLoading] = useState<string | null>(null)
   const [xEngageResult, setXEngageResult] = useState<{ success: boolean; message: string } | null>(null)
 
+  // Auto-dismiss engagement toast after 5s
+  useEffect(() => {
+    if (xEngageResult) {
+      const t = setTimeout(() => setXEngageResult(null), 5000)
+      return () => clearTimeout(t)
+    }
+  }, [xEngageResult])
+
   // Coach Engagement state
   const [engagementData, setEngagementData] = useState<EngagementData | null>(null)
   const [engagementLoaded, setEngagementLoaded] = useState(false)
@@ -969,26 +977,11 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
     setXEngageLoading(`like-${handle}`)
     setXEngageResult(null)
     try {
-      // First fetch the coach's recent tweets to find one to like
-      const { data: tokenRow } = await supabase
-        .from('x_oauth_tokens')
-        .select('access_token, x_user_id')
-        .eq('athlete_id', athlete.id)
-        .single()
-
-      if (!tokenRow) {
-        setXEngageResult({ success: false, message: 'X account not connected' })
+      if (!athlete.xConnected) {
+        setXEngageResult({ success: false, message: 'Connect your X account first' })
         return
       }
 
-      // Resolve user ID and get tweets via our API
-      // We'll pass a dummy tweetId and let the server handle it,
-      // or better: fetch tweets client-side isn't possible without CORS.
-      // Instead, call the engage endpoint which needs a tweetId.
-      // We need to get the tweetId first - let's use a dedicated approach:
-      // Call the auto endpoint for just this coach, or resolve via the API.
-
-      // For simplicity, we'll call a helper that fetches + likes in one go
       const res = await fetch('/api/recruit/x-engage/latest-tweet', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -2202,7 +2195,7 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
                   <div style={{ background: '#f0f8ff', border: '1px solid #1da1f2', borderRadius: '10px', padding: '0.75rem 1rem', marginBottom: '0.75rem' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
                       <p style={{ fontWeight: 'bold', fontSize: '0.85rem', margin: 0 }}>
-                        DM to @{dmComposeCoach.x_handle} <span style={{ fontWeight: 'normal', color: '#666' }}>({dmComposeCoach.name} — {dmComposeCoach.school})</span>
+                        DM to {dmComposeCoach.x_handle?.startsWith('@') ? dmComposeCoach.x_handle : `@${dmComposeCoach.x_handle}`} <span style={{ fontWeight: 'normal', color: '#666' }}>({dmComposeCoach.name} — {dmComposeCoach.school})</span>
                       </p>
                       <button onClick={() => { setDmComposeCoach(null); setDmMessage('') }} style={{ background: 'none', border: 'none', fontSize: '1rem', cursor: 'pointer', color: '#999' }}>&times;</button>
                     </div>
@@ -2246,7 +2239,7 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
                       <div key={c.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.35rem 0', borderBottom: '1px solid #f0f0f0', fontSize: '0.8rem' }}>
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <span style={{ fontWeight: 500 }}>{c.name}</span>
-                          <span style={{ color: '#1da1f2', fontSize: '0.7rem', marginLeft: '0.4rem' }}>@{c.x_handle}</span>
+                          <span style={{ color: '#1da1f2', fontSize: '0.7rem', marginLeft: '0.4rem' }}>{c.x_handle?.startsWith('@') ? c.x_handle : `@${c.x_handle}`}</span>
                           <span style={{ color: '#999', fontSize: '0.7rem', marginLeft: '0.4rem' }}>{c.school}</span>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', flexShrink: 0 }}>
