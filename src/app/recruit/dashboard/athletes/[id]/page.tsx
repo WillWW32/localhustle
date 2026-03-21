@@ -238,6 +238,7 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
   const [outreachQueue, setOutreachQueue] = useState<any[]>([])
   const [queueLoaded, setQueueLoaded] = useState(false)
   const [sendingOutreachId, setSendingOutreachId] = useState<string | null>(null)
+  const [previewOutreachId, setPreviewOutreachId] = useState<string | null>(null)
 
   // Target coaches list state
   const [targetCoaches, setTargetCoaches] = useState<any[]>([])
@@ -803,6 +804,24 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
     } catch {
       // silently fail
     }
+  }
+
+  // Generate follow-up preview messages (client-side mirror of followup-cron templates)
+  const getFollowUpPreview = (step: number, item: any) => {
+    if (!athlete) return ''
+    const coachLast = item.coach_name?.split(' ').pop() || 'Coach'
+    const school = item.school || ''
+    const highlightUrl = athlete.highlightUrl || ''
+    const name = `${athlete.firstName} ${athlete.lastName}`
+    const email = athlete.email || ''
+    const labels = ['', 'Checking In', 'Did You See My Film?', 'Still In the Gym', 'Will Work for Food']
+    const bodies: Record<number, string> = {
+      1: `Coach ${coachLast},\n\nJust checking in on my previous email. I remain very interested in ${school} and would love to connect when you have a moment.\n\nRespectfully,\n${name}\n${email}`,
+      2: `Coach ${coachLast},\n\nI wanted to follow up and see if you've had a chance to watch my film yet. I've been putting in work this offseason and would love your feedback.\n\nFilm: ${highlightUrl}\n\nRespectfully,\n${name}\n${email}`,
+      3: `Coach ${coachLast},\n\nStill in the gym every day getting better. I know your schedule is packed, especially with the season you're having, but I wanted you to know I'm still here and still interested in ${school}.\n\n${name}\n${email}`,
+      4: `Coach ${coachLast},\n\nLast one from me for now — I'll let my game do the talking. But if you ever need a kid who will work for food and outwork everyone in the gym, you know where to find me.\n\nRespectfully,\n${name}\n${email}`,
+    }
+    return { label: labels[step] || `Step ${step}`, body: bodies[step] || '' }
   }
 
   // Load target coaches list
@@ -2337,7 +2356,7 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
                 <p style={{ fontSize: '0.75rem', color: '#555', margin: '0.25rem 0', fontStyle: 'italic' }}>
                   &ldquo;{item.subject}&rdquo;
                 </p>
-                <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.4rem' }}>
+                <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.4rem', flexWrap: 'wrap' }}>
                   {item.status === 'queued' && (
                     <button
                       onClick={() => sendQueuedOutreach(item.id)}
@@ -2347,15 +2366,68 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
                       {sendingOutreachId === item.id ? 'Sending...' : 'Send Now'}
                     </button>
                   )}
+                  <button
+                    onClick={() => setPreviewOutreachId(previewOutreachId === item.id ? null : item.id)}
+                    style={{ padding: '0.35rem 0.75rem', borderRadius: '9999px', background: previewOutreachId === item.id ? '#1976d2' : 'transparent', color: previewOutreachId === item.id ? 'white' : '#1976d2', border: '1px solid #1976d2', cursor: 'pointer', fontSize: '0.7rem', fontFamily: 'inherit', fontWeight: 'bold' }}
+                  >
+                    {previewOutreachId === item.id ? 'Hide Preview' : 'Preview All Messages'}
+                  </button>
                   {(item.status === 'queued' || item.status === 'sent') && (
                     <button
-                      onClick={() => stopOutreach(item.id)}
-                      style={{ padding: '0.35rem 0.75rem', borderRadius: '9999px', background: 'transparent', color: '#999', border: '1px solid #ddd', cursor: 'pointer', fontSize: '0.7rem', fontFamily: 'inherit' }}
+                      onClick={() => { if (confirm(`Stop the outreach sequence to ${item.coach_name} at ${item.school}? No more follow-ups will be sent.`)) stopOutreach(item.id) }}
+                      style={{ padding: '0.35rem 0.75rem', borderRadius: '9999px', background: 'transparent', color: '#ef5350', border: '1px solid #ef5350', cursor: 'pointer', fontSize: '0.7rem', fontFamily: 'inherit' }}
                     >
-                      {item.status === 'sent' ? 'Stop Sequence' : 'Remove'}
+                      {item.status === 'sent' ? '■ Stop Sequence' : '✕ Remove'}
                     </button>
                   )}
                 </div>
+
+                {/* Expandable message preview */}
+                {previewOutreachId === item.id && (
+                  <div style={{ marginTop: '0.75rem', borderTop: '1px solid #ddd', paddingTop: '0.75rem' }}>
+                    <p style={{ fontSize: '0.7rem', fontWeight: 'bold', color: '#999', textTransform: 'uppercase', marginBottom: '0.5rem' }}>Full Sequence Preview</p>
+
+                    {/* Step 0: Initial outreach (already sent or queued) */}
+                    <div style={{ marginBottom: '0.6rem', padding: '0.5rem 0.75rem', borderRadius: '8px', background: (item.followup_step >= 1 || item.status === 'sent') ? '#e8f5e9' : '#fff8e1', borderLeft: '3px solid #4caf50' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+                        <span style={{ fontSize: '0.7rem', fontWeight: 'bold', color: '#333' }}>Initial Letter</span>
+                        <span style={{ fontSize: '0.6rem', color: (item.followup_step >= 1 || item.status === 'sent') ? '#4caf50' : '#e65100', fontWeight: 'bold' }}>
+                          {(item.followup_step >= 1 || item.status === 'sent') ? '✓ Sent' : 'Queued'}
+                        </span>
+                      </div>
+                      <pre style={{ fontSize: '0.7rem', color: '#555', whiteSpace: 'pre-wrap', margin: 0, fontFamily: 'inherit', lineHeight: 1.4, maxHeight: '120px', overflow: 'auto' }}>{item.body}</pre>
+                    </div>
+
+                    {/* Steps 1-4: Follow-ups */}
+                    {[1, 2, 3, 4].map((step) => {
+                      const preview = getFollowUpPreview(step, item)
+                      const isSent = item.followup_step > step
+                      const isCurrent = item.followup_step === step && item.status === 'sent'
+                      const isPending = item.followup_step < step && item.status === 'sent'
+                      const isStopped = item.status === 'stopped'
+                      return (
+                        <div key={step} style={{
+                          marginBottom: '0.6rem',
+                          padding: '0.5rem 0.75rem',
+                          borderRadius: '8px',
+                          background: isSent ? '#e8f5e9' : isCurrent ? '#fff8e1' : isStopped ? '#f5f5f5' : '#fafafa',
+                          borderLeft: `3px solid ${isSent ? '#4caf50' : isCurrent ? '#ff9800' : '#ddd'}`,
+                          opacity: (isStopped && !isSent) ? 0.5 : 1,
+                        }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+                            <span style={{ fontSize: '0.7rem', fontWeight: 'bold', color: '#333' }}>
+                              Step {step}: {preview.label}
+                            </span>
+                            <span style={{ fontSize: '0.6rem', fontWeight: 'bold', color: isSent ? '#4caf50' : isCurrent ? '#ff9800' : '#999' }}>
+                              {isSent ? '✓ Sent' : isCurrent ? `Next: ${item.next_send_at ? new Date(item.next_send_at).toLocaleDateString() : 'Scheduled'}` : isStopped ? 'Cancelled' : 'Pending'}
+                            </span>
+                          </div>
+                          <pre style={{ fontSize: '0.7rem', color: '#555', whiteSpace: 'pre-wrap', margin: 0, fontFamily: 'inherit', lineHeight: 1.4, maxHeight: '120px', overflow: 'auto' }}>{preview.body}</pre>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
               </div>
             ))}
           </div>
