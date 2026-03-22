@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
 
     const expiresAt = new Date(Date.now() + tokenResponse.expires_in * 1000).toISOString()
 
-    await supabaseAdmin
+    const { error: upsertError } = await supabaseAdmin
       .from('x_oauth_tokens')
       .upsert({
         athlete_id: state,
@@ -45,10 +45,16 @@ export async function GET(request: NextRequest) {
         x_username: userProfile.data.username,
         access_token: tokenResponse.access_token,
         refresh_token: tokenResponse.refresh_token || null,
-        expires_at: expiresAt,
-        scope: tokenResponse.scope,
+        token_expires_at: expiresAt,
+        scopes: tokenResponse.scope ? tokenResponse.scope.split(' ') : [],
+        connected_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       }, { onConflict: 'athlete_id' })
+
+    if (upsertError) {
+      console.error('Failed to save X tokens:', upsertError)
+      throw new Error(`Token save failed: ${upsertError.message}`)
+    }
 
     await supabaseAdmin
       .from('athletes')

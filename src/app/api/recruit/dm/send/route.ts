@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
 
     // Refresh token if expired
     const now = new Date()
-    const expiresAt = new Date(tokenRow.expires_at)
+    const expiresAt = new Date(tokenRow.token_expires_at || tokenRow.expires_at)
     if (now >= expiresAt) {
       if (!tokenRow.refresh_token) {
         return NextResponse.json(
@@ -54,7 +54,8 @@ export async function POST(request: NextRequest) {
           .update({
             access_token: refreshed.access_token,
             refresh_token: refreshed.refresh_token || tokenRow.refresh_token,
-            expires_at: newExpiresAt,
+            token_expires_at: newExpiresAt,
+            last_refreshed_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
           })
           .eq('athlete_id', athleteId)
