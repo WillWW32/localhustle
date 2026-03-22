@@ -17,13 +17,13 @@ function getFollowUpBody(
 
   switch (step) {
     case 1:
-      return `Coach ${coachLast},\n\nJust checking in on my previous email. I remain very interested in ${school} and would love to connect when you have a moment.\n\nRespectfully,\n${athleteFirst} ${athleteLast}\n${athleteEmail}`
+      return `Coach ${coachLast},\n\nJust circling back. I'm in the gym 6 days a week this spring putting up 300 shots a day. Still very interested in ${school} and would love to connect when you have a moment.\n\nRespectfully,\n${athleteFirst} ${athleteLast}\n${athleteEmail}`
     case 2:
-      return `Coach ${coachLast},\n\nI wanted to follow up and see if you've had a chance to watch my film yet. I've been putting in work this offseason and would love your feedback.\n\nFilm: ${highlightUrl}\n\nRespectfully,\n${athleteFirst} ${athleteLast}\n${athleteEmail}`
+      return `Coach ${coachLast},\n\nPlanning to come back next season with 15 lbs of extra muscle and a tighter handle. Have you had a chance to check my film?\n\nFilm: ${highlightUrl}\n\nRespectfully,\n${athleteFirst} ${athleteLast}\n${athleteEmail}`
     case 3:
-      return `Coach ${coachLast},\n\nStill in the gym every day getting better. I know your schedule is packed, especially considering this time of the year, but I wanted you to know I'm still here and still interested in ${school}.\n\n${athleteFirst} ${athleteLast}\n${athleteEmail}`
+      return `Coach ${coachLast},\n\nJust wrapped up a week of open runs against college guys in Missoula. Held my own. Still here, still grinding, still interested in ${school}.\n\n${athleteFirst} ${athleteLast}\n${athleteEmail}`
     case 4:
-      return `Coach ${coachLast},\n\nLast one from me for now. I'll let my game do the talking. But if you ever need a kid who will work for food and outwork everyone in the gym, you know where to find me.\n\nRespectfully,\n${athleteFirst} ${athleteLast}\n${athleteEmail}`
+      return `Coach ${coachLast},\n\nLast one from me for now. I'll let my work speak. But if you need a gym rat who plays bigger than 6'4 (and I think I'm still growing) and will outwork your whole roster, I'm your guy.\n\nRespectfully,\n${athleteFirst} ${athleteLast}\n${athleteEmail}`
     default:
       return ''
   }
