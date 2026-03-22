@@ -68,11 +68,28 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Resolve coach's X user ID from handle
-    const recipientId = await resolveXUserId(coachXHandle)
+    // Resolve coach's X user ID from handle using athlete's OAuth2 token
+    const cleanHandle = coachXHandle.startsWith('@') ? coachXHandle.slice(1) : coachXHandle
+    const lookupRes = await fetch(`https://api.twitter.com/2/users/by/username/${cleanHandle}`, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'User-Agent': 'LocalHustle/1.0',
+      },
+    })
+
+    if (!lookupRes.ok) {
+      const lookupErr = await lookupRes.json().catch(() => ({})) as { errors?: Array<{ message: string }> }
+      return NextResponse.json(
+        { error: `Could not resolve X handle @${cleanHandle}: ${lookupErr.errors?.[0]?.message || lookupRes.status}` },
+        { status: 400 }
+      )
+    }
+
+    const lookupData = await lookupRes.json() as { data?: { id: string } }
+    const recipientId = lookupData.data?.id
     if (!recipientId) {
       return NextResponse.json(
-        { error: `Could not resolve X handle: ${coachXHandle}` },
+        { error: `Could not resolve X handle: @${cleanHandle}` },
         { status: 400 }
       )
     }
@@ -114,7 +131,6 @@ export async function POST(request: NextRequest) {
     const xMessageId = dmData.data?.dm_event_id
 
     // Look up coach by x_handle to get coach_id
-    const cleanHandle = coachXHandle.startsWith('@') ? coachXHandle.slice(1) : coachXHandle
     const { data: coach } = await supabaseAdmin
       .from('coaches')
       .select('id')
