@@ -66,6 +66,43 @@ export async function GET(request: NextRequest) {
     .eq('athlete_id', athleteRow.id)
     .order('created_at', { ascending: false })
 
+  // Load coach interest / social proof stats
+  const { count: coachesContacted } = await supabaseAdmin
+    .from('custom_outreach')
+    .select('id', { count: 'exact', head: true })
+    .eq('athlete_id', athleteRow.id)
+    .eq('status', 'sent')
+
+  const { count: dmsSent } = await supabaseAdmin
+    .from('inbox_messages')
+    .select('id', { count: 'exact', head: true })
+    .eq('athlete_id', athleteRow.id)
+    .eq('direction', 'outbound')
+    .eq('channel', 'dm')
+
+  const { count: coachResponses } = await supabaseAdmin
+    .from('inbox_messages')
+    .select('id', { count: 'exact', head: true })
+    .eq('athlete_id', athleteRow.id)
+    .eq('direction', 'inbound')
+
+  // Get unique schools from coaches contacted
+  const { data: outreachSchools } = await supabaseAdmin
+    .from('custom_outreach')
+    .select('coach_id, coaches(school, division)')
+    .eq('athlete_id', athleteRow.id)
+    .eq('status', 'sent')
+
+  const divisions = new Set<string>()
+  const schoolCount = new Set<string>()
+  if (outreachSchools) {
+    for (const o of outreachSchools) {
+      const coach = o.coaches as unknown as { school: string; division: string } | null
+      if (coach?.school) schoolCount.add(coach.school)
+      if (coach?.division) divisions.add(coach.division)
+    }
+  }
+
   return NextResponse.json({
     profile: {
       slug: profile.slug,
@@ -91,6 +128,12 @@ export async function GET(request: NextRequest) {
       contactPhone: athleteRow.parent_phone || '',
       profileImageUrl: athleteRow.profile_image_url || '',
       parentRelationship: athleteRow.parent_relationship || '',
+    },
+    coachInterest: {
+      programsContacted: (coachesContacted || 0) + (dmsSent || 0),
+      coachResponses: coachResponses || 0,
+      schoolsReached: schoolCount.size,
+      divisions: Array.from(divisions),
     },
     scoutingReport: scoutingRow || null,
     coachLetters: (letters || []).map((l: Record<string, unknown>) => ({
