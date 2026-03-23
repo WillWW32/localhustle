@@ -11,8 +11,32 @@ async function handleInboundEmail(data: Record<string, unknown>) {
     const fromRaw = data.from as string | undefined
     const toRaw = data.to as string | string[] | undefined
     const subject = (data.subject as string) || '(no subject)'
-    const textBody = (data.text as string) || ''
-    const htmlBody = (data.html as string) || ''
+    const emailId = data.email_id as string | undefined
+
+    // Resend webhook only sends metadata — fetch the actual email body via API
+    let textBody = (data.text as string) || ''
+    let htmlBody = (data.html as string) || ''
+
+    if (emailId && !textBody && !htmlBody) {
+      try {
+        const emailRes = await fetch(`https://api.resend.com/emails/${emailId}`, {
+          headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}` }
+        })
+        if (emailRes.ok) {
+          const emailData = await emailRes.json() as { text?: string; html_body?: string; body?: string }
+          textBody = emailData.text || emailData.body || ''
+          htmlBody = emailData.html_body || ''
+          console.log('Fetched email body via API:', { emailId, bodyLength: textBody.length })
+        }
+      } catch (fetchErr) {
+        console.error('Failed to fetch email body:', fetchErr)
+      }
+    }
+
+    // If still no body, use subject as fallback
+    if (!textBody && !htmlBody) {
+      textBody = `(Email received - body not available. Subject: ${subject})`
+    }
 
     const fromAddress = typeof fromRaw === 'string' ? fromRaw : ''
     const toAddress = Array.isArray(toRaw) ? toRaw[0] : (typeof toRaw === 'string' ? toRaw : '')
