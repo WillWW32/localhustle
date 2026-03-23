@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabaseClient'
 import ReelContainer from '@/components/ReelContainer'
 import PlayerCardCreator from '@/components/player-cards/PlayerCardCreator'
 import PlayerCardDisplay from '@/components/player-cards/PlayerCardDisplay'
+import InboxMessages from '@/components/recruit/InboxMessages'
 
 // ── Types ──
 interface AthleteProfile {
@@ -100,7 +101,7 @@ interface EngagementData {
   }
 }
 
-type Tab = 'profile' | 'campaign' | 'followups' | 'responses' | 'settings'
+type Tab = 'profile' | 'campaign' | 'followups' | 'responses' | 'messages' | 'settings'
 
 export default function AthleteManagementPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
@@ -1431,7 +1432,7 @@ localhustle.org/recruit/${a.slug || ''}${parentLine}`
 
       {/* Tabs */}
       <div style={{ display: 'flex', gap: '0', borderBottom: '2px solid #eee', marginBottom: '1.5rem', overflowX: 'auto' }}>
-        {(['profile', 'campaign', 'followups', 'responses', 'settings'] as const).map((tab) => (
+        {(['profile', 'campaign', 'followups', 'responses', 'messages', 'settings'] as const).map((tab) => (
           <button key={tab} onClick={() => setCurrentTab(tab)} style={tabStyle(tab)}>
             {tab === 'followups' ? 'Follow-Ups' : tab.charAt(0).toUpperCase() + tab.slice(1)}
           </button>
@@ -3785,6 +3786,16 @@ localhustle.org/recruit/${a.slug || ''}${parentLine}`
             })}
           </div>
         </div>
+      )}
+
+      {/* ══ MESSAGES TAB ══ */}
+      {currentTab === 'messages' && athlete && (
+        <InboxMessages
+          athleteId={id}
+          athleteFirstName={athlete.firstName}
+          athleteLastName={athlete.lastName}
+          xConnected={athlete.xConnected}
+        />
       )}
 
       {/* ══ SETTINGS TAB ══ */}
