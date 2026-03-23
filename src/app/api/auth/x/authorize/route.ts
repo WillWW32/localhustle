@@ -19,12 +19,23 @@ export async function GET(request: NextRequest) {
     const authorizationUrl = getAuthorizationUrl(athleteId, codeChallenge)
 
     // Store PKCE verifier in Supabase (cookies get lost across serverless functions)
-    await supabaseAdmin
+    // Try update first, then insert if no row exists
+    const { data: existing } = await supabaseAdmin
       .from('x_oauth_tokens')
-      .upsert({
-        athlete_id: athleteId,
-        pkce_verifier: codeVerifier,
-      }, { onConflict: 'athlete_id' })
+      .select('id')
+      .eq('athlete_id', athleteId)
+      .single()
+
+    if (existing) {
+      await supabaseAdmin
+        .from('x_oauth_tokens')
+        .update({ pkce_verifier: codeVerifier })
+        .eq('athlete_id', athleteId)
+    } else {
+      await supabaseAdmin
+        .from('x_oauth_tokens')
+        .insert({ athlete_id: athleteId, pkce_verifier: codeVerifier })
+    }
 
     return NextResponse.redirect(authorizationUrl)
   } catch (error) {
