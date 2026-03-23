@@ -20,16 +20,16 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Missing code or state parameter' }, { status: 400 })
     }
 
-    const cookieValue = request.cookies.get('x_oauth_pkce')?.value
-    if (!cookieValue) {
-      return NextResponse.json({ error: 'PKCE state not found in cookie' }, { status: 400 })
-    }
+    // Retrieve PKCE verifier from Supabase (cookies get lost across serverless functions)
+    const { data: tokenRow } = await supabaseAdmin
+      .from('x_oauth_tokens')
+      .select('pkce_verifier')
+      .eq('athlete_id', state)
+      .single()
 
-    const decodedValue = Buffer.from(cookieValue, 'base64').toString('utf-8')
-    const [storedAthleteId, codeVerifier] = decodedValue.split(':')
-
-    if (state !== storedAthleteId) {
-      return NextResponse.json({ error: 'State mismatch - potential CSRF attack' }, { status: 400 })
+    const codeVerifier = tokenRow?.pkce_verifier
+    if (!codeVerifier) {
+      return NextResponse.json({ error: 'PKCE verifier not found. Please try connecting again.' }, { status: 400 })
     }
 
     const tokenResponse = await exchangeCodeForToken(code, codeVerifier)

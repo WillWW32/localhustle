@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { supabaseAdmin } from '@/lib/supabaseClient'
 import { generatePKCE, getAuthorizationUrl } from '@/lib/recruit/x-oauth'
 
 export async function GET(request: NextRequest) {
@@ -16,18 +17,16 @@ export async function GET(request: NextRequest) {
 
     const { codeVerifier, codeChallenge } = generatePKCE()
     const authorizationUrl = getAuthorizationUrl(athleteId, codeChallenge)
-    const response = NextResponse.redirect(authorizationUrl)
 
-    const cookieValue = Buffer.from(`${athleteId}:${codeVerifier}`).toString('base64')
-    response.cookies.set('x_oauth_pkce', cookieValue, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 10 * 60,
-      path: '/api/auth/x',
-    })
+    // Store PKCE verifier in Supabase (cookies get lost across serverless functions)
+    await supabaseAdmin
+      .from('x_oauth_tokens')
+      .upsert({
+        athlete_id: athleteId,
+        pkce_verifier: codeVerifier,
+      }, { onConflict: 'athlete_id' })
 
-    return response
+    return NextResponse.redirect(authorizationUrl)
   } catch (error) {
     console.error('Authorization error:', error)
     return NextResponse.json(
