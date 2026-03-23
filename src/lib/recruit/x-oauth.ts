@@ -4,7 +4,7 @@ const X_AUTHORIZATION_URL = 'https://twitter.com/i/oauth2/authorize'
 const X_TOKEN_URL = 'https://api.twitter.com/2/oauth2/token'
 const X_USER_PROFILE_URL = 'https://api.twitter.com/2/users/me'
 
-const SCOPES = ['dm.write', 'dm.read', 'tweet.read', 'users.read', 'offline.access']
+const SCOPES = ['dm.write', 'dm.read', 'tweet.read', 'tweet.write', 'like.write', 'users.read', 'offline.access']
 
 interface TokenResponse {
   access_token: string

@@ -23,6 +23,12 @@ interface TemplateContext {
   coach_first?: string
   coach_last: string
   coach_title?: string
+  // school_intel fields
+  program_style?: string
+  recent_record?: string
+  roster_needs?: string
+  conference?: string
+  fun_fact?: string
   [key: string]: any
 }
 
@@ -32,8 +38,9 @@ export function renderTemplate(template: string, context: TemplateContext): stri
   })
 }
 
-export function buildContext(athlete: any, coach: any): TemplateContext {
+export function buildContext(athlete: any, coach: any, schoolIntel?: any): TemplateContext {
   const stats = athlete.stats || {}
+  const intel = schoolIntel || {}
   return {
     athlete_first: athlete.first_name,
     athlete_last: athlete.last_name,
@@ -59,5 +66,11 @@ export function buildContext(athlete: any, coach: any): TemplateContext {
     coach_first: coach.first_name || '',
     coach_last: coach.last_name || 'Coach',
     coach_title: coach.title || '',
+    // school_intel fields
+    program_style: intel.program_style || '',
+    recent_record: intel.recent_record || '',
+    roster_needs: intel.roster_needs || '',
+    conference: intel.conference || '',
+    fun_fact: intel.fun_fact || '',
   }
 }

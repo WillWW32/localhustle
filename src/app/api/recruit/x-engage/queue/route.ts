@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
     }
 
     const now = new Date()
-    const dmAt = new Date(now.getTime() + 24 * 60 * 60 * 1000) // 24 hours from now
+    const dmAt = new Date(now.getTime() + 72 * 60 * 60 * 1000) // 72 hours (3 days) from now
 
     const entries = coachXHandles.map((handle: string) => {
       const cleanHandle = handle.startsWith('@') ? handle.slice(1) : handle
