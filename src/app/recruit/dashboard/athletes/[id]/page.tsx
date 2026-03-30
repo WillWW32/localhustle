@@ -3977,6 +3977,54 @@ localhustle.org/recruit/${a.slug || ''}${parentLine}`
             )}
           </div>
 
+          {/* Coach Reply Forwarding */}
+          <div className="dash-card">
+            <h3 style={{ fontSize: '1.125rem', marginBottom: '0.5rem' }}>Coach Reply Forwarding</h3>
+            <p style={{ color: '#666', fontSize: '0.85rem', marginBottom: '1rem' }}>
+              When a coach replies to {athlete.firstName}&apos;s outreach email, we forward a copy here. Currently forwarding to: <strong>{athlete.parentEmail || 'not set'}</strong>
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <input
+                type="email"
+                id="parent-email-input"
+                defaultValue={athlete.parentEmail}
+                placeholder="Forwarding email address"
+                style={{ padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid #ddd', fontSize: '0.875rem', fontFamily: 'inherit' }}
+              />
+              <input
+                type="text"
+                id="parent-name-input"
+                defaultValue={athlete.parentName}
+                placeholder="Parent / guardian name (optional)"
+                style={{ padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid #ddd', fontSize: '0.875rem', fontFamily: 'inherit' }}
+              />
+              <button
+                className="dash-btn"
+                style={{ alignSelf: 'flex-start', padding: '0.5rem 1.25rem', fontSize: '0.8rem' }}
+                onClick={async () => {
+                  const email = (document.getElementById('parent-email-input') as HTMLInputElement).value.trim()
+                  const name = (document.getElementById('parent-name-input') as HTMLInputElement).value.trim()
+                  if (email && !email.includes('@')) { alert('Please enter a valid email'); return }
+                  await Promise.all([
+                    email !== undefined && fetch('/api/recruit/update-profile', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ athleteId: id, field: 'parent_email', value: email }),
+                    }),
+                    name !== undefined && fetch('/api/recruit/update-profile', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ athleteId: id, field: 'parent_name', value: name }),
+                    }),
+                  ])
+                  alert('Forwarding email saved!')
+                }}
+              >
+                Save
+              </button>
+            </div>
+          </div>
+
           <div className="dash-card">
             <h3 style={{ fontSize: '1.125rem', marginBottom: '1rem' }}>Notification Settings</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>

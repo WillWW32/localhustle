@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabaseClient'
+import { resend } from '@/lib/resend'
 
 // Resend webhook — tracks email delivery, opens, bounces, clicks, complaints
 // Also handles inbound emails (email.received) for the inbox messaging system
@@ -50,12 +51,12 @@ async function handleInboundEmail(data: Record<string, unknown>) {
 
     // Match the "to" address to an athlete
     // Supports both exact match on email and pattern match on firstname.lastname@localhustle.org
-    let athlete: { id: string; first_name: string; last_name: string; email: string } | null = null
+    let athlete: { id: string; first_name: string; last_name: string; email: string; parent_email: string | null; parent_name: string | null } | null = null
 
     // Try exact match first
     const { data: exactMatch } = await supabaseAdmin
       .from('athletes')
-      .select('id, first_name, last_name, email')
+      .select('id, first_name, last_name, email, parent_email, parent_name')
       .eq('email', toAddress)
       .single()
 
@@ -68,7 +69,7 @@ async function handleInboundEmail(data: Record<string, unknown>) {
         const [first, last] = localPart.split('.')
         const { data: patternMatch } = await supabaseAdmin
           .from('athletes')
-          .select('id, first_name, last_name, email')
+          .select('id, first_name, last_name, email, parent_email, parent_name')
           .ilike('first_name', first)
           .ilike('last_name', last)
           .limit(1)
@@ -126,6 +127,26 @@ async function handleInboundEmail(data: Record<string, unknown>) {
     }
 
     console.log('Inbound email stored in inbox_messages for athlete:', athlete.id)
+
+    // Forward to parent/guardian email
+    const forwardTo = athlete.parent_email
+    if (forwardTo) {
+      const coachInfo = coach
+        ? `${coach.first_name} ${coach.last_name} — ${coach.school}`
+        : fromAddress
+      try {
+        await resend.emails.send({
+          from: 'LocalHustle <notifications@localhustle.org>',
+          to: forwardTo,
+          replyTo: fromAddress,
+          subject: `[Coach Reply] ${subject}`,
+          text: `Coach reply received for ${athlete.first_name} ${athlete.last_name}.\n\nFrom: ${coachInfo}\n\n---\n\n${textBody || htmlBody || '(no body)'}`,
+        })
+        console.log('Forwarded inbound email to:', forwardTo)
+      } catch (fwdErr) {
+        console.error('Failed to forward inbound email:', fwdErr)
+      }
+    }
   } catch (err) {
     console.error('Error handling inbound email:', err)
   }
