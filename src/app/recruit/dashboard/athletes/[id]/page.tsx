@@ -3838,15 +3838,16 @@ localhustle.org/recruit/${a.slug || ''}${parentLine}`
             <p style={{ color: '#666', fontSize: '0.875rem', marginBottom: '1rem' }}>
               Connecting your X account allows us to amplify your profile and reach more coaches.
             </p>
-            {!athlete.xConnected ? (
-              <a href={`/api/auth/x/authorize?athleteId=${athlete.id}`} className="dash-btn" style={{ display: 'inline-block', textDecoration: 'none', textAlign: 'center' }}>
-                Connect X Account
+            <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
+              <a href={`/api/auth/x/authorize?athleteId=${athlete.id}`} className="dash-btn" style={{ display: 'inline-block', textDecoration: 'none', textAlign: 'center', background: athlete.xConnected ? '#1976d2' : undefined, borderColor: athlete.xConnected ? '#1976d2' : undefined }}>
+                {athlete.xConnected ? '↻ Reconnect X Account' : 'Connect X Account'}
               </a>
-            ) : (
-              <button style={{ color: 'red', fontWeight: 'bold', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>
-                Disconnect X Account
-              </button>
-            )}
+              {athlete.xConnected && (
+                <button style={{ color: '#999', fontSize: '0.8rem', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>
+                  Disconnect
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Parent / Guardian Access */}
