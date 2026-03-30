@@ -1842,6 +1842,18 @@ localhustle.org/recruit/${a.slug || ''}${parentLine}`
             <MarchMadnessBlast athleteId={athlete.id} />
           </div>
 
+          {/* Full DB Campaign Blast */}
+          <div className="dash-card" style={{ borderColor: '#1976d2', borderWidth: '2px', background: '#f5f9ff' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+              <h3 style={{ fontSize: '1.125rem', marginBottom: 0, color: '#1976d2' }}>Full Campaign Blast</h3>
+              <span style={{ fontSize: '0.7rem', fontWeight: 'bold', background: '#1976d2', color: 'white', padding: '0.2rem 0.6rem', borderRadius: '9999px' }}>APRIL 1</span>
+            </div>
+            <p style={{ color: '#555', fontSize: '0.85rem', marginBottom: '1rem' }}>
+              Send the initial outreach letter to all D1, D2, D3, and NAIA coaches in the database. Follow-ups are handled automatically by the campaign cron.
+            </p>
+            <FullDbBlast athleteId={athlete.id} />
+          </div>
+
           {/* Status + Stats Row */}
           <div className="dash-card">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
@@ -4235,6 +4247,97 @@ function MarchMadnessBlast({ athleteId }: { athleteId: string }) {
         </select>
         <button onClick={sendBlast} disabled={sending || preview.eligibleToContact === 0} className="dash-btn" style={{ background: '#e65100', borderColor: '#e65100', fontSize: '0.875rem' }}>
           {sending ? 'Sending...' : preview.eligibleToContact === 0 ? 'All sent!' : `Send to ${batchSize === 999 ? preview.eligibleToContact : batchSize} Coaches`}
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function FullDbBlast({ athleteId }: { athleteId: string }) {
+  const [preview, setPreview] = useState<{ eligibleToContact: number; alreadyContacted: number; byDivision: Record<string, number> } | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [sending, setSending] = useState(false)
+  const [result, setResult] = useState<{ emailsSent: number; emailsFailed: number; message?: string } | null>(null)
+
+  const loadPreview = async () => {
+    setLoading(true)
+    try {
+      const res = await fetch(`/api/recruit/full-db-blast?athleteId=${athleteId}`)
+      const data = await res.json()
+      setPreview(data)
+    } catch {}
+    setLoading(false)
+  }
+
+  const sendBlast = async () => {
+    if (!confirm(`Send initial outreach to ${preview?.eligibleToContact} coaches across D1/D2/D3/NAIA? Follow-ups will be handled automatically.`)) return
+    setSending(true)
+    try {
+      const res = await fetch('/api/recruit/full-db-blast', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ athleteId }),
+      })
+      const data = await res.json()
+      setResult(data)
+    } catch {}
+    setSending(false)
+  }
+
+  if (result) {
+    return (
+      <div style={{ background: '#e3f2fd', borderRadius: '8px', padding: '1rem' }}>
+        <p style={{ fontWeight: 'bold', color: '#1565c0', marginBottom: '0.5rem' }}>
+          {result.emailsSent > 0 ? 'Blast sent!' : result.message || 'Complete'}
+        </p>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem' }}>
+          {[
+            { label: 'Emails Sent', value: result.emailsSent ?? 0 },
+            { label: 'Failed', value: result.emailsFailed ?? 0 },
+          ].map((s, i) => (
+            <div key={i} style={{ textAlign: 'center', background: 'white', borderRadius: '8px', padding: '0.5rem' }}>
+              <p style={{ fontWeight: 'bold', fontSize: '1.25rem', margin: '0 0 0.125rem', color: s.label === 'Failed' && s.value > 0 ? '#c62828' : '#1565c0' }}>{s.value}</p>
+              <p style={{ fontSize: '0.65rem', color: '#999', textTransform: 'uppercase', margin: 0 }}>{s.label}</p>
+            </div>
+          ))}
+        </div>
+        <p style={{ fontSize: '0.78rem', color: '#555', marginTop: '0.75rem', marginBottom: 0 }}>
+          Follow-ups scheduled automatically via campaign cron (7-day intervals).
+        </p>
+      </div>
+    )
+  }
+
+  if (!preview) {
+    return (
+      <button onClick={loadPreview} disabled={loading} className="dash-btn" style={{ background: '#1976d2', borderColor: '#1976d2', fontSize: '0.875rem' }}>
+        {loading ? 'Loading...' : 'Preview Blast'}
+      </button>
+    )
+  }
+
+  return (
+    <div>
+      <div style={{ background: '#e3f2fd', borderRadius: '8px', padding: '0.75rem 1rem', marginBottom: '0.75rem' }}>
+        <p style={{ fontWeight: 'bold', fontSize: '0.9rem', margin: '0 0 0.5rem' }}>
+          {preview.eligibleToContact} coaches eligible ({preview.alreadyContacted} already contacted)
+        </p>
+        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+          {Object.entries(preview.byDivision).sort().map(([div, count]) => (
+            <span key={div} style={{ fontSize: '0.78rem', background: 'white', padding: '0.2rem 0.6rem', borderRadius: '9999px', color: '#1976d2', fontWeight: 'bold' }}>
+              {div}: {count}
+            </span>
+          ))}
+        </div>
+      </div>
+      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+        <button
+          onClick={sendBlast}
+          disabled={sending || preview.eligibleToContact === 0}
+          className="dash-btn"
+          style={{ background: '#1976d2', borderColor: '#1976d2', fontSize: '0.875rem' }}
+        >
+          {sending ? 'Sending...' : preview.eligibleToContact === 0 ? 'All sent!' : `Send to ${preview.eligibleToContact} Coaches`}
         </button>
       </div>
     </div>
