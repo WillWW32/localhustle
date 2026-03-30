@@ -32,7 +32,7 @@ interface AthleteProfile {
   rpg: string
   mpg: string
   threePtPct: string
-  twoPtPct: string
+  fgPct: string
   parentName: string
   parentEmail: string
   photos: string[]
@@ -462,7 +462,7 @@ I know recruiting season keeps you busy, so I'll keep this brief. My name is ${a
 
 I've been researching {{school}}'s program and I'm reaching out because I believe my game is a fit for what you're building. The way your teams play, the toughness, the competitiveness, that's how I was raised and how I play every night.
 
-This past season I started all 25 games and led my team in points, shooting percentage, three-point percentage, steals, deflections, PER, and plus-minus. I averaged ${a.ppg || '{{ppg}}'} ppg, ${a.rpg || '{{rpg}}'} rpg, and ${a.mpg || '{{mpg}}'} mpg while shooting ${a.twoPtPct || '{{two_pt_pct}}'} from the field and ${a.threePtPct || '{{three_pt_pct}}'} from three. We finished 3rd at the Montana Class AA State Tournament. My coaches have also credited me for helping develop our younger players and being someone the team looks to on and off the court.
+This past season I started all 25 games and led my team in points, shooting percentage, three-point percentage, steals, deflections, PER, and plus-minus. I averaged ${a.ppg || '{{ppg}}'} ppg, ${a.rpg || '{{rpg}}'} rpg, and ${a.mpg || '{{mpg}}'} mpg while shooting ${a.fgPct || '{{fg_pct}}'} from the field and ${a.threePtPct || '{{three_pt_pct}}'} from three. We finished 3rd at the Montana Class AA State Tournament. My coaches have also credited me for helping develop our younger players and being someone the team looks to on and off the court.
 
 Here is my film: ${a.highlightUrl || '{{highlight_url}}'}
 
@@ -1900,7 +1900,7 @@ localhustle.org/recruit/${a.slug || ''}${parentLine}`
                 <div style={{ marginTop: '0.75rem', background: '#f0f7ff', borderRadius: '8px', padding: '0.75rem' }}>
                   <p style={{ fontSize: '0.7rem', fontWeight: 'bold', color: '#1976d2', marginBottom: '0.25rem' }}>Available Variables</p>
                   <p style={{ fontSize: '0.7rem', color: '#666', marginBottom: 0, lineHeight: 1.8 }}>
-                    {'{{coach_first}} {{coach_last}} {{school}} {{athlete_first}} {{athlete_last}} {{position}} {{height}} {{weight}} {{high_school}} {{city}} {{state}} {{grad_year}} {{ppg}} {{rpg}} {{mpg}} {{two_pt_pct}} {{three_pt_pct}} {{highlight_url}} {{athlete_email}} {{parent_name}} {{parent_email}}'}
+                    {'{{coach_first}} {{coach_last}} {{school}} {{athlete_first}} {{athlete_last}} {{position}} {{height}} {{weight}} {{high_school}} {{city}} {{state}} {{grad_year}} {{ppg}} {{rpg}} {{mpg}} {{fg_pct}} {{three_pt_pct}} {{highlight_url}} {{athlete_email}} {{parent_name}} {{parent_email}}'}
                   </p>
                 </div>
               </>
@@ -1961,7 +1961,7 @@ localhustle.org/recruit/${a.slug || ''}${parentLine}`
                         .replace(/\{\{ppg\}\}/g, athlete?.ppg || '')
                         .replace(/\{\{rpg\}\}/g, athlete?.rpg || '')
                         .replace(/\{\{mpg\}\}/g, athlete?.mpg || '')
-                        .replace(/\{\{two_pt_pct\}\}/g, athlete?.twoPtPct || '')
+                        .replace(/\{\{fg_pct\}\}/g, athlete?.fgPct || '')
                         .replace(/\{\{three_pt_pct\}\}/g, athlete?.threePtPct || '')
                         .replace(/\{\{highlight_url\}\}/g, athlete?.highlightUrl || '')
                         .replace(/\{\{athlete_email\}\}/g, athlete?.email || '')

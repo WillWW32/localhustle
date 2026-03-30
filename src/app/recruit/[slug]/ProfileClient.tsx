@@ -289,12 +289,19 @@ export default function ProfileClient({ slug }: { slug: string }) {
               <h3 style={{ fontSize: '0.8rem', fontWeight: 'bold', marginBottom: '1rem', textTransform: 'uppercase', color: '#999', letterSpacing: '0.05em' }}>Season Stats</h3>
               {Object.keys(athlete.stats).length > 0 ? (
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                  {Object.entries(athlete.stats).map(([key, value]) => (
+                  {Object.entries(athlete.stats).map(([key, value]) => {
+                    const labels: Record<string, string> = {
+                      ppg: 'PPG', rpg: 'RPG', apg: 'APG', spg: 'SPG', mpg: 'MPG',
+                      fg_pct: 'FG%', three_pt_pct: '3PT%', two_pt_pct: 'FG%',
+                      fgPct: 'FG%', threePct: '3PT%',
+                    }
+                    return (
                     <div key={key} style={{ background: '#f0f0f0', borderRadius: '8px', padding: '0.75rem', textAlign: 'center' }}>
-                      <p style={{ color: '#999', fontSize: '0.625rem', textTransform: 'uppercase', marginBottom: '0.25rem' }}>{key}</p>
+                      <p style={{ color: '#999', fontSize: '0.625rem', textTransform: 'uppercase', marginBottom: '0.25rem' }}>{labels[key] || key.replace(/_/g, ' ')}</p>
                       <p style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'green', marginBottom: 0 }}>{value}</p>
                     </div>
-                  ))}
+                    )
+                  })}
                 </div>
               ) : (
                 <p style={{ color: '#999' }}>No stats added yet</p>

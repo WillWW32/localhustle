@@ -97,7 +97,7 @@ export async function GET(request: NextRequest) {
       ppg: stats.ppg || '',
       rpg: stats.rpg || '',
       threePtPct: stats.three_pt_pct || stats.threePct || '',
-      twoPtPct: stats.two_pt_pct || stats.fgPct || '',
+      fgPct: stats.fg_pct || stats.two_pt_pct || stats.fgPct || '',
       mpg: stats.mpg || '',
       parentName: athleteRow.parent_name || '',
       parentEmail: athleteRow.parent_email || '',
