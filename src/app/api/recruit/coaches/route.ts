@@ -79,8 +79,10 @@ export async function GET(request: NextRequest) {
     }
 
     coaches = (coaches || []).sort((a: any, b: any) => {
-      if (a.state !== b.state) return a.state.localeCompare(b.state)
-      return a.last_name.localeCompare(b.last_name)
+      const stateA = a.state || ''
+      const stateB = b.state || ''
+      if (stateA !== stateB) return stateA.localeCompare(stateB)
+      return (a.last_name || '').localeCompare(b.last_name || '')
     })
 
     // Enrich with status if athleteId was provided
