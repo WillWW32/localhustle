@@ -75,13 +75,13 @@ export default function ReelContainer({ reels, editable = false, onReelsChange }
         {validReels.map((url, i) => {
           const embedUrl = buildEmbedUrl(url)
           return (
-            <div key={i} style={{ borderRadius: '12px', overflow: 'hidden', height: '420px', background: '#f5f5f5' }}>
+            <div key={i} style={{ borderRadius: '12px', overflow: 'hidden', height: '500px', background: '#f5f5f5', position: 'relative' }}>
               <iframe
                 src={embedUrl!}
                 allowFullScreen
                 loading="lazy"
                 title={`Instagram Reel ${i + 1}`}
-                style={{ width: '100%', height: '100%', border: 'none' }}
+                style={{ width: '100%', height: '680px', border: 'none', position: 'absolute', top: '-40px', left: 0 }}
               />
             </div>
           )
