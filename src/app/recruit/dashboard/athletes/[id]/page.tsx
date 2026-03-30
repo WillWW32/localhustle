@@ -4117,10 +4117,10 @@ localhustle.org/recruit/${a.slug || ''}${parentLine}`
 }
 
 function MarchMadnessBlast({ athleteId }: { athleteId: string }) {
-  const [preview, setPreview] = useState<{ eligibleToContact: number; uniqueSchools: number; schools: string[] } | null>(null)
+  const [preview, setPreview] = useState<{ eligibleToContact: number; uniqueSchools: number; alreadyContacted: number; blastStats: { sent: number; delivered: number; opened: number; replied: number } } | null>(null)
   const [loading, setLoading] = useState(false)
   const [sending, setSending] = useState(false)
-  const [result, setResult] = useState<{ emailsSent: number; dmQueued: number; emailsFailed: number } | null>(null)
+  const [result, setResult] = useState<{ emailsSent: number; dmQueued: number; emailsFailed: number; message?: string } | null>(null)
   const [batchSize, setBatchSize] = useState(50)
 
   const loadPreview = async () => {
@@ -4134,7 +4134,7 @@ function MarchMadnessBlast({ athleteId }: { athleteId: string }) {
   }
 
   const sendBlast = async () => {
-    if (!confirm(`Send March Madness congrats to ${batchSize} D1 coaches? This will send real emails.`)) return
+    if (!confirm(`Send March Madness congrats to ${batchSize === 999 ? (preview?.eligibleToContact ?? 'all') : batchSize} D1 coaches? This will send real emails.`)) return
     setSending(true)
     try {
       const res = await fetch('/api/recruit/march-madness-blast', {
@@ -4148,33 +4148,78 @@ function MarchMadnessBlast({ athleteId }: { athleteId: string }) {
     setSending(false)
   }
 
+  const [blastStats, setBlastStats] = useState<{ sent: number; delivered: number; opened: number; replied: number } | null>(null)
+
+  useEffect(() => {
+    fetch(`/api/recruit/march-madness-blast?athleteId=${athleteId}`)
+      .then(r => r.json())
+      .then(d => { if (d.blastStats) setBlastStats(d.blastStats) })
+      .catch(() => {})
+  }, [athleteId])
+
   if (result) {
+    const totalSent = (blastStats?.sent || 0) + (result.emailsSent || 0)
     return (
-      <div style={{ background: '#e8f5e9', borderRadius: '8px', padding: '1rem' }}>
-        <p style={{ fontWeight: 'bold', color: '#2e7d32', marginBottom: '0.25rem' }}>Blast sent!</p>
-        <p style={{ fontSize: '0.85rem', color: '#333', margin: 0 }}>
-          {result.emailsSent} emails sent &bull; {result.dmQueued} DMs queued &bull; {result.emailsFailed} failed
-        </p>
-        <button onClick={() => { setResult(null); setPreview(null) }} style={{ marginTop: '0.75rem', fontSize: '0.75rem', color: '#2e7d32', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0 }}>
-          Send another batch
+      <div>
+        <div style={{ background: '#e8f5e9', borderRadius: '8px', padding: '1rem', marginBottom: '0.75rem' }}>
+          <p style={{ fontWeight: 'bold', color: '#2e7d32', marginBottom: '0.5rem' }}>
+            {result.emailsSent > 0 ? `Blast sent!` : result.message || 'No emails sent'}
+          </p>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem' }}>
+            {[
+              { label: 'Emails Sent', value: result.emailsSent ?? 0 },
+              { label: 'DMs Queued', value: result.dmQueued ?? 0 },
+              { label: 'Failed', value: result.emailsFailed ?? 0 },
+            ].map((s, i) => (
+              <div key={i} style={{ textAlign: 'center', background: 'white', borderRadius: '8px', padding: '0.5rem' }}>
+                <p style={{ fontWeight: 'bold', fontSize: '1.25rem', margin: '0 0 0.125rem', color: s.label === 'Failed' && s.value > 0 ? '#c62828' : '#2e7d32' }}>{s.value}</p>
+                <p style={{ fontSize: '0.65rem', color: '#999', textTransform: 'uppercase', margin: 0 }}>{s.label}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+        {totalSent > 0 && (
+          <div style={{ background: '#f5f5f5', borderRadius: '8px', padding: '0.75rem 1rem', marginBottom: '0.75rem', fontSize: '0.8rem', color: '#555' }}>
+            <strong>All-time blast:</strong> {totalSent} sent &bull; {(blastStats?.delivered || 0)} delivered &bull; {(blastStats?.opened || 0)} opened &bull; {(blastStats?.replied || 0)} replied
+          </div>
+        )}
+        <button onClick={() => { setResult(null); setPreview(null) }} style={{ fontSize: '0.75rem', color: '#e65100', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0 }}>
+          Send another batch →
         </button>
       </div>
     )
   }
 
+  const statsBar = blastStats && blastStats.sent > 0 ? (
+    <div style={{ background: '#f5f5f5', borderRadius: '8px', padding: '0.6rem 1rem', marginBottom: '0.75rem', fontSize: '0.8rem', color: '#555', display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+      <span><strong>{blastStats.sent}</strong> sent</span>
+      <span><strong>{blastStats.delivered}</strong> delivered</span>
+      <span><strong>{blastStats.opened}</strong> opened</span>
+      <span><strong>{blastStats.replied}</strong> replied</span>
+    </div>
+  ) : null
+
   if (!preview) {
     return (
-      <button onClick={loadPreview} disabled={loading} className="dash-btn" style={{ background: '#e65100', borderColor: '#e65100', fontSize: '0.875rem' }}>
-        {loading ? 'Loading...' : 'Preview Blast'}
-      </button>
+      <div>
+        {statsBar}
+        <button onClick={loadPreview} disabled={loading} className="dash-btn" style={{ background: '#e65100', borderColor: '#e65100', fontSize: '0.875rem' }}>
+          {loading ? 'Loading...' : 'Preview Blast'}
+        </button>
+      </div>
     )
   }
 
   return (
     <div>
+      {statsBar}
       <div style={{ background: '#fff3e0', borderRadius: '8px', padding: '0.75rem 1rem', marginBottom: '0.75rem' }}>
-        <p style={{ fontWeight: 'bold', fontSize: '0.9rem', margin: '0 0 0.25rem' }}>{preview.eligibleToContact} coaches eligible across {preview.uniqueSchools} D1 programs</p>
-        <p style={{ fontSize: '0.78rem', color: '#666', margin: 0 }}>All uncontacted D1 coaches with email addresses. DMs queued for those with X handles.</p>
+        <p style={{ fontWeight: 'bold', fontSize: '0.9rem', margin: '0 0 0.25rem' }}>
+          {preview.eligibleToContact} coaches eligible across {preview.uniqueSchools} D1 programs
+        </p>
+        <p style={{ fontSize: '0.78rem', color: '#666', margin: 0 }}>
+          {preview.alreadyContacted} already contacted. DMs queued for coaches with X handles.
+        </p>
       </div>
       <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
         <select
@@ -4188,8 +4233,8 @@ function MarchMadnessBlast({ athleteId }: { athleteId: string }) {
           <option value={200}>200 coaches</option>
           <option value={999}>All ({preview.eligibleToContact})</option>
         </select>
-        <button onClick={sendBlast} disabled={sending} className="dash-btn" style={{ background: '#e65100', borderColor: '#e65100', fontSize: '0.875rem' }}>
-          {sending ? 'Sending...' : `Send to ${batchSize === 999 ? preview.eligibleToContact : batchSize} Coaches`}
+        <button onClick={sendBlast} disabled={sending || preview.eligibleToContact === 0} className="dash-btn" style={{ background: '#e65100', borderColor: '#e65100', fontSize: '0.875rem' }}>
+          {sending ? 'Sending...' : preview.eligibleToContact === 0 ? 'All sent!' : `Send to ${batchSize === 999 ? preview.eligibleToContact : batchSize} Coaches`}
         </button>
       </div>
     </div>

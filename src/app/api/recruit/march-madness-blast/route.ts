@@ -63,12 +63,27 @@ export async function GET(request: NextRequest) {
     schoolCounts[c.school] = (schoolCounts[c.school] || 0) + 1
   }
 
+  // Delivery stats for previously sent blast messages
+  const { data: blastMessages } = await supabaseAdmin
+    .from('messages')
+    .select('status')
+    .eq('athlete_id', athleteId)
+    .like('subject', 'Coach % — what a run, %')
+
+  const blastStats = {
+    sent: blastMessages?.length || 0,
+    delivered: blastMessages?.filter((m: { status: string }) => ['delivered', 'opened', 'replied'].includes(m.status)).length || 0,
+    opened: blastMessages?.filter((m: { status: string }) => ['opened', 'replied'].includes(m.status)).length || 0,
+    replied: blastMessages?.filter((m: { status: string }) => m.status === 'replied').length || 0,
+  }
+
   return NextResponse.json({
     totalD1Coaches: d1Coaches?.length || 0,
     alreadyContacted: contactedIds.size,
     eligibleToContact: eligible.length,
     uniqueSchools: Object.keys(schoolCounts).length,
     schools: Object.keys(schoolCounts).sort(),
+    blastStats,
   })
 }
 
@@ -124,7 +139,7 @@ export async function POST(request: NextRequest) {
     const eligible = (d1Coaches || []).filter((c: { id: string; school: string }) => !contactedIds.has(c.id)).slice(0, maxEmails)
 
     if (eligible.length === 0) {
-      return NextResponse.json({ success: true, emailsSent: 0, dmQueued: 0, message: 'No eligible coaches remaining' })
+      return NextResponse.json({ success: true, emailsSent: 0, emailsFailed: 0, dmQueued: 0, message: 'No eligible coaches remaining' })
     }
 
     const results = { emailsSent: 0, emailsFailed: 0, dmQueued: 0, coaches: [] as string[] }
