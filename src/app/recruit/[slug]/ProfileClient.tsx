@@ -19,6 +19,7 @@ interface AthleteProfile {
   stats: Record<string, string>
   achievements: string[]
   highlightUrl: string
+  hudlUrl: string
   viewCount: number
   isPrivate: boolean
   athleteId: string
@@ -77,6 +78,7 @@ export default function ProfileClient({ slug }: { slug: string }) {
           stats: data.profile.stats || {},
           achievements: data.profile.achievements || [],
           highlightUrl: data.profile.highlightUrl || '',
+          hudlUrl: data.profile.hudlUrl || '',
           viewCount: data.profile.viewCount || 0,
           isPrivate: data.profile.isPrivate || false,
           athleteId: data.profile.athleteId,
@@ -309,10 +311,46 @@ export default function ProfileClient({ slug }: { slug: string }) {
             {athlete.highlightUrl && (
               <div>
                 <h2 style={{ fontSize: '1.125rem', marginBottom: '0.75rem' }}>Highlight Video</h2>
-                <div style={{ background: '#f5f5f5', borderRadius: '12px', padding: '3rem', textAlign: 'center' }}>
-                  <p style={{ color: '#666', marginBottom: '0.75rem' }}>Game Highlights</p>
-                  <a href={athlete.highlightUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'green', fontWeight: 'bold' }}>
-                    Watch Full Video on HUDL &rarr;
+                {athlete.highlightUrl.includes('drive.google.com') ? (
+                  <div style={{ borderRadius: '12px', overflow: 'hidden', aspectRatio: '16/9' }}>
+                    <iframe
+                      src={athlete.highlightUrl.replace('/view', '/preview')}
+                      width="100%"
+                      height="100%"
+                      style={{ border: 'none', borderRadius: '12px' }}
+                      allow="autoplay"
+                      allowFullScreen
+                    />
+                  </div>
+                ) : athlete.highlightUrl.includes('youtube.com') || athlete.highlightUrl.includes('youtu.be') ? (
+                  <div style={{ borderRadius: '12px', overflow: 'hidden', aspectRatio: '16/9' }}>
+                    <iframe
+                      src={athlete.highlightUrl.replace('watch?v=', 'embed/').replace('youtu.be/', 'youtube.com/embed/')}
+                      width="100%"
+                      height="100%"
+                      style={{ border: 'none', borderRadius: '12px' }}
+                      allow="autoplay; encrypted-media"
+                      allowFullScreen
+                    />
+                  </div>
+                ) : (
+                  <div style={{ background: '#f5f5f5', borderRadius: '12px', padding: '3rem', textAlign: 'center' }}>
+                    <p style={{ color: '#666', marginBottom: '0.75rem' }}>Game Highlights</p>
+                    <a href={athlete.highlightUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'green', fontWeight: 'bold' }}>
+                      See Highlights &rarr;
+                    </a>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Hudl Profile */}
+            {athlete.hudlUrl && (
+              <div>
+                <h2 style={{ fontSize: '1.125rem', marginBottom: '0.75rem' }}>Hudl Profile</h2>
+                <div style={{ background: '#f5f5f5', borderRadius: '12px', padding: '2rem', textAlign: 'center' }}>
+                  <a href={athlete.hudlUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#FF6B00', fontWeight: 'bold', fontSize: '1rem' }}>
+                    View Full Hudl Profile &rarr;
                   </a>
                 </div>
               </div>

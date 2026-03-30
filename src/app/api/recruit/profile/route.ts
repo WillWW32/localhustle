@@ -120,6 +120,7 @@ export async function GET(request: NextRequest) {
       stats: athleteRow.stats || {},
       achievements: profile.achievements || [],
       highlightUrl: athleteRow.highlight_url || '',
+      hudlUrl: athleteRow.hudl_url || '',
       viewCount: (profile.views || 0) + 1,
       isPrivate: profile.visibility === 'private',
       athleteId: athleteRow.id,
