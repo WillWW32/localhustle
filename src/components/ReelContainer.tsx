@@ -71,16 +71,17 @@ export default function ReelContainer({ reels, editable = false, onReelsChange }
     if (validReels.length === 0) return null
 
     return (
-      <div className="reel-container">
+      <div style={{ display: 'grid', gridTemplateColumns: `repeat(${validReels.length}, 1fr)`, gap: '0.75rem' }}>
         {validReels.map((url, i) => {
           const embedUrl = buildEmbedUrl(url)
           return (
-            <div key={i} className="reel-slot reel-slot-filled">
+            <div key={i} style={{ borderRadius: '12px', overflow: 'hidden', height: '480px', background: '#f5f5f5' }}>
               <iframe
                 src={embedUrl!}
                 allowFullScreen
                 loading="lazy"
                 title={`Instagram Reel ${i + 1}`}
+                style={{ width: '100%', height: '100%', border: 'none' }}
               />
             </div>
           )
