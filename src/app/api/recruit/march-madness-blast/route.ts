@@ -42,7 +42,7 @@ const TOURNAMENT_2026_PATTERNS: RegExp[] = [
   /\bvillanova\b/,
   /utah state/,
   /\bmissouri\b/,
-  /\btexas\b(?! a&m| tech| state| southern| pan)/,
+  /\btexas\b(?! a&m| tech| state| southern| pan| rio| el paso| arlington| san antonio| dallas| permian)/,
   /high point/,
   /\bhawaii\b/,
   /kennesaw state/,
