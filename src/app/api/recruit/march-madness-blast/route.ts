@@ -279,17 +279,18 @@ export async function POST(request: NextRequest) {
         // Queue DM if they have an X handle
         if (coach.x_handle) {
           const dmText = DM_BODY(coach.last_name, coach.school, PROFILE_URL)
-          await supabaseAdmin.from('x_engagement_queue').insert({
-            athlete_id: athleteId,
-            coach_id: coach.id,
-            coach_x_handle: coach.x_handle,
-            dm_text: dmText,
-            engagement_type: 'dm_only',
-            dm_at: new Date().toISOString(),
-            status: 'pending',
-          }).catch(() => {}) // skip if already queued
-
-          results.dmQueued++
+          try {
+            await supabaseAdmin.from('x_engagement_queue').insert({
+              athlete_id: athleteId,
+              coach_id: coach.id,
+              coach_x_handle: coach.x_handle,
+              dm_text: dmText,
+              engagement_type: 'dm_only',
+              dm_at: new Date().toISOString(),
+              status: 'pending',
+            })
+            results.dmQueued++
+          } catch {} // skip if already queued
         }
 
         // Brief pause to avoid rate limiting
