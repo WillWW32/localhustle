@@ -32,7 +32,7 @@ export default function ReelContainer({ reels, editable = false, onReelsChange }
   const [inputUrl, setInputUrl] = useState('')
   const [error, setError] = useState('')
 
-  const maxSlots = 3
+  const maxSlots = 4
 
   const handleAdd = () => {
     setError('')
@@ -71,11 +71,11 @@ export default function ReelContainer({ reels, editable = false, onReelsChange }
     if (validReels.length === 0) return null
 
     return (
-      <div style={{ display: 'grid', gridTemplateColumns: `repeat(${validReels.length}, 1fr)`, gap: '0.75rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.75rem' }}>
         {validReels.map((url, i) => {
           const embedUrl = buildEmbedUrl(url)
           return (
-            <div key={i} style={{ borderRadius: '12px', overflow: 'hidden', height: '480px', background: '#f5f5f5' }}>
+            <div key={i} style={{ borderRadius: '12px', overflow: 'hidden', height: '420px', background: '#f5f5f5' }}>
               <iframe
                 src={embedUrl!}
                 allowFullScreen
