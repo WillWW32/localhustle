@@ -321,7 +321,7 @@ export default function ProfileClient({ slug }: { slug: string }) {
                 {athlete.highlightUrl.includes('drive.google.com') ? (
                   <div style={{ borderRadius: '12px', overflow: 'hidden', aspectRatio: '16/9' }}>
                     <iframe
-                      src={athlete.highlightUrl.replace('/view', '/preview')}
+                      src={`https://drive.google.com/file/d/${athlete.highlightUrl.match(/\/d\/([a-zA-Z0-9_-]+)/)?.[1] || ''}/preview`}
                       width="100%"
                       height="100%"
                       style={{ border: 'none', borderRadius: '12px' }}
@@ -342,7 +342,7 @@ export default function ProfileClient({ slug }: { slug: string }) {
                   </div>
                 ) : (
                   <div style={{ background: '#f5f5f5', borderRadius: '12px', padding: '3rem', textAlign: 'center' }}>
-                    <p style={{ color: '#666', marginBottom: '0.75rem' }}>Game Highlights</p>
+                    <p style={{ color: '#666', marginBottom: '0.75rem' }}>Highlights</p>
                     <a href={athlete.highlightUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'green', fontWeight: 'bold' }}>
                       See Highlights &rarr;
                     </a>
