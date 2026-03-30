@@ -55,8 +55,8 @@ export async function GET(request: NextRequest) {
     .eq('type', 'email')
     .not('status', 'eq', 'failed')
 
-  const contactedIds = new Set((contacted || []).map(m => m.coach_id))
-  const eligible = (d1Coaches || []).filter(c => !contactedIds.has(c.id))
+  const contactedIds = new Set((contacted || []).map((m: { coach_id: string }) => m.coach_id))
+  const eligible = (d1Coaches || []).filter((c: { id: string; school: string }) => !contactedIds.has(c.id))
 
   const schoolCounts: Record<string, number> = {}
   for (const c of eligible) {
@@ -120,8 +120,8 @@ export async function POST(request: NextRequest) {
       .eq('type', 'email')
       .not('status', 'eq', 'failed')
 
-    const contactedIds = new Set((contacted || []).map(m => m.coach_id))
-    const eligible = (d1Coaches || []).filter(c => !contactedIds.has(c.id)).slice(0, maxEmails)
+    const contactedIds = new Set((contacted || []).map((m: { coach_id: string }) => m.coach_id))
+    const eligible = (d1Coaches || []).filter((c: { id: string; school: string }) => !contactedIds.has(c.id)).slice(0, maxEmails)
 
     if (eligible.length === 0) {
       return NextResponse.json({ success: true, emailsSent: 0, dmQueued: 0, message: 'No eligible coaches remaining' })
@@ -143,7 +143,7 @@ export async function POST(request: NextRequest) {
         try {
           const sent = await resend.emails.send({
             from: `${fromName} <${fromEmail}>`,
-            reply_to: replyTo,
+            replyTo: replyTo,
             to: coach.email,
             subject,
             text: bodyText,
