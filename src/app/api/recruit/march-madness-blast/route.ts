@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabaseClient'
 import { resend } from '@/lib/resend'
 
+export const maxDuration = 300 // 5 min — needed for large batch sends
+
 // POST /api/recruit/march-madness-blast
 // Sends a March Madness congrats email + queues DM to all D1 coaches in the database
 // who haven't been contacted yet by this athlete.
@@ -202,7 +204,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Brief pause to avoid rate limiting
-        await new Promise(r => setTimeout(r, 500))
+        await new Promise(r => setTimeout(r, 100))
       } else {
         results.coaches.push(`${coach.first_name} ${coach.last_name} — ${coach.school} <${coach.email}>`)
       }
