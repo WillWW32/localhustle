@@ -318,7 +318,20 @@ export default function ProfileClient({ slug }: { slug: string }) {
             {athlete.highlightUrl && (
               <div>
                 <h2 style={{ fontSize: '1.125rem', marginBottom: '0.75rem' }}>Highlight Video</h2>
-                {athlete.highlightUrl.includes('drive.google.com') ? (
+                {athlete.highlightUrl.endsWith('.mp4') || athlete.highlightUrl.includes('supabase.co/storage') ? (
+                  <div style={{ borderRadius: '12px', overflow: 'hidden' }}>
+                    <video
+                      controls
+                      playsInline
+                      preload="metadata"
+                      poster=""
+                      style={{ width: '100%', borderRadius: '12px', background: '#000' }}
+                    >
+                      <source src={athlete.highlightUrl} type="video/mp4" />
+                      Your browser does not support the video tag.
+                    </video>
+                  </div>
+                ) : athlete.highlightUrl.includes('drive.google.com') ? (
                   <div style={{ borderRadius: '12px', overflow: 'hidden', aspectRatio: '16/9' }}>
                     <iframe
                       src={`https://drive.google.com/file/d/${athlete.highlightUrl.match(/\/d\/([a-zA-Z0-9_-]+)/)?.[1] || ''}/preview`}
@@ -342,9 +355,8 @@ export default function ProfileClient({ slug }: { slug: string }) {
                   </div>
                 ) : (
                   <div style={{ background: '#f5f5f5', borderRadius: '12px', padding: '3rem', textAlign: 'center' }}>
-                    <p style={{ color: '#666', marginBottom: '0.75rem' }}>Highlights</p>
                     <a href={athlete.highlightUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'green', fontWeight: 'bold' }}>
-                      See Highlights &rarr;
+                      Watch Highlights &rarr;
                     </a>
                   </div>
                 )}
