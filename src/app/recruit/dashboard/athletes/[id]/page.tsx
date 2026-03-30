@@ -1829,6 +1829,19 @@ localhustle.org/recruit/${a.slug || ''}${parentLine}`
       {/* ══ CAMPAIGN TAB ══ */}
       {currentTab === 'campaign' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+
+          {/* March Madness Blast */}
+          <div className="dash-card" style={{ borderColor: '#e65100', borderWidth: '2px', background: '#fff8f5' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+              <h3 style={{ fontSize: '1.125rem', marginBottom: 0, color: '#e65100' }}>March Madness Blast</h3>
+              <span style={{ fontSize: '0.7rem', fontWeight: 'bold', background: '#e65100', color: 'white', padding: '0.2rem 0.6rem', borderRadius: '9999px' }}>LIMITED TIME</span>
+            </div>
+            <p style={{ color: '#555', fontSize: '0.85rem', marginBottom: '1rem' }}>
+              Send a personal congrats email + queue DMs to all D1 coaches in the tournament. Personalized by school — fires immediately.
+            </p>
+            <MarchMadnessBlast athleteId={athlete.id} />
+          </div>
+
           {/* Status + Stats Row */}
           <div className="dash-card">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
@@ -4099,6 +4112,86 @@ localhustle.org/recruit/${a.slug || ''}${parentLine}`
           </div>
         </div>
       )}
+    </div>
+  )
+}
+
+function MarchMadnessBlast({ athleteId }: { athleteId: string }) {
+  const [preview, setPreview] = useState<{ eligibleToContact: number; uniqueSchools: number; schools: string[] } | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [sending, setSending] = useState(false)
+  const [result, setResult] = useState<{ emailsSent: number; dmQueued: number; emailsFailed: number } | null>(null)
+  const [batchSize, setBatchSize] = useState(50)
+
+  const loadPreview = async () => {
+    setLoading(true)
+    try {
+      const res = await fetch(`/api/recruit/march-madness-blast?athleteId=${athleteId}`)
+      const data = await res.json()
+      setPreview(data)
+    } catch {}
+    setLoading(false)
+  }
+
+  const sendBlast = async () => {
+    if (!confirm(`Send March Madness congrats to ${batchSize} D1 coaches? This will send real emails.`)) return
+    setSending(true)
+    try {
+      const res = await fetch('/api/recruit/march-madness-blast', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ athleteId, maxEmails: batchSize }),
+      })
+      const data = await res.json()
+      setResult(data)
+    } catch {}
+    setSending(false)
+  }
+
+  if (result) {
+    return (
+      <div style={{ background: '#e8f5e9', borderRadius: '8px', padding: '1rem' }}>
+        <p style={{ fontWeight: 'bold', color: '#2e7d32', marginBottom: '0.25rem' }}>Blast sent!</p>
+        <p style={{ fontSize: '0.85rem', color: '#333', margin: 0 }}>
+          {result.emailsSent} emails sent &bull; {result.dmQueued} DMs queued &bull; {result.emailsFailed} failed
+        </p>
+        <button onClick={() => { setResult(null); setPreview(null) }} style={{ marginTop: '0.75rem', fontSize: '0.75rem', color: '#2e7d32', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0 }}>
+          Send another batch
+        </button>
+      </div>
+    )
+  }
+
+  if (!preview) {
+    return (
+      <button onClick={loadPreview} disabled={loading} className="dash-btn" style={{ background: '#e65100', borderColor: '#e65100', fontSize: '0.875rem' }}>
+        {loading ? 'Loading...' : 'Preview Blast'}
+      </button>
+    )
+  }
+
+  return (
+    <div>
+      <div style={{ background: '#fff3e0', borderRadius: '8px', padding: '0.75rem 1rem', marginBottom: '0.75rem' }}>
+        <p style={{ fontWeight: 'bold', fontSize: '0.9rem', margin: '0 0 0.25rem' }}>{preview.eligibleToContact} coaches eligible across {preview.uniqueSchools} D1 programs</p>
+        <p style={{ fontSize: '0.78rem', color: '#666', margin: 0 }}>All uncontacted D1 coaches with email addresses. DMs queued for those with X handles.</p>
+      </div>
+      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+        <select
+          value={batchSize}
+          onChange={e => setBatchSize(Number(e.target.value))}
+          style={{ padding: '0.5rem', borderRadius: '8px', border: '1px solid #ddd', fontSize: '0.875rem', fontFamily: 'inherit' }}
+        >
+          <option value={25}>25 coaches</option>
+          <option value={50}>50 coaches</option>
+          <option value={100}>100 coaches</option>
+          <option value={200}>200 coaches</option>
+          <option value={999}>All ({preview.eligibleToContact})</option>
+        </select>
+        <button onClick={sendBlast} disabled={sending} className="dash-btn" style={{ background: '#e65100', borderColor: '#e65100', fontSize: '0.875rem' }}>
+          {sending ? 'Sending...' : `Send to ${batchSize === 999 ? preview.eligibleToContact : batchSize} Coaches`}
+        </button>
+      </div>
     </div>
   )
 }
