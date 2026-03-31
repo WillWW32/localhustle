@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabaseClient'
 import { refreshAccessToken } from '@/lib/recruit/x-oauth'
 
-const MAX_ENGAGEMENTS_PER_HOUR = 10
-const MAX_DMS_PER_DAY = 20
+const MAX_ENGAGEMENTS_PER_HOUR = 50
+const MAX_DMS_PER_DAY = 50
 
 // Basketball-specific reply comments for warm engagement
 const REPLY_COMMENTS = [
