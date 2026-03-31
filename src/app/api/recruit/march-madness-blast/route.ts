@@ -284,8 +284,7 @@ export async function POST(request: NextRequest) {
               athlete_id: athleteId,
               coach_id: coach.id,
               coach_x_handle: coach.x_handle,
-              dm_text: dmText,
-              engagement_type: 'dm_only',
+              dm_message: dmText,
               dm_at: new Date().toISOString(),
               status: 'pending',
             })

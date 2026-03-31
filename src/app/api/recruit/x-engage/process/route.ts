@@ -371,8 +371,10 @@ export async function POST(request: NextRequest) {
       results.engagements.skipped = engageQueue.length - engagementsRemaining
     }
 
-    // --- Phase 2: Process DMs for engaged coaches ---
-    // Find entries where status='engaged' and dm_at <= now
+    // --- Phase 2: Process DMs ---
+    // Sends DMs for:
+    //   a) entries with status='engaged' (went through warm engagement first)
+    //   b) entries with status='queued' that have dm_at <= now AND dm_message set (dm_only flow)
     const todayStart = new Date()
     todayStart.setHours(0, 0, 0, 0)
 
@@ -386,13 +388,26 @@ export async function POST(request: NextRequest) {
 
     const dmsRemaining = Math.max(0, MAX_DMS_PER_DAY - (dmsSentToday || 0))
 
-    const { data: dmQueue, error: dmError } = await supabaseAdmin
+    // Fetch both engaged and dm_only queued entries
+    const { data: engagedDmQueue } = await supabaseAdmin
       .from('x_engagement_queue')
       .select('*')
       .eq('status', 'engaged')
       .lte('dm_at', now.toISOString())
       .order('dm_at', { ascending: true })
       .limit(dmsRemaining)
+
+    const { data: directDmQueue } = await supabaseAdmin
+      .from('x_engagement_queue')
+      .select('*')
+      .eq('status', 'queued')
+      .not('dm_message', 'is', null)
+      .lte('dm_at', now.toISOString())
+      .order('dm_at', { ascending: true })
+      .limit(dmsRemaining)
+
+    const dmQueue = [...(engagedDmQueue || []), ...(directDmQueue || [])].slice(0, dmsRemaining)
+    const dmError = null
 
     if (dmError) {
       console.error('Failed to fetch DM queue:', dmError)
