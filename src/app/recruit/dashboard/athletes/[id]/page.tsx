@@ -3843,7 +3843,14 @@ localhustle.org/recruit/${a.slug || ''}${parentLine}`
                 {athlete.xConnected ? '↻ Reconnect X Account' : 'Connect X Account'}
               </a>
               {athlete.xConnected && (
-                <button style={{ color: '#999', fontSize: '0.8rem', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>
+                <button
+                  style={{ color: '#999', fontSize: '0.8rem', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}
+                  onClick={async () => {
+                    if (!confirm('Disconnect X account? You can reconnect anytime.')) return
+                    await fetch('/api/auth/x/disconnect', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ athleteId: athlete.id }) })
+                    window.location.reload()
+                  }}
+                >
                   Disconnect
                 </button>
               )}
