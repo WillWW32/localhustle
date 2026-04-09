@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabaseClient'
 import { resend } from '@/lib/resend'
-import { renderTemplate, buildContext } from '@/lib/recruit/template-engine'
+import { renderTemplate, buildContext, textToHtml } from '@/lib/recruit/template-engine'
 
 // POST /api/recruit/outreach-send
 // Send a specific queued outreach email
@@ -71,6 +71,7 @@ export async function POST(request: NextRequest) {
       to: coach.email,
       subject: personalizedSubject,
       text: personalizedBody,
+      html: textToHtml(personalizedBody),
     })
 
     const now = new Date()

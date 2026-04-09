@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabaseClient'
 import { resend } from '@/lib/resend'
-import { renderTemplate, buildContext } from '@/lib/recruit/template-engine'
+import { renderTemplate, buildContext, textToHtml } from '@/lib/recruit/template-engine'
 
 export const maxDuration = 300
 
@@ -141,6 +141,7 @@ export async function POST(request: NextRequest) {
             to: coach.email,
             subject,
             text: bodyText,
+            html: textToHtml(bodyText),
           })
 
           const resendId = sent.data?.id || null

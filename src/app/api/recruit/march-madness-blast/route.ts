@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabaseClient'
 import { resend } from '@/lib/resend'
+import { textToHtml } from '@/lib/recruit/template-engine'
 
 export const maxDuration = 300 // 5 min — needed for large batch sends
 
@@ -253,6 +254,7 @@ export async function POST(request: NextRequest) {
             to: coach.email,
             subject,
             text: bodyText,
+            html: textToHtml(bodyText),
           })
 
           await supabaseAdmin.from('messages').insert({

@@ -62,17 +62,14 @@ export async function GET(request: NextRequest) {
 
   const stats = athleteRow.stats || {}
 
-  // Check if X is connected via OAuth tokens table (in addition to x_handle on athlete)
-  let xConnected = !!athleteRow.x_handle
-  if (!xConnected) {
-    const { data: xToken } = await supabaseAdmin
-      .from('x_oauth_tokens')
-      .select('id')
-      .eq('athlete_id', id)
-      .limit(1)
-      .single()
-    xConnected = !!xToken
-  }
+  // xConnected = OAuth token exists (not just x_handle on athlete row)
+  const { data: xToken } = await supabaseAdmin
+    .from('x_oauth_tokens')
+    .select('id')
+    .eq('athlete_id', id)
+    .limit(1)
+    .single()
+  const xConnected = !!xToken
 
   return NextResponse.json({
     athlete: {

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabaseClient'
 import { resend } from '@/lib/resend'
+import { textToHtml } from '@/lib/recruit/template-engine'
 
 // Follow-up email templates by step number
 function getFollowUpBody(
@@ -107,6 +108,7 @@ export async function GET(request: NextRequest) {
           to: coach.email,
           subject: followUpSubject,
           text: followUpBody,
+          html: textToHtml(followUpBody),
         })
 
         const nextStep = step + 1

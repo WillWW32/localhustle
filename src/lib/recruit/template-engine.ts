@@ -1,5 +1,21 @@
 // Simple {{variable}} template engine for emails and DMs
 
+/**
+ * Convert plain-text email body to minimal HTML so Resend can inject
+ * open-tracking pixel and click-tracking links.
+ * Preserves whitespace/line breaks visually without changing the reading experience.
+ */
+export function textToHtml(text: string): string {
+  const escaped = text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    // Linkify bare URLs
+    .replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" style="color:#1a73e8">$1</a>')
+  const lines = escaped.split('\n').map(l => l || '&nbsp;').join('<br>')
+  return `<!DOCTYPE html><html><body style="font-family:Arial,sans-serif;font-size:14px;line-height:1.6;color:#222;max-width:600px;margin:0 auto;padding:20px">${lines}</body></html>`
+}
+
 interface TemplateContext {
   athlete_first: string
   athlete_last: string
