@@ -455,7 +455,7 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
   // Build a default template pre-populated with athlete data
   const buildDefaultTemplate = (a: AthleteProfile) => {
     const subject = `${a.firstName} ${a.lastName} - ${a.gradYear} ${a.position} interested in {{school}}`
-    const parentLine = a.parentName ? `\n\nMy father, ${a.parentName}, can also be reached at ${a.parentEmail || '{{parent_email}}'}` : ''
+    const parentLine = a.parentName ? `\n\nMy dad, ${a.parentName}, can also be reached at ${a.parentEmail || '{{parent_email}}'}` : ''
     const body = `Coach {{coach_last}},
 
 I know recruiting season keeps you busy, so I'll keep this brief. My name is ${a.firstName} ${a.lastName}. I'm a ${a.height}, ${a.weight} lb ${a.position} from ${a.highSchool} in ${a.city}, ${a.state}, Class of ${a.gradYear}, and a coach's son.
@@ -472,6 +472,7 @@ Thank you for your time, Coach {{coach_last}}.
 
 Respectfully,
 ${a.firstName} ${a.lastName}
+406-218-0765
 ${a.email || ''}
 localhustle.org/recruit/${a.slug || ''}${parentLine}`
     return { subject, body }

@@ -111,8 +111,9 @@ I'd love to be considered for your program. I'm open to a call or campus visit w
 Film + full profile: ${profileUrl}
 
 Josiah "Siah" Boone
+406-218-0765
 josiah.boone@localhustle.org
-(406) available on request`
+${profileUrl}`
 
 const DM_BODY = (coachLast: string, school: string, profileUrl: string) =>
   `Coach ${coachLast} — incredible tournament run at ${school}. I'm Josiah Boone, 6'4" SG/SF, Class of 2026, Missoula MT. 11.6 PPG, 48% FG, 36% 3PT, coach's son. Would love to connect: ${profileUrl}`
