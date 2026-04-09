@@ -10,41 +10,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'athleteId required' }, { status: 400 })
     }
 
-    // Get all campaigns for this athlete
-    const { data: campaigns, error: campError } = await supabaseAdmin
-      .from('campaigns')
-      .select('id')
-      .eq('athlete_id', athleteId)
-
-    if (campError) {
-      return NextResponse.json({ error: campError.message }, { status: 500 })
-    }
-
-    const campaignIds = (campaigns || []).map((c: { id: string }) => c.id)
-
-    if (campaignIds.length === 0) {
-      return NextResponse.json({
-        stats: {
-          totalSent: 0,
-          delivered: 0,
-          opened: 0,
-          clicked: 0,
-          bounced: 0,
-          failed: 0,
-          complained: 0,
-          deliveryRate: 0,
-          openRate: 0,
-          clickRate: 0,
-        },
-        recentIssues: [],
-      })
-    }
-
-    // Get all messages for these campaigns
+    // Get all email messages for this athlete directly (avoids large campaign_id IN query)
     const { data: messages, error: msgError } = await supabaseAdmin
       .from('messages')
       .select('id, coach_id, to_address, status, sent_at, delivered_at, opened_at, type')
-      .in('campaign_id', campaignIds)
+      .eq('athlete_id', athleteId)
       .eq('type', 'email')
       .order('sent_at', { ascending: false })
 
@@ -53,6 +23,17 @@ export async function GET(request: NextRequest) {
     }
 
     const allMessages = messages || []
+
+    if (allMessages.length === 0) {
+      return NextResponse.json({
+        stats: {
+          totalSent: 0, delivered: 0, opened: 0, clicked: 0,
+          bounced: 0, failed: 0, complained: 0,
+          deliveryRate: 0, openRate: 0, clickRate: 0,
+        },
+        recentIssues: [],
+      })
+    }
 
     // Compute stats from message statuses
     const totalSent = allMessages.filter(
@@ -80,14 +61,15 @@ export async function GET(request: NextRequest) {
       coachName: string | null
     }> = []
 
-    // Get message IDs for event lookup
-    const messageIds = allMessages.map((m: { id: string }) => m.id)
+    // Get message IDs for event lookup — limit to most recent 100 to avoid URL length limits
+    const messageIds = allMessages.slice(0, 100).map((m: { id: string }) => m.id)
 
     if (messageIds.length > 0) {
       const { data: events } = await supabaseAdmin
         .from('email_events')
         .select('event_type, recipient, error_message, bounce_type, created_at, message_id')
         .in('message_id', messageIds)
+        .limit(500)
 
       if (events && events.length > 0) {
         // Count unique messages per event type

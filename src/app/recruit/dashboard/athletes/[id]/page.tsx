@@ -1942,7 +1942,7 @@ localhustle.org/recruit/${a.slug || ''}${parentLine}`
                 </div>
                 <div style={{ background: '#f8f9fa', borderRadius: '10px', padding: '1rem 1.25rem' }}>
                   <p style={{ fontSize: '0.7rem', fontWeight: 'bold', color: '#999', textTransform: 'uppercase', marginBottom: '0.5rem' }}>Preview</p>
-                  <pre style={{ fontSize: '0.8rem', color: '#333', margin: 0, whiteSpace: 'pre-wrap', fontFamily: "'Courier New', Courier, monospace", lineHeight: 1.6 }}>
+                  <pre style={{ fontSize: '0.8rem', color: '#333', margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-all', fontFamily: "'Courier New', Courier, monospace", lineHeight: 1.6 }}>
                     {(templateBody || 'No template set. Click "Edit Letter" to create your outreach letter.')
                       .replace(/\{\{school\}\}/g, '[School]')
                       .replace(/\{\{coach_last\}\}/g, '[Coach Name]')
@@ -1968,7 +1968,7 @@ localhustle.org/recruit/${a.slug || ''}${parentLine}`
                         .replace(/\{\{coach_last\}\}/g, 'Williams')
                         .replace(/\{\{coach_first\}\}/g, 'Coach')}</span></p>
                     </div>
-                    <pre style={{ fontSize: '0.8rem', color: '#333', margin: 0, whiteSpace: 'pre-wrap', fontFamily: "'Courier New', Courier, monospace", lineHeight: 1.6 }}>
+                    <pre style={{ fontSize: '0.8rem', color: '#333', margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-all', fontFamily: "'Courier New', Courier, monospace", lineHeight: 1.6 }}>
                       {(templateBody || '')
                         .replace(/\{\{coach_last\}\}/g, 'Williams')
                         .replace(/\{\{coach_first\}\}/g, 'Coach')
