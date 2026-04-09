@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { athleteId, maxEmails = 999, dryRun = false } = body
+    const { athleteId, maxEmails = 999, dryRun = false, forceResend = false } = body
 
     if (!athleteId) return NextResponse.json({ error: 'athleteId required' }, { status: 400 })
 
@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
 
     const contactedIds = new Set((contacted || []).map((m: { coach_id: string }) => m.coach_id))
     const eligible = (coaches || [])
-      .filter((c: any) => !contactedIds.has(c.id))
+      .filter((c: any) => forceResend || !contactedIds.has(c.id))
       .slice(0, maxEmails)
 
     if (eligible.length === 0) {

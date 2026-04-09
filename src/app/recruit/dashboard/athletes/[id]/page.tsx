@@ -4278,14 +4278,15 @@ function FullDbBlast({ athleteId }: { athleteId: string }) {
     setLoading(false)
   }
 
-  const sendBlast = async () => {
-    if (!confirm(`Send initial outreach to ${preview?.eligibleToContact} coaches across D1/D2/D3/NAIA? Follow-ups will be handled automatically.`)) return
+  const sendBlast = async (forceResend = false) => {
+    const count = forceResend ? (preview?.alreadyContacted ?? 0) + (preview?.eligibleToContact ?? 0) : (preview?.eligibleToContact ?? 0)
+    if (!confirm(`${forceResend ? 'Resend updated template to ALL' : 'Send to'} ${count} coaches? ${forceResend ? 'This will re-email previously contacted coaches.' : 'Follow-ups will be handled automatically.'}`) ) return
     setSending(true)
     try {
       const res = await fetch('/api/recruit/full-db-blast', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ athleteId }),
+        body: JSON.stringify({ athleteId, forceResend }),
       })
       const data = await res.json()
       setResult(data)
@@ -4339,14 +4340,22 @@ function FullDbBlast({ athleteId }: { athleteId: string }) {
           ))}
         </div>
       </div>
-      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
         <button
-          onClick={sendBlast}
+          onClick={() => sendBlast(false)}
           disabled={sending || preview.eligibleToContact === 0}
           className="dash-btn"
           style={{ background: '#1976d2', borderColor: '#1976d2', fontSize: '0.875rem' }}
         >
-          {sending ? 'Sending...' : preview.eligibleToContact === 0 ? 'All sent!' : `Send to ${preview.eligibleToContact} Coaches`}
+          {sending ? 'Sending...' : preview.eligibleToContact === 0 ? 'All sent!' : `Send to ${preview.eligibleToContact} New Coaches`}
+        </button>
+        <button
+          onClick={() => sendBlast(true)}
+          disabled={sending}
+          className="dash-btn"
+          style={{ background: '#e65100', borderColor: '#e65100', fontSize: '0.875rem' }}
+        >
+          {sending ? 'Sending...' : '↺ Resend to All'}
         </button>
       </div>
     </div>
