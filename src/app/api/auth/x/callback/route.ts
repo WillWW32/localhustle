@@ -46,6 +46,8 @@ export async function GET(request: NextRequest) {
         access_token: tokenResponse.access_token,
         refresh_token: tokenResponse.refresh_token || null,
         token_expires_at: expiresAt,
+        expires_at: expiresAt,
+        last_refreshed_at: new Date().toISOString(),
         scopes: tokenResponse.scope ? tokenResponse.scope.split(' ') : [],
         connected_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),

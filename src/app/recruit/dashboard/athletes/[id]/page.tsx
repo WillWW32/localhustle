@@ -3843,18 +3843,16 @@ localhustle.org/recruit/${a.slug || ''}${parentLine}`
               <a href={`/api/auth/x/authorize?athleteId=${athlete.id}`} className="dash-btn" style={{ display: 'inline-block', textDecoration: 'none', textAlign: 'center', background: athlete.xConnected ? '#1976d2' : undefined, borderColor: athlete.xConnected ? '#1976d2' : undefined }}>
                 {athlete.xConnected ? '↻ Reconnect X Account' : 'Connect X Account'}
               </a>
-              {athlete.xConnected && (
-                <button
-                  style={{ color: '#999', fontSize: '0.8rem', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}
-                  onClick={async () => {
-                    if (!confirm('Disconnect X account? You can reconnect anytime.')) return
-                    await fetch('/api/auth/x/disconnect', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ athleteId: athlete.id }) })
-                    window.location.reload()
-                  }}
-                >
-                  Disconnect
-                </button>
-              )}
+              <button
+                style={{ color: '#c62828', fontSize: '0.8rem', background: 'none', border: '1px solid #c62828', borderRadius: '6px', cursor: 'pointer', fontFamily: 'inherit', padding: '0.25rem 0.65rem', opacity: athlete.xConnected ? 1 : 0.4 }}
+                onClick={async () => {
+                  if (!confirm('Disconnect X account? You can reconnect anytime.')) return
+                  await fetch('/api/auth/x/disconnect', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ athleteId: athlete.id }) })
+                  window.location.reload()
+                }}
+              >
+                Disconnect X
+              </button>
             </div>
           </div>
 

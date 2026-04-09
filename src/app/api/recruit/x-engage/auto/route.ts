@@ -47,13 +47,17 @@ export async function GET(request: Request) {
 
       if (!sourceUserId) continue
 
-      // Get a valid access token (refresh if needed)
+      // Refresh token proactively — always refresh on cron run to keep refresh token alive
       let accessToken = tokenRow.access_token
       const now = new Date()
-      const expiresAt = new Date(tokenRow.expires_at)
+      const expiresAt = new Date(tokenRow.expires_at || tokenRow.token_expires_at || 0)
+      const shouldRefresh = now >= expiresAt || (expiresAt.getTime() - now.getTime()) < 30 * 60 * 1000 // refresh if <30min left
 
-      if (now >= expiresAt) {
-        if (!tokenRow.refresh_token) continue
+      if (shouldRefresh) {
+        if (!tokenRow.refresh_token) {
+          console.error(`No refresh token for athlete ${athleteId} — re-auth required`)
+          continue
+        }
 
         try {
           const refreshed = await refreshAccessToken(tokenRow.refresh_token)
@@ -66,11 +70,13 @@ export async function GET(request: Request) {
               access_token: refreshed.access_token,
               refresh_token: refreshed.refresh_token || tokenRow.refresh_token,
               expires_at: newExpiresAt,
-              updated_at: new Date().toISOString(),
+              token_expires_at: newExpiresAt,
+              last_refreshed_at: now.toISOString(),
+              updated_at: now.toISOString(),
             })
             .eq('athlete_id', athleteId)
-        } catch {
-          console.error(`Failed to refresh token for athlete ${athleteId}`)
+        } catch (err) {
+          console.error(`Failed to refresh token for athlete ${athleteId}:`, err)
           continue
         }
       }
