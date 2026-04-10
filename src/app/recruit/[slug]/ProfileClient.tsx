@@ -225,42 +225,6 @@ export default function ProfileClient({ slug }: { slug: string }) {
           </div>
         )}
 
-        {/* Coach Interest / Social Proof */}
-        {coachInterest && coachInterest.programsContacted > 0 && (
-          <div style={{ background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)', borderRadius: '12px', padding: '1.25rem 1.5rem', marginBottom: '2rem', color: 'white' }}>
-            <p style={{ fontWeight: 'bold', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '1rem', color: '#8b9dc3' }}>
-              Coach Interest
-            </p>
-            <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap', alignItems: 'center' }}>
-              <div style={{ textAlign: 'center' }}>
-                <p style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '0.125rem', color: '#4ade80' }}>{coachInterest.programsContacted}</p>
-                <p style={{ fontSize: '0.7rem', color: '#8b9dc3', marginBottom: 0 }}>Programs Contacted</p>
-              </div>
-              {coachInterest.coachResponses > 0 && (
-                <div style={{ textAlign: 'center' }}>
-                  <p style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '0.125rem', color: '#4ade80' }}>{coachInterest.coachResponses}</p>
-                  <p style={{ fontSize: '0.7rem', color: '#8b9dc3', marginBottom: 0 }}>Coach Responses</p>
-                </div>
-              )}
-              <div style={{ textAlign: 'center' }}>
-                <p style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '0.125rem', color: '#4ade80' }}>{coachInterest.schoolsReached}</p>
-                <p style={{ fontSize: '0.7rem', color: '#8b9dc3', marginBottom: 0 }}>Schools Reached</p>
-              </div>
-              {coachInterest.divisions.length > 0 && (
-                <div style={{ flex: 1, minWidth: '120px' }}>
-                  <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                    {coachInterest.divisions.map(d => (
-                      <span key={d} style={{ background: 'rgba(74, 222, 128, 0.15)', color: '#4ade80', padding: '0.25rem 0.75rem', borderRadius: '9999px', fontSize: '0.7rem', fontWeight: 'bold' }}>
-                        {d}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
         {/* Hero Section */}
         <div style={{ background: '#fafafa', borderRadius: '16px', padding: '2rem', marginBottom: '2rem' }}>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
@@ -430,6 +394,42 @@ export default function ProfileClient({ slug }: { slug: string }) {
             )}
           </div>
         </div>
+
+        {/* Coach Interest / Social Proof */}
+        {coachInterest && coachInterest.programsContacted > 0 && (
+          <div style={{ background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)', borderRadius: '12px', padding: '1.25rem 1.5rem', marginBottom: '2rem', color: 'white' }}>
+            <p style={{ fontWeight: 'bold', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '1rem', color: '#8b9dc3' }}>
+              Coach Interest
+            </p>
+            <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap', alignItems: 'center' }}>
+              <div style={{ textAlign: 'center' }}>
+                <p style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '0.125rem', color: '#4ade80' }}>{coachInterest.programsContacted}</p>
+                <p style={{ fontSize: '0.7rem', color: '#8b9dc3', marginBottom: 0 }}>Programs Contacted</p>
+              </div>
+              {coachInterest.coachResponses > 0 && (
+                <div style={{ textAlign: 'center' }}>
+                  <p style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '0.125rem', color: '#4ade80' }}>{coachInterest.coachResponses}</p>
+                  <p style={{ fontSize: '0.7rem', color: '#8b9dc3', marginBottom: 0 }}>Coach Responses</p>
+                </div>
+              )}
+              <div style={{ textAlign: 'center' }}>
+                <p style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '0.125rem', color: '#4ade80' }}>{coachInterest.schoolsReached}</p>
+                <p style={{ fontSize: '0.7rem', color: '#8b9dc3', marginBottom: 0 }}>School Contacts/Offers</p>
+              </div>
+              {coachInterest.divisions.length > 0 && (
+                <div style={{ flex: 1, minWidth: '120px' }}>
+                  <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    {coachInterest.divisions.map(d => (
+                      <span key={d} style={{ background: 'rgba(74, 222, 128, 0.15)', color: '#4ade80', padding: '0.25rem 0.75rem', borderRadius: '9999px', fontSize: '0.7rem', fontWeight: 'bold' }}>
+                        {d}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* For Coaches */}
         <div style={{ background: '#fafafa', borderRadius: '16px', padding: '2rem', marginBottom: '2rem' }}>

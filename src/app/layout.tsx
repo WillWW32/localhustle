@@ -12,7 +12,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   const [displayedSlogan, setDisplayedSlogan] = useState('')
-  const slogan = "Athletes earn. Parents support. Businesses sponsor. Everyone wins."
+  const slogan = "Athletes Connecting to Programs Made Simple, Where Offers Happen"
   const pathname = usePathname()
 
   const isDashboard = pathname?.includes('-dashboard') || pathname?.startsWith('/admin') || pathname?.startsWith('/recruit/dashboard') || pathname?.startsWith('/mentorship/dashboard')

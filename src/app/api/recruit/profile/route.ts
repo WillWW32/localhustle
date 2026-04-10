@@ -53,11 +53,20 @@ export async function GET(request: NextRequest) {
   // Load scouting report summary
   const { data: scoutingRow } = await supabaseAdmin
     .from('scouting_reports')
-    .select('overall_score, division_projection, stars')
+    .select('report, expires_at')
     .eq('athlete_id', athleteRow.id)
     .order('created_at', { ascending: false })
     .limit(1)
     .single()
+
+  const scoutingReportData = scoutingRow?.report &&
+    (!scoutingRow.expires_at || new Date(scoutingRow.expires_at) > new Date())
+    ? {
+        overall_score: (scoutingRow.report as Record<string, unknown>).overall_score,
+        division_projection: (scoutingRow.report as Record<string, unknown>).division_projection,
+        stars: (scoutingRow.report as Record<string, unknown>).stars ?? null,
+      }
+    : null
 
   // Load coach letters
   const { data: letters } = await supabaseAdmin
@@ -136,7 +145,7 @@ export async function GET(request: NextRequest) {
       schoolsReached: schoolCount.size,
       divisions: Array.from(divisions),
     },
-    scoutingReport: scoutingRow || null,
+    scoutingReport: scoutingReportData,
     coachLetters: (letters || []).map((l: Record<string, unknown>) => ({
       id: l.id,
       coachName: l.coach_name,
