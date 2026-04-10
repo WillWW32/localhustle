@@ -55,8 +55,6 @@ export async function GET(request: NextRequest) {
     .from('scouting_reports')
     .select('report, expires_at')
     .eq('athlete_id', athleteRow.id)
-    .order('created_at', { ascending: false })
-    .limit(1)
     .single()
 
   const scoutingReportData = scoutingRow?.report &&
