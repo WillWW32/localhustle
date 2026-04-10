@@ -445,7 +445,7 @@ export default function ProfileClient({ slug }: { slug: string }) {
             <div>
               <h3 style={{ fontWeight: 'bold', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Recruitment Status</h3>
               <p style={{ color: '#666', fontSize: '0.875rem', marginBottom: 0 }}>
-                Actively being recruited. Interested in schools with strong academic programs.
+                Active Recruitment. Focused on Locality and Opportunity with Culture as a priority.
               </p>
             </div>
             <div>
