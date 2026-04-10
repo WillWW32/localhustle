@@ -135,7 +135,7 @@ export default function RootLayout({
                 <a href="/terms" style={{ color: '#666', textDecoration: 'none', fontSize: '0.8rem' }}>Terms</a>
               </nav>
               <p style={{ color: '#999', fontSize: '0.65rem', textAlign: 'center', margin: 0 }}>
-                © {new Date().getFullYear()} LocalHustle — Athletes earn. Parents support. Businesses sponsor.
+                © {new Date().getFullYear()} LocalHustle — Athletes Connecting to Programs Made Simple, Where Offers Happen
               </p>
             </div>
           </footer>
