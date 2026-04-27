@@ -235,8 +235,9 @@ export default function AthleteManagementPage({ params }: { params: Promise<{ id
 
   // Deliverability state
   const [deliverability, setDeliverability] = useState<{
-    stats: { totalSent: number; delivered: number; opened: number; clicked: number; bounced: number; failed: number; complained: number; deliveryRate: number; openRate: number; clickRate: number }
+    stats: { totalSent: number; delivered: number; opened: number; clicked: number; bounced: number; failed: number; complained: number; deliveryRate: number; openRate: number; clickRate: number } | null
     recentIssues: Array<{ type: string; recipient: string | null; error: string | null; date: string; coachName: string | null }>
+    error?: string
   } | null>(null)
   const [deliverabilityLoading, setDeliverabilityLoading] = useState(false)
 
@@ -1264,9 +1265,12 @@ localhustle.org/recruit/${a.slug || ''}${parentLine}`
       fetch(`/api/recruit/deliverability?athleteId=${athlete.id}`)
         .then(res => res.json())
         .then(data => {
-          if (data.stats) setDeliverability(data)
+          // Always set deliverability (even on error) so the effect doesn't loop
+          setDeliverability(data.stats ? data : { stats: null, recentIssues: [], error: data.error || 'unknown' })
         })
-        .catch(() => { /* silently fail */ })
+        .catch(() => {
+          setDeliverability({ stats: null, recentIssues: [], error: 'fetch failed' })
+        })
         .finally(() => setDeliverabilityLoading(false))
     }
   }, [currentTab, athlete, deliverability, deliverabilityLoading])
@@ -2782,11 +2786,15 @@ localhustle.org/recruit/${a.slug || ''}${parentLine}`
               <p style={{ color: '#999', fontSize: '0.8rem' }}>Loading deliverability data...</p>
             )}
 
-            {!deliverabilityLoading && deliverability && deliverability.stats.totalSent === 0 && (
+            {!deliverabilityLoading && deliverability && !deliverability.stats && (
+              <p style={{ color: '#c62828', fontSize: '0.8rem', marginBottom: 0 }}>Could not load deliverability data. Try refreshing.</p>
+            )}
+
+            {!deliverabilityLoading && deliverability && deliverability.stats?.totalSent === 0 && (
               <p style={{ color: '#999', fontSize: '0.8rem', marginBottom: 0 }}>No emails sent yet. Stats will appear after your first campaign send.</p>
             )}
 
-            {!deliverabilityLoading && deliverability && deliverability.stats.totalSent > 0 && (
+            {!deliverabilityLoading && deliverability && deliverability.stats && deliverability.stats.totalSent > 0 && (
               <>
                 {/* Rate cards */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3" style={{ marginBottom: '1rem' }}>
