@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
     // Get all email messages for this athlete directly (avoids large campaign_id IN query)
     const { data: messages, error: msgError } = await supabaseAdmin
       .from('messages')
-      .select('id, coach_id, to_address, status, sent_at, delivered_at, opened_at, type')
+      .select('id, coach_id, to_address, status, sent_at, type')
       .eq('athlete_id', athleteId)
       .eq('type', 'email')
       .order('sent_at', { ascending: false })
