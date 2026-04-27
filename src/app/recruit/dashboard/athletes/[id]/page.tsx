@@ -1855,6 +1855,15 @@ localhustle.org/recruit/${a.slug || ''}${parentLine}`
             <FullDbBlast athleteId={athlete.id} />
           </div>
 
+          {/* Follow-up: Clickers Blast */}
+          <div className="dash-card" style={{ borderColor: '#7b1fa2', borderWidth: '1.5px' }}>
+            <h3 style={{ fontSize: '1.125rem', marginBottom: '0.5rem', color: '#7b1fa2' }}>Follow-Up: Coaches Who Clicked</h3>
+            <p style={{ color: '#555', fontSize: '0.85rem', marginBottom: '1rem' }}>
+              Send a personalised follow-up to coaches who clicked your profile link in the first campaign. Mentions gym work, added muscle, and urgency around deciding soon.
+            </p>
+            <FollowupClickersBlast athleteId={athlete.id} />
+          </div>
+
           {/* Status + Stats Row */}
           <div className="dash-card">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
@@ -4356,6 +4365,85 @@ function FullDbBlast({ athleteId }: { athleteId: string }) {
           {sending ? 'Sending...' : '↺ Resend to All'}
         </button>
       </div>
+    </div>
+  )
+}
+
+function FollowupClickersBlast({ athleteId }: { athleteId: string }) {
+  const [preview, setPreview] = useState<{ totalClickers: number; alreadySent: number; eligibleToContact: number } | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [sending, setSending] = useState(false)
+  const [result, setResult] = useState<{ emailsSent: number; emailsFailed: number } | null>(null)
+
+  const loadPreview = async () => {
+    setLoading(true)
+    try {
+      const res = await fetch(`/api/recruit/followup-clickers-blast?athleteId=${athleteId}`)
+      const data = await res.json()
+      setPreview(data)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const send = async () => {
+    if (!confirm(`Send follow-up to ${preview?.eligibleToContact} coaches who clicked? This sends real emails.`)) return
+    setSending(true)
+    try {
+      const res = await fetch('/api/recruit/followup-clickers-blast', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ athleteId }),
+      })
+      const data = await res.json()
+      setResult({ emailsSent: data.emailsSent, emailsFailed: data.emailsFailed })
+      setPreview(null)
+    } catch {
+      alert('Send failed — check console')
+    } finally {
+      setSending(false)
+    }
+  }
+
+  if (result) {
+    return (
+      <div style={{ background: '#f3e5f5', borderRadius: '8px', padding: '0.75rem 1rem', fontSize: '0.85rem', color: '#4a148c' }}>
+        ✓ Follow-up sent to <strong>{result.emailsSent}</strong> coaches.
+        {result.emailsFailed > 0 && <span style={{ color: '#c62828' }}> {result.emailsFailed} failed.</span>}
+      </div>
+    )
+  }
+
+  if (!preview) {
+    return (
+      <button onClick={loadPreview} disabled={loading} className="dash-btn" style={{ background: '#7b1fa2', borderColor: '#7b1fa2', fontSize: '0.875rem' }}>
+        {loading ? 'Loading...' : 'Preview Clickers'}
+      </button>
+    )
+  }
+
+  return (
+    <div>
+      <div style={{ display: 'flex', gap: '1.5rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
+        {[
+          { label: 'Total Clickers', value: preview.totalClickers },
+          { label: 'Already Sent', value: preview.alreadySent },
+          { label: 'Ready to Send', value: preview.eligibleToContact },
+        ].map(s => (
+          <div key={s.label} style={{ textAlign: 'center', background: '#f3e5f5', borderRadius: '8px', padding: '0.6rem 1rem' }}>
+            <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#7b1fa2' }}>{s.value}</div>
+            <div style={{ fontSize: '0.7rem', color: '#888' }}>{s.label}</div>
+          </div>
+        ))}
+      </div>
+      <button
+        onClick={send}
+        disabled={sending || preview.eligibleToContact === 0}
+        className="dash-btn"
+        style={{ background: '#7b1fa2', borderColor: '#7b1fa2', fontSize: '0.875rem' }}
+      >
+        {sending ? 'Sending...' : preview.eligibleToContact === 0 ? 'All sent!' : `Send to ${preview.eligibleToContact} Coaches`}
+      </button>
     </div>
   )
 }
