@@ -137,6 +137,9 @@ export default function RootLayout({
               <p style={{ color: '#999', fontSize: '0.65rem', textAlign: 'center', margin: 0 }}>
                 © {new Date().getFullYear()} LocalHustle — Athletes Connecting to Programs Made Simple, Where Offers Happen
               </p>
+              <p style={{ color: '#999', fontSize: '0.65rem', textAlign: 'center', margin: '0.5rem 0 0' }}>
+                <a href="https://www.divineparadox.org/websites" style={{ color: '#999', textDecoration: 'none' }}>Site by Divine Paradox</a>
+              </p>
             </div>
           </footer>
         ) : (
